@@ -1,190 +1,237 @@
 # Plugin HaloSIS untuk GLPI 12
 
-Modul AI untuk layanan TI BPS dengan prinsip *human-in-the-loop*: AI memberi saran, petugas yang memutuskan.
+Modul AI untuk layanan TI BPS di atas GLPI, dengan prinsip *human-in-the-loop*: **AI memberi saran,
+petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode inti GLPI tidak diubah.
 
-> Status: konfigurasi, role, saran triase AI (Fase 4), chatbot self-service (Fase 5), deteksi pola
-> insiden (Fase 6), dan dashboard kinerja AI (Fase 7) sudah jalan.
+| Fitur | Siapa | Di mana |
+| --- | --- | --- |
+| **Tanya HaloSIS**: chatbot self-service yang menjawab hanya dari artikel Pusat Bantuan | Pegawai | Beranda Helpdesk (`/plugins/halosis/Chat`) |
+| **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak | Operator (putuskan), Tim Teknis (lihat) | Panel "Saran AI" di form tiket |
+| **Deteksi pola insiden**: tiket mirip ≥ N dalam 1 jam → Problem "Pola insiden: …" | Operator | Tugas terjadwal + banner beranda |
+| **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen | Bantuan › Kinerja AI |
+| **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
+
+Versi 0.4.0 · GLPI 12.0.x · PHP 8.2+. Tanpa API key semua fitur berjalan dalam **mode demo**
+(jawaban contoh yang deterministik, tanpa internet).
+
+## Akun demo
+
+Password semua akun contoh: `halosis` (kecuali `glpi`). Akun dibuat oleh `seed_halosis.py` di folder induk.
+
+| Login | Role HaloSIS | Antarmuka | Dipakai untuk |
+| --- | --- | --- | --- |
+| `budi`, `siti`, `maya` | Pegawai | Helpdesk | Tanya HaloSIS, buat laporan, approve solusi |
+| `rina` | Operator | Standar | Validasi saran AI, banner pola insiden |
+| `andi`, `yoga` | Tim Teknis (Aplikasi Statistik) | Standar | Menyelesaikan tiket; panel AI hanya-baca |
+| `fajar` / `dedi` | Tim Teknis (Identitas & Akses / Jaringan) | Standar | |
+| `sri` | Manajemen | Standar (hanya-baca) | Dashboard kinerja AI |
+| `lina` | Knowledge Manager | Standar | Mengelola artikel Pusat Bantuan |
+| `glpi` / `glpi` | Super-Admin | Standar | Konfigurasi & pengelolaan sistem |
+
+> ⚠️ `glpi`/`glpi` dan `halosis` hanya untuk demo lokal. Ganti sebelum GLPI bisa diakses dari jaringan lain.
 
 ## Instalasi
 
-Folder ini di-mount ke `/var/www/glpi/plugins/halosis` lewat `docker-compose.yml`. Lalu:
+Langkah lengkap menyalakan GLPI dan data contoh ada di `README.md` folder induk. Urutannya:
 
 ```bash
+docker compose up -d                                   # GLPI 12.0.0 + MySQL, http://localhost:8080
+# aktifkan API (README induk langkah 3), lalu:
 docker compose exec glpi php bin/console plugin:install halosis -u glpi --allow-superuser
 docker compose exec glpi php bin/console plugin:activate halosis --allow-superuser
+docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser
+.venv/bin/python seed_halosis.py http://localhost:8080 # data contoh (sekali, setelah setup-roles)
 ```
 
-**SDK Anthropic** (hanya perlu untuk memanggil Claude sungguhan; mode demo jalan tanpanya).
-Dipasang dengan Composer ke `vendor/` (tidak di-commit). Dari folder plugin:
+Folder ini di-mount ke `/var/www/glpi/plugins/halosis`, jadi perubahan kode langsung terbaca.
+Atau lewat UI: **Setup › Plugins** → HaloSIS → Install → Aktifkan. Saat versi plugin naik, jalankan ulang
+`plugin:install halosis -u glpi --force` lalu `plugin:activate` (install bersifat idempoten: data tetap).
+
+**SDK Anthropic**: hanya dibutuhkan untuk memanggil Claude sungguhan. Dipasang dengan Composer ke
+`vendor/` (tidak di-commit). Dari folder plugin:
 
 ```bash
 docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/app -w /app composer:2 install --no-dev
 ```
 
-`composer.json` me-*replace* Guzzle & paket PSR HTTP karena sudah disediakan GLPI, jadi `vendor/` hanya
-berisi SDK dan dependensi yang belum ada di GLPI. SDK baru dimuat saat API key terisi.
+`composer.json` me-*replace* Guzzle & paket PSR HTTP karena sudah disediakan GLPI. SDK hanya dimuat saat
+API key terisi; halaman konfigurasi memperingatkan bila API key terisi tapi SDK belum terpasang.
 
-Atau lewat UI: **Setup › Plugins** → HaloSIS → Install → Aktifkan.
-
-Uninstall (`plugin:uninstall halosis`) menghapus semua tabel, konfigurasi, dan hak akses plugin.
+**Uninstall** (`plugin:uninstall halosis`) menghapus semua tabel, konfigurasi, hak akses, dan tugas
+terjadwal plugin. Nama profil hasil `setup-roles` tetap.
 
 ## Konfigurasi
 
-**Setup › Plugins › HaloSIS** (ikon kunci pas), atau langsung `/plugins/halosis/front/config.form.php`.
-Halaman ini termasuk area sensitif: GLPI meminta konfirmasi password sebelum membukanya.
+**Setup › AI HaloSIS** (atau ikon kunci pas di Setup › Plugins). Area sensitif: GLPI meminta konfirmasi
+password sebelum membukanya.
 
 | Pengaturan | Default | Keterangan |
 | --- | --- | --- |
 | Penyedia AI | Anthropic (Claude) | Atau API kompatibel OpenAI |
-| API key | kosong | Disimpan terenkripsi dengan kunci GLPI (`glpicrypt.key`); tidak pernah dikirim ke browser |
+| API key | kosong = **mode demo** | Disimpan terenkripsi dengan kunci GLPI (`glpicrypt.key`); tidak pernah dikirim ke browser |
 | Model | `claude-opus-5-5` | ID model di penyedia |
 | URL dasar API | kosong | Opsional, untuk gateway/proxy |
 | Batas waktu | 20 detik | Jika terlewati, tiket tetap tersimpan tanpa saran |
 | Ambang keyakinan | 70% | Di bawah ambang → "Perlu penilaian manual" |
+| Minimal tiket mirip | 10 | Deteksi pola insiden |
+| Jendela waktu | 60 menit | Deteksi pola insiden |
+| Grup Operator | bawaan "Operator Service Desk" | Penerima Problem pola insiden |
 | Fitur AI | semua aktif | Saran triase, chatbot, deteksi pola, dashboard |
 
-**Mode demo:** jika API key kosong, semua fitur memakai jawaban contoh yang deterministik,
-sehingga bisa didemokan tanpa internet.
+### Mode demo
 
-## Saran triase AI (human-in-the-loop)
+Tanpa API key, semua fitur tetap bisa didemokan tanpa internet, dengan hasil yang sama untuk masukan
+yang sama:
 
-1. **Tiket baru disimpan** (hook `item_add` Ticket, dari antarmuka mana pun termasuk REST API) →
-   plugin membuat saran: kategori ITIL, dampak, urgensi, prioritas, grup tujuan, keyakinan 0–100,
-   penjelasan singkat, versi model. Disimpan di `glpi_plugin_halosis_suggestions`, **bukan** di field tiket.
-   - Claude dipanggil dengan *structured output* (JSON schema); ID kategori & grup dibatasi ke daftar yang
-     valid untuk entitas & tipe tiket, lalu divalidasi ulang di server. Prioritas dihitung dari matriks GLPI.
-   - Mode demo: aturan kata kunci (`Triage::DEMO_KEYWORDS`), isi tiket sama → saran sama.
-   - **AI gagal/timeout → tiket tetap tersimpan normal tanpa saran.** Tidak ada coba ulang, jadi waktu tunggu
-     maksimal = batas waktu di konfigurasi. Penyebab dicatat di log GLPI `halosis.log`
-     (di Docker: `/var/glpi/logs/halosis.log`). Petugas bisa menekan **Buat saran AI** di panel.
-2. **Panel "Saran AI"** tampil di atas panel isian tiket untuk pemegang hak `plugin_halosis_triase`
-   (lihat). Isinya meter keyakinan dengan garis ambang, nilai saran, penjelasan, dan model.
-   Keyakinan di bawah ambang → tanda **Perlu penilaian manual**.
-3. **Keputusan** (butuh hak triase *putuskan* + hak ubah tiket di GLPI):
-   - **Terima** → semua nilai saran diterapkan ke tiket.
-   - **Ubah** → form nilai final + **alasan wajib** (min. 5 karakter) → nilai final diterapkan.
-     Tanpa hak GLPI "Ubah prioritas", prioritas mengikuti matriks urgensi × dampak.
-   - **Tolak** → field tiket tidak diubah, triase manual + **alasan wajib**.
-   Nilai diterapkan lewat update tiket GLPI biasa, jadi hak akses, aturan bisnis, notifikasi, dan riwayat
-   field tetap berjalan. Alasan divalidasi di server, bukan hanya di browser.
-4. **Pencatatan**: setiap keputusan masuk `glpi_plugin_halosis_decisions` (aktor, waktu, nilai saran vs
-   final dalam JSON, alasan) **dan** tab **Riwayat** tiket (baris "HaloSIS: Saran AI diterima/diubah/ditolak…").
+- **Saran triase**: aturan kata kunci (mis. "vpn" → Jaringan & VPN, "sso"/"login" → SSO / Login,
+  "fasih"/"sinkron" → FASIH), urgensi naik bila ada "tidak bisa", "gagal", "hari ini", dampak naik bila
+  ada "semua", "rekan". Model tercatat `demo-rules-v1`.
+- **Chatbot**: kutipan langkah dari artikel Pusat Bantuan yang paling relevan, dengan label
+  "Dari Pusat Bantuan" (label "Dijawab AI" hanya bila Claude yang merangkum).
+- **Deteksi pola & dashboard** tidak memakai AI, sehingga sama di kedua mode.
 
-Pemanggilan Claude: SDK resmi `anthropic-ai/sdk`, endpoint beta Messages, `outputConfig.effort = low`
-(klasifikasi), dan *server-side fallback* `fallbacks: "default"` untuk model yang mendukungnya
-(`claude-opus-5-5`, `claude-opus-5`, `claude-fable-5-1`, `claude-sonnet-5-5`) bila memakai API Claude langsung.
-Proxy GLPI (**Setup › Umum › Proxy**) ikut dipakai.
+Dengan API key, Claude dipanggil di server (SDK resmi, *structured output*, effort `low`, dan
+*server-side fallback* untuk model yang mendukungnya). Bila AI gagal atau timeout, triase dilewati dan
+chatbot kembali ke kutipan artikel; penyebabnya dicatat di `halosis.log` (Docker: `/var/glpi/logs/halosis.log`).
 
-## Chatbot self-service pegawai (beranda "Tanya HaloSIS")
+## Skenario demo langkah demi langkah
 
-Alur *resolution-first*: Pegawai login → langsung di halaman penuh **Tanya HaloSIS**
-(`/plugins/halosis/Chat`, controller `src/Controller/ChatController.php`, dirender di layout Helpdesk GLPI).
-Berlaku untuk antarmuka Helpdesk + hak `plugin_halosis_chatbot` (default: Pegawai) + fitur chat aktif.
+Alur utama (± 10 menit), sudah diuji ujung ke ujung: **pegawai chat → buat laporan → operator validasi
+saran AI → teknisi selesaikan → pegawai approve**. Pakai jendela browser terpisah (atau mode privat)
+per akun.
 
-- **Halaman penuh**: percakapan memenuhi layar, input di bawah, saran pertanyaan cepat, tautan sekunder
-  "Langsung buat laporan" (ke Service catalog) di kanan atas. Responsif sampai lebar HP 390px.
-- **Menu Helpdesk** (hook `redefine_menus`): Tanya HaloSIS · Laporan saya · Buat laporan · Pusat bantuan (FAQ),
-  lalu menu lain. Beranda Helpdesk lama disembunyikan. Menu antarmuka standar tidak diubah.
-- **Beranda**: setelah login GLPI selalu membuka `/Helpdesk`; plugin menambahkan
-  `<meta http-equiv="refresh">` (hook `add_header_tag`) **hanya** pada `GET /Helpdesk` untuk pengguna yang
-  memenuhi syarat, sehingga diarahkan ke halaman chat. Operator & profil standar tidak terpengaruh;
-  halaman chat ada di path lain sehingga tidak ada loop. GLPI 12 belum punya hook server-side untuk
-  mengalihkan `/Helpdesk`: `RedirectException` dari `plugin_init` (saat kernel boot) maupun dari
-  `redefine_menus` (di dalam render Twig) sudah dicoba dan berakhir HTTP 500.
-- **Widget melayang** tetap ada di halaman Helpdesk lain (mis. detail tiket, FAQ) dengan tombol
-  "buka layar penuh", tapi tidak dimuat di halaman chat. Percakapan yang sama berlanjut antara halaman
-  penuh dan widget (ID di `sessionStorage`).
-- **Asisten tidak tersedia** (fitur chat dimatikan): halaman menampilkan pesan + tombol "Buat laporan" yang
-  menonjol. Jawaban "belum menemukan" dan galat jaringan juga menampilkan tombol "Buat laporan".
-- Logika percakapan satu untuk keduanya: `Chatbot` (server), `ajax/chat.php` (endpoint),
-  `templates/chat_conversation.html.twig` (isi percakapan), `public/js/chat.js` (fungsi `mount`).
+### 1. Pegawai bertanya ke asisten (`budi`)
 
-- **Sumber jawaban hanya Knowledge Base yang terlihat oleh pengguna.** `KnowledgeSearch` memakai kriteria
-  visibilitas GLPI (`KnowbaseItem::getVisibilityCriteria()`; di Helpdesk = FAQ yang boleh dilihat), lalu tiap
-  artikel dicek ulang dengan `canViewItem()`. Artikel internal (bukan FAQ) tidak pernah dipakai.
-  Peringkat: kata kunci di judul (bobot 3) dan isi (bobot 1), minimal skor 3.
-- **Tidak ada artikel relevan** → "Maaf, saya belum menemukan jawabannya…". Pertanyaan pendek (≤ 2 kata kunci,
-  mis. "masih gagal") dianggap lanjutan pertanyaan sebelumnya.
-- **Dengan API key**: Claude merangkum *hanya* dari artikel yang ditemukan (structured output; `article_ids`
-  dibatasi ke artikel tersebut). Tautan sumber dibuat server dari artikel yang ditemukan, bukan dari teks model.
-  **Mode demo / AI gagal**: kutipan langkah dari artikel teratas.
-- **Data pribadi**: widget menampilkan peringatan; di server, pola kata sandi (`password: …`), email, nomor HP,
-  dan NIK/NIP disamarkan (`Privacy::mask`) **sebelum** dikirim ke AI maupun disimpan di transkrip.
-- **Masalah terselesaikan** → rating 1–5, percakapan ditutup (status `resolved`).
-- **Buat laporan** → tiket baru atas nama pegawai, memakai sesi & hak GLPI pengguna (butuh hak membuat tiket);
-  judul bisa diedit, deskripsi = ringkasan percakapan. Tiket ini otomatis mendapat saran triase AI.
-- Percakapan disimpan di `glpi_plugin_halosis_chats` dan hanya bisa dibaca/dilanjutkan pemiliknya;
-  widget melanjutkan percakapan saat pegawai berpindah halaman.
+1. Buka http://localhost:8080 dan login `budi` / `halosis`. Anda langsung masuk ke **Tanya HaloSIS**
+   (bukan beranda GLPI biasa); menu Helpdesk: Tanya HaloSIS · Laporan saya · Buat laporan · Pusat bantuan.
+2. Klik chip **FASIH gagal sinkron**. Asisten menjawab dengan langkah-langkah dari artikel
+   "FASIH: sinkronisasi gagal" dan chip sumber yang bisa diklik.
+3. Tunjukkan peringatan privasi: kirim "password saya: abc123". Asisten memberi tahu bahwa data pribadi
+   disamarkan sebelum diproses.
+4. Di bawah jawaban, klik **Belum terselesaikan** → kartu oranye "Saya buatkan laporan…" → **Ya, buat laporan**.
+5. Ubah judul menjadi mis. "FASIH gagal sinkron, data Susenas belum terkirim", buka **Ringkasan yang
+   dilampirkan**, lalu **Kirim laporan**. Catat nomor laporan, lalu klik **Buka laporan**.
 
-Tampilan mengikuti prototipe `halosis-web` (komponen ChatRoom): gelembung dengan label "Dijawab AI" (atau
-"Dari Pusat Bantuan" untuk kutipan mode demo), langkah bernomor, chip sumber, aksi "Apakah jawaban ini
-membantu?", kartu "buat laporan" bergaris putus-putus, dan kotak input dengan saran pertanyaan.
+> Variasi: tanyakan "Kursi kantor saya patah" → asisten tidak menemukan artikel dan langsung menawarkan
+> laporan. Atau tanyakan "VPN putus" → **Masalah terselesaikan** → beri bintang (tercatat sebagai
+> "terbantu tanpa tiket" di dashboard).
 
-Aset CSS/JS plugin diberi penanda waktu ubah file (`plugin_halosis_asset()` di `setup.php`), karena GLPI
-hanya memberi versi aset berdasarkan versi plugin; tanpa ini perubahan tampilan tertahan di cache browser.
+### 2. Operator memvalidasi saran AI (`rina`)
 
-Catatan teknis: GLPI hanya membawa hak profil Helpdesk yang terdaftar di `Profile::$helpdesk_rights`
-ke sesi, jadi plugin mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
+1. Login `rina` / `halosis`, buka **Bantuan › Tiket**, lalu buka laporan tadi.
+2. Di kanan atas ada panel **Saran AI**: kategori Aplikasi Statistik > FASIH, grup Tim Aplikasi Statistik,
+   meter keyakinan dengan garis ambang, dan penjelasan.
+3. Klik **Terima**. Kategori, dampak, urgensi, prioritas, dan grup langsung terisi di tiket.
+   - Alternatif **Ubah**: ganti nilai + alasan wajib → **Terapkan perubahan**.
+   - Alternatif **Tolak**: alasan wajib → field tiket tidak diubah, triase manual.
+4. Buka tab **Historical** tiket: ada baris "HaloSIS: Saran AI diterima (keyakinan …%)" selain perubahan field.
 
-## Deteksi pola insiden
+> Untuk melihat tanda **Perlu penilaian manual**, buka tiket berjudul samar (mis. "Aplikasi error terus")
+> yang keyakinannya di bawah 70%.
 
-Tugas terjadwal GLPI **`IncidentPattern`** (Setup › Tindakan otomatis, tiap 15 menit, mode CLI; penjadwal
-container menjalankan `front/cron.php` tiap menit). Jalankan manual:
-`docker compose exec glpi php front/cron.php --force IncidentPattern`.
+### 3. Tim Teknis menyelesaikan (`andi`)
 
-1. Ambil tiket yang dibuat dalam **jendela waktu** (default 60 menit), belum dihapus, belum selesai.
-2. Kelompokkan **per kategori**; tiket tanpa kategori memakai kategori dari saran triase AI.
-3. Sisanya dikelompokkan per **kemiripan judul**: minimal 2 kata kunci sama dan overlap ≥ 0,5
-   (kata sama ÷ jumlah kata judul yang lebih pendek).
-4. Kelompok dengan ≥ **N tiket** (default 10) → Problem **"Pola insiden: …"** berisi daftar tiket & kriteria,
-   ditautkan ke semua tiketnya, ditugaskan ke **grup Operator** (konfigurasi; bawaan "Operator Service Desk").
-   Problem tidak diselesaikan atau diteruskan otomatis: **petugas yang memutuskan tindak lanjut**.
-5. Pola yang sama dan Problem-nya masih terbuka (≤ 24 jam) **tidak dibuat ulang**; tiket baru ditautkan ke
-   Problem tersebut.
+1. Login `andi` / `halosis`. Tiket muncul di **Beranda › Tampilan Group** dan **Bantuan › Tiket**.
+2. Panel Saran AI tampil **tanpa tombol keputusan** (Tim Teknis hanya melihat).
+3. Klik **Answer ▾ › Add a solution**, tulis solusi (mis. "Server sinkronisasi FASIH wilayah sudah
+   dipulihkan. Buka FASIH lalu tekan Coba sinkron ulang."), simpan. Status menjadi **Terselesaikan**.
 
-**Notifikasi ke Operator**
-- Problem ditugaskan ke grup Operator, sehingga muncul di antrean mereka dan GLPI mengirim notifikasi
-  standar "masalah baru" ke grup itu bila email/notifikasi dikonfigurasi.
-- Banner **"Pola insiden terdeteksi"** di beranda antarmuka standar untuk pemegang hak triase *putuskan*
-  (pola terbuka 48 jam terakhir).
-- Panel Saran AI di tiket terkait menampilkan **"Bagian dari pola insiden"** dengan tautan ke Problem.
+### 4. Pegawai menyetujui solusi (`budi`)
 
-Pola tercatat di `glpi_plugin_halosis_patterns` (tanda pola, kriteria, Problem, jumlah tiket).
+1. Login `budi`, buka **Laporan saya**, lalu laporan tadi.
+2. Pada solusi, klik **Approve**. Status laporan menjadi **Ditutup**. (Refuse = belum beres, tiket dibuka lagi.)
 
-## Dashboard kinerja AI
+### 5. Manajemen melihat kinerja AI (`sri`)
 
-**Bantuan › Kinerja AI** (`/plugins/halosis/Dashboard`) untuk pemegang hak `plugin_halosis_dashboard`
-(Manajemen, Administrator, Super-Admin) selama fitur dashboard aktif. Filter periode 4 / 8 / 12 minggu.
+1. Login `sri` / `halosis`, buka **Bantuan › Kinerja AI**.
+2. Tunjukkan: % saran diterima apa adanya, batang komposisi Diterima/Diubah/Ditolak, **Dipindah ke tim lain
+   setelah triase**, grafik keputusan per minggu (arahkan kursor ke kolom; **Tampilkan sebagai tabel**),
+   keyakinan AI vs keputusan petugas, dan kartu chatbot (terbantu tanpa tiket, rating).
+3. Ganti periode 4 / 8 / 12 minggu.
+
+### Bonus: pola insiden (`glpi` + `rina`)
+
+Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan ambangnya:
+
+1. Login `glpi`, **Setup › AI HaloSIS** → **Minimal tiket mirip** = 3 → Simpan.
+2. Sebagai `budi`/`siti`/`maya`, buat 3 laporan cepat dengan judul mirip (mis. "Tidak bisa login SSO",
+   "Login SSO gagal", "SSO error tidak bisa masuk") lewat **Langsung buat laporan**.
+3. Sebagai `glpi`, buka **Setup › Tindakan otomatis › IncidentPattern** → **Jalankan** (atau tunggu
+   jadwal 15 menit). Log tugas menampilkan "Pola baru: …".
+4. Login `rina`, buka **Beranda**: banner **Pola insiden terdeteksi** dengan tautan ke Problem
+   "Pola insiden: …" yang berisi daftar tiket dan sudah ditugaskan ke grup Operator. Panel Saran AI di tiket
+   terkait menampilkan **Bagian dari pola insiden**. Operator yang memutuskan tindak lanjutnya.
+5. Kembalikan **Minimal tiket mirip** ke 10.
+
+## Detail fitur
+
+### Saran triase AI
+
+- Dibuat saat tiket baru disimpan (hook `item_add` Ticket, dari antarmuka mana pun termasuk REST API),
+  disimpan di tabel plugin, **bukan** di field tiket. Kategori & grup dibatasi ke daftar yang valid untuk
+  entitas & tipe tiket dan divalidasi ulang di server; prioritas dari matriks urgensi × dampak GLPI.
+- AI gagal/timeout → tiket tetap tersimpan normal tanpa saran (tidak ada coba ulang, waktu tunggu maksimal =
+  batas waktu). Petugas bisa menekan **Buat saran AI** di panel.
+- Keputusan butuh hak triase *putuskan* **dan** hak ubah tiket GLPI. Nilai diterapkan lewat update tiket
+  biasa, jadi aturan bisnis, notifikasi, dan riwayat field GLPI tetap berjalan. Alasan Ubah/Tolak divalidasi
+  di server (minimal 5 karakter). Tanpa hak GLPI "Ubah prioritas", prioritas mengikuti matriks.
+- Setiap keputusan tercatat di `glpi_plugin_halosis_decisions` (aktor, waktu, nilai saran vs final, alasan)
+  dan tab Riwayat tiket.
+
+### Tanya HaloSIS (chatbot)
+
+- **Beranda Pegawai**: setelah login GLPI selalu membuka `/Helpdesk`; plugin menambahkan
+  `<meta http-equiv="refresh">` (hook `add_header_tag`) hanya pada `GET /Helpdesk` untuk pengguna Helpdesk
+  yang berhak chatbot. Operator & profil standar tidak terpengaruh; tidak ada loop. (GLPI 12 belum punya
+  hook server-side untuk ini: `RedirectException` dari `plugin_init` maupun `redefine_menus` berakhir HTTP 500.)
+- **Menu Helpdesk** diatur lewat hook `redefine_menus`.
+- **Sumber jawaban hanya artikel KB yang terlihat oleh pengguna**: kriteria visibilitas GLPI
+  (`KnowbaseItem::getVisibilityCriteria()`; di Helpdesk = FAQ yang boleh dilihat), tiap artikel dicek ulang
+  dengan `canViewItem()`. Artikel internal tidak pernah dipakai. Tautan sumber dibuat server, bukan dari teks model.
+- **Data pribadi** (pola kata sandi, email, nomor HP, NIK/NIP) disamarkan di server sebelum dikirim ke AI
+  maupun disimpan.
+- **Buat laporan** memakai sesi & hak GLPI pegawai; deskripsi = ringkasan percakapan; tiket langsung
+  mendapat saran triase.
+- **Widget melayang** "Tanya asisten" muncul di halaman Helpdesk lain (detail tiket, FAQ) dan melanjutkan
+  percakapan yang sama; tidak dimuat di halaman chat.
+- Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
+
+### Deteksi pola insiden
+
+Tugas terjadwal **`IncidentPattern`** (tiap 15 menit, mode CLI; penjadwal container menjalankan
+`front/cron.php` tiap menit). Manual: `docker compose exec glpi php front/cron.php --force IncidentPattern`.
+
+1. Tiket yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
+2. Dikelompokkan per **kategori** (tiket tanpa kategori memakai kategori saran triase AI), sisanya per
+   **judul mirip** (≥ 2 kata kunci sama dan overlap ≥ 0,5).
+3. Kelompok ≥ N tiket → Problem **"Pola insiden: …"** (daftar tiket & kriteria), ditautkan ke tiketnya,
+   ditugaskan ke grup Operator. Tidak ada penyelesaian/penerusan otomatis.
+4. Pola yang sama dengan Problem masih terbuka (≤ 24 jam) tidak dibuat ulang; tiket baru ditautkan ke sana.
+
+Notifikasi: penugasan ke grup Operator (notifikasi GLPI standar terkirim bila email dikonfigurasi), banner
+di beranda pemegang hak triase *putuskan*, dan catatan di panel Saran AI tiket terkait.
+
+### Dashboard kinerja AI
+
 Semua angka dari tabel log plugin (`src/Stats.php`):
 
 | Angka | Sumber |
 | --- | --- |
-| % saran diterima / diubah / ditolak | `decisions` |
-| Keputusan per minggu (kolom bertumpuk + tabel) | `decisions` |
+| % saran diterima / diubah / ditolak, keputusan per minggu | `decisions` |
 | Keyakinan AI vs keputusan (di atas / di bawah ambang) | `decisions` + `suggestions` |
 | % tiket dipindah ke tim lain setelah triase ("salah tim") | `reassignments` ÷ tiket dengan keputusan Terima/Ubah |
 | Chat terbantu tanpa tiket, jadi laporan, rata-rata rating | `chats` |
 
-**"Dipindah ke tim lain"**: GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat
-(hook `item_add` Group_Ticket) setiap kali tiket yang triasenya sudah diterapkan lalu ditugaskan ke grup
-selain grup hasil triase.
-
-Grafik dirender server sebagai SVG (tanpa pustaka luar, jalan tanpa internet). Warna seri divalidasi untuk
-buta warna: Diterima `#00826F`, Diubah `#62C9AF`, Ditolak `#D8652A` (turunan teal & oranye HaloSIS; warna
-brand mentah terlalu pucat/kusam untuk isian grafik). Nilai selalu ditulis sebagai teks (legenda, total di
-puncak kolom, tooltip, tabel), tidak mengandalkan warna saja.
+GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat (hook `item_add` Group_Ticket)
+setiap kali tiket yang triasenya sudah diterapkan lalu ditugaskan ke grup lain. Grafik dirender server
+sebagai SVG tanpa pustaka luar. Warna seri divalidasi untuk buta warna (Diterima `#00826F`, Diubah `#62C9AF`,
+Ditolak `#D8652A`, turunan teal & oranye HaloSIS), dan nilai selalu tertulis sebagai teks.
 
 ## Role & hak akses
 
-Role HaloSIS diterapkan ke profil GLPI dengan perintah yang aman dijalankan berulang:
-
-```bash
-docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser
-```
-
-Perintah ini mengganti nama profil bawaan (berdasarkan ID, jadi pengguna yang terhubung tidak terpengaruh),
-membuat profil Knowledge Manager, memastikan Manajemen hanya-baca, menerapkan hak plugin, dan menonaktifkan
-akun bawaan `tech`, `normal`, `post-only`. Definisinya ada di `src/Roles.php`.
+`plugins:halosis:setup-roles` (aman dijalankan berulang) mengganti nama profil bawaan berdasarkan ID,
+membuat Knowledge Manager, memastikan Manajemen hanya-baca, menerapkan hak plugin, dan menonaktifkan akun
+bawaan `tech`, `normal`, `post-only`. Definisi di `src/Roles.php`.
 
 | ID | Profil GLPI asal | Role HaloSIS | Antarmuka |
 | --- | --- | --- | --- |
@@ -196,8 +243,8 @@ akun bawaan `tech`, `normal`, `post-only`. Definisinya ada di `src/Roles.php`.
 | 6 | Technician | Tim Teknis | Standar |
 | baru | — | Knowledge Manager | Standar |
 
-Hak plugin (bisa diubah di **Administrasi › Profil › (profil) › tab HaloSIS**). Semua pengecekan akses di
-plugin memakai hak ini (`Session::haveRight`), tidak pernah nama profil.
+Hak plugin (ubah di **Administrasi › Profil › (profil) › tab HaloSIS**). Semua pengecekan akses memakai
+hak ini, tidak pernah nama profil.
 
 | Hak | Nilai | Default |
 | --- | --- | --- |
@@ -206,51 +253,67 @@ plugin memakai hak ini (`Session::haveRight`), tidak pernah nama profil.
 | `plugin_halosis_dashboard` | lihat (READ) | Manajemen, Administrator, Super-Admin |
 | `plugin_halosis_config` | ubah (UPDATE) | Administrator, Super-Admin |
 
-Saat plugin di-install, hak baru otomatis mendapat nilai default di atas; hak yang sudah ada tidak diubah.
-Halaman konfigurasi juga muncul di menu **Setup › AI HaloSIS** bagi pemegang `plugin_halosis_config`.
+GLPI hanya membawa hak profil Helpdesk yang terdaftar di `Profile::$helpdesk_rights` ke sesi, jadi plugin
+mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
 
-## Struktur
+## Pemecahan masalah
+
+| Gejala | Penyebab & solusi |
+| --- | --- |
+| Tampilan chatbot/panel berantakan setelah update | Cache browser lama. Aset plugin sudah diberi penanda waktu ubah file (`plugin_halosis_asset()`), cukup muat ulang (Safari: Cmd+Option+R). |
+| "An unexpected error occurred" setelah login | Bug GLPI 12.0.0 pada "Remember me" (token ganda). "Remember me" sudah dimatikan (`login_remember_time = 0`); lihat README induk. |
+| `ERROR_NOT_ALLOWED_IP` saat menjalankan seed | Klien API untuk IP gateway Docker belum ada; lihat README induk langkah 3. |
+| Tiket baru tidak mendapat saran AI | Cek fitur triase aktif dan `/var/glpi/logs/halosis.log` (AI gagal/timeout, SDK belum terpasang). Klik **Buat saran AI** di panel. |
+| Pegawai tidak diarahkan ke Tanya HaloSIS | Pastikan profil Helpdesk punya hak chatbot (tab HaloSIS) dan fitur chat aktif; login ulang. |
+| Pola insiden tidak terbentuk | Butuh ≥ N tiket mirip dalam jendela waktu; lihat log tugas di Setup › Tindakan otomatis › IncidentPattern. |
+
+## Batasan yang diketahui
+
+- **Belum diuji dengan API key Claude asli.** Jalur SDK, jaringan, timeout, dan penanganan galat sudah
+  terbukti (request sampai ke API dan ditolak karena key uji palsu), tapi isi request belum divalidasi oleh
+  API dengan key sungguhan. Uji sekali dengan key asli sebelum dipakai.
+- AI dipanggil saat tiket disimpan, jadi pegawai menunggu sampai saran jadi (maksimal = batas waktu).
+- Pencarian artikel & pengelompokan judul memakai pencocokan kata kunci: sinonim (mis. "lemot" vs "lambat")
+  belum dikenali; cukup untuk KB kecil.
+- "Salah tim" diukur sebagai pemindahan grup setelah triase, bukan aksi "kembalikan" eksplisit.
+- Sebagian menu GLPI masih berbahasa Inggris (terjemahan `id_ID` bawaan GLPI 12 belum lengkap).
+- Notifikasi email pola insiden bergantung pada konfigurasi email GLPI.
+
+## Pengembangan
 
 ```
-setup.php            versi, syarat GLPI 12.0.x, registrasi hook
-hook.php             install/uninstall: tabel, config default, hak akses
-src/Config.php       baca/simpan konfigurasi, API key terenkripsi, mode demo
-src/Profile.php      hak akses plugin + tab di form Profil
-src/Roles.php        pemetaan 6 role HaloSIS ke profil GLPI
-src/ConfigMenu.php   menu Setup › AI HaloSIS
-src/Console/         perintah plugins:halosis:setup-roles
-src/Triage.php       saran triase (AI & demo) + keputusan Terima/Ubah/Tolak
-src/TriagePanel.php  panel "Saran AI" di form tiket
-src/Suggestion.php   model tabel saran;  src/Decision.php  model log keputusan
-src/Ai/Client.php    pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
-ajax/triase.php      aksi panel (JSON)
-public/js/triase.js  interaksi panel
-composer.json        SDK Anthropic (vendor/ tidak di-commit)
-src/Chatbot.php      jawaban chatbot, rating, buat laporan
-src/HelpdeskHome.php menu Helpdesk & pengalihan beranda ke halaman chat
-src/PatternDetector.php  tugas terjadwal deteksi pola insiden + banner
-src/Stats.php        angka dashboard;  src/Reassignment.php  pencatat pemindahan tim
-src/Controller/DashboardController.php  halaman /plugins/halosis/Dashboard
-src/Controller/ChatController.php  halaman penuh /plugins/halosis/Chat
-src/KnowledgeSearch.php  pencarian KB yang menghormati visibilitas GLPI
-src/Privacy.php      penyamaran data pribadi;  src/Chat.php  model percakapan
-ajax/chat.php        endpoint widget;  public/js/chat.js  widget chat
-front/config.form.php  halaman konfigurasi
-templates/           template Twig (@halosis/...)
-public/css, public/js  aset, disajikan di /plugins/halosis/css|js/...
-locales/id_ID.po     terjemahan; kompilasi: python3 tools/locales.py
+setup.php                 versi, syarat GLPI 12.0.x, registrasi hook, penanda versi aset
+hook.php                  install/uninstall: tabel, config default, hak akses, tugas terjadwal
+src/Config.php            konfigurasi, API key terenkripsi, mode demo
+src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php  6 role HaloSIS
+src/Console/              perintah plugins:halosis:setup-roles
+src/Ai/Client.php         pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
+src/Triage.php            saran triase (AI & demo) + keputusan;  src/TriagePanel.php  panel di form tiket
+src/Suggestion.php        model saran;  src/Decision.php  model keputusan
+src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  model percakapan
+src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/Privacy.php  penyamaran data
+src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
+src/PatternDetector.php   tugas terjadwal pola insiden + banner
+src/Stats.php             angka dashboard;  src/Reassignment.php  pencatat pemindahan tim
+src/Controller/           halaman /plugins/halosis/Chat dan /plugins/halosis/Dashboard
+src/ConfigMenu.php, src/DashboardMenu.php  entri menu
+ajax/triase.php, ajax/chat.php             endpoint JSON panel triase & chatbot
+front/config.form.php     halaman konfigurasi
+templates/                template Twig (@halosis/...)
+public/css, public/js     aset, disajikan di /plugins/halosis/css|js/...
+locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
+composer.json             SDK Anthropic (vendor/ tidak di-commit)
 ```
 
-Teks di kode memakai msgid bahasa Inggris (konvensi GLPI) dengan terjemahan `id_ID`.
-Setelah menambah teks UI, jalankan `python3 tools/locales.py`: skrip ini menampilkan string
-yang belum diterjemahkan lalu mengompilasi `.mo`.
+Teks di kode memakai msgid bahasa Inggris (konvensi GLPI) dengan terjemahan `id_ID`. Setelah menambah teks
+UI, jalankan `python3 tools/locales.py`.
 
-## Tabel
+### Tabel
 
 | Tabel | Isi |
 | --- | --- |
 | `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, model, status) |
-| `glpi_plugin_halosis_decisions` | Log keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
-| `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain setelah triase AI diterapkan (metrik "salah tim") |
-| `glpi_plugin_halosis_patterns` | Pola insiden terdeteksi: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
-| `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status open/resolved/ticket, rating, tiket |
+| `glpi_plugin_halosis_decisions` | Keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
+| `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain setelah triase AI diterapkan |
+| `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
+| `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status, rating, tiket |

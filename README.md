@@ -5,6 +5,10 @@ Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh Halo
 SLA per prioritas, 12 tiket (lengkap dengan balasan, catatan internal, solusi),
 5 artikel knowledge base, dan 1 "masalah" sebagai contoh pola insiden.
 
+Di atas GLPI terpasang **plugin HaloSIS** (modul AI human-in-the-loop: chatbot Tanya HaloSIS, saran triase,
+deteksi pola insiden, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo, dan **skenario
+demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
+
 ## Yang dibutuhkan
 - Docker Desktop (Mac/Windows) atau Docker Engine (Linux)
 - Python 3 (untuk skrip pengisi data)
