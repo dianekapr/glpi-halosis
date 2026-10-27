@@ -53,6 +53,21 @@ python3 -m venv .venv && .venv/bin/pip install requests
 | lina | Lina Marlina | Supervisor | Knowledge Manager |
 | glpi | — | Super-Admin | Administrator |
 
+**6. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
+
+Palet ada di `themes/halosis.scss` (di-mount ke folder tema kustom GLPI `/var/glpi/files/_themes`).
+Jadikan default untuk semua pengguna:
+```bash
+docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
+docker compose exec glpi php bin/console config:set language id_ID --allow-superuser
+docker compose exec glpi php bin/console config:set text_login '<p style="text-align:center">Selamat datang di <strong>HaloSIS</strong>, layanan TI BPS.<br>Masuk dengan akun dinas Anda.</p>' --allow-superuser
+```
+Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
+
+Catatan palet: GLPI memakai variabel `secondary` juga sebagai warna teks, jadi variabelnya diisi versi gelap
+`#4F7D72` agar terbaca; `#77B8A8` dipakai sebagai latar (tombol sekunder, `.bg-secondary`). Badge memakai
+accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variabel `--glpi-logo-*`.
+
 ## Peta HaloSIS → menu GLPI
 
 | Halaman HaloSIS | Di GLPI |

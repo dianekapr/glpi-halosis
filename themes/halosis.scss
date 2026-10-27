@@ -1,0 +1,101 @@
+/* theme-name: HaloSIS */
+
+// Palet HaloSIS untuk GLPI 12.
+// File ini dibaca dari GLPI_THEMES_DIR (/var/glpi/files/_themes), bukan dari kode inti GLPI.
+// Kunci palet = nama file ("halosis"), nama tampilan = komentar theme-name di atas.
+//
+// Warna dasar:
+//   primary   #155E63  sidebar, header, tombol utama, tautan
+//   secondary #77B8A8  tombol sekunder, latar lembut
+//   accent    #FF965A  highlight & badge (teks di atasnya #203332, bukan putih)
+//   bg        #F5F8F6  latar halaman
+//   surface   #FFFFFF  kartu, form
+//   text      #203332  teks utama
+
+$is-dark: false;
+
+:root[data-glpi-theme="halosis"] {
+    // Primary: tombol utama & elemen aktif (teks putih, kontras 7,4:1)
+    --tblr-primary-rgb: 21, 94, 99;
+    --tblr-primary-fg: #fff;
+    --tblr-link-color-rgb: 21, 94, 99;
+
+    // GLPI/Tabler memakai "secondary" sebagai warna TEKS sekunder (link header, deskripsi,
+    // .text-secondary). #77B8A8 terlalu pucat untuk teks di atas putih (2:1), jadi variabel
+    // secondary diisi versi gelapnya (hue sama, kontras 4,7:1). #77B8A8 asli dipakai untuk
+    // latar: tombol sekunder & .bg-secondary (lihat aturan di bawah).
+    --tblr-secondary: #4f7d72;
+    --tblr-secondary-rgb: 79, 125, 114;
+    --tblr-secondary-fg: #fff;
+    --tblr-muted: #5a6e6c;
+
+    // Latar, permukaan, teks
+    --tblr-body-bg: #f5f8f6;
+    --tblr-bg-surface: #fff;
+    --tblr-body-color: #203332;
+    --tblr-body-color-rgb: 32, 51, 50;
+    --tblr-navbar-color: #155e63;
+
+    // Sidebar & header pakai primary
+    --glpi-mainmenu-bg: #155e63;
+    --glpi-mainmenu-fg: #fff;
+    --glpi-mainmenu-fg-muted: #ffffffb3;
+    // Latar item aktif di menu flyout (menu flyout berlatar putih, teks primary)
+    --glpi-mainmenu-active-bg: #dcede8;
+
+    // Badge & highlight pakai accent, teks gelap demi kontras (6,2:1)
+    --tblr-badge-bg: #ff965a;
+    --tblr-badge-color: #203332;
+    --glpi-badge-bg: #ff965a;
+    --glpi-badge-fg: #203332;
+
+    // Judul bagian form
+    --glpi-form-header-fg: #155e63;
+
+    // Antarmuka Helpdesk (Self-Service)
+    --glpi-helpdesk-header: #dcede8;
+    --glpi-helpdesk-tiles-section-bg: #f5f8f6;
+    --glpi-illustrations-primary: #ff965a;
+    --glpi-illustrations-gradient-1: hsl(184deg, 40%, 92%);
+    --glpi-illustrations-gradient-2: hsl(165deg, 30%, 72%);
+    --glpi-illustrations-gradient-3: hsl(184deg, 65%, 30%);
+
+    // Contoh warna di pemilih palet (Preferensi pengguna)
+    --glpi-palette-color-1: #155e63;
+    --glpi-palette-color-2: #77b8a8;
+    --glpi-palette-color-3: #ff965a;
+    --glpi-palette-color-4: #f5f8f6;
+
+    // Logo HaloSIS (SVG inline, desain sama dengan prototipe web: kotak "H." + tulisan HaloSIS).
+    // light = di atas sidebar gelap, dark = di atas latar terang (halaman login).
+    --glpi-logo-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='55' viewBox='0 0 100 55'%3E%3Crect x='0' y='15.5' width='24' height='24' rx='7' fill='%23fff'/%3E%3Ctext x='12' y='32.5' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='14' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='29' y='33' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='%23fff'%3EHaloSIS%3C/text%3E%3C/svg%3E");
+    --glpi-logo-light-reduced: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='11' fill='%23fff'/%3E%3Ctext x='20' y='27' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='20' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3C/svg%3E");
+    --glpi-logo-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='55' viewBox='0 0 100 55'%3E%3Crect x='0' y='15.5' width='24' height='24' rx='7' fill='%23155E63'/%3E%3Ctext x='12' y='32.5' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='14' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='29' y='33' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='%23203332'%3EHaloSIS%3C/text%3E%3C/svg%3E");
+    --glpi-logo-dark-reduced: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='11' fill='%23155E63'/%3E%3Ctext x='20' y='27' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='20' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3C/svg%3E");
+    --glpi-logo-dark-login: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='110' viewBox='0 0 200 110'%3E%3Crect x='6' y='31' width='48' height='48' rx='14' fill='%23155E63'/%3E%3Ctext x='30' y='65' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='28' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='64' y='66' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='30' font-weight='700' fill='%23203332'%3EHaloSIS%3C/text%3E%3C/svg%3E");
+    --glpi-logo-light-login: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='110' viewBox='0 0 200 110'%3E%3Crect x='6' y='31' width='48' height='48' rx='14' fill='%23fff'/%3E%3Ctext x='30' y='65' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='28' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='64' y='66' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='30' font-weight='700' fill='%23fff'%3EHaloSIS%3C/text%3E%3C/svg%3E");
+
+    // Secondary #77B8A8 sebagai latar (teks gelap demi kontras)
+    .btn-secondary {
+        --tblr-btn-bg: #77b8a8;
+        --tblr-btn-border-color: #77b8a8;
+        --tblr-btn-color: #203332;
+        --tblr-btn-hover-bg: #62a796;
+        --tblr-btn-hover-border-color: #62a796;
+        --tblr-btn-hover-color: #203332;
+        --tblr-btn-active-bg: #62a796;
+        --tblr-btn-active-border-color: #62a796;
+        --tblr-btn-active-color: #203332;
+    }
+
+    .bg-secondary {
+        background-color: #77b8a8 !important;
+        color: #203332 !important;
+    }
+
+    // Garis penanda item aktif di menu flyout: bawaannya primary, diganti accent sebagai highlight.
+    .sidebar .dropdown-menu .dropdown-item.active {
+        // !important karena selektor bawaan GLPI bersarang dalam (spesifisitas lebih tinggi)
+        border-left-color: #ff965a !important;
+    }
+}
