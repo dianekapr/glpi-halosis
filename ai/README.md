@@ -55,3 +55,22 @@ laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
 - **20 masalah paling sering** = topik hasil TF-IDF judul+deskripsi → K-Means (40 kelompok, seed 42),
   topik kembar digabung, kelompok campuran (tim terbanyak < 25%) tidak diperingkat. Judul ditulis bebas,
   jadi judul identik hanya dicantumkan sebagai pembanding.
+
+## AI-3 — Model saran triase (routing ke tim)
+
+```bash
+.venv/bin/python ai/scripts/train_triage.py     # → ai/models/triage.joblib + reports/triase.md (±1 menit)
+.venv/bin/python -m pytest -q ai/tests          # tes dengan data rekaan
+```
+
+- **Input** hanya info saat tiket dibuat: judul + deskripsi + jenis (INC/REQ), disamarkan ulang lewat
+  `privacy.mask_text` (juga saat dipakai layanan). Kolom routing/reassignment/SLA/resolusi tidak dipakai.
+- **Target** `assignment_group_name` akhir; tim < 30 tiket di data latih → "Lainnya".
+- **Split waktu**: latih Jan–Jun, uji Jul–Ags. Pengaturan (C, bobot kelas) dipilih dengan latih Jan–Mei /
+  validasi Juni, jadi data uji tidak ikut memilih.
+- **Model**: TF-IDF kata (1–2 gram) + karakter (3–5 gram) → Logistic Regression, dikalibrasi sigmoid 5-fold.
+  "Keyakinan" = probabilitas tim teratas; < 70% → "Perlu penilaian manual".
+- `halosis_ai.triage_model.TriageModel.predict(judul, deskripsi, jenis)` → `{tim, keyakinan,
+  perlu_penilaian_manual, top3, tiket_mirip, versi_model}`; `tiket_mirip` diambil dari indeks TF-IDF data
+  latih (no. tiket + judul tersamar). Fungsi ini yang dipakai layanan AI-5.
+- File model ±40 MB di `ai/models/` (di-ignore git; berisi judul tiket tersamar, jangan dibagikan).
