@@ -93,6 +93,12 @@ $is-dark: false;
         color: #203332 !important;
     }
 
+    // Pita ikon pada judul bagian form (macro largeTitle memakai .bg-blue bawaan Tabler)
+    .ribbon.bg-blue {
+        background-color: #155e63 !important;
+        border-color: #155e63 !important;
+    }
+
     // Garis penanda item aktif di menu flyout: bawaannya primary, diganti accent sebagai highlight.
     .sidebar .dropdown-menu .dropdown-item.active {
         // !important karena selektor bawaan GLPI bersarang dalam (spesifisitas lebih tinggi)

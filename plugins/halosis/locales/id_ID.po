@@ -1,0 +1,114 @@
+# Terjemahan Bahasa Indonesia untuk plugin HaloSIS.
+# Kompilasi ke .mo dengan: python3 tools/locales.py
+msgid ""
+msgstr ""
+"Project-Id-Version: HaloSIS\n"
+"PO-Revision-Date: 2026-10-27 00:00+0700\n"
+"Last-Translator: Tim HaloSIS BPS\n"
+"Language-Team: Indonesian\n"
+"Language: id_ID\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Konfigurasi & hak akses
+msgid "HaloSIS configuration"
+msgstr "Konfigurasi HaloSIS"
+
+msgid "HaloSIS configuration saved."
+msgstr "Konfigurasi HaloSIS tersimpan."
+
+msgid "HaloSIS AI module"
+msgstr "Modul AI HaloSIS"
+
+msgid "AI triage suggestions"
+msgstr "Saran triase AI"
+
+msgid "Decide (accept / modify / reject)"
+msgstr "Memutuskan (terima / ubah / tolak)"
+
+msgid "AI performance dashboard"
+msgstr "Dashboard kinerja AI"
+
+msgid "Anthropic (Claude)"
+msgstr "Anthropic (Claude)"
+
+msgid "OpenAI-compatible API"
+msgstr "API kompatibel OpenAI"
+
+msgid "AI triage suggestions on new tickets"
+msgstr "Saran triase AI untuk tiket baru"
+
+msgid "Self-service chatbot for employees"
+msgstr "Chatbot self-service untuk pegawai"
+
+msgid "Incident pattern detection"
+msgstr "Deteksi pola insiden"
+
+msgid "API base URL must start with http:// or https://."
+msgstr "URL dasar API harus diawali http:// atau https://."
+
+# Halaman konfigurasi
+msgid "Demo mode is active"
+msgstr "Mode demo aktif"
+
+msgid "No API key is stored. All AI features use deterministic sample answers so they can be demonstrated without internet access."
+msgstr "Belum ada API key tersimpan. Semua fitur AI memakai jawaban contoh yang deterministik sehingga tetap bisa didemokan tanpa internet."
+
+msgid "Connected to AI provider"
+msgstr "Terhubung ke penyedia AI"
+
+msgid "AI calls are made from the GLPI server. The API key is never sent to the browser."
+msgstr "Pemanggilan AI dilakukan dari server GLPI. API key tidak pernah dikirim ke browser."
+
+msgid "AI provider"
+msgstr "Penyedia AI"
+
+msgid "Provider"
+msgstr "Penyedia"
+
+msgid "API key"
+msgstr "API key"
+
+msgid "An API key is stored (encrypted). Leave empty to keep it."
+msgstr "API key sudah tersimpan (terenkripsi). Biarkan kosong untuk mempertahankannya."
+
+msgid "Leave empty to use demo mode."
+msgstr "Biarkan kosong untuk memakai mode demo."
+
+msgid "Delete stored API key"
+msgstr "Hapus API key tersimpan"
+
+msgid "Return to demo mode."
+msgstr "Kembali ke mode demo."
+
+msgid "Model"
+msgstr "Model"
+
+msgid "Model ID at the provider, e.g. claude-opus-5-5."
+msgstr "ID model di penyedia, mis. claude-opus-5-5."
+
+msgid "API base URL"
+msgstr "URL dasar API"
+
+msgid "Optional. Fill in for an OpenAI-compatible gateway or proxy; leave empty for the provider default."
+msgstr "Opsional. Isi untuk gateway/proxy kompatibel OpenAI; kosongkan untuk alamat bawaan penyedia."
+
+msgid "Timeout (seconds)"
+msgstr "Batas waktu (detik)"
+
+msgid "If the AI does not answer in time, tickets are still saved normally without a suggestion."
+msgstr "Jika AI tidak menjawab tepat waktu, tiket tetap tersimpan normal tanpa saran."
+
+msgid "Triage"
+msgstr "Triase"
+
+msgid "Confidence threshold"
+msgstr "Ambang keyakinan"
+
+msgid "Suggestions below this confidence are flagged “Needs manual review”."
+msgstr "Saran dengan keyakinan di bawah ambang ini diberi tanda “Perlu penilaian manual”."
+
+msgid "AI features"
+msgstr "Fitur AI"

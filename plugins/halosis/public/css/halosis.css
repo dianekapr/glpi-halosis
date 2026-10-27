@@ -1,0 +1,23 @@
+/**
+ * Gaya bersama komponen plugin HaloSIS (panel Saran AI, widget chat, dashboard).
+ * Warna mengikuti palet HaloSIS; tetap terbaca bila pengguna memilih palet GLPI lain.
+ */
+:root {
+    --halosis-primary: #155e63;
+    --halosis-secondary: #77b8a8;
+    --halosis-accent: #ff965a;
+    --halosis-text: #203332;
+    --halosis-soft: #dcede8;
+}
+
+.halosis-config .form-range::-webkit-slider-thumb {
+    background: var(--halosis-primary);
+}
+
+.halosis-config .form-range::-moz-range-thumb {
+    background: var(--halosis-primary);
+}
+
+.halosis-config [data-halosis-threshold-output] {
+    min-width: 4.5rem;
+}
