@@ -74,3 +74,17 @@ laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
   perlu_penilaian_manual, top3, tiket_mirip, versi_model}`; `tiket_mirip` diambil dari indeks TF-IDF data
   latih (no. tiket + judul tersamar). Fungsi ini yang dipakai layanan AI-5.
 - File model ±40 MB di `ai/models/` (di-ignore git; berisi judul tiket tersamar, jangan dibagikan).
+
+## AI-4 — Indeks pencarian (RAG)
+
+```bash
+docker compose up -d                            # agar artikel KB GLPI ikut terindeks
+.venv/bin/python ai/scripts/build_index.py      # → ai/index/chunks.parquet + vectors.npy
+```
+
+- Sumber: artikel KB GLPI yang terbit (punya target visibilitas) + `qa_pairs` (masalah + solusi tiket).
+  Semua teks disamarkan ulang dan dipindai pola data pribadi sebelum di-embed.
+- Embedding lokal `intfloat/multilingual-e5-base` (gratis, offline setelah unduhan pertama ±1 GB).
+- `halosis_ai.search.cari(query, k)` → `[{potongan, skor, sumber (KB-<id> / no. tiket), jenis_sumber, judul}]`.
+- Skor kosinus E5 cenderung tinggi (≈0,8–0,9 untuk teks terkait), jadi ambang "belum menemukan jawaban"
+  di AI-5 perlu sekitar 0,85, bukan 0,5.

@@ -5,3 +5,5 @@ pyarrow>=20
 pytest>=8
 scikit-learn>=1.6
 joblib>=1.4
+sentence-transformers>=3.0
+numpy>=2.0
