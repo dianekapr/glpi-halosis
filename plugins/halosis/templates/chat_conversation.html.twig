@@ -1,0 +1,61 @@
+{#
+ # Isi percakapan chatbot, dipakai bersama oleh halaman penuh (chat_page) dan widget melayang (chat_widget).
+ # Gaya mengikuti prototipe halosis-web (ChatRoom). Pesan, aksi, dan kartu laporan dibuat oleh
+ # public/js/chat.js dengan textContent (tanpa HTML dari server/model).
+ # Variabel: user_name, max_length, suggestions (opsional), compact (widget)
+ #}
+<div class="hc-thread" data-chat-messages aria-live="polite">
+    <div class="hc-row hc-row-ai" data-chat-greeting>
+        <span class="hc-avatar" aria-hidden="true"><i class="ti ti-sparkles"></i></span>
+        <div class="hc-col">
+            <div class="hc-bubble hc-bubble-ai">{{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }} {{ __('Describe your IT problem and I will look for the answer in the Help Center.', 'halosis') }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="hc-composer">
+    {% if suggestions is defined and suggestions is not empty %}
+        <div class="hc-suggest" aria-label="{{ __('Quick questions', 'halosis') }}">
+            <span class="hc-suggest-label">{{ __('Try asking:', 'halosis') }}</span>
+            {% for suggestion in suggestions %}
+                <button type="button" class="hc-chip" data-chat-suggest="{{ suggestion }}">{{ suggestion }}</button>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <form class="hc-form" data-chat-form>
+        <textarea rows="{{ compact|default(false) ? 1 : 2 }}" maxlength="{{ max_length }}" placeholder="{{ __('Describe your problem…', 'halosis') }}"
+                  aria-label="{{ __('Your question', 'halosis') }}" data-chat-text></textarea>
+        <button type="submit" class="hc-send" aria-label="{{ __('Send', 'halosis') }}">
+            <i class="ti ti-send" aria-hidden="true"></i>
+        </button>
+    </form>
+    <p class="hc-note">
+        <i class="ti ti-shield-lock" aria-hidden="true"></i>
+        {{ __('The assistant only answers from official BPS Help Center articles. Do not send passwords or personal data.', 'halosis') }}
+    </p>
+</div>
+
+{# Teks untuk JS #}
+<template data-chat-i18n>{{ {
+    label_ai: __('Answered by AI', 'halosis'),
+    label_kb: __('From the Help Center', 'halosis'),
+    typing: __('The assistant is typing', 'halosis'),
+    masked: __('Personal data in your message was hidden before processing.', 'halosis'),
+    ended: __('This conversation has ended. Start a new one to ask again.', 'halosis'),
+    error: __('The assistant is not available right now. You can still create a report.', 'halosis'),
+    helpful: __('Did this answer help?', 'halosis'),
+    resolved: __('Problem solved', 'halosis'),
+    not_resolved: __('Not solved yet', 'halosis'),
+    rate: __('How helpful was the assistant?', 'halosis'),
+    offer: __('Problem not solved? I will create a report for the IT team. This conversation summary is attached, so you do not need to explain again.', 'halosis'),
+    offer_notfound: __('I could not find the answer yet. Shall I create a report for the IT team? This conversation summary will be attached.', 'halosis'),
+    yes_report: __('Yes, create report', 'halosis'),
+    no_thanks: __('No, thank you', 'halosis'),
+    report_title: __('Report title', 'halosis'),
+    summary: __('Summary to be attached', 'halosis'),
+    send_report: __('Send report', 'halosis'),
+    cancel: __('Cancel', 'halosis'),
+    open_ticket: __('Open report', 'halosis'),
+    you: __('Employee', 'halosis'),
+    assistant: __('Assistant', 'halosis'),
+}|json_encode }}</template>

@@ -3,7 +3,9 @@
 Pakai:  pip install requests
         python seed_halosis.py                      # default http://localhost:8080
         python seed_halosis.py http://localhost:8080
-Syarat: API sudah aktif (lihat README langkah 3). Jalankan SEKALI di database kosong.
+Syarat: API sudah aktif dan role HaloSIS sudah diterapkan (README langkah 3-4):
+        php bin/console plugins:halosis:setup-roles
+        Jalankan SEKALI di database kosong.
 """
 import json, sys
 import requests
@@ -16,7 +18,14 @@ if r.status_code != 200:
     raise SystemExit(f'Gagal login ke API ({r.status_code}): {r.text[:200]}\nCek: API aktif & login lewat kredensial diizinkan.')
 tok = r.json()['session_token']
 s.headers.update({'Session-Token': tok, 'Content-Type': 'application/json'})
-s.post(B + '/changeActiveProfile', json={'profiles_id': 4})
+
+# Profil GLPI per role HaloSIS (nama diatur oleh perintah plugins:halosis:setup-roles)
+P = {p['name']: p['id'] for p in s.get(B + '/Profile', params={'range': '0-100'}).json()}
+ROLES = ['Pegawai', 'Operator', 'Tim Teknis', 'Manajemen', 'Knowledge Manager', 'Administrator', 'Super-Admin']
+if missing := [n for n in ROLES if n not in P]:
+    raise SystemExit(f'Profil belum ada: {", ".join(missing)}.\n'
+                     'Jalankan dulu: docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser')
+s.post(B + '/changeActiveProfile', json={'profiles_id': P['Super-Admin']})
 
 def add(it, data):
     r = s.post(f'{B}/{it}', data=json.dumps({'input': data}))
@@ -45,15 +54,24 @@ for parent, kids in {'Akun & Akses': ['SSO / Login', 'TTE', 'Hak akses folder'],
 # Pengguna & role (profile)
 U = {}
 USERS = [
-    ('budi', 'Budi', 'Santoso', 1, None), ('siti', 'Siti', 'Rahma', 1, None), ('maya', 'Maya', 'Putri', 1, None),
-    ('rina', 'Rina', 'Wulandari', 5, 'Operator Service Desk'), ('andi', 'Andi', 'Pratama', 6, 'Tim Aplikasi Statistik'),
-    ('yoga', 'Yoga', 'Saputra', 6, 'Tim Aplikasi Statistik'), ('fajar', 'Fajar', 'Nugroho', 6, 'Tim Identitas & Akses'),
-    ('dedi', 'Dedi', 'Kurniawan', 6, 'Tim Jaringan'), ('sri', 'Sri', 'Handayani', 2, None), ('lina', 'Lina', 'Marlina', 7, None),
+    ('budi', 'Budi', 'Santoso', 'Pegawai', None), ('siti', 'Siti', 'Rahma', 'Pegawai', None), ('maya', 'Maya', 'Putri', 'Pegawai', None),
+    ('rina', 'Rina', 'Wulandari', 'Operator', 'Operator Service Desk'), ('andi', 'Andi', 'Pratama', 'Tim Teknis', 'Tim Aplikasi Statistik'),
+    ('yoga', 'Yoga', 'Saputra', 'Tim Teknis', 'Tim Aplikasi Statistik'), ('fajar', 'Fajar', 'Nugroho', 'Tim Teknis', 'Tim Identitas & Akses'),
+    ('dedi', 'Dedi', 'Kurniawan', 'Tim Teknis', 'Tim Jaringan'), ('sri', 'Sri', 'Handayani', 'Manajemen', None),
+    ('lina', 'Lina', 'Marlina', 'Knowledge Manager', None),
 ]
-for login, fn, ln, prof, grp in USERS:
+for login, fn, ln, role, grp in USERS:
+    prof = P[role]
     uid = add('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@bps.go.id'}})
     U[login] = uid
     add('Profile_User', {'users_id': uid, 'profiles_id': prof, 'entities_id': 0, 'is_recursive': 1})
+    # GLPI otomatis menambahkan profil default (Pegawai) ke pengguna baru; satu pengguna = satu role HaloSIS
+    kept = False
+    for pu in s.get(f'{B}/User/{uid}/Profile_User').json():
+        if pu['profiles_id'] == prof and not kept:
+            kept = True
+        else:
+            s.delete(f'{B}/Profile_User/{pu["id"]}')
     if grp: add('Group_User', {'users_id': uid, 'groups_id': G[grp]})
 
 # SLA per prioritas (time to resolve)

@@ -1,0 +1,44 @@
+{#
+ # Halaman penuh "Tanya HaloSIS": beranda Pegawai (resolution-first), di dalam layout Helpdesk GLPI.
+ # Tampilan mengikuti prototipe halosis-web (/chat). Isi percakapan dipakai bersama dengan widget.
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% block content %}
+<div class="hc hc-page" data-halosis-chat="page" data-ajax-url="{{ ajax_url }}" data-report-url="{{ report_url }}">
+    <header class="hc-head">
+        <div class="hc-head-text">
+            <h1>{{ __('Ask HaloSIS', 'halosis') }}</h1>
+            <p>{{ __('Tell us about your IT problem. The assistant looks for solutions in official BPS guides.', 'halosis') }}</p>
+        </div>
+        <div class="hc-head-actions">
+            {% if available %}
+                <button type="button" class="hc-btn hc-btn-icon" data-chat-new title="{{ __('New conversation', 'halosis') }}" aria-label="{{ __('New conversation', 'halosis') }}">
+                    <i class="ti ti-refresh" aria-hidden="true"></i>
+                </button>
+            {% endif %}
+            <a class="hc-btn" href="{{ report_url }}">
+                <i class="ti ti-pencil" aria-hidden="true"></i>
+                <span>{{ __('Create a report directly', 'halosis') }}</span>
+            </a>
+        </div>
+    </header>
+
+    {% if available %}
+        <div class="hc-chat">
+            {% include '@halosis/chat_conversation.html.twig' with {suggestions: suggestions} %}
+        </div>
+    {% else %}
+        {# Fitur chat dimatikan admin: arahkan ke laporan & FAQ #}
+        <div class="hc-thread hc-unavailable">
+            <span class="hc-unavailable-icon" aria-hidden="true"><i class="ti ti-message-off"></i></span>
+            <h2>{{ __('The assistant is not available right now', 'halosis') }}</h2>
+            <p>{{ __('Report your problem and an officer will help you.', 'halosis') }}</p>
+            <a class="hc-btn hc-btn-primary hc-btn-lg" href="{{ report_url }}">
+                <i class="ti ti-file-plus" aria-hidden="true"></i> {{ __('Create report', 'halosis') }}
+            </a>
+            <a class="hc-link" href="{{ faq_url }}">{{ __('Help center (FAQ)', 'halosis') }}</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{# Banner beranda petugas: pola insiden terbuka yang terdeteksi HaloSIS (hook display_central) #}
+<div class="halosis-pattern-banner" role="status">
+    <span class="halosis-pattern-icon" aria-hidden="true"><i class="ti ti-alert-triangle"></i></span>
+    <div class="flex-grow-1">
+        <strong>{{ __('Incident pattern detected', 'halosis') }}</strong>
+        <ul>
+            {% for pattern in patterns %}
+                <li>
+                    <a href="{{ pattern.url }}">{{ pattern.label }}</a>
+                    · {{ __('%d linked tickets', 'halosis')|format(pattern.ticket_count) }}
+                    · {{ pattern.date|formatted_datetime }}
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="small">{{ __('Open the problem to decide the follow-up: investigate, assign a team, or close if unrelated.', 'halosis') }}</div>
+    </div>
+</div>

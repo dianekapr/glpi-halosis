@@ -2,7 +2,8 @@
 # Jalankan: docker compose up -d   →   buka http://localhost:8080
 services:
   glpi:
-    image: "glpi/glpi:latest"
+    # Dikunci ke 12.0.0: plugin halosis ditulis untuk API/hook versi ini
+    image: "glpi/glpi:12.0.0"
     restart: unless-stopped
     env_file: .env
     depends_on:

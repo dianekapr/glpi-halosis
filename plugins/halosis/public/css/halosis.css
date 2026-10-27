@@ -1,0 +1,1277 @@
+/**
+ * Gaya bersama komponen plugin HaloSIS (panel Saran AI, widget chat, dashboard).
+ * Warna mengikuti palet HaloSIS; tetap terbaca bila pengguna memilih palet GLPI lain.
+ */
+:root {
+    --halosis-primary: #155e63;
+    --halosis-secondary: #77b8a8;
+    --halosis-accent: #ff965a;
+    --halosis-text: #203332;
+    --halosis-soft: #dcede8;
+    --halosis-primary-light: #1f7a80;
+    --halosis-secondary-light: #e3f1ed;
+    --halosis-accent-light: #ffede2;
+    --halosis-bg: #f5f8f6;
+    --halosis-border: #dce6e2;
+    --halosis-soft-2: #ebf2ef;
+    --halosis-muted: #5b706d;
+}
+
+.halosis-config .form-range::-webkit-slider-thumb {
+    background: var(--halosis-primary);
+}
+
+.halosis-config .form-range::-moz-range-thumb {
+    background: var(--halosis-primary);
+}
+
+.halosis-config [data-halosis-threshold-output] {
+    min-width: 4.5rem;
+}
+
+/* Panel Saran AI di form tiket */
+.halosis-triase .accordion-button .ti-sparkles {
+    color: var(--halosis-primary);
+}
+
+/* Panel isian tiket sempit: badge status boleh turun ke baris berikutnya, tidak terpotong */
+.halosis-triase .accordion-button {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+}
+
+.halosis-triase .accordion-button .item-title,
+.halosis-triase .accordion-button .badge {
+    white-space: nowrap;
+    overflow: visible;
+    max-width: none;
+}
+
+.halosis-triase .halosis-meter .progress {
+    height: 0.5rem;
+    overflow: visible;
+}
+
+.halosis-triase .halosis-meter-ok {
+    background-color: var(--halosis-primary);
+}
+
+.halosis-triase .halosis-meter-low {
+    background-color: var(--halosis-accent);
+}
+
+/* Penanda ambang keyakinan di atas meter */
+.halosis-triase .halosis-meter-threshold {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: var(--halosis-text);
+    opacity: 0.6;
+}
+
+/* Tanda "Perlu penilaian manual": accent dengan teks gelap demi kontras */
+.halosis-triase .halosis-review {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+    font-size: 0.85rem;
+}
+
+.halosis-triase .halosis-values {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.15rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.halosis-triase .halosis-values dt {
+    font-weight: 500;
+    color: var(--tblr-secondary);
+}
+
+.halosis-triase .halosis-values dd {
+    margin: 0;
+}
+
+.halosis-triase .halosis-explanation {
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--halosis-secondary);
+    background: var(--halosis-soft);
+    color: var(--halosis-text);
+}
+
+.halosis-triase .halosis-status-pending {
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+}
+
+.halosis-triase .halosis-status-accepted,
+.halosis-triase .halosis-status-modified {
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.halosis-triase .halosis-status-rejected {
+    background: var(--tblr-danger);
+    color: #fff;
+}
+
+.halosis-triase .halosis-form {
+    padding: 0.6rem;
+    border: 1px solid var(--tblr-border-color);
+    border-radius: 4px;
+}
+
+/* =====================================================================================
+ * Chatbot self-service "Tanya HaloSIS" (antarmuka Helpdesk)
+ * Mengikuti prototipe halosis-web (ChatRoom): halaman penuh & widget melayang memakai komponen yang sama.
+ * ===================================================================================== */
+.hc {
+    color: var(--halosis-text);
+    font-size: 0.9rem;
+}
+
+/* ---- Tombol ---- */
+.hc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--halosis-text);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.hc-btn:hover,
+.hc-btn:focus-visible {
+    background: var(--halosis-soft-2);
+    color: var(--halosis-text);
+}
+
+.hc-btn-primary {
+    border-color: var(--halosis-primary);
+    background: var(--halosis-primary);
+    color: #fff;
+    box-shadow: 0 1px 2px rgb(21 94 99 / 20%);
+}
+
+.hc-btn-primary:hover,
+.hc-btn-primary:focus-visible {
+    border-color: var(--halosis-primary-light);
+    background: var(--halosis-primary-light);
+    color: #fff;
+}
+
+.hc-btn-sm {
+    padding: 0.4rem 0.75rem;
+    border-radius: 9px;
+    font-size: 0.78rem;
+}
+
+.hc-btn-lg {
+    padding: 0.8rem 1.4rem;
+    font-size: 1rem;
+}
+
+.hc-btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.15rem;
+}
+
+.hc-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.hc a.hc-link {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+/* ---- Halaman penuh ---- */
+.hc-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem 0 1rem;
+    height: calc(100dvh - var(--glpi-topbar-height, 79px) - 1rem);
+    min-height: 480px;
+}
+
+.hc-head {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    animation: hc-fade-up 0.4s ease both;
+}
+
+.hc-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.hc-head h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--halosis-text);
+}
+
+.hc-head p {
+    margin: 0.4rem 0 0;
+    color: var(--halosis-muted);
+    font-size: 0.9rem;
+}
+
+.hc-head-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.hc-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ---- Utas percakapan ---- */
+.hc-thread {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 18px;
+    background: #fff;
+    scroll-behavior: smooth;
+}
+
+.hc-row {
+    display: flex;
+    gap: 0.75rem;
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-row-user {
+    justify-content: flex-end;
+}
+
+.hc-row-system {
+    justify-content: center;
+}
+
+.hc-avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--halosis-secondary-light);
+    color: var(--halosis-primary);
+    font-size: 1rem;
+}
+
+.hc-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 85%;
+    min-width: 0;
+}
+
+.hc-bubble {
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.hc-bubble p {
+    margin: 0;
+}
+
+.hc-bubble p + p,
+.hc-bubble p + .hc-steps,
+.hc-bubble .hc-steps + p {
+    margin-top: 0.5rem;
+}
+
+.hc-bubble-user {
+    max-width: 80%;
+    border-bottom-right-radius: 6px;
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.hc-bubble-ai {
+    border-top-left-radius: 6px;
+    border-left: 3px solid var(--halosis-secondary);
+    background: var(--halosis-bg);
+}
+
+/* Jawaban "belum menemukan": garis accent */
+.hc-bubble-notfound {
+    border-left-color: var(--halosis-accent);
+}
+
+.hc-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--halosis-primary);
+}
+
+/* Langkah bernomor */
+.hc-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hc-steps li {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.hc-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-top: 0.1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+/* Chip sumber artikel */
+.hc-sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.hc a.hc-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--halosis-primary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s;
+}
+
+.hc a.hc-source:hover {
+    border-color: var(--halosis-secondary);
+}
+
+.hc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    background: var(--halosis-soft-2);
+    color: var(--halosis-muted);
+    font-size: 0.76rem;
+    text-align: center;
+}
+
+/* Indikator mengetik */
+.hc-typing {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.9rem 1rem;
+}
+
+.hc-typing span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--halosis-secondary);
+    animation: hc-bounce 1s infinite;
+}
+
+.hc-typing span:nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.hc-typing span:nth-child(3) {
+    animation-delay: 0.24s;
+}
+
+/* ---- Aksi di bawah jawaban ---- */
+.hc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-actions-q {
+    font-size: 0.78rem;
+    color: var(--halosis-muted);
+}
+
+.hc-actions-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.hc-stars {
+    display: flex;
+    gap: 0.15rem;
+}
+
+.hc-star {
+    border: 0;
+    padding: 0.1rem;
+    background: transparent;
+    color: #c9d6d2;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.1s, transform 0.1s;
+}
+
+.hc-star:hover,
+.hc-star.active {
+    color: var(--halosis-accent);
+}
+
+.hc-star:hover {
+    transform: scale(1.1);
+}
+
+/* Kartu tawaran laporan: garis putus-putus accent */
+.hc-offer {
+    padding: 1rem;
+    border: 2px dashed color-mix(in srgb, var(--halosis-accent), transparent 40%);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--halosis-accent-light), transparent 40%);
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-offer > p {
+    margin: 0 0 0.75rem;
+}
+
+.hc-report {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hc-field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.hc-input {
+    width: 100%;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--halosis-text);
+}
+
+.hc-input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--halosis-primary), transparent 40%);
+}
+
+.hc-summary-wrap summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--halosis-muted);
+}
+
+.hc-summary {
+    max-height: 150px;
+    overflow-y: auto;
+    margin: 0.4rem 0 0;
+    padding: 0.5rem 0.75rem 0.5rem 1.4rem;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.78rem;
+}
+
+.hc-success {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 1rem;
+    border: 1px solid var(--halosis-secondary);
+    border-radius: 18px;
+    background: var(--halosis-secondary-light);
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-success p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.hc-success .ti-circle-check {
+    color: var(--halosis-primary);
+}
+
+/* ---- Kotak input ---- */
+.hc-composer {
+    padding: 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(32 51 50 / 6%);
+}
+
+.hc-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.hc-suggest-label {
+    font-size: 0.75rem;
+    color: var(--halosis-muted);
+}
+
+.hc-chip {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--halosis-muted);
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.hc-chip:hover,
+.hc-chip:focus-visible {
+    border-color: var(--halosis-secondary);
+    color: var(--halosis-primary);
+}
+
+.hc-chip:disabled {
+    opacity: 0.5;
+}
+
+/* Saran pertanyaan disembunyikan setelah percakapan dimulai, memberi ruang untuk pesan */
+.hc-started .hc-suggest {
+    display: none;
+}
+
+.hc-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.hc-form textarea {
+    flex: 1;
+    resize: none;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--halosis-text);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.hc-form textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--halosis-primary), transparent 40%);
+}
+
+.hc-send {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--halosis-primary);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.hc-send:hover {
+    background: var(--halosis-primary-light);
+}
+
+.hc-send:disabled,
+.hc-form textarea:disabled {
+    opacity: 0.5;
+}
+
+.hc-note {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.74rem;
+    color: var(--halosis-muted);
+}
+
+/* ---- Asisten tidak tersedia ---- */
+.hc-unavailable {
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.hc-unavailable h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.hc-unavailable p {
+    margin: 0;
+    color: var(--halosis-muted);
+}
+
+.hc-unavailable-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-accent-dark, #b4521a);
+    font-size: 2rem;
+}
+
+/* ---- Widget melayang (halaman Helpdesk lain) ---- */
+.hc-floating {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1060;
+}
+
+.hc-launcher {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.15rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--halosis-primary);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgb(21 94 99 / 35%);
+    cursor: pointer;
+}
+
+.hc-launcher .ti {
+    font-size: 1.25rem;
+}
+
+.hc-launcher:hover {
+    background: var(--halosis-primary-light);
+}
+
+.hc-panel {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    height: min(640px, calc(100dvh - 40px));
+    overflow: hidden;
+    border: 1px solid var(--halosis-border);
+    border-radius: 20px;
+    background: var(--halosis-bg);
+    box-shadow: 0 16px 48px rgb(32 51 50 / 22%);
+    animation: hc-fade-up 0.25s ease both;
+}
+
+.hc-panel[hidden] {
+    display: none;
+}
+
+.hc-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.hc-avatar-light {
+    background: rgb(255 255 255 / 18%);
+    color: #fff;
+}
+
+.hc-panel-title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.hc-panel-title span {
+    font-size: 0.74rem;
+    opacity: 0.85;
+}
+
+.hc-panel-icon {
+    display: inline-flex;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #fff;
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+
+.hc-panel-icon:hover {
+    background: rgb(255 255 255 / 15%);
+    color: #fff;
+}
+
+.hc-chat-compact {
+    gap: 0.6rem;
+    padding: 0.6rem;
+}
+
+.hc-chat-compact .hc-thread {
+    padding: 1rem;
+    border-radius: 14px;
+}
+
+.hc-chat-compact .hc-composer {
+    padding: 0.6rem;
+    border-radius: 14px;
+}
+
+.hc-chat-compact .hc-send {
+    width: 42px;
+    height: 42px;
+}
+
+.hc-chat-compact .hc-col {
+    max-width: 90%;
+}
+
+@keyframes hc-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes hc-bounce {
+    0%, 80%, 100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-5px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hc *,
+    .hc-row,
+    .hc-head {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ---- HP (sampai 390px) ---- */
+@media (max-width: 576px) {
+    .hc-page {
+        gap: 0.75rem;
+        padding: 0.75rem 0 0.5rem;
+        height: calc(100dvh - var(--glpi-topbar-height, 79px) - 0.5rem);
+    }
+
+    .hc-head {
+        align-items: flex-start;
+    }
+
+    .hc-head h1 {
+        font-size: 1.35rem;
+    }
+
+    .hc-head p {
+        display: none;
+    }
+
+    /* Tombol "Langsung buat laporan" jadi ringkas di HP */
+    .hc-head-actions .hc-btn:not(.hc-btn-icon) {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.78rem;
+    }
+
+    .hc-thread {
+        padding: 0.9rem;
+        border-radius: 14px;
+    }
+
+    .hc-col {
+        max-width: 92%;
+    }
+
+    .hc-avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .hc-composer {
+        padding: 0.65rem;
+        border-radius: 14px;
+    }
+
+    .hc-send {
+        width: 44px;
+        height: 44px;
+    }
+
+    .hc-floating {
+        right: 12px;
+        bottom: 12px;
+    }
+
+    .hc-floating .hc-panel {
+        position: fixed;
+        inset: 0;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+    }
+}
+
+/* =====================================================================================
+ * Pola insiden: banner beranda petugas & catatan di panel Saran AI
+ * ===================================================================================== */
+.halosis-pattern-banner {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--halosis-accent), transparent 30%);
+    border-left: 4px solid var(--halosis-accent);
+    border-radius: 12px;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-text);
+}
+
+.halosis-pattern-banner ul {
+    margin: 0.3rem 0;
+    padding-left: 1.1rem;
+}
+
+.halosis-pattern-banner a {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+.halosis-pattern-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+    font-size: 1.2rem;
+}
+
+.halosis-triase .halosis-pattern-note {
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-start;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-text);
+    font-size: 0.82rem;
+}
+
+.halosis-triase .halosis-pattern-note a {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+/* =====================================================================================
+ * Dashboard kinerja AI (/plugins/halosis/Dashboard)
+ * Warna seri hanya untuk mark & penanda legenda; teks memakai warna teks.
+ * ===================================================================================== */
+.hd {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 0 1.5rem;
+    color: var(--halosis-text);
+}
+
+.hd h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.hd h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.hd-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.hd-head p,
+.hd-sub,
+.hd-note {
+    margin: 0.25rem 0 0;
+    color: var(--halosis-muted);
+    font-size: 0.85rem;
+}
+
+/* Filter periode: satu baris di atas semua grafik */
+.hd-period {
+    display: inline-flex;
+    padding: 3px;
+    border: 1px solid var(--halosis-border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.hd-period a {
+    padding: 0.35rem 0.8rem;
+    border-radius: 7px;
+    color: var(--halosis-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.hd-period a.active {
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.hd-grid {
+    display: grid;
+    grid-template-columns: 2fr repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.hd-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.hd-card {
+    /* min-width 0: item grid tidak melebar mengikuti tabel; tabel lebar digulir di dalam kartu */
+    min-width: 0;
+    overflow-x: auto;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.hd-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hd-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--halosis-muted);
+}
+
+.hd-value {
+    margin-top: 0.3rem;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* Angka utama: satu per halaman */
+.hd-hero-value {
+    margin-top: 0.2rem;
+    font-size: 3.4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--halosis-primary);
+}
+
+/* Batang komposisi 100%: celah 2px antar-segmen, ujung membulat */
+.hd-composition {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+    margin: 0.9rem 0 0.6rem;
+}
+
+.hd-composition span:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.hd-composition span:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.hd-composition span:only-child {
+    border-radius: 4px;
+}
+
+.hd-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.82rem;
+}
+
+.hd-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.hd-legend i,
+.hd-tooltip i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.hd-legend-values span {
+    color: var(--halosis-muted);
+}
+
+.hd-empty {
+    margin-top: 0.8rem;
+    color: var(--halosis-muted);
+}
+
+/* Grafik SVG */
+.hd-chart {
+    position: relative;
+}
+
+.hd-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.hd-grid-line {
+    stroke: #e8eeec;
+    stroke-width: 1;
+}
+
+.hd-baseline {
+    stroke: #c9d6d2;
+    stroke-width: 1;
+}
+
+.hd-axis {
+    fill: var(--halosis-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hd-cap {
+    fill: var(--halosis-text);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.hd-hit {
+    fill: transparent;
+    cursor: default;
+    outline: none;
+}
+
+.hd-hit.active,
+.hd-hit:focus-visible {
+    fill: rgb(32 51 50 / 5%);
+}
+
+.hd-tooltip {
+    position: absolute;
+    z-index: 2;
+    min-width: 150px;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(32 51 50 / 14%);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+.hd-tooltip-title {
+    margin-bottom: 0.3rem;
+    font-weight: 700;
+}
+
+.hd-tooltip-row,
+.hd-tooltip-total {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.hd-tooltip-total {
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: 1px solid var(--halosis-border);
+}
+
+.hd-table-toggle summary {
+    margin-top: 0.5rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+.hd-table {
+    width: 100%;
+    margin-top: 0.6rem;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.hd-table th,
+.hd-table td {
+    padding: 0.45rem 0.5rem;
+    border-bottom: 1px solid var(--halosis-border);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.hd-table th:first-child,
+.hd-table td:first-child {
+    text-align: left;
+}
+
+.hd-table th {
+    color: var(--halosis-muted);
+    font-weight: 600;
+}
+
+.hd-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 1100px) {
+    .hd-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .hd-hero {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 700px) {
+    .hd-grid,
+    .hd-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Grafik tidak diperkecil sampai teks sumbu tak terbaca: hanya area grafik yang digeser,
+       judul & legenda kartu tetap terlihat */
+    .hd-chart {
+        overflow-x: auto;
+    }
+
+    .hd-chart svg {
+        min-width: 640px;
+    }
+}

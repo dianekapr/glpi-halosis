@@ -1,0 +1,662 @@
+# Terjemahan Bahasa Indonesia untuk plugin HaloSIS.
+# Kompilasi ke .mo dengan: python3 tools/locales.py
+msgid ""
+msgstr ""
+"Project-Id-Version: HaloSIS\n"
+"PO-Revision-Date: 2026-10-27 00:00+0700\n"
+"Last-Translator: Tim HaloSIS BPS\n"
+"Language-Team: Indonesian\n"
+"Language: id_ID\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Konfigurasi & hak akses
+msgid "HaloSIS configuration"
+msgstr "Konfigurasi HaloSIS"
+
+msgid "HaloSIS configuration saved."
+msgstr "Konfigurasi HaloSIS tersimpan."
+
+msgid "HaloSIS AI module"
+msgstr "Modul AI HaloSIS"
+
+msgid "AI triage suggestions"
+msgstr "Saran triase AI"
+
+msgid "Decide (accept / modify / reject)"
+msgstr "Memutuskan (terima / ubah / tolak)"
+
+msgid "AI performance dashboard"
+msgstr "Dashboard kinerja AI"
+
+msgid "Self-service chatbot"
+msgstr "Chatbot self-service"
+
+msgid "HaloSIS AI"
+msgstr "AI HaloSIS"
+
+msgid "Anthropic (Claude)"
+msgstr "Anthropic (Claude)"
+
+msgid "OpenAI-compatible API"
+msgstr "API kompatibel OpenAI"
+
+msgid "AI triage suggestions on new tickets"
+msgstr "Saran triase AI untuk tiket baru"
+
+msgid "Self-service chatbot for employees"
+msgstr "Chatbot self-service untuk pegawai"
+
+msgid "Incident pattern detection"
+msgstr "Deteksi pola insiden"
+
+msgid "API base URL must start with http:// or https://."
+msgstr "URL dasar API harus diawali http:// atau https://."
+
+# Halaman konfigurasi
+msgid "Demo mode is active"
+msgstr "Mode demo aktif"
+
+msgid "No API key is stored. All AI features use deterministic sample answers so they can be demonstrated without internet access."
+msgstr "Belum ada API key tersimpan. Semua fitur AI memakai jawaban contoh yang deterministik sehingga tetap bisa didemokan tanpa internet."
+
+msgid "Connected to AI provider"
+msgstr "Terhubung ke penyedia AI"
+
+msgid "AI calls are made from the GLPI server. The API key is never sent to the browser."
+msgstr "Pemanggilan AI dilakukan dari server GLPI. API key tidak pernah dikirim ke browser."
+
+msgid "AI provider"
+msgstr "Penyedia AI"
+
+msgid "Provider"
+msgstr "Penyedia"
+
+msgid "API key"
+msgstr "API key"
+
+msgid "An API key is stored (encrypted). Leave empty to keep it."
+msgstr "API key sudah tersimpan (terenkripsi). Biarkan kosong untuk mempertahankannya."
+
+msgid "Leave empty to use demo mode."
+msgstr "Biarkan kosong untuk memakai mode demo."
+
+msgid "Delete stored API key"
+msgstr "Hapus API key tersimpan"
+
+msgid "Return to demo mode."
+msgstr "Kembali ke mode demo."
+
+msgid "Model"
+msgstr "Model"
+
+msgid "Model ID at the provider, e.g. claude-opus-5-5."
+msgstr "ID model di penyedia, mis. claude-opus-5-5."
+
+msgid "API base URL"
+msgstr "URL dasar API"
+
+msgid "Optional. Fill in for an OpenAI-compatible gateway or proxy; leave empty for the provider default."
+msgstr "Opsional. Isi untuk gateway/proxy kompatibel OpenAI; kosongkan untuk alamat bawaan penyedia."
+
+msgid "Timeout (seconds)"
+msgstr "Batas waktu (detik)"
+
+msgid "If the AI does not answer in time, tickets are still saved normally without a suggestion."
+msgstr "Jika AI tidak menjawab tepat waktu, tiket tetap tersimpan normal tanpa saran."
+
+msgid "Triage"
+msgstr "Triase"
+
+msgid "Confidence threshold"
+msgstr "Ambang keyakinan"
+
+msgid "Suggestions below this confidence are flagged “Needs manual review”."
+msgstr "Saran dengan keyakinan di bawah ambang ini diberi tanda “Perlu penilaian manual”."
+
+msgid "AI features"
+msgstr "Fitur AI"
+
+# Saran triase AI (Fase 4)
+msgid "AI suggestion"
+msgid_plural "AI suggestions"
+msgstr[0] "Saran AI"
+
+msgid "AI decision"
+msgid_plural "AI decisions"
+msgstr[0] "Keputusan AI"
+
+msgid "Awaiting decision"
+msgstr "Menunggu keputusan"
+
+msgid "Accepted"
+msgstr "Diterima"
+
+msgid "Modified"
+msgstr "Diubah"
+
+msgid "Rejected"
+msgstr "Ditolak"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Demo mode: deterministic sample suggestion"
+msgstr "Mode demo: saran contoh yang deterministik"
+
+msgid "No AI suggestion for this ticket yet."
+msgstr "Belum ada saran AI untuk tiket ini."
+
+msgid "Create AI suggestion"
+msgstr "Buat saran AI"
+
+msgid "Confidence"
+msgstr "Keyakinan"
+
+msgid "Threshold"
+msgstr "Ambang"
+
+msgid "Needs manual review"
+msgstr "Perlu penilaian manual"
+
+msgid "confidence below the %d%% threshold"
+msgstr "keyakinan di bawah ambang %d%%"
+
+msgid "Accept"
+msgstr "Terima"
+
+msgid "Modify"
+msgstr "Ubah"
+
+msgid "Reject"
+msgstr "Tolak"
+
+msgid "Calculated from urgency and impact."
+msgstr "Dihitung dari urgensi dan dampak."
+
+msgid "Reason (required)"
+msgstr "Alasan (wajib)"
+
+msgid "Why are you changing the suggestion?"
+msgstr "Mengapa saran ini diubah?"
+
+msgid "Apply changes"
+msgstr "Terapkan perubahan"
+
+msgid "Why is the suggestion wrong?"
+msgstr "Mengapa saran ini salah?"
+
+msgid "Reject & triage manually"
+msgstr "Tolak & triase manual"
+
+msgid "Ticket fields are not changed. Fill them in manually below."
+msgstr "Field tiket tidak diubah. Isi secara manual di bawah."
+
+msgid "Awaiting decision by an Operator."
+msgstr "Menunggu keputusan Operator."
+
+msgid "by %s"
+msgstr "oleh %s"
+
+msgid "Reason"
+msgstr "Alasan"
+
+msgid "Final"
+msgstr "Final"
+
+msgid "You are not allowed to decide on AI suggestions."
+msgstr "Anda tidak berhak memutuskan saran AI."
+
+msgid "This suggestion has already been decided."
+msgstr "Saran ini sudah diputuskan."
+
+msgid "You are not allowed to update this ticket."
+msgstr "Anda tidak berhak mengubah tiket ini."
+
+msgid "A reason of at least %d characters is required."
+msgstr "Alasan wajib diisi, minimal %d karakter."
+
+msgid "The modified values are not valid."
+msgstr "Nilai yang diubah tidak valid."
+
+msgid "The values are identical to the suggestion. Use Accept instead."
+msgstr "Nilainya sama dengan saran. Gunakan Terima."
+
+msgid "Unknown action."
+msgstr "Aksi tidak dikenal."
+
+msgid "The ticket could not be updated."
+msgstr "Tiket gagal diperbarui."
+
+msgid "AI suggestion accepted (confidence %d%%). %s"
+msgstr "Saran AI diterima (keyakinan %d%%). %s"
+
+msgid "AI suggestion modified (confidence %d%%). Suggested: %s. Final: %s. Reason: %s"
+msgstr "Saran AI diubah (keyakinan %d%%). Saran: %s. Final: %s. Alasan: %s"
+
+msgid "AI suggestion rejected, manual triage (confidence %d%%). Suggested: %s. Reason: %s"
+msgstr "Saran AI ditolak, triase manual (keyakinan %d%%). Saran: %s. Alasan: %s"
+
+msgid "AI suggestion created."
+msgstr "Saran AI dibuat."
+
+msgid "AI suggestion accepted and applied to the ticket."
+msgstr "Saran AI diterima dan diterapkan ke tiket."
+
+msgid "Modified values applied to the ticket."
+msgstr "Nilai yang diubah diterapkan ke tiket."
+
+msgid "AI suggestion rejected. Please triage the ticket manually."
+msgstr "Saran AI ditolak. Silakan triase tiket secara manual."
+
+msgid "Suggestion not found."
+msgstr "Saran tidak ditemukan."
+
+msgid "The AI could not produce a suggestion. The ticket is unchanged; check files/_log/halosis.log."
+msgstr "AI belum bisa memberi saran. Tiket tidak berubah; periksa files/_log/halosis.log."
+
+msgid "Anthropic SDK is not installed"
+msgstr "SDK Anthropic belum terpasang"
+
+msgid "Demo mode works without it. To call Claude, run composer install in the plugin folder (see README)."
+msgstr "Mode demo tetap berjalan tanpanya. Untuk memanggil Claude, jalankan composer install di folder plugin (lihat README)."
+
+# Chatbot self-service (Fase 5)
+msgid "Chat"
+msgid_plural "Chats"
+msgstr[0] "Percakapan"
+
+msgid "HaloSIS Assistant"
+msgstr "Asisten HaloSIS"
+
+msgid "Ask the assistant"
+msgstr "Tanya asisten"
+
+msgid "Answers from Help Center articles"
+msgstr "Jawaban dari artikel Pusat Bantuan"
+
+msgid "New conversation"
+msgstr "Percakapan baru"
+
+msgid "Close"
+msgstr "Tutup"
+
+msgid "Do not send passwords or personal data (NIK, NIP, phone number)."
+msgstr "Jangan kirim kata sandi atau data pribadi (NIK, NIP, nomor HP)."
+
+msgid "Hello %s!"
+msgstr "Halo %s!"
+
+msgid "Hello!"
+msgstr "Halo!"
+
+msgid "Describe your IT problem and I will look for the answer in the Help Center."
+msgstr "Ceritakan kendala TI Anda, saya carikan jawabannya di Pusat Bantuan."
+
+msgid "Problem solved"
+msgstr "Masalah terselesaikan"
+
+msgid "Create report"
+msgstr "Buat laporan"
+
+msgid "How helpful was the assistant?"
+msgstr "Seberapa membantu asisten ini?"
+
+msgid "Rating"
+msgstr "Penilaian"
+
+msgid "Report title"
+msgstr "Judul laporan"
+
+msgid "The conversation summary becomes the report description."
+msgstr "Ringkasan percakapan menjadi deskripsi laporan."
+
+msgid "Send report"
+msgstr "Kirim laporan"
+
+msgid "Type your question…"
+msgstr "Ketik pertanyaan Anda…"
+
+msgid "Your question"
+msgstr "Pertanyaan Anda"
+
+msgid "Send"
+msgstr "Kirim"
+
+msgid "Sources:"
+msgstr "Sumber:"
+
+msgid "Searching the Help Center…"
+msgstr "Mencari di Pusat Bantuan…"
+
+msgid "Personal data in your message was hidden before processing."
+msgstr "Data pribadi di pesan Anda disamarkan sebelum diproses."
+
+msgid "This conversation has ended. Click the refresh icon to start a new one."
+msgstr "Percakapan ini sudah selesai. Klik ikon muat ulang untuk memulai percakapan baru."
+
+msgid "Open report"
+msgstr "Buka laporan"
+
+msgid "Something went wrong. Please try again."
+msgstr "Terjadi kesalahan. Silakan coba lagi."
+
+msgid "Please type a question."
+msgstr "Silakan ketik pertanyaan."
+
+msgid "This conversation has ended. Start a new one."
+msgstr "Percakapan ini sudah selesai. Mulai percakapan baru."
+
+msgid "This conversation is too long. Create a report or start a new one."
+msgstr "Percakapan terlalu panjang. Buat laporan atau mulai percakapan baru."
+
+msgid "According to the article “%s”:"
+msgstr "Menurut artikel “%s”:"
+
+msgid "Sorry, I have not found an answer in the Help Center yet. Try other words, or click “Create report” so an officer can help you."
+msgstr "Maaf, saya belum menemukan jawabannya di Pusat Bantuan. Coba dengan kata lain, atau klik “Buat laporan” agar petugas membantu Anda."
+
+msgid "Choose a rating from 1 to 5."
+msgstr "Pilih penilaian 1 sampai 5."
+
+msgid "You are not allowed to create tickets."
+msgstr "Anda tidak berhak membuat tiket."
+
+msgid "The report title must be at least 5 characters."
+msgstr "Judul laporan minimal 5 karakter."
+
+msgid "The report could not be created."
+msgstr "Laporan gagal dibuat."
+
+msgid "Employee"
+msgstr "Pegawai"
+
+msgid "Assistant"
+msgstr "Asisten"
+
+msgid "source"
+msgstr "sumber"
+
+msgid "Report created from a conversation with the HaloSIS Assistant."
+msgstr "Laporan dibuat dari percakapan dengan Asisten HaloSIS."
+
+msgid "Conversation summary:"
+msgstr "Ringkasan percakapan:"
+
+msgid "The chatbot is not available for your account."
+msgstr "Chatbot tidak tersedia untuk akun Anda."
+
+msgid "Conversation not found."
+msgstr "Percakapan tidak ditemukan."
+
+msgid "Thank you! Glad your problem is solved."
+msgstr "Terima kasih! Senang masalah Anda terselesaikan."
+
+msgid "Report #%d has been created. An officer will follow it up."
+msgstr "Laporan #%d sudah dibuat. Petugas akan menindaklanjutinya."
+
+# Halaman penuh "Tanya HaloSIS" (revisi Fase 5)
+msgid "Ask HaloSIS"
+msgstr "Tanya HaloSIS"
+
+msgid "My reports"
+msgstr "Laporan saya"
+
+msgid "Help center (FAQ)"
+msgstr "Pusat bantuan (FAQ)"
+
+msgid "Answers from Help Center articles, available any time."
+msgstr "Jawaban dari artikel Pusat Bantuan, kapan saja."
+
+msgid "Create a report directly"
+msgstr "Langsung buat laporan"
+
+msgid "Quick questions"
+msgstr "Pertanyaan cepat"
+
+msgid "Forgot my SSO password"
+msgstr "Lupa password SSO"
+
+msgid "FASIH fails to sync"
+msgstr "FASIH gagal sinkron"
+
+msgid "VPN keeps disconnecting"
+msgstr "VPN putus"
+
+msgid "Email attachment is too large"
+msgstr "Lampiran email terlalu besar"
+
+msgid "Cancel"
+msgstr "Batal"
+
+msgid "Open full screen"
+msgstr "Buka layar penuh"
+
+msgid "The assistant is not available right now"
+msgstr "Asisten sedang tidak tersedia"
+
+msgid "The assistant is not available right now. You can still create a report."
+msgstr "Asisten sedang tidak tersedia. Anda tetap bisa membuat laporan."
+
+msgid "Report your problem and an officer will help you."
+msgstr "Laporkan kendala Anda, petugas akan membantu."
+
+# Tampilan chatbot baru (mengikuti prototipe halosis-web)
+msgid "Tell us about your IT problem. The assistant looks for solutions in official BPS guides."
+msgstr "Ceritakan kendala TI Anda. Asisten mencarikan solusi dari panduan resmi BPS."
+
+msgid "Try asking:"
+msgstr "Coba tanyakan:"
+
+msgid "Describe your problem…"
+msgstr "Tulis kendala Anda…"
+
+msgid "The assistant only answers from official BPS Help Center articles. Do not send passwords or personal data."
+msgstr "Asisten hanya menjawab dari artikel resmi Pusat Bantuan BPS. Jangan kirim kata sandi atau data pribadi."
+
+msgid "Answered by AI"
+msgstr "Dijawab AI"
+
+msgid "From the Help Center"
+msgstr "Dari Pusat Bantuan"
+
+msgid "The assistant is typing"
+msgstr "Asisten sedang mengetik"
+
+msgid "This conversation has ended. Start a new one to ask again."
+msgstr "Percakapan ini sudah selesai. Mulai percakapan baru untuk bertanya lagi."
+
+msgid "Did this answer help?"
+msgstr "Apakah jawaban ini membantu?"
+
+msgid "Not solved yet"
+msgstr "Belum terselesaikan"
+
+msgid "Problem not solved? I will create a report for the IT team. This conversation summary is attached, so you do not need to explain again."
+msgstr "Masalah belum selesai? Saya buatkan laporan ke tim TI. Ringkasan percakapan ini akan dilampirkan, jadi Anda tidak perlu menjelaskan ulang."
+
+msgid "I could not find the answer yet. Shall I create a report for the IT team? This conversation summary will be attached."
+msgstr "Saya belum menemukan jawabannya. Mau saya buatkan laporan ke tim TI? Ringkasan percakapan ini akan dilampirkan."
+
+msgid "Yes, create report"
+msgstr "Ya, buat laporan"
+
+msgid "No, thank you"
+msgstr "Tidak, terima kasih"
+
+msgid "Summary to be attached"
+msgstr "Ringkasan yang dilampirkan"
+
+# Deteksi pola insiden (Fase 6)
+msgid "Incident pattern"
+msgid_plural "Incident patterns"
+msgstr[0] "Pola insiden"
+
+msgid "Incident pattern: %s"
+msgstr "Pola insiden: %s"
+
+msgid "HaloSIS: detect incident patterns from similar new tickets"
+msgstr "HaloSIS: deteksi pola insiden dari tiket baru yang mirip"
+
+msgid "Incident pattern detection is disabled in the HaloSIS configuration."
+msgstr "Deteksi pola insiden dimatikan di konfigurasi HaloSIS."
+
+msgid "New pattern"
+msgstr "Pola baru"
+
+msgid "Pattern updated"
+msgstr "Pola diperbarui"
+
+msgid "%d newly linked"
+msgstr "%d baru ditautkan"
+
+msgid "same category (%s)"
+msgstr "kategori sama (%s)"
+
+msgid "similar titles"
+msgstr "judul mirip"
+
+msgid "HaloSIS detected %1$d new tickets within the last %2$d minutes with %3$s."
+msgstr "HaloSIS mendeteksi %1$d tiket baru dalam %2$d menit terakhir dengan %3$s."
+
+msgid "Linked tickets:"
+msgstr "Tiket yang ditautkan:"
+
+msgid "Detected automatically. An officer decides the follow-up (investigate, assign a team, or close if unrelated)."
+msgstr "Terdeteksi otomatis. Petugas yang memutuskan tindak lanjut (investigasi, tugaskan tim, atau tutup bila tidak berkaitan)."
+
+msgid "Incident pattern detected"
+msgstr "Pola insiden terdeteksi"
+
+msgid "%d linked tickets"
+msgstr "%d tiket tertaut"
+
+msgid "Open the problem to decide the follow-up: investigate, assign a team, or close if unrelated."
+msgstr "Buka masalahnya untuk memutuskan tindak lanjut: investigasi, tugaskan tim, atau tutup bila tidak berkaitan."
+
+msgid "Part of an incident pattern"
+msgstr "Bagian dari pola insiden"
+
+msgid "Minimum similar tickets"
+msgstr "Minimal tiket mirip"
+
+msgid "A pattern is created when at least this many new tickets share a category or have similar titles."
+msgstr "Pola dibuat bila sedikitnya sejumlah ini tiket baru berkategori sama atau berjudul mirip."
+
+msgid "Time window (minutes)"
+msgstr "Jendela waktu (menit)"
+
+msgid "Tickets created within this window are checked. The scheduled task runs every 15 minutes."
+msgstr "Tiket yang dibuat dalam jendela ini diperiksa. Tugas terjadwal berjalan tiap 15 menit."
+
+msgid "Operator group"
+msgstr "Grup Operator"
+
+msgid "Default (Operator Service Desk)"
+msgstr "Bawaan (Operator Service Desk)"
+
+msgid "The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up."
+msgstr "Masalah pola insiden ditugaskan ke grup ini agar Operator mendapat notifikasi dan memutuskan tindak lanjut."
+
+# Dashboard kinerja AI (Fase 7)
+msgid "Team reassignment"
+msgid_plural "Team reassignments"
+msgstr[0] "Pemindahan tim"
+
+msgid "AI performance"
+msgstr "Kinerja AI"
+
+msgid "How officers use AI suggestions and how many employees are helped by the assistant, since %s."
+msgstr "Seberapa sering petugas memakai saran AI dan berapa pegawai terbantu asisten, sejak %s."
+
+msgid "Period"
+msgstr "Periode"
+
+msgid "%d weeks"
+msgstr "%d minggu"
+
+msgid "AI suggestions accepted as is"
+msgstr "Saran AI diterima apa adanya"
+
+msgid "of %d decided suggestions"
+msgstr "dari %d saran yang sudah diputuskan"
+
+msgid "No suggestion has been decided in this period yet."
+msgstr "Belum ada saran yang diputuskan pada periode ini."
+
+msgid "Modified by an officer"
+msgstr "Diubah petugas"
+
+msgid "%d suggestions corrected before being applied"
+msgstr "%d saran dikoreksi sebelum diterapkan"
+
+msgid "Rejected (manual triage)"
+msgstr "Ditolak (triase manual)"
+
+msgid "%d suggestions not used"
+msgstr "%d saran tidak dipakai"
+
+msgid "Moved to another team after triage"
+msgstr "Dipindah ke tim lain setelah triase"
+
+msgid "%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)"
+msgstr "%1$d dari %2$d tiket yang ditriase dengan AI dipindah ke grup lain (salah tim)"
+
+msgid "Decisions per week"
+msgstr "Keputusan per minggu"
+
+msgid "Stacked columns of accepted, modified and rejected suggestions per week"
+msgstr "Kolom bertumpuk saran diterima, diubah, dan ditolak per minggu"
+
+msgid "Week of %s"
+msgstr "Minggu %s"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Show as table"
+msgstr "Tampilkan sebagai tabel"
+
+msgid "Week"
+msgstr "Minggu"
+
+msgid "AI confidence vs officer decisions"
+msgstr "Keyakinan AI vs keputusan petugas"
+
+msgid "If the AI is well calibrated, suggestions above the threshold are accepted more often."
+msgstr "Bila AI terkalibrasi baik, saran di atas ambang lebih sering diterima."
+
+msgid "Decided"
+msgstr "Diputuskan"
+
+msgid "≥ %d%% (threshold)"
+msgstr "≥ %d%% (ambang)"
+
+msgid "< %d%% (needs manual review)"
+msgstr "< %d%% (perlu penilaian manual)"
+
+msgid "Employee chatbot"
+msgstr "Chatbot pegawai"
+
+msgid "Conversations"
+msgstr "Percakapan"
+
+msgid "Helped without a ticket"
+msgstr "Terbantu tanpa tiket"
+
+msgid "%d%% of conversations"
+msgstr "%d%% dari percakapan"
+
+msgid "Turned into a report"
+msgstr "Menjadi laporan"
+
+msgid "Average rating"
+msgstr "Rata-rata rating"
+
+msgid "%d ratings"
+msgstr "%d penilaian"
+
+msgid "Definitions: accepted = suggestion applied unchanged; modified = applied after an officer changed values (reason required); rejected = manual triage (reason required); moved to another team = an AI-triaged ticket later assigned to a different group; helped without a ticket = conversation marked solved by the employee."
+msgstr "Definisi: diterima = saran diterapkan tanpa perubahan; diubah = diterapkan setelah petugas mengubah nilai (alasan wajib); ditolak = triase manual (alasan wajib); dipindah ke tim lain = tiket yang ditriase dengan AI kemudian ditugaskan ke grup lain; terbantu tanpa tiket = percakapan yang ditandai selesai oleh pegawai."

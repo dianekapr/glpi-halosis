@@ -1,0 +1,127 @@
+{# Halaman konfigurasi plugin HaloSIS. API key tidak pernah dirender; hanya status tersimpan/tidak. #}
+{% import 'components/form/fields_macros.html.twig' as fields %}
+{% import _self as self %}
+
+{# Teks bantuan kecil di bawah input #}
+{% macro hint(text) %}<div class="form-hint small text-secondary mt-1">{{ text }}</div>{% endmacro %}
+
+{% set field_opts = {'field_class': 'col-12', 'label_class': 'col-xxl-3', 'input_class': 'col-xxl-9'} %}
+
+<div class="container-lg halosis-config">
+    <form method="post" action="{{ path('plugins/halosis/front/config.form.php') }}" data-halosis-config>
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="ti ti-sparkles fs-2 text-primary" aria-hidden="true"></i>
+                <h2 class="card-title mb-0">{{ __('HaloSIS configuration', 'halosis') }}</h2>
+                <span class="ms-auto text-secondary small">v{{ plugin_version }}</span>
+            </div>
+
+            <div class="card-body">
+                {% if is_demo %}
+                    <div class="alert alert-info d-flex gap-2" role="status">
+                        <i class="ti ti-flask fs-2" aria-hidden="true"></i>
+                        <div>
+                            <strong>{{ __('Demo mode is active', 'halosis') }}</strong><br>
+                            {{ __('No API key is stored. All AI features use deterministic sample answers so they can be demonstrated without internet access.', 'halosis') }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success d-flex gap-2" role="status">
+                        <i class="ti ti-plug-connected fs-2" aria-hidden="true"></i>
+                        <div>
+                            <strong>{{ __('Connected to AI provider', 'halosis') }}</strong><br>
+                            {{ __('AI calls are made from the GLPI server. The API key is never sent to the browser.', 'halosis') }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if sdk_missing %}
+                    <div class="alert alert-warning d-flex gap-2" role="status">
+                        <i class="ti ti-package-off fs-2" aria-hidden="true"></i>
+                        <div>
+                            <strong>{{ __('Anthropic SDK is not installed', 'halosis') }}</strong><br>
+                            {{ __('Demo mode works without it. To call Claude, run composer install in the plugin folder (see README).', 'halosis') }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {{ fields.largeTitle(__('AI provider', 'halosis'), 'ti ti-cpu', true) }}
+                <div class="row">
+                    {{ fields.dropdownArrayField('ai_provider', config.ai_provider, providers, __('Provider', 'halosis'), field_opts) }}
+
+                    {% set key_helper = config.has_api_key
+                        ? __('An API key is stored (encrypted). Leave empty to keep it.', 'halosis')
+                        : __('Leave empty to use demo mode.', 'halosis') %}
+                    {{ fields.passwordField('api_key', '', __('API key', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(key_helper),
+                        'clearable': false,
+                        'additional_attributes': {'autocomplete': 'new-password', 'placeholder': config.has_api_key ? '••••••••••••' : ''},
+                    })) }}
+                    {% if config.has_api_key %}
+                        {{ fields.sliderField('_clear_api_key', 0, __('Delete stored API key', 'halosis'), field_opts|merge({
+                            'add_field_html': self.hint(__('Return to demo mode.', 'halosis')),
+                        })) }}
+                    {% endif %}
+
+                    {{ fields.textField('ai_model', config.ai_model, __('Model', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Model ID at the provider, e.g. claude-opus-5-5.', 'halosis')),
+                    })) }}
+                    {{ fields.textField('api_base_url', config.api_base_url, __('API base URL', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Optional. Fill in for an OpenAI-compatible gateway or proxy; leave empty for the provider default.', 'halosis')),
+                    })) }}
+                    {{ fields.numberField('ai_timeout', config.ai_timeout, __('Timeout (seconds)', 'halosis'), field_opts|merge({
+                        'min': 5, 'max': 120,
+                        'add_field_html': self.hint(__('If the AI does not answer in time, tickets are still saved normally without a suggestion.', 'halosis')),
+                    })) }}
+                </div>
+
+                {{ fields.largeTitle(__('Triage', 'halosis'), 'ti ti-route') }}
+                <div class="row">
+                    {% set threshold_field %}
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="range" class="form-range flex-grow-1" min="0" max="100" step="5"
+                                   name="triage_threshold" id="halosis_triage_threshold"
+                                   value="{{ config.triage_threshold }}" data-halosis-threshold>
+                            <output for="halosis_triage_threshold" class="badge fs-4" data-halosis-threshold-output>{{ config.triage_threshold }}%</output>
+                        </div>
+                    {% endset %}
+                    {{ fields.field('triage_threshold', threshold_field, __('Confidence threshold', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Suggestions below this confidence are flagged “Needs manual review”.', 'halosis')),
+                        'id': 'halosis_triage_threshold',
+                    })) }}
+                </div>
+
+                {{ fields.largeTitle(__('Incident pattern detection', 'halosis'), 'ti ti-topology-ring-3') }}
+                <div class="row">
+                    {{ fields.numberField('pattern_min_tickets', config.pattern_min_tickets, __('Minimum similar tickets', 'halosis'), field_opts|merge({
+                        'min': 2, 'max': 500,
+                        'add_field_html': self.hint(__('A pattern is created when at least this many new tickets share a category or have similar titles.', 'halosis')),
+                    })) }}
+                    {{ fields.numberField('pattern_window', config.pattern_window, __('Time window (minutes)', 'halosis'), field_opts|merge({
+                        'min': 15, 'max': 1440,
+                        'add_field_html': self.hint(__('Tickets created within this window are checked. The scheduled task runs every 15 minutes.', 'halosis')),
+                    })) }}
+                    {{ fields.dropdownField('Group', 'pattern_group_id', config.pattern_group_id, __('Operator group', 'halosis'), field_opts|merge({
+                        'condition': {'is_assign': 1},
+                        'emptylabel': __('Default (Operator Service Desk)', 'halosis'),
+                        'add_field_html': self.hint(__('The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up.', 'halosis')),
+                    })) }}
+                </div>
+
+                {{ fields.largeTitle(__('AI features', 'halosis'), 'ti ti-toggle-right') }}
+                <div class="row">
+                    {% for key, label in features %}
+                        {{ fields.sliderField('feature_' ~ key, config['feature_' ~ key], label, field_opts) }}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card-footer text-end">
+                <button type="submit" name="update" value="1" class="btn btn-primary">
+                    <i class="ti ti-device-floppy" aria-hidden="true"></i>
+                    <span>{{ _x('button', 'Save') }}</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
