@@ -1,0 +1,32 @@
+# GLPI + MySQL untuk mencoba HaloSIS secara lokal.
+# Jalankan: docker compose up -d   →   buka http://localhost:8080
+services:
+  glpi:
+    image: "glpi/glpi:latest"
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    volumes:
+      - glpi_data:/var/glpi
+      # Kode plugin HaloSIS dari repo ini (langsung terbaca tanpa build/copy)
+      - ./plugins/halosis:/var/www/glpi/plugins/halosis
+      # Palet tema kustom GLPI (folder GLPI_THEMES_DIR = /var/glpi/files/_themes)
+      - ./themes:/var/glpi/files/_themes
+
+  db:
+    image: "mysql:8.4"
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ${GLPI_DB_NAME}
+      MYSQL_USER: ${GLPI_DB_USER}
+      MYSQL_PASSWORD: ${GLPI_DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  glpi_data:
+  db_data:
