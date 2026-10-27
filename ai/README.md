@@ -38,3 +38,20 @@ dipilih. Bila tidak ada, dipakai `resolution` lalu `close_notes` yang bukan temp
 
 **Batasan:** nama orang yang tidak ada di kolom pengguna dan ditulis tanpa sapaan tidak terdeteksi; bagian
 nama yang juga kata umum (sering muncul berhuruf kecil) sengaja tidak disamarkan.
+
+## AI-2 — Analisis awal (angka AS-IS)
+
+```bash
+.venv/bin/python ai/scripts/eda.py              # → reports/eda.md
+```
+
+Hanya membaca `tickets_clean.parquet` (sudah disamarkan) dan hanya menulis angka agregat & label topik;
+laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
+
+- **Kepatuhan SLA** = PASS ÷ (PASS + BREACH); tiket IN PROGRESS & tanpa bukti SLA dikecualikan
+  (cocok dengan angka dokumen 27,59%). Versi dengan seluruh tiket sebagai penyebut ikut dicantumkan.
+- **Indikasi salah routing** = `potential_wrong_routing` ≠ NO (REVIEW + YES).
+- **Waktu selesai** = `resolved − opened`, waktu kalender (bukan jam kerja).
+- **20 masalah paling sering** = topik hasil TF-IDF judul+deskripsi → K-Means (40 kelompok, seed 42),
+  topik kembar digabung, kelompok campuran (tim terbanyak < 25%) tidak diperingkat. Judul ditulis bebas,
+  jadi judul identik hanya dicantumkan sebagai pembanding.
