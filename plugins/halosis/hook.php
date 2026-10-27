@@ -72,6 +72,18 @@ function plugin_halosis_tables(): array
             KEY `status` (`status`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Tiket yang dipindah ke grup lain setelah triase AI diterapkan (indikasi saran salah tim).
+        'glpi_plugin_halosis_reassignments' => "
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `decisions_id` int {$sign} NOT NULL DEFAULT '0',
+            `from_groups_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Grup hasil triase',
+            `to_groups_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Grup baru yang ditugaskan',
+            `users_id` int {$sign} NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            KEY `tickets_id` (`tickets_id`),
+            KEY `decisions_id` (`decisions_id`),
+            KEY `date_creation` (`date_creation`)
+        ",
         // Pola insiden yang terdeteksi tugas terjadwal; mencegah Problem ganda untuk pola yang sama.
         'glpi_plugin_halosis_patterns' => "
             `problems_id` int {$sign} NOT NULL DEFAULT '0',

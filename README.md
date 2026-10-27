@@ -81,6 +81,15 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 > dan jangan gunakan akun ini untuk pekerjaan sehari-hari. Password contoh `halosis` juga hanya untuk demo.
 > Perintah `setup-roles` menampilkan peringatan selama masih ada akun dengan password bawaan.
 
+> ⚠️ **"Remember me" dimatikan** (`login_remember_time = 0`, semula 604800 = 7 hari) karena bug GLPI 12.0.0:
+> mengirim form login saat browser masih login dengan "Remember me" (tab login lama, tombol Back) berakhir
+> "An unexpected error occurred" (`Duplicate entry … glpi_usertokens.token_uid`), dan tugas pembersih token
+> GLPI juga gagal. Aktifkan lagi bila GLPI merilis perbaikan:
+> ```bash
+> docker compose exec glpi php bin/console config:set login_remember_time 604800 --allow-superuser
+> ```
+> Untuk instalasi baru, matikan dengan nilai `0`.
+
 **7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
 
 Palet ada di `themes/halosis.scss` (di-mount ke folder tema kustom GLPI `/var/glpi/files/_themes`).

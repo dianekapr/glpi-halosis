@@ -2,8 +2,8 @@
 
 Modul AI untuk layanan TI BPS dengan prinsip *human-in-the-loop*: AI memberi saran, petugas yang memutuskan.
 
-> Status: konfigurasi, role, saran triase AI (Fase 4), chatbot self-service (Fase 5), dan deteksi pola
-> insiden (Fase 6) sudah jalan. Dashboard kinerja AI menyusul.
+> Status: konfigurasi, role, saran triase AI (Fase 4), chatbot self-service (Fase 5), deteksi pola
+> insiden (Fase 6), dan dashboard kinerja AI (Fase 7) sudah jalan.
 
 ## Instalasi
 
@@ -151,6 +151,29 @@ container menjalankan `front/cron.php` tiap menit). Jalankan manual:
 
 Pola tercatat di `glpi_plugin_halosis_patterns` (tanda pola, kriteria, Problem, jumlah tiket).
 
+## Dashboard kinerja AI
+
+**Bantuan › Kinerja AI** (`/plugins/halosis/Dashboard`) untuk pemegang hak `plugin_halosis_dashboard`
+(Manajemen, Administrator, Super-Admin) selama fitur dashboard aktif. Filter periode 4 / 8 / 12 minggu.
+Semua angka dari tabel log plugin (`src/Stats.php`):
+
+| Angka | Sumber |
+| --- | --- |
+| % saran diterima / diubah / ditolak | `decisions` |
+| Keputusan per minggu (kolom bertumpuk + tabel) | `decisions` |
+| Keyakinan AI vs keputusan (di atas / di bawah ambang) | `decisions` + `suggestions` |
+| % tiket dipindah ke tim lain setelah triase ("salah tim") | `reassignments` ÷ tiket dengan keputusan Terima/Ubah |
+| Chat terbantu tanpa tiket, jadi laporan, rata-rata rating | `chats` |
+
+**"Dipindah ke tim lain"**: GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat
+(hook `item_add` Group_Ticket) setiap kali tiket yang triasenya sudah diterapkan lalu ditugaskan ke grup
+selain grup hasil triase.
+
+Grafik dirender server sebagai SVG (tanpa pustaka luar, jalan tanpa internet). Warna seri divalidasi untuk
+buta warna: Diterima `#00826F`, Diubah `#62C9AF`, Ditolak `#D8652A` (turunan teal & oranye HaloSIS; warna
+brand mentah terlalu pucat/kusam untuk isian grafik). Nilai selalu ditulis sebagai teks (legenda, total di
+puncak kolom, tooltip, tabel), tidak mengandalkan warna saja.
+
 ## Role & hak akses
 
 Role HaloSIS diterapkan ke profil GLPI dengan perintah yang aman dijalankan berulang:
@@ -206,6 +229,8 @@ composer.json        SDK Anthropic (vendor/ tidak di-commit)
 src/Chatbot.php      jawaban chatbot, rating, buat laporan
 src/HelpdeskHome.php menu Helpdesk & pengalihan beranda ke halaman chat
 src/PatternDetector.php  tugas terjadwal deteksi pola insiden + banner
+src/Stats.php        angka dashboard;  src/Reassignment.php  pencatat pemindahan tim
+src/Controller/DashboardController.php  halaman /plugins/halosis/Dashboard
 src/Controller/ChatController.php  halaman penuh /plugins/halosis/Chat
 src/KnowledgeSearch.php  pencarian KB yang menghormati visibilitas GLPI
 src/Privacy.php      penyamaran data pribadi;  src/Chat.php  model percakapan
@@ -226,5 +251,6 @@ yang belum diterjemahkan lalu mengompilasi `.mo`.
 | --- | --- |
 | `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, model, status) |
 | `glpi_plugin_halosis_decisions` | Log keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
+| `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain setelah triase AI diterapkan (metrik "salah tim") |
 | `glpi_plugin_halosis_patterns` | Pola insiden terdeteksi: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status open/resolved/ticket, rating, tiket |

@@ -1,0 +1,168 @@
+{#
+ # Dashboard kinerja AI. Angka dari tabel log plugin (Stats); grafik SVG dirender server tanpa pustaka luar.
+ # Warna seri hanya untuk mark & penanda legenda; teks memakai warna teks (bukan warna seri).
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% set labels = {
+    'accept': __('Accepted', 'halosis'),
+    'modify': __('Modified', 'halosis'),
+    'reject': __('Rejected', 'halosis'),
+} %}
+{% set d = stats.decisions %}
+
+{% block content %}
+<div class="hd" data-halosis-dashboard>
+    <header class="hd-head">
+        <div>
+            <h1>{{ __('AI performance', 'halosis') }}</h1>
+            <p>{{ __('How officers use AI suggestions and how many employees are helped by the assistant, since %s.', 'halosis')|format(stats.since|formatted_date) }}</p>
+        </div>
+        <nav class="hd-period" aria-label="{{ __('Period', 'halosis') }}">
+            {% for w in periods %}
+                <a href="?weeks={{ w }}" class="{{ w == stats.weeks ? 'active' }}" {{ w == stats.weeks ? 'aria-current="page"' }}>{{ __('%d weeks', 'halosis')|format(w) }}</a>
+            {% endfor %}
+        </nav>
+    </header>
+
+    {# ---- Saran triase AI ---- #}
+    <section class="hd-grid">
+        <article class="hd-card hd-hero">
+            <div class="hd-label">{{ __('AI suggestions accepted as is', 'halosis') }}</div>
+            {% if d.total > 0 %}
+                <div class="hd-hero-value">{{ d.percent.accept }}%</div>
+                <div class="hd-sub">{{ __('of %d decided suggestions', 'halosis')|format(d.total) }}</div>
+                <div class="hd-composition" role="img"
+                     aria-label="{% for a in ['accept','modify','reject'] %}{{ labels[a] }} {{ d.percent[a] }}%{{ not loop.last ? ', ' }}{% endfor %}">
+                    {% for a in ['accept', 'modify', 'reject'] %}
+                        {% if d.counts[a] > 0 %}
+                            <span style="flex-grow: {{ d.counts[a] }}; background: {{ colors[a] }}"></span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <ul class="hd-legend hd-legend-values">
+                    {% for a in ['accept', 'modify', 'reject'] %}
+                        <li><i style="background: {{ colors[a] }}" aria-hidden="true"></i>{{ labels[a] }} <strong>{{ d.percent[a] }}%</strong> <span>({{ d.counts[a] }})</span></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="hd-empty">{{ __('No suggestion has been decided in this period yet.', 'halosis') }}</div>
+            {% endif %}
+        </article>
+
+        <article class="hd-card hd-stat">
+            <div class="hd-label">{{ __('Modified by an officer', 'halosis') }}</div>
+            <div class="hd-value">{{ d.percent.modify }}%</div>
+            <div class="hd-sub">{{ __('%d suggestions corrected before being applied', 'halosis')|format(d.counts.modify) }}</div>
+        </article>
+        <article class="hd-card hd-stat">
+            <div class="hd-label">{{ __('Rejected (manual triage)', 'halosis') }}</div>
+            <div class="hd-value">{{ d.percent.reject }}%</div>
+            <div class="hd-sub">{{ __('%d suggestions not used', 'halosis')|format(d.counts.reject) }}</div>
+        </article>
+        <article class="hd-card hd-stat">
+            <div class="hd-label">{{ __('Moved to another team after triage', 'halosis') }}</div>
+            <div class="hd-value">{{ stats.reassigned.percent }}%</div>
+            <div class="hd-sub">{{ __('%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)', 'halosis')|format(stats.reassigned.moved, stats.reassigned.applied) }}</div>
+        </article>
+    </section>
+
+    {# ---- Tren mingguan ---- #}
+    <section class="hd-card">
+        <div class="hd-card-head">
+            <h2>{{ __('Decisions per week', 'halosis') }}</h2>
+            <ul class="hd-legend">
+                {% for a in ['accept', 'modify', 'reject'] %}
+                    <li><i style="background: {{ colors[a] }}" aria-hidden="true"></i>{{ labels[a] }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="hd-chart" data-hd-chart>
+            <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img"
+                 aria-label="{{ __('Stacked columns of accepted, modified and rejected suggestions per week', 'halosis') }}">
+                {% for tick in chart.ticks %}
+                    <line class="hd-grid-line" x1="{{ chart.plot.left }}" x2="{{ chart.plot.right }}" y1="{{ tick.y }}" y2="{{ tick.y }}"></line>
+                    <text class="hd-axis" x="{{ chart.plot.left - 8 }}" y="{{ tick.y + 4 }}" text-anchor="end">{{ tick.value }}</text>
+                {% endfor %}
+                {% for col in chart.columns %}
+                    {% for seg in col.segments %}
+                        <path d="{{ seg.path }}" fill="{{ colors[seg.action] }}"></path>
+                    {% endfor %}
+                    {% if col.week.total > 0 %}
+                        <text class="hd-cap" x="{{ col.center }}" y="{{ col.top - 6 }}" text-anchor="middle">{{ col.week.total }}</text>
+                    {% endif %}
+                    <text class="hd-axis" x="{{ col.center }}" y="{{ chart.baseline + 18 }}" text-anchor="middle">{{ col.week.label }}</text>
+                    {# Area hover/fokus selebar kolom minggu (lebih besar dari mark) #}
+                    <rect class="hd-hit" x="{{ col.band_x }}" y="{{ chart.plot.top }}" width="{{ col.band_w }}" height="{{ chart.baseline - chart.plot.top }}"
+                          tabindex="0" data-week="{{ __('Week of %s', 'halosis')|format(col.week.start|formatted_date) }}"
+                          {% for a in ['accept', 'modify', 'reject'] %}data-{{ a }}="{{ col.week.counts[a] }}" {% endfor %}
+                          data-total="{{ col.week.total }}"
+                          aria-label="{{ __('Week of %s', 'halosis')|format(col.week.start|formatted_date) }}: {% for a in ['accept','modify','reject'] %}{{ labels[a] }} {{ col.week.counts[a] }}{{ not loop.last ? ', ' }}{% endfor %}"></rect>
+                {% endfor %}
+                <line class="hd-baseline" x1="{{ chart.plot.left }}" x2="{{ chart.plot.right }}" y1="{{ chart.baseline }}" y2="{{ chart.baseline }}"></line>
+            </svg>
+            <div class="hd-tooltip" role="tooltip" hidden data-hd-tooltip>
+                <div class="hd-tooltip-title"></div>
+                {% for a in ['accept', 'modify', 'reject'] %}
+                    <div class="hd-tooltip-row"><i style="background: {{ colors[a] }}" aria-hidden="true"></i><strong data-hd-value="{{ a }}"></strong> {{ labels[a] }}</div>
+                {% endfor %}
+                <div class="hd-tooltip-total">{{ __('Total', 'halosis') }} <strong data-hd-value="total"></strong></div>
+            </div>
+        </div>
+        <details class="hd-table-toggle">
+            <summary>{{ __('Show as table', 'halosis') }}</summary>
+            <table class="hd-table">
+                <thead><tr><th>{{ __('Week', 'halosis') }}</th>{% for a in ['accept','modify','reject'] %}<th>{{ labels[a] }}</th>{% endfor %}<th>{{ __('Total', 'halosis') }}</th></tr></thead>
+                <tbody>
+                    {% for week in stats.weekly %}
+                        <tr><td>{{ week.start|formatted_date }}</td>{% for a in ['accept','modify','reject'] %}<td>{{ week.counts[a] }}</td>{% endfor %}<td>{{ week.total }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
+    </section>
+
+    <div class="hd-grid hd-grid-2">
+        {# ---- Keyakinan vs keputusan ---- #}
+        <section class="hd-card">
+            <h2>{{ __('AI confidence vs officer decisions', 'halosis') }}</h2>
+            <p class="hd-sub">{{ __('If the AI is well calibrated, suggestions above the threshold are accepted more often.', 'halosis') }}</p>
+            <table class="hd-table">
+                <thead><tr><th>{{ __('Confidence', 'halosis') }}</th><th>{{ __('Decided', 'halosis') }}</th>{% for a in ['accept','modify','reject'] %}<th>{{ labels[a] }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                    {% for band, row in stats.by_band %}
+                        <tr>
+                            <td>{{ band == 'above' ? __('≥ %d%% (threshold)', 'halosis')|format(stats.threshold) : __('< %d%% (needs manual review)', 'halosis')|format(stats.threshold) }}</td>
+                            <td>{{ row.total }}</td>
+                            {% for a in ['accept','modify','reject'] %}<td>{{ row.total > 0 ? row.percent[a] ~ '%' : '–' }}</td>{% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        {# ---- Chatbot pegawai ---- #}
+        <section class="hd-card">
+            <h2>{{ __('Employee chatbot', 'halosis') }}</h2>
+            <div class="hd-mini-grid">
+                <div><div class="hd-label">{{ __('Conversations', 'halosis') }}</div><div class="hd-value">{{ stats.chats.total }}</div></div>
+                <div>
+                    <div class="hd-label">{{ __('Helped without a ticket', 'halosis') }}</div>
+                    <div class="hd-value">{{ stats.chats.resolved }}</div>
+                    <div class="hd-sub">{{ __('%d%% of conversations', 'halosis')|format(stats.chats.resolved_pct) }}</div>
+                </div>
+                <div><div class="hd-label">{{ __('Turned into a report', 'halosis') }}</div><div class="hd-value">{{ stats.chats.ticket }}</div></div>
+                <div>
+                    <div class="hd-label">{{ __('Average rating', 'halosis') }}</div>
+                    <div class="hd-value">{{ stats.chats.rating_avg is not null ? stats.chats.rating_avg ~ ' / 5' : '–' }}</div>
+                    <div class="hd-sub">{{ __('%d ratings', 'halosis')|format(stats.chats.rating_count) }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <p class="hd-note">
+        {{ __('Definitions: accepted = suggestion applied unchanged; modified = applied after an officer changed values (reason required); rejected = manual triage (reason required); moved to another team = an AI-triaged ticket later assigned to a different group; helped without a ticket = conversation marked solved by the employee.', 'halosis') }}
+    </p>
+</div>
+{% endblock %}

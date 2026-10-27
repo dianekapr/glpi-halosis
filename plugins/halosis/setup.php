@@ -14,13 +14,15 @@ use Glpi\Plugin\Hooks;
 use GlpiPlugin\Halosis\Chatbot;
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
+use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
+use GlpiPlugin\Halosis\Reassignment;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.3.0');
+define('PLUGIN_HALOSIS_VERSION', '0.4.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -68,6 +70,9 @@ function plugin_init_halosis(): void
     // Gaya & skrip bersama komponen plugin (file di public/, disajikan sebagai /plugins/halosis/css|js/...)
     $PLUGIN_HOOKS[Hooks::ADD_CSS]['halosis']        = [plugin_halosis_asset('css/halosis.css')];
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'] = [plugin_halosis_asset('js/triase.js')];
+    if (DashboardMenu::canViewDashboard()) {
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/dashboard.js');
+    }
 
     // Chatbot (antarmuka Helpdesk, pemegang hak chatbot, fitur aktif): halaman penuh "Tanya HaloSIS"
     // sebagai beranda Pegawai + widget melayang di halaman Helpdesk lain. Lihat HelpdeskHome.
@@ -81,7 +86,11 @@ function plugin_init_halosis(): void
     $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [HelpdeskHome::class, 'redefineMenu'];
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
-    $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis']              = [Ticket::class => [Triage::class, 'onTicketAdd']];
+    // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
+    $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
+        Ticket::class       => [Triage::class, 'onTicketAdd'],
+        Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
+    ];
     $PLUGIN_HOOKS[Hooks::PRE_ITIL_INFO_SECTION]['halosis'] = [TriagePanel::class, 'display'];
 
     // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas
@@ -93,8 +102,12 @@ function plugin_init_halosis(): void
     // Halaman konfigurasi: ikon kunci pas di Setup › Plugins dan menu Setup › AI HaloSIS
     // (menu dibutuhkan Administrator yang tidak punya akses ke Setup › Plugins)
     if (Session::haveRight(Profile::RIGHT_CONFIG, UPDATE)) {
-        $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['halosis'] = 'front/config.form.php';
-        $PLUGIN_HOOKS[Hooks::MENU_TOADD]['halosis']  = ['config' => [ConfigMenu::class]];
+        $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['halosis']           = 'front/config.form.php';
+        $PLUGIN_HOOKS[Hooks::MENU_TOADD]['halosis']['config'] = [ConfigMenu::class];
+    }
+    // Dashboard kinerja AI: menu Bantuan › Kinerja AI
+    if (DashboardMenu::canViewDashboard()) {
+        $PLUGIN_HOOKS[Hooks::MENU_TOADD]['halosis']['helpdesk'] = [DashboardMenu::class];
     }
 }
 

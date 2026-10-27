@@ -559,3 +559,104 @@ msgstr "Bawaan (Operator Service Desk)"
 
 msgid "The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up."
 msgstr "Masalah pola insiden ditugaskan ke grup ini agar Operator mendapat notifikasi dan memutuskan tindak lanjut."
+
+# Dashboard kinerja AI (Fase 7)
+msgid "Team reassignment"
+msgid_plural "Team reassignments"
+msgstr[0] "Pemindahan tim"
+
+msgid "AI performance"
+msgstr "Kinerja AI"
+
+msgid "How officers use AI suggestions and how many employees are helped by the assistant, since %s."
+msgstr "Seberapa sering petugas memakai saran AI dan berapa pegawai terbantu asisten, sejak %s."
+
+msgid "Period"
+msgstr "Periode"
+
+msgid "%d weeks"
+msgstr "%d minggu"
+
+msgid "AI suggestions accepted as is"
+msgstr "Saran AI diterima apa adanya"
+
+msgid "of %d decided suggestions"
+msgstr "dari %d saran yang sudah diputuskan"
+
+msgid "No suggestion has been decided in this period yet."
+msgstr "Belum ada saran yang diputuskan pada periode ini."
+
+msgid "Modified by an officer"
+msgstr "Diubah petugas"
+
+msgid "%d suggestions corrected before being applied"
+msgstr "%d saran dikoreksi sebelum diterapkan"
+
+msgid "Rejected (manual triage)"
+msgstr "Ditolak (triase manual)"
+
+msgid "%d suggestions not used"
+msgstr "%d saran tidak dipakai"
+
+msgid "Moved to another team after triage"
+msgstr "Dipindah ke tim lain setelah triase"
+
+msgid "%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)"
+msgstr "%1$d dari %2$d tiket yang ditriase dengan AI dipindah ke grup lain (salah tim)"
+
+msgid "Decisions per week"
+msgstr "Keputusan per minggu"
+
+msgid "Stacked columns of accepted, modified and rejected suggestions per week"
+msgstr "Kolom bertumpuk saran diterima, diubah, dan ditolak per minggu"
+
+msgid "Week of %s"
+msgstr "Minggu %s"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Show as table"
+msgstr "Tampilkan sebagai tabel"
+
+msgid "Week"
+msgstr "Minggu"
+
+msgid "AI confidence vs officer decisions"
+msgstr "Keyakinan AI vs keputusan petugas"
+
+msgid "If the AI is well calibrated, suggestions above the threshold are accepted more often."
+msgstr "Bila AI terkalibrasi baik, saran di atas ambang lebih sering diterima."
+
+msgid "Decided"
+msgstr "Diputuskan"
+
+msgid "≥ %d%% (threshold)"
+msgstr "≥ %d%% (ambang)"
+
+msgid "< %d%% (needs manual review)"
+msgstr "< %d%% (perlu penilaian manual)"
+
+msgid "Employee chatbot"
+msgstr "Chatbot pegawai"
+
+msgid "Conversations"
+msgstr "Percakapan"
+
+msgid "Helped without a ticket"
+msgstr "Terbantu tanpa tiket"
+
+msgid "%d%% of conversations"
+msgstr "%d%% dari percakapan"
+
+msgid "Turned into a report"
+msgstr "Menjadi laporan"
+
+msgid "Average rating"
+msgstr "Rata-rata rating"
+
+msgid "%d ratings"
+msgstr "%d penilaian"
+
+msgid "Definitions: accepted = suggestion applied unchanged; modified = applied after an officer changed values (reason required); rejected = manual triage (reason required); moved to another team = an AI-triaged ticket later assigned to a different group; helped without a ticket = conversation marked solved by the employee."
+msgstr "Definisi: diterima = saran diterapkan tanpa perubahan; diubah = diterapkan setelah petugas mengubah nilai (alasan wajib); ditolak = triase manual (alasan wajib); dipindah ke tim lain = tiket yang ditriase dengan AI kemudian ditugaskan ke grup lain; terbantu tanpa tiket = percakapan yang ditandai selesai oleh pegawai."
