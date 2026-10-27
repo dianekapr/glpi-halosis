@@ -12,6 +12,7 @@
 
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\Profile;
 
 define('PLUGIN_HALOSIS_VERSION', '0.1.0');
@@ -59,8 +60,10 @@ function plugin_init_halosis(): void
     // Tab "HaloSIS" di form Profil untuk mengatur hak akses plugin
     Plugin::registerClass(Profile::class, ['addtabon' => [\Profile::class]]);
 
-    // Ikon kunci pas di daftar plugin → halaman konfigurasi (hanya untuk yang berhak)
+    // Halaman konfigurasi: ikon kunci pas di Setup › Plugins dan menu Setup › AI HaloSIS
+    // (menu dibutuhkan Administrator yang tidak punya akses ke Setup › Plugins)
     if (Session::haveRight(Profile::RIGHT_CONFIG, UPDATE)) {
         $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['halosis'] = 'front/config.form.php';
+        $PLUGIN_HOOKS[Hooks::MENU_TOADD]['halosis']  = ['config' => [ConfigMenu::class]];
     }
 }

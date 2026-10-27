@@ -10,33 +10,18 @@ use Session;
 
 /**
  * Hak akses plugin HaloSIS, diatur lewat tab "HaloSIS" di form Profil GLPI.
+ * Semua pengecekan akses di plugin memakai hak ini (Session::haveRight), bukan nama profil.
  */
 final class Profile extends CommonGLPI
 {
-    /** Membuka & menyimpan halaman konfigurasi plugin */
+    /** UPDATE = membuka & menyimpan halaman konfigurasi plugin */
     public const RIGHT_CONFIG = 'plugin_halosis_config';
     /** READ = melihat panel Saran AI di tiket, UPDATE = memutuskan Terima/Ubah/Tolak */
-    public const RIGHT_TRIAGE = 'plugin_halosis_triage';
+    public const RIGHT_TRIASE = 'plugin_halosis_triase';
+    /** READ = memakai chatbot self-service */
+    public const RIGHT_CHATBOT = 'plugin_halosis_chatbot';
     /** READ = melihat dashboard kinerja AI */
     public const RIGHT_DASHBOARD = 'plugin_halosis_dashboard';
-
-    /**
-     * Hak default saat instalasi, berdasarkan nama profil bawaan GLPI.
-     * Peran HaloSIS: Admin = Super-Admin, Operator = Hotliner, Manajemen = Observer.
-     */
-    private const DEFAULT_RIGHTS = [
-        'Super-Admin' => [
-            self::RIGHT_CONFIG    => UPDATE,
-            self::RIGHT_TRIAGE    => READ | UPDATE,
-            self::RIGHT_DASHBOARD => READ,
-        ],
-        'Hotliner' => [
-            self::RIGHT_TRIAGE => READ | UPDATE,
-        ],
-        'Observer' => [
-            self::RIGHT_DASHBOARD => READ,
-        ],
-    ];
 
     public static string $rightname = 'profile';
 
@@ -51,21 +36,26 @@ final class Profile extends CommonGLPI
     }
 
     /**
-     * Definisi baris untuk matriks hak akses (Profile::displayRightsChoiceMatrix).
+     * Definisi baris matriks hak akses (Profile::displayRightsChoiceMatrix).
+     * Profil Helpdesk hanya relevan dengan chatbot; profil standar dengan fitur petugas.
+     *
+     * @param string|null $interface 'helpdesk', 'central', atau null untuk semua
      */
-    public static function getAllRights(): array
+    public static function getAllRights(?string $interface = null): array
     {
-        return [
+        $helpdesk = [
             [
-                'itemtype' => Config::class,
-                'label'    => __('HaloSIS configuration', 'halosis'),
-                'field'    => self::RIGHT_CONFIG,
-                'rights'   => [UPDATE => __('Update')],
+                'itemtype' => self::class,
+                'label'    => __('Self-service chatbot', 'halosis'),
+                'field'    => self::RIGHT_CHATBOT,
+                'rights'   => [READ => __('Use')],
             ],
+        ];
+        $central = [
             [
                 'itemtype' => self::class,
                 'label'    => __('AI triage suggestions', 'halosis'),
-                'field'    => self::RIGHT_TRIAGE,
+                'field'    => self::RIGHT_TRIASE,
                 'rights'   => [
                     READ   => __('Read'),
                     UPDATE => __('Decide (accept / modify / reject)', 'halosis'),
@@ -77,12 +67,32 @@ final class Profile extends CommonGLPI
                 'field'    => self::RIGHT_DASHBOARD,
                 'rights'   => [READ => __('Read')],
             ],
+            [
+                'itemtype' => Config::class,
+                'label'    => __('HaloSIS configuration', 'halosis'),
+                'field'    => self::RIGHT_CONFIG,
+                'rights'   => [UPDATE => __('Update')],
+            ],
         ];
+
+        return match ($interface) {
+            'helpdesk' => $helpdesk,
+            'central'  => $central,
+            default    => array_merge($helpdesk, $central),
+        };
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function getRightNames(): array
+    {
+        return array_column(self::getAllRights(), 'field');
     }
 
     public function getTabNameForItem(CommonGLPI $item, $withtemplate = 0)
     {
-        if ($item instanceof CoreProfile && $item->getField('interface') === 'central') {
+        if ($item instanceof CoreProfile) {
             return self::createTabEntry(self::getTypeName());
         }
         return '';
@@ -100,7 +110,7 @@ final class Profile extends CommonGLPI
 
         echo '<form method="post" action="' . htmlescape(CoreProfile::getFormURL()) . '">';
         echo '<div class="spaced">';
-        $profile->displayRightsChoiceMatrix(self::getAllRights(), [
+        $profile->displayRightsChoiceMatrix(self::getAllRights($profile->fields['interface']), [
             'canedit' => $canedit,
             'title'   => __('HaloSIS AI module', 'halosis'),
         ]);
@@ -117,37 +127,32 @@ final class Profile extends CommonGLPI
     }
 
     /**
-     * Tambahkan hak plugin ke semua profil (nilai 0), lalu beri hak default ke profil bawaan.
-     * Hak yang sudah ada tidak diubah, supaya pengaturan admin tetap terjaga saat plugin diperbarui.
+     * Terapkan hak plugin ke semua profil.
+     *
+     * @param array<int, array<string, int>> $rights_by_profile Hak per ID profil; yang tidak disebut = 0
+     * @param bool                           $override          true = timpa semua hak plugin;
+     *                                                          false = hanya hak di $only_names
+     * @param string[]                       $only_names        Dipakai jika $override = false
      */
-    public static function install(): void
+    public static function applyRights(array $rights_by_profile, bool $override, array $only_names = []): void
     {
         global $DB;
 
-        $all_names = array_column(self::getAllRights(), 'field');
-        $existing  = array_column(iterator_to_array($DB->request([
-            'SELECT'   => ['name'],
-            'DISTINCT' => true,
-            'FROM'     => ProfileRight::getTable(),
-            'WHERE'    => ['name' => $all_names],
-        ])), 'name');
-        $new_names = array_values(array_diff($all_names, $existing));
-        if ($new_names === []) {
+        $names = $override ? self::getRightNames() : $only_names;
+        if ($names === []) {
             return;
         }
 
-        ProfileRight::addProfileRights($new_names);
-
-        foreach (self::DEFAULT_RIGHTS as $profile_name => $rights) {
-            $rights = array_intersect_key($rights, array_flip($new_names));
-            $profile = new CoreProfile();
-            if ($rights === [] || !$profile->getFromDBByCrit(['name' => $profile_name])) {
-                continue;
+        foreach ($DB->request(['SELECT' => ['id'], 'FROM' => CoreProfile::getTable()]) as $row) {
+            $profiles_id = (int) $row['id'];
+            $rights = [];
+            foreach ($names as $name) {
+                $rights[$name] = $rights_by_profile[$profiles_id][$name] ?? 0;
             }
-            ProfileRight::updateProfileRights($profile->getID(), $rights);
+            ProfileRight::updateProfileRights($profiles_id, $rights);
 
             // Berlaku langsung untuk sesi yang sedang aktif dengan profil ini (tanpa perlu login ulang)
-            if (($_SESSION['glpiactiveprofile']['id'] ?? null) == $profile->getID()) {
+            if (($_SESSION['glpiactiveprofile']['id'] ?? null) == $profiles_id) {
                 foreach ($rights as $name => $value) {
                     $_SESSION['glpiactiveprofile'][$name] = $value;
                 }
@@ -155,9 +160,46 @@ final class Profile extends CommonGLPI
         }
     }
 
+    /**
+     * Daftarkan hak plugin di semua profil dan beri nilai default untuk hak yang baru ditambahkan.
+     * Hak yang sudah ada tidak diubah, supaya pengaturan admin tetap terjaga saat plugin diperbarui.
+     * Hak plugin lama yang tidak dipakai lagi dihapus.
+     */
+    public static function install(): void
+    {
+        global $DB;
+
+        $all_names = self::getRightNames();
+        $existing  = array_column(iterator_to_array($DB->request([
+            'SELECT'   => ['name'],
+            'DISTINCT' => true,
+            'FROM'     => ProfileRight::getTable(),
+            'WHERE'    => ['name' => ['LIKE', 'plugin_halosis_%']],
+        ])), 'name');
+
+        $obsolete = array_values(array_diff($existing, $all_names));
+        if ($obsolete !== []) {
+            ProfileRight::deleteProfileRights($obsolete);
+        }
+
+        $new_names = array_values(array_diff($all_names, $existing));
+        if ($new_names !== []) {
+            ProfileRight::addProfileRights($new_names);
+            self::applyRights(Roles::getPluginRights(), false, $new_names);
+        }
+    }
+
     public static function uninstall(): void
     {
-        $names = array_column(self::getAllRights(), 'field');
+        global $DB;
+
+        // Termasuk hak dari versi plugin sebelumnya yang mungkin masih tersisa
+        $names = array_column(iterator_to_array($DB->request([
+            'SELECT'   => ['name'],
+            'DISTINCT' => true,
+            'FROM'     => ProfileRight::getTable(),
+            'WHERE'    => ['name' => ['LIKE', 'plugin_halosis_%']],
+        ])), 'name');
         ProfileRight::deleteProfileRights($names);
         foreach ($names as $name) {
             unset($_SESSION['glpiactiveprofile'][$name]);

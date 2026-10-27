@@ -31,6 +31,12 @@ msgstr "Memutuskan (terima / ubah / tolak)"
 msgid "AI performance dashboard"
 msgstr "Dashboard kinerja AI"
 
+msgid "Self-service chatbot"
+msgstr "Chatbot self-service"
+
+msgid "HaloSIS AI"
+msgstr "AI HaloSIS"
+
 msgid "Anthropic (Claude)"
 msgstr "Anthropic (Claude)"
 

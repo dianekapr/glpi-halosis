@@ -8,6 +8,7 @@
 use Glpi\Application\View\TemplateRenderer;
 use Glpi\Security\ReAuth\ReAuthManager;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\Profile;
 
 Session::checkRight(Profile::RIGHT_CONFIG, UPDATE);
@@ -26,7 +27,7 @@ if (isset($_POST['update'])) {
     Html::back();
 }
 
-Html::header(__('HaloSIS configuration', 'halosis'), '', 'config', 'plugin');
+Html::header(__('HaloSIS configuration', 'halosis'), '', 'config', ConfigMenu::class);
 
 TemplateRenderer::getInstance()->display('@halosis/config.html.twig', [
     'config'         => Config::getFormValues(),
