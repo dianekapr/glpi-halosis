@@ -21,3 +21,345 @@
 .halosis-config [data-halosis-threshold-output] {
     min-width: 4.5rem;
 }
+
+/* Panel Saran AI di form tiket */
+.halosis-triase .accordion-button .ti-sparkles {
+    color: var(--halosis-primary);
+}
+
+/* Panel isian tiket sempit: badge status boleh turun ke baris berikutnya, tidak terpotong */
+.halosis-triase .accordion-button {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+}
+
+.halosis-triase .accordion-button .item-title,
+.halosis-triase .accordion-button .badge {
+    white-space: nowrap;
+    overflow: visible;
+    max-width: none;
+}
+
+.halosis-triase .halosis-meter .progress {
+    height: 0.5rem;
+    overflow: visible;
+}
+
+.halosis-triase .halosis-meter-ok {
+    background-color: var(--halosis-primary);
+}
+
+.halosis-triase .halosis-meter-low {
+    background-color: var(--halosis-accent);
+}
+
+/* Penanda ambang keyakinan di atas meter */
+.halosis-triase .halosis-meter-threshold {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: var(--halosis-text);
+    opacity: 0.6;
+}
+
+/* Tanda "Perlu penilaian manual": accent dengan teks gelap demi kontras */
+.halosis-triase .halosis-review {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+    font-size: 0.85rem;
+}
+
+.halosis-triase .halosis-values {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.15rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.halosis-triase .halosis-values dt {
+    font-weight: 500;
+    color: var(--tblr-secondary);
+}
+
+.halosis-triase .halosis-values dd {
+    margin: 0;
+}
+
+.halosis-triase .halosis-explanation {
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--halosis-secondary);
+    background: var(--halosis-soft);
+    color: var(--halosis-text);
+}
+
+.halosis-triase .halosis-status-pending {
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+}
+
+.halosis-triase .halosis-status-accepted,
+.halosis-triase .halosis-status-modified {
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.halosis-triase .halosis-status-rejected {
+    background: var(--tblr-danger);
+    color: #fff;
+}
+
+.halosis-triase .halosis-form {
+    padding: 0.6rem;
+    border: 1px solid var(--tblr-border-color);
+    border-radius: 4px;
+}
+
+/* Widget chatbot self-service (antarmuka Helpdesk) */
+.halosis-chat {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1060;
+    font-size: 0.9rem;
+    color: var(--halosis-text);
+}
+
+.halosis-chat-launcher {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--halosis-primary);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgb(21 94 99 / 35%);
+}
+
+.halosis-chat-launcher .ti {
+    font-size: 1.4rem;
+}
+
+.halosis-chat-launcher:hover,
+.halosis-chat-launcher:focus-visible {
+    background: color-mix(in srgb, var(--halosis-primary), black 12%);
+}
+
+.halosis-chat-panel {
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    height: min(600px, calc(100vh - 40px));
+    overflow: hidden;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgb(32 51 50 / 25%);
+}
+
+.halosis-chat-panel[hidden] {
+    display: none;
+}
+
+.halosis-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 0.9rem;
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.halosis-chat-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--halosis-primary);
+    font-weight: 800;
+}
+
+.halosis-chat-avatar span {
+    color: var(--halosis-accent);
+}
+
+.halosis-chat-title {
+    font-weight: 700;
+}
+
+.halosis-chat-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.halosis-chat-icon {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 1.2rem;
+    padding: 0.2rem;
+}
+
+/* Peringatan data pribadi: accent dengan teks gelap demi kontras */
+.halosis-chat-warning {
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-start;
+    padding: 0.5rem 0.9rem;
+    background: color-mix(in srgb, var(--halosis-accent), white 70%);
+    color: var(--halosis-text);
+    font-size: 0.8rem;
+}
+
+.halosis-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.9rem;
+    background: #f5f8f6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.halosis-chat-msg {
+    max-width: 88%;
+    padding: 0.55rem 0.75rem;
+    border-radius: 12px;
+    white-space: pre-line;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.halosis-chat-msg-assistant {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid var(--halosis-soft);
+    border-bottom-left-radius: 4px;
+}
+
+.halosis-chat-msg-user {
+    align-self: flex-end;
+    background: var(--halosis-primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.halosis-chat-msg-system {
+    align-self: center;
+    max-width: 100%;
+    background: var(--halosis-soft);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.halosis-chat-notfound {
+    border-left: 3px solid var(--halosis-accent);
+}
+
+.halosis-chat-thinking {
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.halosis-chat-sources {
+    margin-top: 0.4rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed var(--halosis-soft);
+    font-size: 0.8rem;
+    white-space: normal;
+}
+
+.halosis-chat-sources a {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+.halosis-chat-actions,
+.halosis-chat-step {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.6rem 0.9rem;
+    border-top: 1px solid var(--halosis-soft);
+}
+
+.halosis-chat-step {
+    display: block;
+}
+
+.halosis-chat-actions[hidden],
+.halosis-chat-step[hidden] {
+    display: none;
+}
+
+.halosis-chat-stars {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.halosis-chat-star {
+    border: 0;
+    background: transparent;
+    font-size: 1.5rem;
+    color: #b7c4c1;
+    padding: 0;
+}
+
+.halosis-chat-star.active,
+.halosis-chat-star:hover {
+    color: var(--halosis-accent);
+}
+
+.halosis-chat-input {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.6rem 0.9rem;
+    border-top: 1px solid var(--halosis-soft);
+}
+
+.halosis-chat-input textarea {
+    flex: 1;
+    resize: none;
+    border: 1px solid var(--halosis-soft);
+    border-radius: 10px;
+    padding: 0.5rem 0.65rem;
+    max-height: 120px;
+}
+
+.halosis-chat-send {
+    border: 0;
+    border-radius: 10px;
+    width: 42px;
+    background: var(--halosis-primary);
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.halosis-chat-send:disabled,
+.halosis-chat-input textarea:disabled {
+    opacity: 0.5;
+}
+
+@media (max-width: 576px) {
+    .halosis-chat {
+        right: 12px;
+        bottom: 12px;
+    }
+
+    .halosis-chat-panel {
+        position: fixed;
+        inset: 0;
+        width: auto;
+        height: auto;
+        border-radius: 0;
+    }
+}

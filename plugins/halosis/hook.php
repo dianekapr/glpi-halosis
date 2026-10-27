@@ -55,6 +55,22 @@ function plugin_halosis_tables(): array
             KEY `action` (`action`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Percakapan chatbot self-service pegawai: transkrip, hasil (terselesaikan/jadi tiket), rating.
+        'glpi_plugin_halosis_chats' => "
+            `users_id` int {$sign} NOT NULL DEFAULT '0',
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Tiket yang dibuat dari percakapan',
+            `status` varchar(20) NOT NULL DEFAULT 'open' COMMENT 'open|resolved|ticket',
+            `rating` tinyint unsigned DEFAULT NULL COMMENT '1-5, saat masalah terselesaikan',
+            `message_count` int NOT NULL DEFAULT '0',
+            `answered_count` int NOT NULL DEFAULT '0' COMMENT 'Jawaban yang bersumber dari artikel KB',
+            `transcript` longtext COMMENT 'JSON pesan pengguna & asisten (data pribadi sudah disamarkan)',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            `date_mod` timestamp NULL DEFAULT NULL,
+            KEY `users_id` (`users_id`),
+            KEY `tickets_id` (`tickets_id`),
+            KEY `status` (`status`),
+            KEY `date_creation` (`date_creation`)
+        ",
     ];
 }
 

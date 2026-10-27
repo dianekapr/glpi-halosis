@@ -35,6 +35,16 @@
                     </div>
                 {% endif %}
 
+                {% if sdk_missing %}
+                    <div class="alert alert-warning d-flex gap-2" role="status">
+                        <i class="ti ti-package-off fs-2" aria-hidden="true"></i>
+                        <div>
+                            <strong>{{ __('Anthropic SDK is not installed', 'halosis') }}</strong><br>
+                            {{ __('Demo mode works without it. To call Claude, run composer install in the plugin folder (see README).', 'halosis') }}
+                        </div>
+                    </div>
+                {% endif %}
+
                 {{ fields.largeTitle(__('AI provider', 'halosis'), 'ti ti-cpu', true) }}
                 <div class="row">
                     {{ fields.dropdownArrayField('ai_provider', config.ai_provider, providers, __('Provider', 'halosis'), field_opts) }}

@@ -1,0 +1,168 @@
+{#
+ # Panel "Saran AI" di form tiket.
+ # Panel ini berada DI DALAM form utama tiket: semua tombol type="button" dan input tanpa atribut name,
+ # supaya tidak ikut terkirim saat petugas menekan Simpan tiket. Aksi dikirim lewat public/js/triase.js.
+ # data-track-changes menonaktifkan peringatan "perubahan belum disimpan" GLPI untuk field panel ini.
+ #}
+{% set status_labels = {
+    'pending':  __('Awaiting decision', 'halosis'),
+    'accepted': __('Accepted', 'halosis'),
+    'modified': __('Modified', 'halosis'),
+    'rejected': __('Rejected', 'halosis'),
+} %}
+
+<section class="accordion-item halosis-triase" aria-label="{{ __('AI suggestion', 'halosis') }}"
+         data-halosis-triase
+         data-ajax-url="{{ ajax_url }}"
+         data-ticket-id="{{ ticket_id }}"
+         data-suggestion-id="{{ suggestion.id ?? '' }}"
+         data-min-reason="{{ min_reason }}"
+         data-can-change-priority="{{ options.can_change_priority ? 1 : 0 }}"
+         data-priority-matrix="{{ options.priority_matrix|json_encode }}">
+    <div class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#halosis-triase-body" aria-expanded="true">
+            <i class="ti ti-sparkles item-icon" aria-hidden="true"></i>
+            <span class="item-title">{{ __('AI suggestion', 'halosis') }}</span>
+            {% if suggestion is not null %}
+                <span class="badge halosis-status halosis-status-{{ suggestion.status }} ms-2">{{ status_labels[suggestion.status] ?? suggestion.status }}</span>
+            {% endif %}
+            {% if suggestion.is_demo|default(false) %}
+                <span class="badge bg-secondary ms-1" title="{{ __('Demo mode: deterministic sample suggestion', 'halosis') }}">{{ __('Demo', 'halosis') }}</span>
+            {% endif %}
+        </button>
+    </div>
+
+    <div id="halosis-triase-body" class="accordion-collapse collapse show">
+        <div class="accordion-body">
+            <div class="alert alert-danger py-2 d-none" role="alert" data-halosis-error></div>
+
+            {% if suggestion is null %}
+                <p class="text-secondary mb-2">{{ __('No AI suggestion for this ticket yet.', 'halosis') }}</p>
+                {% if can_decide %}
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-action="generate">
+                        <i class="ti ti-sparkles" aria-hidden="true"></i>
+                        <span>{{ __('Create AI suggestion', 'halosis') }}</span>
+                    </button>
+                {% endif %}
+            {% else %}
+                {# Meter keyakinan #}
+                <div class="halosis-meter mb-2">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ __('Confidence', 'halosis') }}</span>
+                        <strong>{{ suggestion.confidence }}%</strong>
+                    </div>
+                    <div class="progress progress-sm position-relative" role="meter" aria-valuemin="0" aria-valuemax="100"
+                         aria-valuenow="{{ suggestion.confidence }}" aria-label="{{ __('Confidence', 'halosis') }}">
+                        <div class="progress-bar {{ needs_review ? 'halosis-meter-low' : 'halosis-meter-ok' }}" style="width: {{ suggestion.confidence }}%"></div>
+                        <span class="halosis-meter-threshold" style="left: {{ threshold }}%" title="{{ __('Threshold', 'halosis') }} {{ threshold }}%"></span>
+                    </div>
+                </div>
+
+                {% if needs_review %}
+                    <div class="halosis-review mb-2" role="status">
+                        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+                        <span><strong>{{ __('Needs manual review', 'halosis') }}</strong> · {{ __('confidence below the %d%% threshold', 'halosis')|format(threshold) }}</span>
+                    </div>
+                {% endif %}
+
+                <dl class="halosis-values mb-2">
+                    <dt>{{ __('Category') }}</dt><dd>{{ values.category }}</dd>
+                    <dt>{{ __('Impact') }}</dt><dd>{{ values.impact }}</dd>
+                    <dt>{{ __('Urgency') }}</dt><dd>{{ values.urgency }}</dd>
+                    <dt>{{ __('Priority') }}</dt><dd>{{ values.priority }}</dd>
+                    <dt>{{ __('Group') }}</dt><dd>{{ values.group }}</dd>
+                </dl>
+
+                {% if suggestion.explanation %}
+                    <p class="small mb-1 halosis-explanation">{{ suggestion.explanation }}</p>
+                {% endif %}
+                <p class="small text-secondary mb-2">{{ __('Model', 'halosis') }}: {{ suggestion.model }} · {{ suggestion.date_creation|formatted_datetime }}</p>
+
+                {% if suggestion.status == 'pending' and can_decide %}
+                    <div class="d-flex flex-wrap gap-1" data-halosis-actions>
+                        <button type="button" class="btn btn-sm btn-primary" data-action="accept">
+                            <i class="ti ti-check" aria-hidden="true"></i><span>{{ __('Accept', 'halosis') }}</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="show-modify" aria-expanded="false">
+                            <i class="ti ti-pencil" aria-hidden="true"></i><span>{{ __('Modify', 'halosis') }}</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-action="show-reject" aria-expanded="false">
+                            <i class="ti ti-x" aria-hidden="true"></i><span>{{ __('Reject', 'halosis') }}</span>
+                        </button>
+                    </div>
+
+                    {# Form Ubah: nilai final + alasan wajib #}
+                    <div class="halosis-form mt-2 d-none" data-halosis-section="modify">
+                        <label class="form-label small mb-1" for="halosis-cat">{{ __('Category') }}</label>
+                        <select data-track-changes="" class="form-select form-select-sm mb-2" id="halosis-cat" data-field="itilcategories_id">
+                            <option value="0">-----</option>
+                            {% for id, name in options.categories %}
+                                <option value="{{ id }}" {{ id == suggestion.itilcategories_id ? 'selected' }}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="row g-2">
+                            {% for field, label in {'impact': __('Impact'), 'urgency': __('Urgency')} %}
+                                <div class="col-6">
+                                    <label class="form-label small mb-1" for="halosis-{{ field }}">{{ label }}</label>
+                                    <select data-track-changes="" class="form-select form-select-sm" id="halosis-{{ field }}" data-field="{{ field }}">
+                                        {% for value, name in options[field] %}
+                                            <option value="{{ value }}" {{ value == suggestion[field] ? 'selected' }}>{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <label class="form-label small mb-1 mt-2" for="halosis-priority">{{ __('Priority') }}</label>
+                        <select data-track-changes="" class="form-select form-select-sm mb-1" id="halosis-priority" data-field="priority" {{ options.can_change_priority ? '' : 'disabled' }}>
+                            {% for value, name in options.priority %}
+                                <option value="{{ value }}" {{ value == suggestion.priority ? 'selected' }}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not options.can_change_priority %}
+                            <div class="form-hint small text-secondary mb-2">{{ __('Calculated from urgency and impact.', 'halosis') }}</div>
+                        {% endif %}
+                        <label class="form-label small mb-1 mt-1" for="halosis-group">{{ __('Group') }}</label>
+                        <select data-track-changes="" class="form-select form-select-sm mb-2" id="halosis-group" data-field="groups_id">
+                            <option value="0">-----</option>
+                            {% for id, name in options.groups %}
+                                <option value="{{ id }}" {{ id == suggestion.groups_id ? 'selected' }}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="form-label small mb-1 required" for="halosis-modify-reason">{{ __('Reason (required)', 'halosis') }}</label>
+                        <textarea data-track-changes="false" class="form-control form-control-sm mb-2" id="halosis-modify-reason" rows="2" data-reason
+                                  placeholder="{{ __('Why are you changing the suggestion?', 'halosis') }}"></textarea>
+                        <button type="button" class="btn btn-sm btn-primary" data-action="modify" disabled>
+                            {{ __('Apply changes', 'halosis') }}
+                        </button>
+                    </div>
+
+                    {# Form Tolak: alasan wajib, triase dilakukan manual di field tiket #}
+                    <div class="halosis-form mt-2 d-none" data-halosis-section="reject">
+                        <label class="form-label small mb-1 required" for="halosis-reject-reason">{{ __('Reason (required)', 'halosis') }}</label>
+                        <textarea data-track-changes="false" class="form-control form-control-sm mb-2" id="halosis-reject-reason" rows="2" data-reason
+                                  placeholder="{{ __('Why is the suggestion wrong?', 'halosis') }}"></textarea>
+                        <button type="button" class="btn btn-sm btn-danger" data-action="reject" disabled>
+                            {{ __('Reject & triage manually', 'halosis') }}
+                        </button>
+                        <div class="form-hint small text-secondary mt-1">{{ __('Ticket fields are not changed. Fill them in manually below.', 'halosis') }}</div>
+                    </div>
+                {% elseif suggestion.status == 'pending' %}
+                    <p class="small text-secondary mb-0">{{ __('Awaiting decision by an Operator.', 'halosis') }}</p>
+                {% elseif decision is not null %}
+                    <div class="halosis-decision small">
+                        <div>
+                            <strong>{{ status_labels[suggestion.status] }}</strong>
+                            {{ __('by %s', 'halosis')|format(decision.user) }} · {{ decision.date|formatted_datetime }}
+                        </div>
+                        {% if decision.reason %}
+                            <div class="mt-1">{{ __('Reason', 'halosis') }}: {{ decision.reason }}</div>
+                        {% endif %}
+                        {% if decision.action == 'modify' and decision.final %}
+                            <div class="mt-1 text-secondary">{{ __('Final', 'halosis') }}: {{ decision.final }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</section>

@@ -118,3 +118,281 @@ msgstr "Saran dengan keyakinan di bawah ambang ini diberi tanda “Perlu penilai
 
 msgid "AI features"
 msgstr "Fitur AI"
+
+# Saran triase AI (Fase 4)
+msgid "AI suggestion"
+msgid_plural "AI suggestions"
+msgstr[0] "Saran AI"
+
+msgid "AI decision"
+msgid_plural "AI decisions"
+msgstr[0] "Keputusan AI"
+
+msgid "Awaiting decision"
+msgstr "Menunggu keputusan"
+
+msgid "Accepted"
+msgstr "Diterima"
+
+msgid "Modified"
+msgstr "Diubah"
+
+msgid "Rejected"
+msgstr "Ditolak"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Demo mode: deterministic sample suggestion"
+msgstr "Mode demo: saran contoh yang deterministik"
+
+msgid "No AI suggestion for this ticket yet."
+msgstr "Belum ada saran AI untuk tiket ini."
+
+msgid "Create AI suggestion"
+msgstr "Buat saran AI"
+
+msgid "Confidence"
+msgstr "Keyakinan"
+
+msgid "Threshold"
+msgstr "Ambang"
+
+msgid "Needs manual review"
+msgstr "Perlu penilaian manual"
+
+msgid "confidence below the %d%% threshold"
+msgstr "keyakinan di bawah ambang %d%%"
+
+msgid "Accept"
+msgstr "Terima"
+
+msgid "Modify"
+msgstr "Ubah"
+
+msgid "Reject"
+msgstr "Tolak"
+
+msgid "Calculated from urgency and impact."
+msgstr "Dihitung dari urgensi dan dampak."
+
+msgid "Reason (required)"
+msgstr "Alasan (wajib)"
+
+msgid "Why are you changing the suggestion?"
+msgstr "Mengapa saran ini diubah?"
+
+msgid "Apply changes"
+msgstr "Terapkan perubahan"
+
+msgid "Why is the suggestion wrong?"
+msgstr "Mengapa saran ini salah?"
+
+msgid "Reject & triage manually"
+msgstr "Tolak & triase manual"
+
+msgid "Ticket fields are not changed. Fill them in manually below."
+msgstr "Field tiket tidak diubah. Isi secara manual di bawah."
+
+msgid "Awaiting decision by an Operator."
+msgstr "Menunggu keputusan Operator."
+
+msgid "by %s"
+msgstr "oleh %s"
+
+msgid "Reason"
+msgstr "Alasan"
+
+msgid "Final"
+msgstr "Final"
+
+msgid "You are not allowed to decide on AI suggestions."
+msgstr "Anda tidak berhak memutuskan saran AI."
+
+msgid "This suggestion has already been decided."
+msgstr "Saran ini sudah diputuskan."
+
+msgid "You are not allowed to update this ticket."
+msgstr "Anda tidak berhak mengubah tiket ini."
+
+msgid "A reason of at least %d characters is required."
+msgstr "Alasan wajib diisi, minimal %d karakter."
+
+msgid "The modified values are not valid."
+msgstr "Nilai yang diubah tidak valid."
+
+msgid "The values are identical to the suggestion. Use Accept instead."
+msgstr "Nilainya sama dengan saran. Gunakan Terima."
+
+msgid "Unknown action."
+msgstr "Aksi tidak dikenal."
+
+msgid "The ticket could not be updated."
+msgstr "Tiket gagal diperbarui."
+
+msgid "AI suggestion accepted (confidence %d%%). %s"
+msgstr "Saran AI diterima (keyakinan %d%%). %s"
+
+msgid "AI suggestion modified (confidence %d%%). Suggested: %s. Final: %s. Reason: %s"
+msgstr "Saran AI diubah (keyakinan %d%%). Saran: %s. Final: %s. Alasan: %s"
+
+msgid "AI suggestion rejected, manual triage (confidence %d%%). Suggested: %s. Reason: %s"
+msgstr "Saran AI ditolak, triase manual (keyakinan %d%%). Saran: %s. Alasan: %s"
+
+msgid "AI suggestion created."
+msgstr "Saran AI dibuat."
+
+msgid "AI suggestion accepted and applied to the ticket."
+msgstr "Saran AI diterima dan diterapkan ke tiket."
+
+msgid "Modified values applied to the ticket."
+msgstr "Nilai yang diubah diterapkan ke tiket."
+
+msgid "AI suggestion rejected. Please triage the ticket manually."
+msgstr "Saran AI ditolak. Silakan triase tiket secara manual."
+
+msgid "Suggestion not found."
+msgstr "Saran tidak ditemukan."
+
+msgid "The AI could not produce a suggestion. The ticket is unchanged; check files/_log/halosis.log."
+msgstr "AI belum bisa memberi saran. Tiket tidak berubah; periksa files/_log/halosis.log."
+
+msgid "Anthropic SDK is not installed"
+msgstr "SDK Anthropic belum terpasang"
+
+msgid "Demo mode works without it. To call Claude, run composer install in the plugin folder (see README)."
+msgstr "Mode demo tetap berjalan tanpanya. Untuk memanggil Claude, jalankan composer install di folder plugin (lihat README)."
+
+# Chatbot self-service (Fase 5)
+msgid "Chat"
+msgid_plural "Chats"
+msgstr[0] "Percakapan"
+
+msgid "HaloSIS Assistant"
+msgstr "Asisten HaloSIS"
+
+msgid "Ask the assistant"
+msgstr "Tanya asisten"
+
+msgid "Answers from Help Center articles"
+msgstr "Jawaban dari artikel Pusat Bantuan"
+
+msgid "New conversation"
+msgstr "Percakapan baru"
+
+msgid "Close"
+msgstr "Tutup"
+
+msgid "Do not send passwords or personal data (NIK, NIP, phone number)."
+msgstr "Jangan kirim kata sandi atau data pribadi (NIK, NIP, nomor HP)."
+
+msgid "Hello %s!"
+msgstr "Halo %s!"
+
+msgid "Hello!"
+msgstr "Halo!"
+
+msgid "Describe your IT problem and I will look for the answer in the Help Center."
+msgstr "Ceritakan kendala TI Anda, saya carikan jawabannya di Pusat Bantuan."
+
+msgid "Problem solved"
+msgstr "Masalah terselesaikan"
+
+msgid "Create report"
+msgstr "Buat laporan"
+
+msgid "How helpful was the assistant?"
+msgstr "Seberapa membantu asisten ini?"
+
+msgid "Rating"
+msgstr "Penilaian"
+
+msgid "Report title"
+msgstr "Judul laporan"
+
+msgid "The conversation summary becomes the report description."
+msgstr "Ringkasan percakapan menjadi deskripsi laporan."
+
+msgid "Send report"
+msgstr "Kirim laporan"
+
+msgid "Type your question…"
+msgstr "Ketik pertanyaan Anda…"
+
+msgid "Your question"
+msgstr "Pertanyaan Anda"
+
+msgid "Send"
+msgstr "Kirim"
+
+msgid "Sources:"
+msgstr "Sumber:"
+
+msgid "Searching the Help Center…"
+msgstr "Mencari di Pusat Bantuan…"
+
+msgid "Personal data in your message was hidden before processing."
+msgstr "Data pribadi di pesan Anda disamarkan sebelum diproses."
+
+msgid "This conversation has ended. Click the refresh icon to start a new one."
+msgstr "Percakapan ini sudah selesai. Klik ikon muat ulang untuk memulai percakapan baru."
+
+msgid "Open report"
+msgstr "Buka laporan"
+
+msgid "Something went wrong. Please try again."
+msgstr "Terjadi kesalahan. Silakan coba lagi."
+
+msgid "Please type a question."
+msgstr "Silakan ketik pertanyaan."
+
+msgid "This conversation has ended. Start a new one."
+msgstr "Percakapan ini sudah selesai. Mulai percakapan baru."
+
+msgid "This conversation is too long. Create a report or start a new one."
+msgstr "Percakapan terlalu panjang. Buat laporan atau mulai percakapan baru."
+
+msgid "According to the article “%s”:"
+msgstr "Menurut artikel “%s”:"
+
+msgid "Sorry, I have not found an answer in the Help Center yet. Try other words, or click “Create report” so an officer can help you."
+msgstr "Maaf, saya belum menemukan jawabannya di Pusat Bantuan. Coba dengan kata lain, atau klik “Buat laporan” agar petugas membantu Anda."
+
+msgid "Choose a rating from 1 to 5."
+msgstr "Pilih penilaian 1 sampai 5."
+
+msgid "You are not allowed to create tickets."
+msgstr "Anda tidak berhak membuat tiket."
+
+msgid "The report title must be at least 5 characters."
+msgstr "Judul laporan minimal 5 karakter."
+
+msgid "The report could not be created."
+msgstr "Laporan gagal dibuat."
+
+msgid "Employee"
+msgstr "Pegawai"
+
+msgid "Assistant"
+msgstr "Asisten"
+
+msgid "source"
+msgstr "sumber"
+
+msgid "Report created from a conversation with the HaloSIS Assistant."
+msgstr "Laporan dibuat dari percakapan dengan Asisten HaloSIS."
+
+msgid "Conversation summary:"
+msgstr "Ringkasan percakapan:"
+
+msgid "The chatbot is not available for your account."
+msgstr "Chatbot tidak tersedia untuk akun Anda."
+
+msgid "Conversation not found."
+msgstr "Percakapan tidak ditemukan."
+
+msgid "Thank you! Glad your problem is solved."
+msgstr "Terima kasih! Senang masalah Anda terselesaikan."
+
+msgid "Report #%d has been created. An officer will follow it up."
+msgstr "Laporan #%d sudah dibuat. Petugas akan menindaklanjutinya."

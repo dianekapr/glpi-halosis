@@ -7,6 +7,7 @@
 
 use Glpi\Application\View\TemplateRenderer;
 use Glpi\Security\ReAuth\ReAuthManager;
+use GlpiPlugin\Halosis\Ai\Client;
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\Profile;
@@ -34,6 +35,7 @@ TemplateRenderer::getInstance()->display('@halosis/config.html.twig', [
     'providers'      => Config::getProviders(),
     'features'       => Config::getFeatureLabels(),
     'is_demo'        => Config::isDemoMode(),
+    'sdk_missing'    => !Client::isSdkInstalled(),
     'plugin_version' => PLUGIN_HALOSIS_VERSION,
 ]);
 echo Html::script('/plugins/halosis/js/config.js');

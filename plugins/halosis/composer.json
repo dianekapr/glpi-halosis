@@ -1,0 +1,34 @@
+{
+    "name": "halosis/glpi-plugin-halosis",
+    "description": "Plugin GLPI HaloSIS: modul AI dengan human-in-the-loop",
+    "license": "GPL-3.0-or-later",
+    "type": "glpi-plugin",
+    "require": {
+        "php": ">=8.2",
+        "anthropic-ai/sdk": "^1.3"
+    },
+    "replace": {
+        "guzzlehttp/guzzle": "*",
+        "guzzlehttp/promises": "*",
+        "guzzlehttp/psr7": "*",
+        "psr/http-client": "*",
+        "psr/http-factory": "*",
+        "psr/http-message": "*",
+        "ralouphie/getallheaders": "*",
+        "symfony/deprecation-contracts": "*"
+    },
+    "provide": {
+        "psr/http-client-implementation": "1.0",
+        "psr/http-factory-implementation": "1.0",
+        "psr/http-message-implementation": "1.0"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "platform": {
+            "php": "8.2.0"
+        },
+        "allow-plugins": {
+            "php-http/discovery": false
+        }
+    }
+}
