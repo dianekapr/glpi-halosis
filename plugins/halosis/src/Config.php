@@ -29,6 +29,10 @@ final class Config
         'ai_model'         => 'claude-opus-5-5',
         'ai_timeout'       => 20,
         'triage_threshold' => 70,
+        // Deteksi pola insiden: minimal N tiket mirip dalam jendela waktu (menit); 0 = grup Operator bawaan
+        'pattern_min_tickets' => 10,
+        'pattern_window'      => 60,
+        'pattern_group_id'    => 0,
         'feature_triage'    => 1,
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
@@ -148,6 +152,11 @@ final class Config
 
         $values['ai_timeout']       = max(5, min(120, (int) ($input['ai_timeout'] ?? self::DEFAULTS['ai_timeout'])));
         $values['triage_threshold'] = max(0, min(100, (int) ($input['triage_threshold'] ?? self::DEFAULTS['triage_threshold'])));
+
+        $values['pattern_min_tickets'] = max(2, min(500, (int) ($input['pattern_min_tickets'] ?? self::DEFAULTS['pattern_min_tickets'])));
+        $values['pattern_window']      = max(15, min(1440, (int) ($input['pattern_window'] ?? self::DEFAULTS['pattern_window'])));
+        $group_id = (int) ($input['pattern_group_id'] ?? 0);
+        $values['pattern_group_id'] = $group_id > 0 && (new \Group())->getFromDB($group_id) ? $group_id : 0;
 
         foreach (self::FEATURES as $feature) {
             $values['feature_' . $feature] = (int) !empty($input['feature_' . $feature]);

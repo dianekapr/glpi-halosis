@@ -55,6 +55,7 @@ final class TriagePanel
 
         TemplateRenderer::getInstance()->display('@halosis/triase_panel.html.twig', [
             'ticket_id'   => $ticket->getID(),
+            'pattern'     => self::pattern($ticket->getID()),
             'suggestion'  => $suggestion?->fields,
             'values'      => $suggestion !== null ? self::describe($suggestion) : null,
             'needs_review' => $suggestion?->needsManualReview() ?? false,
@@ -74,6 +75,18 @@ final class TriagePanel
                 'priority_matrix'     => $CFG_GLPI['priority_matrix'] ?? [],
             ],
         ]);
+    }
+
+    /**
+     * Pola insiden (Problem buatan HaloSIS) yang menaungi tiket ini, dengan URL-nya.
+     */
+    private static function pattern(int $tickets_id): ?array
+    {
+        $pattern = PatternDetector::getPatternForTicket($tickets_id);
+        if ($pattern !== null) {
+            $pattern['url'] = \Problem::getFormURLWithID($pattern['problems_id']);
+        }
+        return $pattern;
     }
 
     /**

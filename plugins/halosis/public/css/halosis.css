@@ -907,3 +907,57 @@
         border-radius: 0;
     }
 }
+
+/* =====================================================================================
+ * Pola insiden: banner beranda petugas & catatan di panel Saran AI
+ * ===================================================================================== */
+.halosis-pattern-banner {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid color-mix(in srgb, var(--halosis-accent), transparent 30%);
+    border-left: 4px solid var(--halosis-accent);
+    border-radius: 12px;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-text);
+}
+
+.halosis-pattern-banner ul {
+    margin: 0.3rem 0;
+    padding-left: 1.1rem;
+}
+
+.halosis-pattern-banner a {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+.halosis-pattern-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--halosis-accent);
+    color: var(--halosis-text);
+    font-size: 1.2rem;
+}
+
+.halosis-triase .halosis-pattern-note {
+    display: flex;
+    gap: 0.4rem;
+    align-items: flex-start;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-text);
+    font-size: 0.82rem;
+}
+
+.halosis-triase .halosis-pattern-note a {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}

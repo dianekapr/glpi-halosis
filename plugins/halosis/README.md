@@ -2,8 +2,8 @@
 
 Modul AI untuk layanan TI BPS dengan prinsip *human-in-the-loop*: AI memberi saran, petugas yang memutuskan.
 
-> Status: konfigurasi, role, saran triase AI (Fase 4), dan chatbot self-service (Fase 5) sudah jalan.
-> Deteksi pola insiden dan dashboard menyusul.
+> Status: konfigurasi, role, saran triase AI (Fase 4), chatbot self-service (Fase 5), dan deteksi pola
+> insiden (Fase 6) sudah jalan. Dashboard kinerja AI menyusul.
 
 ## Instalasi
 
@@ -126,6 +126,31 @@ hanya memberi versi aset berdasarkan versi plugin; tanpa ini perubahan tampilan 
 Catatan teknis: GLPI hanya membawa hak profil Helpdesk yang terdaftar di `Profile::$helpdesk_rights`
 ke sesi, jadi plugin mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
 
+## Deteksi pola insiden
+
+Tugas terjadwal GLPI **`IncidentPattern`** (Setup › Tindakan otomatis, tiap 15 menit, mode CLI; penjadwal
+container menjalankan `front/cron.php` tiap menit). Jalankan manual:
+`docker compose exec glpi php front/cron.php --force IncidentPattern`.
+
+1. Ambil tiket yang dibuat dalam **jendela waktu** (default 60 menit), belum dihapus, belum selesai.
+2. Kelompokkan **per kategori**; tiket tanpa kategori memakai kategori dari saran triase AI.
+3. Sisanya dikelompokkan per **kemiripan judul**: minimal 2 kata kunci sama dan overlap ≥ 0,5
+   (kata sama ÷ jumlah kata judul yang lebih pendek).
+4. Kelompok dengan ≥ **N tiket** (default 10) → Problem **"Pola insiden: …"** berisi daftar tiket & kriteria,
+   ditautkan ke semua tiketnya, ditugaskan ke **grup Operator** (konfigurasi; bawaan "Operator Service Desk").
+   Problem tidak diselesaikan atau diteruskan otomatis: **petugas yang memutuskan tindak lanjut**.
+5. Pola yang sama dan Problem-nya masih terbuka (≤ 24 jam) **tidak dibuat ulang**; tiket baru ditautkan ke
+   Problem tersebut.
+
+**Notifikasi ke Operator**
+- Problem ditugaskan ke grup Operator, sehingga muncul di antrean mereka dan GLPI mengirim notifikasi
+  standar "masalah baru" ke grup itu bila email/notifikasi dikonfigurasi.
+- Banner **"Pola insiden terdeteksi"** di beranda antarmuka standar untuk pemegang hak triase *putuskan*
+  (pola terbuka 48 jam terakhir).
+- Panel Saran AI di tiket terkait menampilkan **"Bagian dari pola insiden"** dengan tautan ke Problem.
+
+Pola tercatat di `glpi_plugin_halosis_patterns` (tanda pola, kriteria, Problem, jumlah tiket).
+
 ## Role & hak akses
 
 Role HaloSIS diterapkan ke profil GLPI dengan perintah yang aman dijalankan berulang:
@@ -180,6 +205,7 @@ public/js/triase.js  interaksi panel
 composer.json        SDK Anthropic (vendor/ tidak di-commit)
 src/Chatbot.php      jawaban chatbot, rating, buat laporan
 src/HelpdeskHome.php menu Helpdesk & pengalihan beranda ke halaman chat
+src/PatternDetector.php  tugas terjadwal deteksi pola insiden + banner
 src/Controller/ChatController.php  halaman penuh /plugins/halosis/Chat
 src/KnowledgeSearch.php  pencarian KB yang menghormati visibilitas GLPI
 src/Privacy.php      penyamaran data pribadi;  src/Chat.php  model percakapan
@@ -200,4 +226,5 @@ yang belum diterjemahkan lalu mengompilasi `.mo`.
 | --- | --- |
 | `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, model, status) |
 | `glpi_plugin_halosis_decisions` | Log keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
+| `glpi_plugin_halosis_patterns` | Pola insiden terdeteksi: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status open/resolved/ticket, rating, tiket |

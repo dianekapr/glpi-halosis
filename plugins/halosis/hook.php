@@ -8,6 +8,7 @@
  */
 
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
 
 /**
@@ -71,6 +72,19 @@ function plugin_halosis_tables(): array
             KEY `status` (`status`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Pola insiden yang terdeteksi tugas terjadwal; mencegah Problem ganda untuk pola yang sama.
+        'glpi_plugin_halosis_patterns' => "
+            `problems_id` int {$sign} NOT NULL DEFAULT '0',
+            `signature` varchar(255) NOT NULL DEFAULT '' COMMENT 'cat:<id> atau title:<kata kunci>',
+            `criteria` varchar(20) NOT NULL DEFAULT '' COMMENT 'category|title',
+            `label` varchar(255) NOT NULL DEFAULT '',
+            `ticket_count` int NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            `date_mod` timestamp NULL DEFAULT NULL,
+            KEY `problems_id` (`problems_id`),
+            KEY `signature` (`signature`),
+            KEY `date_creation` (`date_creation`)
+        ",
     ];
 }
 
@@ -98,6 +112,12 @@ function plugin_halosis_install(): bool
     Config::install();
     Profile::install();
 
+    // Deteksi pola insiden tiap 15 menit (tidak menimpa jadwal yang sudah diubah admin)
+    CronTask::register(PatternDetector::class, PatternDetector::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
+        'comment' => 'HaloSIS: deteksi pola insiden',
+        'mode'    => CronTask::MODE_EXTERNAL,
+    ]);
+
     return true;
 }
 
@@ -111,6 +131,7 @@ function plugin_halosis_uninstall(): bool
 
     Config::uninstall();
     Profile::uninstall();
+    CronTask::unregister('halosis');
 
     return true;
 }

@@ -15,11 +15,12 @@ use GlpiPlugin\Halosis\Chatbot;
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
+use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.2.0');
+define('PLUGIN_HALOSIS_VERSION', '0.3.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -82,6 +83,9 @@ function plugin_init_halosis(): void
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis']              = [Ticket::class => [Triage::class, 'onTicketAdd']];
     $PLUGIN_HOOKS[Hooks::PRE_ITIL_INFO_SECTION]['halosis'] = [TriagePanel::class, 'display'];
+
+    // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas
+    $PLUGIN_HOOKS[Hooks::DISPLAY_CENTRAL]['halosis'] = [PatternDetector::class, 'displayCentralBanner'];
 
     // Tab "HaloSIS" di form Profil untuk mengatur hak akses plugin
     Plugin::registerClass(Profile::class, ['addtabon' => [\Profile::class]]);

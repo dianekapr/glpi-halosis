@@ -91,6 +91,23 @@
                     })) }}
                 </div>
 
+                {{ fields.largeTitle(__('Incident pattern detection', 'halosis'), 'ti ti-topology-ring-3') }}
+                <div class="row">
+                    {{ fields.numberField('pattern_min_tickets', config.pattern_min_tickets, __('Minimum similar tickets', 'halosis'), field_opts|merge({
+                        'min': 2, 'max': 500,
+                        'add_field_html': self.hint(__('A pattern is created when at least this many new tickets share a category or have similar titles.', 'halosis')),
+                    })) }}
+                    {{ fields.numberField('pattern_window', config.pattern_window, __('Time window (minutes)', 'halosis'), field_opts|merge({
+                        'min': 15, 'max': 1440,
+                        'add_field_html': self.hint(__('Tickets created within this window are checked. The scheduled task runs every 15 minutes.', 'halosis')),
+                    })) }}
+                    {{ fields.dropdownField('Group', 'pattern_group_id', config.pattern_group_id, __('Operator group', 'halosis'), field_opts|merge({
+                        'condition': {'is_assign': 1},
+                        'emptylabel': __('Default (Operator Service Desk)', 'halosis'),
+                        'add_field_html': self.hint(__('The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up.', 'halosis')),
+                    })) }}
+                </div>
+
                 {{ fields.largeTitle(__('AI features', 'halosis'), 'ti ti-toggle-right') }}
                 <div class="row">
                     {% for key, label in features %}

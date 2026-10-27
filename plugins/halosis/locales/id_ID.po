@@ -488,3 +488,74 @@ msgstr "Tidak, terima kasih"
 
 msgid "Summary to be attached"
 msgstr "Ringkasan yang dilampirkan"
+
+# Deteksi pola insiden (Fase 6)
+msgid "Incident pattern"
+msgid_plural "Incident patterns"
+msgstr[0] "Pola insiden"
+
+msgid "Incident pattern: %s"
+msgstr "Pola insiden: %s"
+
+msgid "HaloSIS: detect incident patterns from similar new tickets"
+msgstr "HaloSIS: deteksi pola insiden dari tiket baru yang mirip"
+
+msgid "Incident pattern detection is disabled in the HaloSIS configuration."
+msgstr "Deteksi pola insiden dimatikan di konfigurasi HaloSIS."
+
+msgid "New pattern"
+msgstr "Pola baru"
+
+msgid "Pattern updated"
+msgstr "Pola diperbarui"
+
+msgid "%d newly linked"
+msgstr "%d baru ditautkan"
+
+msgid "same category (%s)"
+msgstr "kategori sama (%s)"
+
+msgid "similar titles"
+msgstr "judul mirip"
+
+msgid "HaloSIS detected %1$d new tickets within the last %2$d minutes with %3$s."
+msgstr "HaloSIS mendeteksi %1$d tiket baru dalam %2$d menit terakhir dengan %3$s."
+
+msgid "Linked tickets:"
+msgstr "Tiket yang ditautkan:"
+
+msgid "Detected automatically. An officer decides the follow-up (investigate, assign a team, or close if unrelated)."
+msgstr "Terdeteksi otomatis. Petugas yang memutuskan tindak lanjut (investigasi, tugaskan tim, atau tutup bila tidak berkaitan)."
+
+msgid "Incident pattern detected"
+msgstr "Pola insiden terdeteksi"
+
+msgid "%d linked tickets"
+msgstr "%d tiket tertaut"
+
+msgid "Open the problem to decide the follow-up: investigate, assign a team, or close if unrelated."
+msgstr "Buka masalahnya untuk memutuskan tindak lanjut: investigasi, tugaskan tim, atau tutup bila tidak berkaitan."
+
+msgid "Part of an incident pattern"
+msgstr "Bagian dari pola insiden"
+
+msgid "Minimum similar tickets"
+msgstr "Minimal tiket mirip"
+
+msgid "A pattern is created when at least this many new tickets share a category or have similar titles."
+msgstr "Pola dibuat bila sedikitnya sejumlah ini tiket baru berkategori sama atau berjudul mirip."
+
+msgid "Time window (minutes)"
+msgstr "Jendela waktu (menit)"
+
+msgid "Tickets created within this window are checked. The scheduled task runs every 15 minutes."
+msgstr "Tiket yang dibuat dalam jendela ini diperiksa. Tugas terjadwal berjalan tiap 15 menit."
+
+msgid "Operator group"
+msgstr "Grup Operator"
+
+msgid "Default (Operator Service Desk)"
+msgstr "Bawaan (Operator Service Desk)"
+
+msgid "The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up."
+msgstr "Masalah pola insiden ditugaskan ke grup ini agar Operator mendapat notifikasi dan memutuskan tindak lanjut."

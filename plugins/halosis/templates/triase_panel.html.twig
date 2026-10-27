@@ -36,6 +36,15 @@
         <div class="accordion-body">
             <div class="alert alert-danger py-2 d-none" role="alert" data-halosis-error></div>
 
+            {% if pattern %}
+                <div class="halosis-pattern-note mb-2">
+                    <i class="ti ti-topology-ring-3" aria-hidden="true"></i>
+                    <span>{{ __('Part of an incident pattern', 'halosis') }}:
+                        <a href="{{ pattern.url }}">{{ pattern.label }}</a>
+                        ({{ __('%d linked tickets', 'halosis')|format(pattern.ticket_count) }})</span>
+                </div>
+            {% endif %}
+
             {% if suggestion is null %}
                 <p class="text-secondary mb-2">{{ __('No AI suggestion for this ticket yet.', 'halosis') }}</p>
                 {% if can_decide %}
