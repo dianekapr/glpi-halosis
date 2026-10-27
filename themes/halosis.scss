@@ -99,6 +99,12 @@ $is-dark: false;
         border-color: #155e63 !important;
     }
 
+    // Menu atas antarmuka Helpdesk: halaman aktif ditandai garis accent & huruf tebal
+    header.navbar .navbar-nav > .nav-item.active > .nav-link {
+        font-weight: 600;
+        box-shadow: inset 0 -3px 0 #ff965a;
+    }
+
     // Garis penanda item aktif di menu flyout: bawaannya primary, diganti accent sebagai highlight.
     .sidebar .dropdown-menu .dropdown-item.active {
         // !important karena selektor bawaan GLPI bersarang dalam (spesifisitas lebih tinggi)

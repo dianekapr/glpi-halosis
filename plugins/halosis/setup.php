@@ -14,6 +14,7 @@ use Glpi\Plugin\Hooks;
 use GlpiPlugin\Halosis\Chatbot;
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
+use GlpiPlugin\Halosis\HelpdeskHome;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
@@ -64,13 +65,19 @@ function plugin_init_halosis(): void
     }
 
     // Gaya & skrip bersama komponen plugin (file di public/, disajikan sebagai /plugins/halosis/css|js/...)
-    $PLUGIN_HOOKS[Hooks::ADD_CSS]['halosis']        = ['css/halosis.css'];
-    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'] = ['js/triase.js'];
+    $PLUGIN_HOOKS[Hooks::ADD_CSS]['halosis']        = [plugin_halosis_asset('css/halosis.css')];
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'] = [plugin_halosis_asset('js/triase.js')];
 
-    // Widget chatbot: hanya di antarmuka Helpdesk untuk pemegang hak chatbot (fitur aktif)
+    // Chatbot (antarmuka Helpdesk, pemegang hak chatbot, fitur aktif): halaman penuh "Tanya HaloSIS"
+    // sebagai beranda Pegawai + widget melayang di halaman Helpdesk lain. Lihat HelpdeskHome.
     if (Chatbot::isAvailable()) {
-        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = 'js/chat.js';
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/chat.js');
+        if (HelpdeskHome::shouldRedirectHome()) {
+            $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] = HelpdeskHome::getRedirectHeaderTags();
+        }
     }
+    // Urutan menu Helpdesk (fungsi ini sendiri tidak mengubah menu antarmuka standar)
+    $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [HelpdeskHome::class, 'redefineMenu'];
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis']              = [Ticket::class => [Triage::class, 'onTicketAdd']];
@@ -85,4 +92,14 @@ function plugin_init_halosis(): void
         $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['halosis'] = 'front/config.form.php';
         $PLUGIN_HOOKS[Hooks::MENU_TOADD]['halosis']  = ['config' => [ConfigMenu::class]];
     }
+}
+
+/**
+ * Path aset di public/ dengan penanda waktu ubah file. GLPI memberi versi aset plugin berdasarkan versi
+ * plugin saja, sehingga perubahan CSS/JS tanpa naik versi tertahan di cache browser (terlihat di Safari).
+ */
+function plugin_halosis_asset(string $file): string
+{
+    $path = __DIR__ . '/public/' . $file;
+    return is_file($path) ? $file . '?m=' . filemtime($path) : $file;
 }

@@ -21,15 +21,31 @@ final class Chatbot
     /** Pertanyaan dengan kata kunci sebanyak ini atau kurang dianggap lanjutan pertanyaan sebelumnya */
     private const FOLLOW_UP_MAX_TOKENS = 2;
 
+    /** Halaman penuh "Tanya HaloSIS" (route plugin src/Controller/ChatController.php) */
+    public const PAGE_PATH = '/plugins/halosis/Chat';
+
     /**
-     * Fitur aktif & pengguna berhak memakai chatbot (antarmuka Helpdesk).
+     * Pengguna berhak memakai chatbot: login, antarmuka Helpdesk, hak plugin_halosis_chatbot.
+     */
+    public static function canUse(): bool
+    {
+        return Session::getLoginUserID() !== false
+            && Session::getCurrentInterface() === 'helpdesk'
+            && Session::haveRight(Profile::RIGHT_CHATBOT, READ);
+    }
+
+    /**
+     * Pengguna berhak DAN fitur chat aktif di konfigurasi.
      */
     public static function isAvailable(): bool
     {
-        return Config::isFeatureEnabled('chat')
-            && Session::getLoginUserID() !== false
-            && Session::getCurrentInterface() === 'helpdesk'
-            && Session::haveRight(Profile::RIGHT_CHATBOT, READ);
+        return Config::isFeatureEnabled('chat') && self::canUse();
+    }
+
+    public static function getPageUrl(): string
+    {
+        global $CFG_GLPI;
+        return $CFG_GLPI['root_doc'] . self::PAGE_PATH;
     }
 
     /**
@@ -98,9 +114,19 @@ final class Chatbot
             'chat_id' => $chat->getID(),
             'answer'  => $reply['answer'],
             'found'   => $reply['found'],
+            'ai'      => self::isAiModel($reply['model']),
             'sources' => $reply['sources'],
             'masked'  => $privacy['masked'],
         ];
+    }
+
+    /**
+     * Jawaban benar-benar dirangkum AI (bukan kutipan mode demo / cadangan saat AI gagal)?
+     * Dipakai widget untuk label "Dijawab AI" vs "Dari Pusat Bantuan".
+     */
+    public static function isAiModel(?string $model): bool
+    {
+        return $model !== null && $model !== '' && $model !== self::DEMO_MODEL;
     }
 
     /**

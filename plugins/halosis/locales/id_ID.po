@@ -396,3 +396,95 @@ msgstr "Terima kasih! Senang masalah Anda terselesaikan."
 
 msgid "Report #%d has been created. An officer will follow it up."
 msgstr "Laporan #%d sudah dibuat. Petugas akan menindaklanjutinya."
+
+# Halaman penuh "Tanya HaloSIS" (revisi Fase 5)
+msgid "Ask HaloSIS"
+msgstr "Tanya HaloSIS"
+
+msgid "My reports"
+msgstr "Laporan saya"
+
+msgid "Help center (FAQ)"
+msgstr "Pusat bantuan (FAQ)"
+
+msgid "Answers from Help Center articles, available any time."
+msgstr "Jawaban dari artikel Pusat Bantuan, kapan saja."
+
+msgid "Create a report directly"
+msgstr "Langsung buat laporan"
+
+msgid "Quick questions"
+msgstr "Pertanyaan cepat"
+
+msgid "Forgot my SSO password"
+msgstr "Lupa password SSO"
+
+msgid "FASIH fails to sync"
+msgstr "FASIH gagal sinkron"
+
+msgid "VPN keeps disconnecting"
+msgstr "VPN putus"
+
+msgid "Email attachment is too large"
+msgstr "Lampiran email terlalu besar"
+
+msgid "Cancel"
+msgstr "Batal"
+
+msgid "Open full screen"
+msgstr "Buka layar penuh"
+
+msgid "The assistant is not available right now"
+msgstr "Asisten sedang tidak tersedia"
+
+msgid "The assistant is not available right now. You can still create a report."
+msgstr "Asisten sedang tidak tersedia. Anda tetap bisa membuat laporan."
+
+msgid "Report your problem and an officer will help you."
+msgstr "Laporkan kendala Anda, petugas akan membantu."
+
+# Tampilan chatbot baru (mengikuti prototipe halosis-web)
+msgid "Tell us about your IT problem. The assistant looks for solutions in official BPS guides."
+msgstr "Ceritakan kendala TI Anda. Asisten mencarikan solusi dari panduan resmi BPS."
+
+msgid "Try asking:"
+msgstr "Coba tanyakan:"
+
+msgid "Describe your problem…"
+msgstr "Tulis kendala Anda…"
+
+msgid "The assistant only answers from official BPS Help Center articles. Do not send passwords or personal data."
+msgstr "Asisten hanya menjawab dari artikel resmi Pusat Bantuan BPS. Jangan kirim kata sandi atau data pribadi."
+
+msgid "Answered by AI"
+msgstr "Dijawab AI"
+
+msgid "From the Help Center"
+msgstr "Dari Pusat Bantuan"
+
+msgid "The assistant is typing"
+msgstr "Asisten sedang mengetik"
+
+msgid "This conversation has ended. Start a new one to ask again."
+msgstr "Percakapan ini sudah selesai. Mulai percakapan baru untuk bertanya lagi."
+
+msgid "Did this answer help?"
+msgstr "Apakah jawaban ini membantu?"
+
+msgid "Not solved yet"
+msgstr "Belum terselesaikan"
+
+msgid "Problem not solved? I will create a report for the IT team. This conversation summary is attached, so you do not need to explain again."
+msgstr "Masalah belum selesai? Saya buatkan laporan ke tim TI. Ringkasan percakapan ini akan dilampirkan, jadi Anda tidak perlu menjelaskan ulang."
+
+msgid "I could not find the answer yet. Shall I create a report for the IT team? This conversation summary will be attached."
+msgstr "Saya belum menemukan jawabannya. Mau saya buatkan laporan ke tim TI? Ringkasan percakapan ini akan dilampirkan."
+
+msgid "Yes, create report"
+msgstr "Ya, buat laporan"
+
+msgid "No, thank you"
+msgstr "Tidak, terima kasih"
+
+msgid "Summary to be attached"
+msgstr "Ringkasan yang dilampirkan"

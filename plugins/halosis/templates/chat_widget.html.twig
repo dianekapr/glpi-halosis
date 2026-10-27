@@ -1,83 +1,32 @@
 {#
- # Widget chatbot self-service (antarmuka Helpdesk). Dimuat oleh public/js/chat.js lewat ajax/chat.php.
- # Pesan dirender oleh JS dengan textContent (tanpa HTML dari server/model).
+ # Widget chatbot melayang untuk halaman Helpdesk selain halaman "Tanya HaloSIS" (mis. detail tiket, FAQ).
+ # Dimuat oleh public/js/chat.js lewat ajax/chat.php; isi percakapan sama dengan halaman penuh (versi ringkas).
  #}
-<div class="halosis-chat" data-halosis-chat data-ajax-url="{{ ajax_url }}">
-    <button type="button" class="halosis-chat-launcher" data-chat-toggle aria-expanded="false" aria-controls="halosis-chat-panel">
-        <i class="ti ti-message-chatbot" aria-hidden="true"></i>
+<div class="hc hc-floating" data-halosis-chat="widget" data-ajax-url="{{ ajax_url }}" data-report-url="{{ report_url }}">
+    <button type="button" class="hc-launcher" data-chat-toggle aria-expanded="false" aria-controls="halosis-chat-panel">
+        <i class="ti ti-sparkles" aria-hidden="true"></i>
         <span>{{ __('Ask the assistant', 'halosis') }}</span>
     </button>
 
-    <section class="halosis-chat-panel" id="halosis-chat-panel" role="dialog" aria-label="{{ __('HaloSIS Assistant', 'halosis') }}" hidden>
-        <header class="halosis-chat-header">
-            <span class="halosis-chat-avatar" aria-hidden="true">H<span>.</span></span>
-            <div class="flex-grow-1">
-                <div class="halosis-chat-title">{{ __('HaloSIS Assistant', 'halosis') }}</div>
-                <div class="halosis-chat-subtitle">{{ __('Answers from Help Center articles', 'halosis') }}</div>
+    <section class="hc-panel" id="halosis-chat-panel" role="dialog" aria-label="{{ __('HaloSIS Assistant', 'halosis') }}" hidden>
+        <header class="hc-panel-head">
+            <span class="hc-avatar hc-avatar-light" aria-hidden="true"><i class="ti ti-sparkles"></i></span>
+            <div class="hc-panel-title">
+                <strong>{{ __('Ask HaloSIS', 'halosis') }}</strong>
+                <span>{{ __('Answers from Help Center articles', 'halosis') }}</span>
             </div>
-            <button type="button" class="halosis-chat-icon" data-chat-new title="{{ __('New conversation', 'halosis') }}" aria-label="{{ __('New conversation', 'halosis') }}">
+            <a class="hc-panel-icon" href="{{ page_url }}" title="{{ __('Open full screen', 'halosis') }}" aria-label="{{ __('Open full screen', 'halosis') }}">
+                <i class="ti ti-arrows-maximize" aria-hidden="true"></i>
+            </a>
+            <button type="button" class="hc-panel-icon" data-chat-new title="{{ __('New conversation', 'halosis') }}" aria-label="{{ __('New conversation', 'halosis') }}">
                 <i class="ti ti-refresh" aria-hidden="true"></i>
             </button>
-            <button type="button" class="halosis-chat-icon" data-chat-toggle title="{{ __('Close', 'halosis') }}" aria-label="{{ __('Close', 'halosis') }}">
+            <button type="button" class="hc-panel-icon" data-chat-toggle title="{{ __('Close', 'halosis') }}" aria-label="{{ __('Close', 'halosis') }}">
                 <i class="ti ti-x" aria-hidden="true"></i>
             </button>
         </header>
-
-        <div class="halosis-chat-warning" role="note">
-            <i class="ti ti-shield-lock" aria-hidden="true"></i>
-            <span>{{ __('Do not send passwords or personal data (NIK, NIP, phone number).', 'halosis') }}</span>
+        <div class="hc-chat hc-chat-compact">
+            {% include '@halosis/chat_conversation.html.twig' with {compact: true} %}
         </div>
-
-        <div class="halosis-chat-messages" data-chat-messages aria-live="polite">
-            <div class="halosis-chat-msg halosis-chat-msg-assistant">
-                {{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }}
-                {{ __('Describe your IT problem and I will look for the answer in the Help Center.', 'halosis') }}
-            </div>
-        </div>
-
-        {# Aksi setelah ada jawaban #}
-        <div class="halosis-chat-actions" data-chat-actions hidden>
-            <button type="button" class="btn btn-sm btn-primary" data-chat-show="resolve">
-                <i class="ti ti-circle-check" aria-hidden="true"></i><span>{{ __('Problem solved', 'halosis') }}</span>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-chat-show="ticket">
-                <i class="ti ti-file-plus" aria-hidden="true"></i><span>{{ __('Create report', 'halosis') }}</span>
-            </button>
-        </div>
-
-        <div class="halosis-chat-step" data-chat-step="resolve" hidden>
-            <div class="small mb-1">{{ __('How helpful was the assistant?', 'halosis') }}</div>
-            <div class="halosis-chat-stars" role="radiogroup" aria-label="{{ __('Rating', 'halosis') }}">
-                {% for star in 1..5 %}
-                    <button type="button" class="halosis-chat-star" data-chat-rating="{{ star }}" role="radio" aria-checked="false"
-                            aria-label="{{ star }}/5"><i class="ti ti-star" aria-hidden="true"></i></button>
-                {% endfor %}
-            </div>
-        </div>
-
-        <form class="halosis-chat-step" data-chat-step="ticket" hidden>
-            <label class="form-label small mb-1" for="halosis-chat-title">{{ __('Report title', 'halosis') }}</label>
-            <input type="text" class="form-control form-control-sm mb-1" id="halosis-chat-title" maxlength="200" required minlength="5">
-            <div class="small text-secondary mb-2">{{ __('The conversation summary becomes the report description.', 'halosis') }}</div>
-            <button type="submit" class="btn btn-sm btn-primary">{{ __('Send report', 'halosis') }}</button>
-        </form>
-
-        <form class="halosis-chat-input" data-chat-form>
-            <textarea rows="1" maxlength="{{ max_length }}" placeholder="{{ __('Type your question…', 'halosis') }}"
-                      aria-label="{{ __('Your question', 'halosis') }}" data-chat-text></textarea>
-            <button type="submit" class="halosis-chat-send" aria-label="{{ __('Send', 'halosis') }}">
-                <i class="ti ti-send" aria-hidden="true"></i>
-            </button>
-        </form>
-
-        {# Teks untuk JS #}
-        <template data-chat-i18n>{{ {
-            sources: __('Sources:', 'halosis'),
-            thinking: __('Searching the Help Center…', 'halosis'),
-            masked: __('Personal data in your message was hidden before processing.', 'halosis'),
-            ended: __('This conversation has ended. Click the refresh icon to start a new one.', 'halosis'),
-            open_ticket: __('Open report', 'halosis'),
-            error: __('Something went wrong. Please try again.', 'halosis'),
-        }|json_encode }}</template>
     </section>
 </div>

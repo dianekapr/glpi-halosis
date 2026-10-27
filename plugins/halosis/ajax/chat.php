@@ -21,6 +21,8 @@ if ($action === 'widget') {
     if (Chatbot::isAvailable()) {
         TemplateRenderer::getInstance()->display('@halosis/chat_widget.html.twig', [
             'ajax_url'    => $CFG_GLPI['root_doc'] . '/plugins/halosis/ajax/chat.php',
+            'page_url'    => Chatbot::getPageUrl(),
+            'report_url'  => \Glpi\Form\ServiceCatalog\ServiceCatalog::getSearchURL(),
             'max_length'  => Chatbot::MAX_MESSAGE_LENGTH,
             'user_name'   => $_SESSION['glpifirstname'] ?? '',
         ]);
@@ -51,7 +53,13 @@ if ($action === 'history') {
         'ok'       => true,
         'status'   => $chat?->fields['status'],
         'messages' => array_map(
-            static fn ($m) => ['role' => $m['role'], 'text' => $m['text'], 'sources' => $m['sources'] ?? []],
+            static fn ($m) => [
+                'role'    => $m['role'],
+                'text'    => $m['text'],
+                'sources' => $m['sources'] ?? [],
+                'found'   => (bool) ($m['found'] ?? false),
+                'ai'      => Chatbot::isAiModel($m['model'] ?? null),
+            ],
             $chat?->getMessages() ?? [],
         ),
     ]);

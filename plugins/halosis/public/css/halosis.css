@@ -8,6 +8,13 @@
     --halosis-accent: #ff965a;
     --halosis-text: #203332;
     --halosis-soft: #dcede8;
+    --halosis-primary-light: #1f7a80;
+    --halosis-secondary-light: #e3f1ed;
+    --halosis-accent-light: #ffede2;
+    --halosis-bg: #f5f8f6;
+    --halosis-border: #dce6e2;
+    --halosis-soft-2: #ebf2ef;
+    --halosis-muted: #5b706d;
 }
 
 .halosis-config .form-range::-webkit-slider-thumb {
@@ -120,242 +127,779 @@
     border-radius: 4px;
 }
 
-/* Widget chatbot self-service (antarmuka Helpdesk) */
-.halosis-chat {
+/* =====================================================================================
+ * Chatbot self-service "Tanya HaloSIS" (antarmuka Helpdesk)
+ * Mengikuti prototipe halosis-web (ChatRoom): halaman penuh & widget melayang memakai komponen yang sama.
+ * ===================================================================================== */
+.hc {
+    color: var(--halosis-text);
+    font-size: 0.9rem;
+}
+
+/* ---- Tombol ---- */
+.hc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--halosis-text);
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.hc-btn:hover,
+.hc-btn:focus-visible {
+    background: var(--halosis-soft-2);
+    color: var(--halosis-text);
+}
+
+.hc-btn-primary {
+    border-color: var(--halosis-primary);
+    background: var(--halosis-primary);
+    color: #fff;
+    box-shadow: 0 1px 2px rgb(21 94 99 / 20%);
+}
+
+.hc-btn-primary:hover,
+.hc-btn-primary:focus-visible {
+    border-color: var(--halosis-primary-light);
+    background: var(--halosis-primary-light);
+    color: #fff;
+}
+
+.hc-btn-sm {
+    padding: 0.4rem 0.75rem;
+    border-radius: 9px;
+    font-size: 0.78rem;
+}
+
+.hc-btn-lg {
+    padding: 0.8rem 1.4rem;
+    font-size: 1rem;
+}
+
+.hc-btn-icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.15rem;
+}
+
+.hc-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.hc a.hc-link {
+    color: var(--halosis-primary);
+    font-weight: 600;
+}
+
+/* ---- Halaman penuh ---- */
+.hc-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem 0 1rem;
+    height: calc(100dvh - var(--glpi-topbar-height, 79px) - 1rem);
+    min-height: 480px;
+}
+
+.hc-head {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    animation: hc-fade-up 0.4s ease both;
+}
+
+.hc-head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.hc-head h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--halosis-text);
+}
+
+.hc-head p {
+    margin: 0.4rem 0 0;
+    color: var(--halosis-muted);
+    font-size: 0.9rem;
+}
+
+.hc-head-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.hc-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ---- Utas percakapan ---- */
+.hc-thread {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 18px;
+    background: #fff;
+    scroll-behavior: smooth;
+}
+
+.hc-row {
+    display: flex;
+    gap: 0.75rem;
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-row-user {
+    justify-content: flex-end;
+}
+
+.hc-row-system {
+    justify-content: center;
+}
+
+.hc-avatar {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--halosis-secondary-light);
+    color: var(--halosis-primary);
+    font-size: 1rem;
+}
+
+.hc-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 85%;
+    min-width: 0;
+}
+
+.hc-bubble {
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.hc-bubble p {
+    margin: 0;
+}
+
+.hc-bubble p + p,
+.hc-bubble p + .hc-steps,
+.hc-bubble .hc-steps + p {
+    margin-top: 0.5rem;
+}
+
+.hc-bubble-user {
+    max-width: 80%;
+    border-bottom-right-radius: 6px;
+    background: var(--halosis-primary);
+    color: #fff;
+}
+
+.hc-bubble-ai {
+    border-top-left-radius: 6px;
+    border-left: 3px solid var(--halosis-secondary);
+    background: var(--halosis-bg);
+}
+
+/* Jawaban "belum menemukan": garis accent */
+.hc-bubble-notfound {
+    border-left-color: var(--halosis-accent);
+}
+
+.hc-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--halosis-primary);
+}
+
+/* Langkah bernomor */
+.hc-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hc-steps li {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.hc-num {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-top: 0.1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+/* Chip sumber artikel */
+.hc-sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.hc a.hc-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--halosis-primary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.15s;
+}
+
+.hc a.hc-source:hover {
+    border-color: var(--halosis-secondary);
+}
+
+.hc-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    background: var(--halosis-soft-2);
+    color: var(--halosis-muted);
+    font-size: 0.76rem;
+    text-align: center;
+}
+
+/* Indikator mengetik */
+.hc-typing {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.9rem 1rem;
+}
+
+.hc-typing span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--halosis-secondary);
+    animation: hc-bounce 1s infinite;
+}
+
+.hc-typing span:nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.hc-typing span:nth-child(3) {
+    animation-delay: 0.24s;
+}
+
+/* ---- Aksi di bawah jawaban ---- */
+.hc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-actions-q {
+    font-size: 0.78rem;
+    color: var(--halosis-muted);
+}
+
+.hc-actions-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.hc-stars {
+    display: flex;
+    gap: 0.15rem;
+}
+
+.hc-star {
+    border: 0;
+    padding: 0.1rem;
+    background: transparent;
+    color: #c9d6d2;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.1s, transform 0.1s;
+}
+
+.hc-star:hover,
+.hc-star.active {
+    color: var(--halosis-accent);
+}
+
+.hc-star:hover {
+    transform: scale(1.1);
+}
+
+/* Kartu tawaran laporan: garis putus-putus accent */
+.hc-offer {
+    padding: 1rem;
+    border: 2px dashed color-mix(in srgb, var(--halosis-accent), transparent 40%);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--halosis-accent-light), transparent 40%);
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-offer > p {
+    margin: 0 0 0.75rem;
+}
+
+.hc-report {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.hc-field-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.hc-input {
+    width: 100%;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--halosis-text);
+}
+
+.hc-input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--halosis-primary), transparent 40%);
+}
+
+.hc-summary-wrap summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--halosis-muted);
+}
+
+.hc-summary {
+    max-height: 150px;
+    overflow-y: auto;
+    margin: 0.4rem 0 0;
+    padding: 0.5rem 0.75rem 0.5rem 1.4rem;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.78rem;
+}
+
+.hc-success {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 1rem;
+    border: 1px solid var(--halosis-secondary);
+    border-radius: 18px;
+    background: var(--halosis-secondary-light);
+    animation: hc-fade-up 0.35s ease both;
+}
+
+.hc-success p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.hc-success .ti-circle-check {
+    color: var(--halosis-primary);
+}
+
+/* ---- Kotak input ---- */
+.hc-composer {
+    padding: 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(32 51 50 / 6%);
+}
+
+.hc-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.hc-suggest-label {
+    font-size: 0.75rem;
+    color: var(--halosis-muted);
+}
+
+.hc-chip {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--halosis-muted);
+    font-size: 0.76rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.hc-chip:hover,
+.hc-chip:focus-visible {
+    border-color: var(--halosis-secondary);
+    color: var(--halosis-primary);
+}
+
+.hc-chip:disabled {
+    opacity: 0.5;
+}
+
+/* Saran pertanyaan disembunyikan setelah percakapan dimulai, memberi ruang untuk pesan */
+.hc-started .hc-suggest {
+    display: none;
+}
+
+.hc-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.hc-form textarea {
+    flex: 1;
+    resize: none;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--halosis-text);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.hc-form textarea:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--halosis-primary), transparent 40%);
+}
+
+.hc-send {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--halosis-primary);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.hc-send:hover {
+    background: var(--halosis-primary-light);
+}
+
+.hc-send:disabled,
+.hc-form textarea:disabled {
+    opacity: 0.5;
+}
+
+.hc-note {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.74rem;
+    color: var(--halosis-muted);
+}
+
+/* ---- Asisten tidak tersedia ---- */
+.hc-unavailable {
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.hc-unavailable h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.hc-unavailable p {
+    margin: 0;
+    color: var(--halosis-muted);
+}
+
+.hc-unavailable-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--halosis-accent-light);
+    color: var(--halosis-accent-dark, #b4521a);
+    font-size: 2rem;
+}
+
+/* ---- Widget melayang (halaman Helpdesk lain) ---- */
+.hc-floating {
     position: fixed;
     right: 20px;
     bottom: 20px;
     z-index: 1060;
-    font-size: 0.9rem;
-    color: var(--halosis-text);
 }
 
-.halosis-chat-launcher {
+.hc-launcher {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.1rem;
+    padding: 0.75rem 1.15rem;
     border: 0;
     border-radius: 999px;
     background: var(--halosis-primary);
     color: #fff;
-    font-weight: 600;
-    box-shadow: 0 6px 20px rgb(21 94 99 / 35%);
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgb(21 94 99 / 35%);
+    cursor: pointer;
 }
 
-.halosis-chat-launcher .ti {
-    font-size: 1.4rem;
+.hc-launcher .ti {
+    font-size: 1.25rem;
 }
 
-.halosis-chat-launcher:hover,
-.halosis-chat-launcher:focus-visible {
-    background: color-mix(in srgb, var(--halosis-primary), black 12%);
+.hc-launcher:hover {
+    background: var(--halosis-primary-light);
 }
 
-.halosis-chat-panel {
+.hc-panel {
     display: flex;
     flex-direction: column;
-    width: 380px;
-    height: min(600px, calc(100vh - 40px));
+    width: 400px;
+    height: min(640px, calc(100dvh - 40px));
     overflow: hidden;
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 12px 40px rgb(32 51 50 / 25%);
+    border: 1px solid var(--halosis-border);
+    border-radius: 20px;
+    background: var(--halosis-bg);
+    box-shadow: 0 16px 48px rgb(32 51 50 / 22%);
+    animation: hc-fade-up 0.25s ease both;
 }
 
-.halosis-chat-panel[hidden] {
+.hc-panel[hidden] {
     display: none;
 }
 
-.halosis-chat-header {
+.hc-panel-head {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.75rem 0.9rem;
+    padding: 0.8rem 1rem;
     background: var(--halosis-primary);
     color: #fff;
 }
 
-.halosis-chat-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: #fff;
-    color: var(--halosis-primary);
-    font-weight: 800;
+.hc-avatar-light {
+    background: rgb(255 255 255 / 18%);
+    color: #fff;
 }
 
-.halosis-chat-avatar span {
-    color: var(--halosis-accent);
+.hc-panel-title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
 }
 
-.halosis-chat-title {
-    font-weight: 700;
-}
-
-.halosis-chat-subtitle {
-    font-size: 0.75rem;
+.hc-panel-title span {
+    font-size: 0.74rem;
     opacity: 0.85;
 }
 
-.halosis-chat-icon {
+.hc-panel-icon {
+    display: inline-flex;
+    padding: 0.25rem;
     border: 0;
+    border-radius: 8px;
     background: transparent;
     color: #fff;
-    font-size: 1.2rem;
-    padding: 0.2rem;
+    font-size: 1.15rem;
+    cursor: pointer;
 }
 
-/* Peringatan data pribadi: accent dengan teks gelap demi kontras */
-.halosis-chat-warning {
-    display: flex;
-    gap: 0.4rem;
-    align-items: flex-start;
-    padding: 0.5rem 0.9rem;
-    background: color-mix(in srgb, var(--halosis-accent), white 70%);
-    color: var(--halosis-text);
-    font-size: 0.8rem;
-}
-
-.halosis-chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.9rem;
-    background: #f5f8f6;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.halosis-chat-msg {
-    max-width: 88%;
-    padding: 0.55rem 0.75rem;
-    border-radius: 12px;
-    white-space: pre-line;
-    line-height: 1.45;
-    overflow-wrap: anywhere;
-}
-
-.halosis-chat-msg-assistant {
-    align-self: flex-start;
-    background: #fff;
-    border: 1px solid var(--halosis-soft);
-    border-bottom-left-radius: 4px;
-}
-
-.halosis-chat-msg-user {
-    align-self: flex-end;
-    background: var(--halosis-primary);
+.hc-panel-icon:hover {
+    background: rgb(255 255 255 / 15%);
     color: #fff;
-    border-bottom-right-radius: 4px;
 }
 
-.halosis-chat-msg-system {
-    align-self: center;
-    max-width: 100%;
-    background: var(--halosis-soft);
-    font-size: 0.8rem;
-    text-align: center;
+.hc-chat-compact {
+    gap: 0.6rem;
+    padding: 0.6rem;
 }
 
-.halosis-chat-notfound {
-    border-left: 3px solid var(--halosis-accent);
+.hc-chat-compact .hc-thread {
+    padding: 1rem;
+    border-radius: 14px;
 }
 
-.halosis-chat-thinking {
-    opacity: 0.7;
-    font-style: italic;
+.hc-chat-compact .hc-composer {
+    padding: 0.6rem;
+    border-radius: 14px;
 }
 
-.halosis-chat-sources {
-    margin-top: 0.4rem;
-    padding-top: 0.35rem;
-    border-top: 1px dashed var(--halosis-soft);
-    font-size: 0.8rem;
-    white-space: normal;
-}
-
-.halosis-chat-sources a {
-    color: var(--halosis-primary);
-    font-weight: 600;
-}
-
-.halosis-chat-actions,
-.halosis-chat-step {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    padding: 0.6rem 0.9rem;
-    border-top: 1px solid var(--halosis-soft);
-}
-
-.halosis-chat-step {
-    display: block;
-}
-
-.halosis-chat-actions[hidden],
-.halosis-chat-step[hidden] {
-    display: none;
-}
-
-.halosis-chat-stars {
-    display: flex;
-    gap: 0.25rem;
-}
-
-.halosis-chat-star {
-    border: 0;
-    background: transparent;
-    font-size: 1.5rem;
-    color: #b7c4c1;
-    padding: 0;
-}
-
-.halosis-chat-star.active,
-.halosis-chat-star:hover {
-    color: var(--halosis-accent);
-}
-
-.halosis-chat-input {
-    display: flex;
-    gap: 0.4rem;
-    padding: 0.6rem 0.9rem;
-    border-top: 1px solid var(--halosis-soft);
-}
-
-.halosis-chat-input textarea {
-    flex: 1;
-    resize: none;
-    border: 1px solid var(--halosis-soft);
-    border-radius: 10px;
-    padding: 0.5rem 0.65rem;
-    max-height: 120px;
-}
-
-.halosis-chat-send {
-    border: 0;
-    border-radius: 10px;
+.hc-chat-compact .hc-send {
     width: 42px;
-    background: var(--halosis-primary);
-    color: #fff;
-    font-size: 1.2rem;
+    height: 42px;
 }
 
-.halosis-chat-send:disabled,
-.halosis-chat-input textarea:disabled {
-    opacity: 0.5;
+.hc-chat-compact .hc-col {
+    max-width: 90%;
 }
 
+@keyframes hc-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes hc-bounce {
+    0%, 80%, 100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-5px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hc *,
+    .hc-row,
+    .hc-head {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ---- HP (sampai 390px) ---- */
 @media (max-width: 576px) {
-    .halosis-chat {
+    .hc-page {
+        gap: 0.75rem;
+        padding: 0.75rem 0 0.5rem;
+        height: calc(100dvh - var(--glpi-topbar-height, 79px) - 0.5rem);
+    }
+
+    .hc-head {
+        align-items: flex-start;
+    }
+
+    .hc-head h1 {
+        font-size: 1.35rem;
+    }
+
+    .hc-head p {
+        display: none;
+    }
+
+    /* Tombol "Langsung buat laporan" jadi ringkas di HP */
+    .hc-head-actions .hc-btn:not(.hc-btn-icon) {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.78rem;
+    }
+
+    .hc-thread {
+        padding: 0.9rem;
+        border-radius: 14px;
+    }
+
+    .hc-col {
+        max-width: 92%;
+    }
+
+    .hc-avatar {
+        width: 28px;
+        height: 28px;
+    }
+
+    .hc-composer {
+        padding: 0.65rem;
+        border-radius: 14px;
+    }
+
+    .hc-send {
+        width: 44px;
+        height: 44px;
+    }
+
+    .hc-floating {
         right: 12px;
         bottom: 12px;
     }
 
-    .halosis-chat-panel {
+    .hc-floating .hc-panel {
         position: fixed;
         inset: 0;
         width: auto;

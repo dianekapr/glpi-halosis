@@ -75,10 +75,29 @@ Pemanggilan Claude: SDK resmi `anthropic-ai/sdk`, endpoint beta Messages, `outpu
 (`claude-opus-5-5`, `claude-opus-5`, `claude-fable-5-1`, `claude-sonnet-5-5`) bila memakai API Claude langsung.
 Proxy GLPI (**Setup › Umum › Proxy**) ikut dipakai.
 
-## Chatbot self-service pegawai
+## Chatbot self-service pegawai (beranda "Tanya HaloSIS")
 
-Tombol **Tanya asisten** muncul di pojok kanan bawah antarmuka Helpdesk untuk pemegang hak
-`plugin_halosis_chatbot` (default: Pegawai) selama fitur chat aktif. Widget tidak dimuat di antarmuka standar.
+Alur *resolution-first*: Pegawai login → langsung di halaman penuh **Tanya HaloSIS**
+(`/plugins/halosis/Chat`, controller `src/Controller/ChatController.php`, dirender di layout Helpdesk GLPI).
+Berlaku untuk antarmuka Helpdesk + hak `plugin_halosis_chatbot` (default: Pegawai) + fitur chat aktif.
+
+- **Halaman penuh**: percakapan memenuhi layar, input di bawah, saran pertanyaan cepat, tautan sekunder
+  "Langsung buat laporan" (ke Service catalog) di kanan atas. Responsif sampai lebar HP 390px.
+- **Menu Helpdesk** (hook `redefine_menus`): Tanya HaloSIS · Laporan saya · Buat laporan · Pusat bantuan (FAQ),
+  lalu menu lain. Beranda Helpdesk lama disembunyikan. Menu antarmuka standar tidak diubah.
+- **Beranda**: setelah login GLPI selalu membuka `/Helpdesk`; plugin menambahkan
+  `<meta http-equiv="refresh">` (hook `add_header_tag`) **hanya** pada `GET /Helpdesk` untuk pengguna yang
+  memenuhi syarat, sehingga diarahkan ke halaman chat. Operator & profil standar tidak terpengaruh;
+  halaman chat ada di path lain sehingga tidak ada loop. GLPI 12 belum punya hook server-side untuk
+  mengalihkan `/Helpdesk`: `RedirectException` dari `plugin_init` (saat kernel boot) maupun dari
+  `redefine_menus` (di dalam render Twig) sudah dicoba dan berakhir HTTP 500.
+- **Widget melayang** tetap ada di halaman Helpdesk lain (mis. detail tiket, FAQ) dengan tombol
+  "buka layar penuh", tapi tidak dimuat di halaman chat. Percakapan yang sama berlanjut antara halaman
+  penuh dan widget (ID di `sessionStorage`).
+- **Asisten tidak tersedia** (fitur chat dimatikan): halaman menampilkan pesan + tombol "Buat laporan" yang
+  menonjol. Jawaban "belum menemukan" dan galat jaringan juga menampilkan tombol "Buat laporan".
+- Logika percakapan satu untuk keduanya: `Chatbot` (server), `ajax/chat.php` (endpoint),
+  `templates/chat_conversation.html.twig` (isi percakapan), `public/js/chat.js` (fungsi `mount`).
 
 - **Sumber jawaban hanya Knowledge Base yang terlihat oleh pengguna.** `KnowledgeSearch` memakai kriteria
   visibilitas GLPI (`KnowbaseItem::getVisibilityCriteria()`; di Helpdesk = FAQ yang boleh dilihat), lalu tiap
@@ -96,6 +115,13 @@ Tombol **Tanya asisten** muncul di pojok kanan bawah antarmuka Helpdesk untuk pe
   judul bisa diedit, deskripsi = ringkasan percakapan. Tiket ini otomatis mendapat saran triase AI.
 - Percakapan disimpan di `glpi_plugin_halosis_chats` dan hanya bisa dibaca/dilanjutkan pemiliknya;
   widget melanjutkan percakapan saat pegawai berpindah halaman.
+
+Tampilan mengikuti prototipe `halosis-web` (komponen ChatRoom): gelembung dengan label "Dijawab AI" (atau
+"Dari Pusat Bantuan" untuk kutipan mode demo), langkah bernomor, chip sumber, aksi "Apakah jawaban ini
+membantu?", kartu "buat laporan" bergaris putus-putus, dan kotak input dengan saran pertanyaan.
+
+Aset CSS/JS plugin diberi penanda waktu ubah file (`plugin_halosis_asset()` di `setup.php`), karena GLPI
+hanya memberi versi aset berdasarkan versi plugin; tanpa ini perubahan tampilan tertahan di cache browser.
 
 Catatan teknis: GLPI hanya membawa hak profil Helpdesk yang terdaftar di `Profile::$helpdesk_rights`
 ke sesi, jadi plugin mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
@@ -153,6 +179,8 @@ ajax/triase.php      aksi panel (JSON)
 public/js/triase.js  interaksi panel
 composer.json        SDK Anthropic (vendor/ tidak di-commit)
 src/Chatbot.php      jawaban chatbot, rating, buat laporan
+src/HelpdeskHome.php menu Helpdesk & pengalihan beranda ke halaman chat
+src/Controller/ChatController.php  halaman penuh /plugins/halosis/Chat
 src/KnowledgeSearch.php  pencarian KB yang menghormati visibilitas GLPI
 src/Privacy.php      penyamaran data pribadi;  src/Chat.php  model percakapan
 ajax/chat.php        endpoint widget;  public/js/chat.js  widget chat
