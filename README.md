@@ -5,6 +5,10 @@ Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh Halo
 SLA per prioritas, 12 tiket (lengkap dengan balasan, catatan internal, solusi),
 5 artikel knowledge base, dan 1 "masalah" sebagai contoh pola insiden.
 
+Di atas GLPI terpasang **plugin HaloSIS** (modul AI human-in-the-loop: chatbot Tanya HaloSIS, saran triase,
+deteksi pola insiden, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo, dan **skenario
+demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
+
 ## Yang dibutuhkan
 - Docker Desktop (Mac/Windows) atau Docker Engine (Linux)
 - Python 3 (untuk skrip pengisi data)
@@ -34,24 +38,76 @@ docker compose exec -T db mysql -uglpi -pglpi glpi -e "INSERT INTO glpi_apiclien
 ```
 (Atau lewat UI: **Setup › General › API › Add API client**.)
 
-**4. Isi data contoh HaloSIS** (jalankan sekali saja)
+**4. Pasang plugin HaloSIS & terapkan role**
+```bash
+docker compose exec glpi php bin/console plugin:install halosis -u glpi --allow-superuser
+docker compose exec glpi php bin/console plugin:activate halosis --allow-superuser
+docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser
+```
+Perintah `setup-roles` aman dijalankan berulang. Yang dilakukannya:
+- ganti nama profil bawaan GLPI sesuai role HaloSIS (ID tetap, pengguna yang terhubung tidak terpengaruh);
+- buat profil **Knowledge Manager**; pastikan **Manajemen** hanya-baca;
+- terapkan hak plugin HaloSIS (triase, chatbot, dashboard, konfigurasi);
+- nonaktifkan akun bawaan GLPI `tech`, `normal`, `post-only`.
+
+**5. Isi data contoh HaloSIS** (jalankan sekali saja, setelah langkah 4)
 ```bash
 python3 -m venv .venv && .venv/bin/pip install requests
 .venv/bin/python seed_halosis.py http://localhost:8080
 ```
 
-**5. Login sebagai role berbeda** (password semua: `halosis`)
+**6. Login sebagai role berbeda** (password semua: `halosis`)
 
-| Login | Nama | Profil GLPI | Peran di HaloSIS |
-| --- | --- | --- | --- |
-| budi, siti, maya | Budi Santoso, dkk. | Self-Service | Pegawai |
-| rina | Rina Wulandari | Hotliner | Operator |
-| andi, yoga | Andi Pratama, Yoga Saputra | Technician | Tim Teknis (Aplikasi Statistik) |
-| fajar | Fajar Nugroho | Technician | Tim Teknis (Identitas & Akses) |
-| dedi | Dedi Kurniawan | Technician | Tim Teknis (Jaringan) |
-| sri | Sri Handayani | Observer | Manajemen (lihat saja) |
-| lina | Lina Marlina | Supervisor | Knowledge Manager |
-| glpi | — | Super-Admin | Administrator |
+| Login | Nama | Profil GLPI (role HaloSIS) | Antarmuka | Keterangan |
+| --- | --- | --- | --- | --- |
+| budi, siti, maya | Budi Santoso, dkk. | Pegawai | Helpdesk (sederhana) | Lapor & pantau tiket, chatbot |
+| rina | Rina Wulandari | Operator | Standar | Validasi & triase tiket (saran AI) |
+| andi, yoga | Andi Pratama, Yoga Saputra | Tim Teknis | Standar | Tim Aplikasi Statistik |
+| fajar | Fajar Nugroho | Tim Teknis | Standar | Tim Identitas & Akses |
+| dedi | Dedi Kurniawan | Tim Teknis | Standar | Tim Jaringan |
+| sri | Sri Handayani | Manajemen | Standar | Hanya-baca: tiket, dashboard, statistik |
+| lina | Lina Marlina | Knowledge Manager | Standar | Kelola Knowledge Base; tiket hanya-baca |
+| glpi | — | Super-Admin | Standar | Pengelola sistem (bukan role bisnis) |
+
+Profil **Administrator** (bekas "Admin") disiapkan untuk admin bisnis HaloSIS, tapi belum ada pengguna contohnya.
+
+Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › tab HaloSIS**):
+
+| Hak | Pegawai | Operator | Tim Teknis | Manajemen | Knowledge Manager | Administrator | Super-Admin |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Chatbot | ✓ | | | | | | |
+| Saran triase AI | | lihat & putuskan | lihat | | | lihat & putuskan | lihat & putuskan |
+| Dashboard kinerja AI | | | | ✓ | | ✓ | ✓ |
+| Konfigurasi plugin | | | | | | ✓ | ✓ |
+
+> ⚠️ **Keamanan.** Akun `glpi` / `glpi` adalah Super-Admin dengan password bawaan yang diketahui umum.
+> Ganti password-nya (**klik avatar › Preferensi › Password**) sebelum GLPI bisa diakses dari jaringan lain,
+> dan jangan gunakan akun ini untuk pekerjaan sehari-hari. Password contoh `halosis` juga hanya untuk demo.
+> Perintah `setup-roles` menampilkan peringatan selama masih ada akun dengan password bawaan.
+
+> ⚠️ **"Remember me" dimatikan** (`login_remember_time = 0`, semula 604800 = 7 hari) karena bug GLPI 12.0.0:
+> mengirim form login saat browser masih login dengan "Remember me" (tab login lama, tombol Back) berakhir
+> "An unexpected error occurred" (`Duplicate entry … glpi_usertokens.token_uid`), dan tugas pembersih token
+> GLPI juga gagal. Aktifkan lagi bila GLPI merilis perbaikan:
+> ```bash
+> docker compose exec glpi php bin/console config:set login_remember_time 604800 --allow-superuser
+> ```
+> Untuk instalasi baru, matikan dengan nilai `0`.
+
+**7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
+
+Palet ada di `themes/halosis.scss` (di-mount ke folder tema kustom GLPI `/var/glpi/files/_themes`).
+Jadikan default untuk semua pengguna:
+```bash
+docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
+docker compose exec glpi php bin/console config:set language id_ID --allow-superuser
+docker compose exec glpi php bin/console config:set text_login '<p style="text-align:center">Selamat datang di <strong>HaloSIS</strong>, layanan TI BPS.<br>Masuk dengan akun dinas Anda.</p>' --allow-superuser
+```
+Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
+
+Catatan palet: GLPI memakai variabel `secondary` juga sebagai warna teks, jadi variabelnya diisi versi gelap
+`#4F7D72` agar terbaca; `#77B8A8` dipakai sebagai latar (tombol sekunder, `.bg-secondary`). Badge memakai
+accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variabel `--glpi-logo-*`.
 
 ## Peta HaloSIS → menu GLPI
 
@@ -68,7 +124,7 @@ python3 -m venv .venv && .venv/bin/pip install requests
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
 | Dashboard manajemen, laporan | **Bantuan › Dashboard**, **Bantuan › Statistik** |
-| Service catalog, tim, pengguna & role | **Setup › Dropdowns › ITIL categories**, **Administrasi › Groups / Users / Profiles** |
+| Service catalog, tim, pengguna & role | **Setup › Dropdowns › ITIL categories**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |
 | Workflow & aturan otomatis | **Administrasi › Rules › Business rules for tickets** |
 | Audit trail | Tab **Riwayat** di setiap tiket/objek |
 

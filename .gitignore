@@ -1,2 +1,15 @@
 .venv/
 .DS_Store
+__pycache__/
+plugins/halosis/vendor/
+
+# Data history tiket berisi data pribadi (email, NIP, HP, nama, password polos): JANGAN PERNAH di-commit.
+# Termasuk semua hasil olahan & turunan yang masih memuat teks tiket (parquet, model, indeks pencarian).
+data/
+ai/models/
+ai/index/
+*.xlsx
+*.parquet
+
+# Rahasia (mis. ANTHROPIC_API_KEY opsional) — jangan di-commit
+.env

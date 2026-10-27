@@ -1,0 +1,32 @@
+{#
+ # Widget chatbot melayang untuk halaman Helpdesk selain halaman "Tanya HaloSIS" (mis. detail tiket, FAQ).
+ # Dimuat oleh public/js/chat.js lewat ajax/chat.php; isi percakapan sama dengan halaman penuh (versi ringkas).
+ #}
+<div class="hc hc-floating" data-halosis-chat="widget" data-ajax-url="{{ ajax_url }}" data-report-url="{{ report_url }}">
+    <button type="button" class="hc-launcher" data-chat-toggle aria-expanded="false" aria-controls="halosis-chat-panel">
+        <i class="ti ti-sparkles" aria-hidden="true"></i>
+        <span>{{ __('Ask the assistant', 'halosis') }}</span>
+    </button>
+
+    <section class="hc-panel" id="halosis-chat-panel" role="dialog" aria-label="{{ __('HaloSIS Assistant', 'halosis') }}" hidden>
+        <header class="hc-panel-head">
+            <span class="hc-avatar hc-avatar-light" aria-hidden="true"><i class="ti ti-sparkles"></i></span>
+            <div class="hc-panel-title">
+                <strong>{{ __('Ask HaloSIS', 'halosis') }}</strong>
+                <span>{{ __('Answers from Help Center articles', 'halosis') }}</span>
+            </div>
+            <a class="hc-panel-icon" href="{{ page_url }}" title="{{ __('Open full screen', 'halosis') }}" aria-label="{{ __('Open full screen', 'halosis') }}">
+                <i class="ti ti-arrows-maximize" aria-hidden="true"></i>
+            </a>
+            <button type="button" class="hc-panel-icon" data-chat-new title="{{ __('New conversation', 'halosis') }}" aria-label="{{ __('New conversation', 'halosis') }}">
+                <i class="ti ti-refresh" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="hc-panel-icon" data-chat-toggle title="{{ __('Close', 'halosis') }}" aria-label="{{ __('Close', 'halosis') }}">
+                <i class="ti ti-x" aria-hidden="true"></i>
+            </button>
+        </header>
+        <div class="hc-chat hc-chat-compact">
+            {% include '@halosis/chat_conversation.html.twig' with {compact: true} %}
+        </div>
+    </section>
+</div>

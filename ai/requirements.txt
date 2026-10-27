@@ -1,0 +1,9 @@
+# Layanan & pipeline AI HaloSIS (Python 3.12+)
+pandas>=3.0
+openpyxl>=3.1
+pyarrow>=20
+pytest>=8
+scikit-learn>=1.6
+joblib>=1.4
+sentence-transformers>=3.0
+numpy>=2.0
