@@ -107,4 +107,5 @@ atau ke tim lama yang mirip. Latih ulang berkala (mis. bulanan) mengatasi ini.
 - Akurasi diukur terhadap tim akhir di data history; tim akhir itu sendiri kadang hasil koreksi routing
   (≈5,8% tiket berindikasi salah routing), jadi sebagian "salah" model bisa berarti kasus ambigu.
 - Tiket "Operator Pusat" (ditangani langsung operator) ikut menjadi kelas sendiri.
-- Pembanding retrieval + LLM (opsional) belum dijalankan.
+- Pembanding retrieval + LLM (opsional) tidak dijalankan: proyek berjalan tanpa API key LLM, sehingga tidak
+  ada data yang dikirim ke API eksternal. Triase sepenuhnya memakai model lokal ini.

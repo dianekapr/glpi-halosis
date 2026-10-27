@@ -10,3 +10,6 @@ ai/models/
 ai/index/
 *.xlsx
 *.parquet
+
+# Rahasia (mis. ANTHROPIC_API_KEY opsional) — jangan di-commit
+.env
