@@ -1,0 +1,5 @@
+# Layanan & pipeline AI HaloSIS (Python 3.12+)
+pandas>=3.0
+openpyxl>=3.1
+pyarrow>=20
+pytest>=8
