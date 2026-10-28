@@ -228,6 +228,9 @@ Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `Role
 - Sorotan menu aktif diatur `public/js/menu.js` (detail tiket menyorot "Semua tiket"/daftar tiket peran itu).
 - Matikan fitur **Menu ringkas** di konfigurasi plugin untuk kembali ke menu GLPI lengkap.
 
+
+Antrean validasi, Tiket saya & tim, dan Monitoring SLA diurutkan "Waktu untuk menyelesaikan" terdekat dulu
+(parameter `sort`/`order` di URL menu). Kolom daftarnya diatur `setup_list_columns.py` (README induk langkah 5c).
 ### Kandidat Knowledge (UC-09, hak `plugin_halosis_kandidat`)
 
 Halaman `/plugins/halosis/Kandidat` (Knowledge Manager, Administrator, Super-Admin). Setiap dibuka, kandidat
@@ -381,6 +384,7 @@ templates/                template Twig (@halosis/...)
 public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
                           menu, triase)
 public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
+public/logo               logo HaloSIS: file asli (*.webp) + versi transparan halosis-logo-light/dark.png untuk palet
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
 composer.json             SDK Anthropic (vendor/ tidak di-commit)
 ```

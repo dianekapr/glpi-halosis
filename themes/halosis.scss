@@ -107,14 +107,17 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --glpi-palette-color-3: #ff965a;
     --glpi-palette-color-4: #f5f8f6;
 
-    // Logo HaloSIS (SVG inline, desain sama dengan prototipe web: kotak "H." + tulisan HaloSIS).
-    // light = di atas sidebar gelap, dark = di atas latar terang (halaman login).
-    --glpi-logo-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='55' viewBox='0 0 100 55'%3E%3Crect x='0' y='15.5' width='24' height='24' rx='7' fill='%23fff'/%3E%3Ctext x='12' y='32.5' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='14' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='29' y='33' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='%23fff'%3EHaloSIS%3C/text%3E%3C/svg%3E");
-    --glpi-logo-light-reduced: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='11' fill='%23fff'/%3E%3Ctext x='20' y='27' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='20' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3C/svg%3E");
-    --glpi-logo-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='55' viewBox='0 0 100 55'%3E%3Crect x='0' y='15.5' width='24' height='24' rx='7' fill='%23155E63'/%3E%3Ctext x='12' y='32.5' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='14' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='29' y='33' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='15' font-weight='700' fill='%23203332'%3EHaloSIS%3C/text%3E%3C/svg%3E");
-    --glpi-logo-dark-reduced: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='11' fill='%23155E63'/%3E%3Ctext x='20' y='27' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='20' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3C/svg%3E");
-    --glpi-logo-dark-login: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='110' viewBox='0 0 200 110'%3E%3Crect x='6' y='31' width='48' height='48' rx='14' fill='%23155E63'/%3E%3Ctext x='30' y='65' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='28' font-weight='800' fill='%23fff'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='64' y='66' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='30' font-weight='700' fill='%23203332'%3EHaloSIS%3C/text%3E%3C/svg%3E");
-    --glpi-logo-light-login: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='110' viewBox='0 0 200 110'%3E%3Crect x='6' y='31' width='48' height='48' rx='14' fill='%23fff'/%3E%3Ctext x='30' y='65' text-anchor='middle' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='28' font-weight='800' fill='%23155E63'%3EH%3Ctspan fill='%23FF965A'%3E.%3C/tspan%3E%3C/text%3E%3Ctext x='64' y='66' font-family='Inter,Segoe UI,Helvetica,Arial,sans-serif' font-size='30' font-weight='700' fill='%23fff'%3EHaloSIS%3C/text%3E%3C/svg%3E");
+    // Logo HaloSIS dari aset plugin (plugins/halosis/public/logo): tanda logo asli, latar dibuat transparan,
+    // PNG 192px (tajam sampai 3x). light = tanda putih untuk sidebar primary, dark = tanda hitam untuk latar terang.
+    // Tulisan "HaloSIS" di sampingnya ditambahkan lewat ::after (lihat bagian Logo di bawah).
+    --halosis-logo-light: url("/plugins/halosis/logo/halosis-logo-light.png");
+    --halosis-logo-dark: url("/plugins/halosis/logo/halosis-logo-dark.png");
+    --glpi-logo-light: var(--halosis-logo-light);
+    --glpi-logo-light-reduced: var(--halosis-logo-light);
+    --glpi-logo-dark: var(--halosis-logo-dark);
+    --glpi-logo-dark-reduced: var(--halosis-logo-dark);
+    --glpi-logo-dark-login: var(--halosis-logo-dark);
+    --glpi-logo-light-login: var(--halosis-logo-light);
 
     // Secondary #77B8A8 sebagai latar (teks gelap demi kontras)
     .btn-secondary {
@@ -214,11 +217,52 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
         box-shadow: 0 0 0 0.2rem var(--tblr-focus-ring-color);
     }
 
-    // ---- Tabel daftar: header lembut, garis tipis, hover baris, jarak sedikit lebih lega ----
+    // ==== Tabel daftar GLPI (semua itemtype: tiket, masalah, KB, pengguna, grup, kategori, SLA, aturan, log) ====
+    // Sel hasil pencarian membawa atribut data-searchopt-content-id (1 = nama/judul, 2 = ID, 3 = prioritas,
+    // 12 = status, 18 = waktu penyelesaian pada tiket). Semua aturan hanya memakai kelas & atribut itu.
     .table {
-        --tblr-table-border-color: #e6eeeb;
-        --tblr-table-striped-bg: #fafcfb;
-        --tblr-table-hover-bg: #eef5f2;
+        --tblr-table-border-color: #e9efed;
+        --tblr-table-striped-bg: transparent;
+        --tblr-table-hover-bg: #f1f7f4;
+    }
+
+    // Wadah: kartu bersudut membulat (tanpa overflow hidden agar dropdown toolbar tidak terpotong)
+    .search-card {
+        border-radius: var(--tblr-border-radius-lg);
+        border-color: #dce6e2;
+        box-shadow: var(--tblr-box-shadow);
+    }
+
+    // Catatan: GLPI 12 sudah menangani header sticky (toolbar top -1px, header tabel top 44px), footer sticky,
+    // dan gulir horizontal (.search-container) di layar ≥ lg. Tema tidak mengubah posisi/overflow agar tetap utuh.
+
+    // Layar sempit: tabel daftar di luar mesin pencarian (mis. daftar aturan) digulir di dalam wadahnya,
+    // bukan melebarkan halaman
+    @media (max-width: 991.98px) {
+        .table-responsive:has(> table.card-table) {
+            overflow-x: auto;
+        }
+    }
+
+    // Tabel daftar di luar mesin pencarian (daftar aturan, tab daftar di form): gaya dasar yang sama
+    table.card-table:not(.search-results) {
+        > thead > tr > th {
+            background-color: #f5f8f6;
+            color: #4f6763;
+            font-weight: 600;
+            font-size: 0.6875rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.55rem 0.625rem;
+            vertical-align: middle;
+        }
+
+        > tbody > tr > td {
+            font-size: 0.875rem;
+            padding: 0.45rem 0.625rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #edf2f0;
+        }
     }
 
     table.search-results {
@@ -228,12 +272,261 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
             font-weight: 600;
             font-size: 0.6875rem;
             letter-spacing: 0.04em;
-            padding-block: 0.55rem;
+            text-transform: uppercase;
+            line-height: 1.3;
+            padding: 0.55rem 0.625rem;
+            border-bottom: 1px solid #e3ebe8;
+            vertical-align: middle;
         }
 
         > tbody > tr > td {
+            font-size: 0.875rem;
+            line-height: 1.4;
+            padding: 0.45rem 0.625rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #edf2f0;
+        }
+
+        > tbody > tr:last-child > td {
+            border-bottom: 0;
+        }
+
+        // Kolom lain: satu baris dengan ellipsis; teks lengkap tampil saat baris disorot
+        > tbody > tr > td[data-searchopt-content-id] {
+            max-width: 13rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        > tbody > tr:hover > td[data-searchopt-content-id] {
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        // Kolom nama/judul (tautan utama): lebar minimal & maksimal 2 baris
+        > tbody > tr > td[data-searchopt-content-id="1"] {
+            min-width: 260px;
+            max-width: 26rem;
+            white-space: normal;
+
+            > a {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                font-weight: 500;
+            }
+        }
+
+        > thead > tr > th[data-searchopt-id="1"] {
+            min-width: 260px;
+        }
+
+        // ID, tanggal, angka (GLPI membungkusnya .text-nowrap), status, prioritas: tidak terpotong
+        > tbody > tr > td[data-searchopt-content-id="2"],
+        > tbody > tr > td:has(> .text-nowrap),
+        > tbody > tr > td:has(> .badge_block) {
+            max-width: none;
+            white-space: nowrap;
+            overflow: visible;
+        }
+
+        // ---- Pill prioritas / urgensi / dampak / SLA (GLPI: .badge_block berwarna inline) ----
+        // Rona latar = warna inline pada <span> dengan opasitas rendah; titik = warna border inline (diwarisi).
+        .badge_block {
+            position: relative;
+            isolation: isolate;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            gap: 0.4rem;
+            border-width: 0;
+            border-radius: var(--tblr-border-radius-pill);
+            padding: 0.125rem 0.6rem 0.125rem 0.5rem;
+            color: #203332;
             font-size: 0.8125rem;
-            padding-block: 0.5rem;
+            font-weight: 500;
+            line-height: 1.45;
+            white-space: nowrap;
+
+            > span {
+                position: absolute;
+                inset: 0;
+                width: auto;
+                height: auto;
+                margin: 0;
+                border-radius: inherit;
+                opacity: 0.16;
+                z-index: -1;
+            }
+
+            &::before {
+                content: "";
+                flex: none;
+                width: 0.5rem;
+                height: 0.5rem;
+                border: 0.25rem solid;
+                border-color: inherit;
+                border-radius: 50%;
+            }
+        }
+
+        // SLA lewat batas: GLPI memakai warna tetap #cf9b9b → merah
+        td[data-searchopt-content-id="18"] .badge_block[style*="cf9b9b"] {
+            border-color: #e03131 !important;
+
+            > span {
+                background: #e03131 !important;
+            }
+        }
+
+        // ---- Pill status ITIL: <span.text-nowrap><span><i.itilstatus.<status>></span>Teks</span> ----
+        .text-nowrap:has(> span > i.itilstatus) {
+            --halosis-dot: #868e96;
+            --halosis-tint: #f1f3f5;
+            display: inline-flex;
+            align-items: center;
+            vertical-align: middle;
+            gap: 0.4rem;
+            padding: 0.125rem 0.6rem 0.125rem 0.5rem;
+            border-radius: var(--tblr-border-radius-pill);
+            background: var(--halosis-tint);
+            color: #203332;
+            font-size: 0.8125rem;
+            font-weight: 500;
+
+            > span {
+                display: inline-flex;
+            }
+
+            i.itilstatus {
+                width: 0.5rem;
+                height: 0.5rem;
+                margin: 0 !important;
+                border-radius: 50%;
+                background: var(--halosis-dot);
+                font-size: 0;
+            }
+        }
+
+        .text-nowrap:has(> span > i.itilstatus.new) { --halosis-dot: #155e63; --halosis-tint: #e3f1ed; }
+        .text-nowrap:has(> span > i.itilstatus.assigned),
+        .text-nowrap:has(> span > i.itilstatus.planned) { --halosis-dot: #f59f00; --halosis-tint: #fff4db; }
+        .text-nowrap:has(> span > i.itilstatus.waiting) { --halosis-dot: #f76707; --halosis-tint: #ffe8d9; }
+        .text-nowrap:has(> span > i.itilstatus.solved) { --halosis-dot: #2f9e44; --halosis-tint: #e6f4ea; }
+        .text-nowrap:has(> span > i.itilstatus.closed) { --halosis-dot: #868e96; --halosis-tint: #f1f3f5; }
+
+        // ---- "Waktu untuk menyelesaikan" tiket yang belum lewat batas: pill hijau; tiket selesai/ditutup: abu ----
+        &:has(td[data-searchopt-content-id="1"] a[href*="ticket.form.php"]) {
+            td[data-searchopt-content-id="18"] > .text-nowrap:not(:empty) {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.125rem 0.6rem 0.125rem 0.5rem;
+                border-radius: var(--tblr-border-radius-pill);
+                background: #e6f4ea;
+                font-size: 0.8125rem;
+                font-weight: 500;
+
+                &::before {
+                    content: "";
+                    width: 0.5rem;
+                    height: 0.5rem;
+                    border-radius: 50%;
+                    background: #2f9e44;
+                }
+            }
+
+            tr:has(i.itilstatus.solved, i.itilstatus.closed) td[data-searchopt-content-id="18"] > .text-nowrap:not(:empty) {
+                background: #f1f3f5;
+
+                &::before {
+                    background: #868e96;
+                }
+            }
+        }
+    }
+
+    // ---- Toolbar pencarian & pagination ----
+    .search-controls {
+        .btn {
+            border-radius: var(--tblr-border-radius);
+        }
+
+        // Chip filter & urutan aktif: lembut (bawaan GLPI hijau/oranye pucat, selektor bersarang → !important)
+        .btn-active-search,
+        .btn-active-sort {
+            background-color: #e3f1ed !important;
+            color: #155e63 !important;
+            border-radius: var(--tblr-border-radius-pill);
+        }
+
+        // Tombol tampilan aktif (tabel/peta/kanban)
+        .btn-pill.btn-ghost-info {
+            background-color: #155e63 !important;
+            color: #fff !important;
+        }
+    }
+
+    .search-pager {
+        padding: 0.5rem 0.75rem 0;
+
+        .page-link {
+            border-radius: var(--tblr-border-radius) !important;
+        }
+    }
+
+    // ==== Logo HaloSIS: tanda logo (variabel --glpi-logo-*) + tulisan "HaloSIS" ====
+    // Sidebar & header Helpdesk (GLPI: .page .glpi-logo, latar var(--glpi-logo), 100×55)
+    .page .navbar-brand .glpi-logo {
+        display: inline-flex;
+        align-items: center;
+        width: auto;
+        height: 55px;
+        padding-left: 52px;
+        background-size: auto 32px;
+        background-position: left center;
+
+        &::after {
+            content: "HaloSIS";
+            font-family: var(--halosis-font-display);
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--glpi-mainmenu-fg);
+        }
+    }
+
+    // Sidebar diciutkan: hanya tanda logo, cukup besar di sidebar 70px
+    body.navbar-collapsed .sidebar .navbar-brand .glpi-logo {
+        width: 46px;
+        height: 36px;
+        padding-left: 0;
+        background: var(--glpi-logo-reduced) no-repeat center / contain;
+
+        &::after {
+            content: none;
+        }
+    }
+
+    // Halaman login: tanda logo 48px + "HaloSIS" di atas kartu (GLPI memakai content: var(--logo))
+    .page-anonymous .glpi-logo {
+        content: normal;
+        display: inline-flex;
+        align-items: center;
+        width: auto;
+        height: 64px;
+        padding-left: 74px;
+        background: var(--glpi-logo-dark-login) no-repeat left center / auto 48px;
+
+        &::after {
+            content: "HaloSIS";
+            font-family: var(--halosis-font-display);
+            font-size: 2.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #203332;
         }
     }
 
