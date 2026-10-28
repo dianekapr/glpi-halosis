@@ -13,3 +13,6 @@ ai/index/
 
 # Rahasia (mis. ANTHROPIC_API_KEY opsional) — jangan di-commit
 .env
+
+# Tangkapan Kandidat knowledge memuat solusi history tiket (tersamar, data internal) — jangan di-commit
+screenshot/modernisasi/**/*kandidat*

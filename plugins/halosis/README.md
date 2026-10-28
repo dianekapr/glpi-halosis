@@ -8,13 +8,13 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Tanya HaloSIS**: chatbot self-service yang menjawab hanya dari artikel Pusat Bantuan | Pegawai | Beranda Helpdesk (`/plugins/halosis/Chat`) |
 | **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak; Kembalikan ke operator (salah tim) | Operator (putuskan), Tim Teknis (lihat, kembalikan) | Panel "Saran AI" di form tiket |
 | **Deteksi pola insiden**: tiket mirip ≥ N dalam 1 jam → Problem "Pola insiden: …" | Operator | Tugas terjadwal + banner beranda |
-| **Kandidat Knowledge** (UC-09): solusi tiket selesai & solusi berulang dari indeks AI → Jadikan artikel (draf KB) / Abaikan (dengan alasan) | Knowledge Manager, Administrator | Menu Kandidat knowledge (`/plugins/halosis/Kandidat`) |
-| **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen | Bantuan › Kinerja AI |
+| **Kandidat Knowledge** (UC-09): solusi tiket selesai & solusi berulang dari indeks AI → Jadikan artikel (draf KB) / Abaikan (dengan alasan) | Knowledge Manager, Administrator, Super-Admin | Menu Kandidat knowledge (`/plugins/halosis/Kandidat`) |
+| **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.5.0 · GLPI 12.0.x · PHP 8.2+. Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan
-itu mati dan tidak ada API key, semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik,
-tanpa internet).
+Versi 0.5.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
+semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
 ## Akun demo
 
@@ -228,6 +228,9 @@ Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `Role
 - Sorotan menu aktif diatur `public/js/menu.js` (detail tiket menyorot "Semua tiket"/daftar tiket peran itu).
 - Matikan fitur **Menu ringkas** di konfigurasi plugin untuk kembali ke menu GLPI lengkap.
 
+
+Antrean validasi, Tiket saya & tim, dan Monitoring SLA diurutkan "Waktu untuk menyelesaikan" terdekat dulu
+(parameter `sort`/`order` di URL menu). Kolom daftarnya diatur `setup_list_columns.py` (README induk langkah 5c).
 ### Kandidat Knowledge (UC-09, hak `plugin_halosis_kandidat`)
 
 Halaman `/plugins/halosis/Kandidat` (Knowledge Manager, Administrator, Super-Admin). Setiap dibuka, kandidat
@@ -323,6 +326,7 @@ hak ini, tidak pernah nama profil.
 | `plugin_halosis_triase` | lihat (READ), putuskan (UPDATE) | Operator, Administrator, Super-Admin: lihat & putuskan; Tim Teknis: lihat |
 | `plugin_halosis_chatbot` | pakai (READ) | Pegawai |
 | `plugin_halosis_dashboard` | lihat (READ) | Manajemen, Administrator, Super-Admin |
+| `plugin_halosis_kandidat` | lihat (READ), putuskan (UPDATE: jadikan artikel / abaikan) | Knowledge Manager, Administrator, Super-Admin: lihat & putuskan |
 | `plugin_halosis_config` | ubah (UPDATE) | Administrator, Super-Admin |
 
 GLPI hanya membawa hak profil Helpdesk yang terdaftar di `Profile::$helpdesk_rights` ke sesi, jadi plugin
@@ -345,9 +349,10 @@ mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
   terbukti (request sampai ke API dan ditolak karena key uji palsu), tapi isi request belum divalidasi oleh
   API dengan key sungguhan. Uji sekali dengan key asli sebelum dipakai.
 - AI dipanggil saat tiket disimpan, jadi pegawai menunggu sampai saran jadi (maksimal = batas waktu).
-- Pencarian artikel & pengelompokan judul memakai pencocokan kata kunci: sinonim (mis. "lemot" vs "lambat")
-  belum dikenali; cukup untuk KB kecil.
-- "Salah tim" diukur sebagai pemindahan grup setelah triase, bukan aksi "kembalikan" eksplisit.
+- **Mode demo saja** (layanan `halosis-ai` mati): pencarian artikel memakai pencocokan kata kunci, jadi sinonim
+  (mis. "lemot" vs "lambat") belum dikenali; cukup untuk KB kecil. Dengan `halosis-ai`, pencarian chatbot
+  memakai embedding (`intfloat/multilingual-e5-base`) sehingga makna serupa tetap ditemukan.
+- Deteksi pola insiden mengelompokkan judul dengan kata kunci di semua mode (tidak memakai layanan AI).
 - Sebagian menu GLPI masih berbahasa Inggris (terjemahan `id_ID` bawaan GLPI 12 belum lengkap).
 - Notifikasi email pola insiden bergantung pada konfigurasi email GLPI.
 
@@ -357,22 +362,29 @@ mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
 setup.php                 versi, syarat GLPI 12.0.x, registrasi hook, penanda versi aset
 hook.php                  install/uninstall: tabel, config default, hak akses, tugas terjadwal
 src/Config.php            konfigurasi, API key terenkripsi, mode demo
-src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php  6 role HaloSIS
+src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php  role HaloSIS & hak inti GLPI
+src/RoleMenu.php          menu ringkas per peran (hook redefine_menus)
 src/Console/              perintah plugins:halosis:setup-roles
 src/Ai/Client.php         pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
+src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /kandidat);  src/Ai/AiException.php
 src/Triage.php            saran triase (AI & demo) + keputusan;  src/TriagePanel.php  panel di form tiket
 src/Suggestion.php        model saran;  src/Decision.php  model keputusan
 src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  model percakapan
 src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/Privacy.php  penyamaran data
 src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
 src/PatternDetector.php   tugas terjadwal pola insiden + banner
-src/Stats.php             angka dashboard;  src/Reassignment.php  pencatat pemindahan tim
-src/Controller/           halaman /plugins/halosis/Chat dan /plugins/halosis/Dashboard
+src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
+src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan;  src/Candidate.php  model kandidat
+src/Controller/           ChatController (/plugins/halosis/Chat, /plugins/halosis/ChatHistory),
+                          DashboardController (/plugins/halosis/Dashboard), KandidatController (/plugins/halosis/Kandidat)
 src/ConfigMenu.php, src/DashboardMenu.php  entri menu
-ajax/triase.php, ajax/chat.php             endpoint JSON panel triase & chatbot
+ajax/triase.php, ajax/chat.php, ajax/kandidat.php  endpoint JSON panel triase, chatbot, kandidat knowledge
 front/config.form.php     halaman konfigurasi
 templates/                template Twig (@halosis/...)
-public/css, public/js     aset, disajikan di /plugins/halosis/css|js/...
+public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
+                          menu, triase)
+public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
+public/logo               logo HaloSIS: file asli (*.webp) + versi transparan halosis-logo-light/dark.png untuk palet
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
 composer.json             SDK Anthropic (vendor/ tidak di-commit)
 ```
@@ -389,3 +401,4 @@ UI, jalankan `python3 tools/locales.py`.
 | `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain (`reassign`) atau dikembalikan ke operator dengan alasan (`return`) setelah triase AI diterapkan |
 | `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status, rating, tiket |
+| `glpi_plugin_halosis_candidates` | Kandidat Knowledge (UC-09): sumber (tiket selesai / klaster AI), masalah & solusi (tersamarkan), jumlah kemunculan, status (`pending` / `article` / `ignored`), artikel KB yang dibuat, alasan diabaikan, Knowledge Manager & waktu keputusan |

@@ -327,6 +327,45 @@ menunggu batas waktu, majukan jadwalnya lalu tunggu ±1 menit:
 `UPDATE glpi_slalevels_tickets SET date = NOW() WHERE tickets_id = <id>`. Peringatan muncul di
 `glpi_queuednotifications` (event `recall`) untuk teknisi & anggota tim serta ketua timnya.
 
+**5c. Kolom daftar yang ringkas & warna prioritas/SLA** (konfigurasi GLPI, tanpa kode; aman dijalankan berulang)
+```bash
+.venv/bin/python setup_list_columns.py http://localhost:8080
+docker compose exec glpi php bin/console config:set priority_6 '#c92a2a' --allow-superuser   # Mayor
+docker compose exec glpi php bin/console config:set priority_5 '#e03131' --allow-superuser   # Sangat tinggi
+docker compose exec glpi php bin/console config:set priority_4 '#f76707' --allow-superuser   # Tinggi
+docker compose exec glpi php bin/console config:set priority_3 '#f59f00' --allow-superuser   # Sedang
+docker compose exec glpi php bin/console config:set priority_2 '#868e96' --allow-superuser   # Rendah
+docker compose exec glpi php bin/console config:set priority_1 '#adb5bd' --allow-superuser   # Sangat rendah
+docker compose exec glpi php bin/console config:set duedateok_color '#2f9e44' --allow-superuser
+docker compose exec glpi php bin/console config:set duedatewarning_color '#f76707' --allow-superuser
+docker compose exec glpi php bin/console config:set duedatecritical_color '#e03131' --allow-superuser
+```
+Warna di atas menjadi **titik** pada pill prioritas/SLA di tabel (palet membuat pill lembut + titik).
+
+`setup_list_columns.py` menulis *Display preferences* global (Administrasi › … › ikon "pilih kolom"). GLPI selalu
+menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri → kanan):
+
+| Daftar (menu) | Kolom tambahan | Dibuang (alasan) |
+| --- | --- | --- |
+| Tiket — Antrean validasi & Semua tiket (Operator) | Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui | Tanggal buka (dobel tanggal), Teknisi (Operator menugaskan ke tim) |
+| Tiket — Tiket saya & tim (kolom pribadi tiap pengguna Tim Teknis) | Status, Prioritas, Kategori, Pemohon, Teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui | Grup teknisi (sudah tersaring ke tim sendiri), Tanggal buka |
+| Tiket — Laporan saya (Pegawai, Helpdesk) | Status, Kategori, Terakhir diperbarui | Tanggal buka (dobel tanggal) |
+| Masalah / pola insiden | Status, Prioritas, Kategori, Jumlah tiket, Tanggal buka | Deskripsi (panjang), Waktu untuk menyelesaikan (kosong untuk pola) |
+| Knowledge Base (Daftar artikel) | Kategori, FAQ, Pengguna (penulis), Tampilan, Terakhir diperbarui | Parent article, Unsur terkait (kosong) |
+| Pengguna | Nama depan, Nama belakang, Email, Profil (Entitas), Grup, Aktif, Terakhir login | Telepon, Lokasi (kosong) |
+| Tim (Grup) | Manager (ketua tim), Jumlah pengguna, Bisa ditugaskan | Komentar (kosong) |
+| Kategori layanan (ITIL) | Grup, Jumlah tiket, Terlihat untuk insiden / permintaan / antarmuka sederhana | — |
+| SLA / SLM | SLM, Tipe, Waktu / Kalender | — |
+| Workflow & aturan (aturan tiket) | Kolom tetap bawaan GLPI (Nama, Deskripsi, Dipakai untuk, Kriteria, Tindakan, Aktif, Posisi) | Daftar aturan bukan mesin pencarian, kolomnya tidak bisa diatur preferensi |
+
+Urutan default **Antrean validasi, Tiket saya & tim, Monitoring SLA**: "Waktu untuk menyelesaikan" terdekat dulu
+(URL menu ringkas di `plugins/halosis/src/RoleMenu.php`).
+
+Batasan GLPI: preferensi kolom berlaku per *itemtype* (dan per pengguna), **bukan per URL pencarian**. Antrean
+validasi dan Semua tiket sama-sama daftar Tiket milik Operator, jadi kolom Status tetap tampil di antrean
+(isinya selalu "Baru") karena dibutuhkan di Semua tiket. Pengguna yang berhak (hak *Search config*) tetap bisa
+mengubah kolomnya sendiri; menjalankan ulang skrip menimpa kolom global & kolom pribadi Tim Teknis.
+
 **6. Login sebagai role berbeda** (password semua: `halosis`)
 
 Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
@@ -423,8 +462,32 @@ docker compose exec glpi php bin/console config:set text_login '<p style="text-a
 Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
 
 Catatan palet: GLPI memakai variabel `secondary` juga sebagai warna teks, jadi variabelnya diisi versi gelap
-`#4F7D72` agar terbaca; `#77B8A8` dipakai sebagai latar (tombol sekunder, `.bg-secondary`). Badge memakai
-accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variabel `--glpi-logo-*`.
+`#4C786E` agar terbaca (kontras ≥ 4,5:1 di putih maupun latar `#F5F8F6`); `#77B8A8` dipakai sebagai latar
+(tombol sekunder, `.bg-secondary`). Badge memakai accent `#FF965A` dengan teks `#203332`.
+
+**Logo:** tanda logo dari `plugins/halosis/public/logo/` (file asli `logo-sidebar.webp` & `logo-loginwebp` berlatar
+pola kotak-kotak tercetak, jadi dibuat versi transparan tanpa mengubah bentuk: `halosis-logo-light.png` putih
+untuk sidebar primary, `halosis-logo-dark.png` hitam untuk login & header Helpdesk, PNG 192px). Dipasang lewat
+variabel `--glpi-logo-*`; tulisan "HaloSIS" ditambahkan dengan CSS `::after` (font Plus Jakarta Sans). Sidebar
+diciutkan: hanya tanda logo. **Favicon tidak bisa diganti** tanpa mengubah GLPI: tautannya ditulis langsung di
+template inti (`templates/layout/parts/head.html.twig` → `/pics/favicon.ico`), dan tema/CSS tidak bisa mengatur
+favicon.
+
+Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): hanya palet ini + CSS/aset plugin.
+- Judul Plus Jakarta Sans (di-host lokal di `plugins/halosis/public/fonts`, lisensi OFL, tanpa CDN); teks Inter
+  bawaan GLPI. Kartu 16px, tombol & input 10px, badge pill, bayangan halus, tabel daftar lebih lega.
+- Antarmuka Helpdesk (Pegawai) memakai header putih seperti prototipe; sidebar petugas tetap primary.
+- Header notifikasi info & peringatan GLPI disesuaikan agar kontras teks memenuhi WCAG AA.
+- **Semua tabel daftar** (tiket, masalah, KB, pengguna, grup, kategori, SLA, aturan, log): kartu membulat, header
+  11px huruf kapital, isi 14px, garis tipis & hover baris; kolom nama/judul min. 260px (maks. 2 baris); ID,
+  tanggal, status & prioritas tidak terpotong; kolom lain satu baris dengan ellipsis (lengkap saat baris
+  disorot). Prioritas, status, dan "Waktu untuk menyelesaikan" menjadi pill lembut + titik warna. Header sticky,
+  gulir horizontal, sorting, aksi massal, pagination, pilih kolom, tampilan peta tetap bawaan GLPI.
+- **Rollback:** `config:set palette auror` (palet bawaan GLPI) → semua gaya & logo HaloSIS lepas; halaman plugin
+  ikut font GLPI. Kembalikan dengan `config:set palette halosis`. Kolom daftar & warna prioritas/SLA (langkah 5c)
+  adalah data konfigurasi, bukan palet: kembalikan bila perlu dengan mengatur ulang kolom lewat ikon "pilih kolom", dan nilai awal
+  GLPI `priority_1..6` = `#fff2f2 #ffe0e0 #ffcece #ffbfbf #ffadad #ff5555`, `duedateok_color #06ff00`,
+  `duedatewarning_color #ffb800`, `duedatecritical_color #ff0000`.
 
 ## Peta HaloSIS → menu GLPI
 

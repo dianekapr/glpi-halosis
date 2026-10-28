@@ -37,6 +37,8 @@ final class RoleMenu
     public const HIDDEN_CLASS = 'halosis-menu-hidden';
     /** Penanda item menu HaloSIS (dipakai public/js/menu.js untuk menyorot item aktif) */
     public const ITEM_CLASS = 'halosis-menu-item';
+    /** Urutan antrean: "Waktu untuk menyelesaikan" (opsi 18) terdekat dulu */
+    private const BY_DEADLINE = [18, 'ASC'];
 
     /**
      * Hook redefine_menus.
@@ -102,7 +104,7 @@ final class RoleMenu
     {
         return self::build([
             ['dashboard', __('Dashboard', 'halosis'), '/front/central.php', 'ti ti-layout-dashboard', true],
-            ['queue', __('Validation queue', 'halosis'), self::ticketSearch([self::status('1')]), 'ti ti-sparkles', Ticket::canView()],
+            ['queue', __('Validation queue', 'halosis'), self::ticketSearch([self::status('1')], self::BY_DEADLINE), 'ti ti-sparkles', Ticket::canView()],
             ['tickets', __('All tickets', 'halosis'), '/front/ticket.php?reset=reset', 'ti ti-ticket', Ticket::canView()],
             ...self::monitoring(),
             ['knowledge', __('Search knowledge', 'halosis'), '/front/knowbaseitem.php', 'ti ti-search', KnowbaseItem::canView()],
@@ -119,7 +121,7 @@ final class RoleMenu
                     ['field' => 5, 'searchtype' => 'equals', 'value' => 'myself'],
                     ['link' => 'OR', 'field' => 8, 'searchtype' => 'equals', 'value' => 'mygroups'],
                 ]],
-            ]), 'ti ti-ticket', Ticket::canView()],
+            ], self::BY_DEADLINE), 'ti ti-ticket', Ticket::canView()],
             ...self::monitoring(),
             ['knowledge', __('Search knowledge', 'halosis'), '/front/knowbaseitem.php', 'ti ti-search', KnowbaseItem::canView()],
         ]);
@@ -196,7 +198,7 @@ final class RoleMenu
             ['sla', __('SLA monitoring', 'halosis'), self::ticketSearch([
                 self::status('notold'),
                 ['link' => 'AND', 'field' => 82, 'searchtype' => 'equals', 'value' => 1],
-            ]), 'ti ti-clock-exclamation', Ticket::canView()],
+            ], self::BY_DEADLINE), 'ti ti-clock-exclamation', Ticket::canView()],
             // Pola insiden dicatat sebagai Problem oleh PatternDetector
             ['patterns', __('Incident patterns', 'halosis'), '/front/problem.php', 'ti ti-topology-ring-3', Problem::canView()],
         ];
@@ -223,8 +225,17 @@ final class RoleMenu
         return ['field' => 12, 'searchtype' => 'equals', 'value' => $value];
     }
 
-    private static function ticketSearch(array $criteria): string
+    /**
+     * @param array<int, array<string, mixed>> $criteria
+     * @param array{0: int, 1: string}|null    $sort [opsi pencarian, ASC|DESC]
+     */
+    private static function ticketSearch(array $criteria, ?array $sort = null): string
     {
-        return '/front/ticket.php?' . http_build_query(['criteria' => $criteria]);
+        $query = ['criteria' => $criteria];
+        if ($sort !== null) {
+            $query['sort'] = [$sort[0]];
+            $query['order'] = [$sort[1]];
+        }
+        return '/front/ticket.php?' . http_build_query($query);
     }
 }
