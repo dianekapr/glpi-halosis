@@ -6,7 +6,7 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | Fitur | Siapa | Di mana |
 | --- | --- | --- |
 | **Tanya HaloSIS**: chatbot self-service yang menjawab hanya dari artikel Pusat Bantuan | Pegawai | Beranda Helpdesk (`/plugins/halosis/Chat`) |
-| **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak | Operator (putuskan), Tim Teknis (lihat) | Panel "Saran AI" di form tiket |
+| **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak; Kembalikan ke operator (salah tim) | Operator (putuskan), Tim Teknis (lihat, kembalikan) | Panel "Saran AI" di form tiket |
 | **Deteksi pola insiden**: tiket mirip ≥ N dalam 1 jam → Problem "Pola insiden: …" | Operator | Tugas terjadwal + banner beranda |
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
@@ -146,13 +146,18 @@ per akun.
 
 1. Login `andi` / `halosis`. Tiket muncul di **Beranda › Tampilan Group** dan **Bantuan › Tiket**.
 2. Panel Saran AI tampil **tanpa tombol keputusan** (Tim Teknis hanya melihat).
+   - Alternatif **salah tim** (UC-06): klik **Kembalikan ke operator (salah tim)**, tulis alasan (wajib, minimal
+     5 karakter). Tim & teknisi dilepas, status kembali **Baru** (antrean validasi `rina`), alasan tercatat sebagai
+     tindak lanjut privat dan data evaluasi AI. `rina` lalu menugaskan tim yang benar.
 3. Klik **Answer ▾ › Add a solution**, tulis solusi (mis. "Server sinkronisasi FASIH wilayah sudah
    dipulihkan. Buka FASIH lalu tekan Coba sinkron ulang."), simpan. Status menjadi **Terselesaikan**.
 
 ### 4. Pegawai menyetujui solusi (`budi`)
 
 1. Login `budi`, buka **Laporan saya**, lalu laporan tadi.
-2. Pada solusi, klik **Approve**. Status laporan menjadi **Ditutup**. (Refuse = belum beres, tiket dibuka lagi.)
+2. Pada solusi, klik **Approve**. Status laporan menjadi **Ditutup**.
+   - Alternatif **belum beres** (UC-07): tulis alasan lalu klik **Refuse**. GLPI menolak Refuse tanpa alasan;
+     dengan alasan, solusi ditandai ditolak dan tiket kembali **Diproses** ke tim yang sama.
 
 ### 5. Manajemen melihat kinerja AI (`sri`)
 
@@ -188,6 +193,10 @@ Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan a
 - Keputusan butuh hak triase *putuskan* **dan** hak ubah tiket GLPI. Nilai diterapkan lewat update tiket
   biasa, jadi aturan bisnis, notifikasi, dan riwayat field GLPI tetap berjalan. Alasan Ubah/Tolak divalidasi
   di server (minimal 5 karakter). Tanpa hak GLPI "Ubah prioritas", prioritas mengikuti matriks.
+- **Kembalikan ke operator (salah tim)**, UC-06 alur alternatif: tombol hanya tampil untuk teknisi/anggota tim
+  yang ditugaskan, selama tiket Diproses/Direncanakan/Menunggu. Hak dicek ulang di server. Alasan wajib.
+  Hasilnya: grup & teknisi penugasan dihapus, status Baru, tindak lanjut privat "Dikembalikan ke operator
+  (salah tim): …", dan baris `reassignments` dengan `kind = return`.
 - Setiap keputusan tercatat di `glpi_plugin_halosis_decisions` (aktor, waktu, nilai saran vs final, alasan)
   dan tab Riwayat tiket.
 
@@ -201,8 +210,8 @@ Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `Role
 | Operator | Dashboard · Antrean validasi (tiket Baru) · Semua tiket · Monitoring SLA · Pola insiden · Cari knowledge |
 | Tim Teknis | Dashboard · Tiket saya & tim · Monitoring SLA · Pola insiden · Cari knowledge |
 | Manajemen | Dashboard kinerja · Kinerja AI · Monitoring SLA · Pola insiden · Laporan (statistik) |
-| Knowledge Manager | Dashboard · Kandidat knowledge (tiket selesai) · Daftar artikel · Tulis artikel |
-| Administrator | Admin console · Service catalog · Kategori layanan · Kebijakan SLA · Tim teknis · Pengguna & role · Workflow & aturan · Pengaturan AI · Kinerja AI · Template notifikasi · Audit trail |
+| Knowledge Manager | Dashboard · Kandidat knowledge · Daftar artikel · Tulis artikel |
+| Administrator | Admin console · Service catalog · Kategori layanan · Kebijakan SLA · Tim teknis · Pengguna & role · Workflow & aturan · Pengaturan AI · Kinerja AI · Kandidat knowledge · Notifikasi · Audit trail |
 | Super-Admin | seperti Administrator + grup **Sistem GLPI** (umum, plugin, profil, entitas, aksi otomatis, perubahan, dropdown) |
 
 - Item hanya tampil bila pengguna berhak membuka halamannya. Monitoring SLA = tiket belum selesai yang melewati
@@ -211,6 +220,20 @@ Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `Role
   dari sidebar lewat CSS. Halaman lain tetap bisa dibuka lewat URL sesuai hak akses.
 - Sorotan menu aktif diatur `public/js/menu.js` (detail tiket menyorot "Semua tiket"/daftar tiket peran itu).
 - Matikan fitur **Menu ringkas** di konfigurasi plugin untuk kembali ke menu GLPI lengkap.
+
+### Kandidat Knowledge (UC-09, hak `plugin_halosis_kandidat`)
+
+Halaman `/plugins/halosis/Kandidat` (Knowledge Manager, Administrator, Super-Admin). Setiap dibuka, kandidat
+baru disinkronkan dari dua sumber:
+
+- **Tiket selesai** (Solved/Closed) dengan solusi yang tidak ditolak pemohon; yang disetujui pemohon diberi
+  label *Disetujui pemohon* dan tampil lebih dulu.
+- **Solusi berulang dari indeks AI**: layanan `halosis-ai` (`GET /kandidat`) mengelompokkan solusi tiket history
+  yang mirip (TF-IDF, kosinus ≥ 0,75, minimal 5 tiket, solusi ≥ 10 kata). Bila layanan mati, bagian ini dilewati.
+
+Aksi: **Jadikan artikel** membuat *draf* artikel KB (masalah + solusi + sumber, tanpa target visibilitas =
+belum terbit) lalu membuka draf itu untuk disunting & diterbitkan; **Abaikan** wajib beralasan (≥ 5 karakter).
+Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates`). Teks kandidat disamarkan.
 
 ### Tanya HaloSIS (chatbot)
 
@@ -260,11 +283,12 @@ Semua angka dari tabel log plugin (`src/Stats.php`):
 | --- | --- |
 | % saran diterima / diubah / ditolak, keputusan per minggu | `decisions` |
 | Keyakinan AI vs keputusan (di atas / di bawah ambang) | `decisions` + `suggestions` |
-| % tiket dipindah ke tim lain setelah triase ("salah tim") | `reassignments` ÷ tiket dengan keputusan Terima/Ubah |
+| % tiket dipindah ke tim lain setelah triase ("salah tim"), termasuk yang dikembalikan Tim Teknis | `reassignments` ÷ tiket dengan keputusan Terima/Ubah |
 | Chat terbantu tanpa tiket, jadi laporan, rata-rata rating | `chats` |
 
-GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat (hook `item_add` Group_Ticket)
-setiap kali tiket yang triasenya sudah diterapkan lalu ditugaskan ke grup lain. Grafik dirender server
+GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat dua hal: tombol **Kembalikan ke
+operator** (`kind = return`, beserta alasan) dan setiap kali tiket yang triasenya sudah diterapkan lalu
+ditugaskan ke grup lain (`kind = reassign`, hook `item_add` Group_Ticket). Grafik dirender server
 sebagai SVG tanpa pustaka luar. Warna seri divalidasi untuk buta warna (Diterima `#00826F`, Diubah `#62C9AF`,
 Ditolak `#D8652A`, turunan teal & oranye HaloSIS), dan nilai selalu tertulis sebagai teks.
 
@@ -355,6 +379,6 @@ UI, jalankan `python3 tools/locales.py`.
 | --- | --- |
 | `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, model, status) |
 | `glpi_plugin_halosis_decisions` | Keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
-| `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain setelah triase AI diterapkan |
+| `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain (`reassign`) atau dikembalikan ke operator dengan alasan (`return`) setelah triase AI diterapkan |
 | `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status, rating, tiket |

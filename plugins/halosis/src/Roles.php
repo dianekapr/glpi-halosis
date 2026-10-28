@@ -55,7 +55,7 @@ final class Roles
      */
     public static function getPluginRights(): array
     {
-        return [
+        $rights = [
             self::PEGAWAI => [
                 Profile::RIGHT_CHATBOT => READ,
             ],
@@ -72,12 +72,59 @@ final class Roles
                 Profile::RIGHT_TRIASE    => READ | UPDATE,
                 Profile::RIGHT_DASHBOARD => READ,
                 Profile::RIGHT_CONFIG    => UPDATE,
+                Profile::RIGHT_KANDIDAT  => READ | UPDATE,
             ],
+            // Akun pengelola sistem (di luar aktor dokumen): semua hak plugin
             self::SUPER_ADMIN => [
                 Profile::RIGHT_TRIASE    => READ | UPDATE,
                 Profile::RIGHT_DASHBOARD => READ,
                 Profile::RIGHT_CONFIG    => UPDATE,
+                Profile::RIGHT_KANDIDAT  => READ | UPDATE,
             ],
+        ];
+        // Knowledge Manager dibuat oleh plugin (ID tidak tetap): UC-09 kurasi kandidat knowledge
+        if (($km_id = self::findKnowledgeManagerId()) !== null) {
+            $rights[$km_id] = [Profile::RIGHT_KANDIDAT => READ | UPDATE];
+        }
+        return $rights;
+    }
+
+    /**
+     * UC-08 & FR-04 (Tabel 6.1): Operator mewarisi pemantauan SLA & pola insiden dari Petugas Layanan TI dan
+     * boleh mengubah Masalah (konfirmasi/tutup pola, tautkan tiket).
+     *
+     * @return array<string, int>
+     */
+    public static function getOperatorCoreRights(): array
+    {
+        return [
+            'problem' => CommonITILObject::READALL | CommonITILObject::READMY | UPDATE,
+        ];
+    }
+
+    /**
+     * UC-10: Administrator Sistem mengonfigurasi service catalog (form) dan template notifikasi, yang tidak
+     * termasuk hak bawaan profil Admin GLPI.
+     *
+     * @return array<string, int>
+     */
+    public static function getAdministratorCoreRights(): array
+    {
+        return [
+            'form'         => READ | UPDATE | CREATE | DELETE | PURGE,
+            'notification' => READ | UPDATE | CREATE | PURGE,
+        ];
+    }
+
+    /**
+     * UC-08: Tim Teknis mewarisi pemantauan SLA & pola insiden, tetapi Masalah hanya-baca.
+     *
+     * @return array<string, int>
+     */
+    public static function getTimTeknisCoreRights(): array
+    {
+        return [
+            'problem' => CommonITILObject::READALL | CommonITILObject::READMY,
         ];
     }
 
@@ -159,9 +206,18 @@ final class Roles
             }
         }
 
-        // 2. Manajemen: pastikan hanya-baca
+        // 2. Manajemen: pastikan hanya-baca (termasuk Masalah/pola insiden, UC-08)
         ProfileRight::updateProfileRights(self::MANAJEMEN, self::getManajemenCoreRights());
-        $log[] = 'Manajemen: hak tiket/followup/tugas diset hanya-baca, dashboard & statistik dapat dilihat';
+        $log[] = 'Manajemen: hak tiket/followup/tugas/masalah diset hanya-baca, dashboard & statistik dapat dilihat';
+
+        // 2b. Petugas Layanan TI (UC-08): Operator boleh mengubah Masalah (FR-04), Tim Teknis hanya melihat
+        ProfileRight::updateProfileRights(self::OPERATOR, self::getOperatorCoreRights());
+        ProfileRight::updateProfileRights(self::TIM_TEKNIS, self::getTimTeknisCoreRights());
+        $log[] = 'Operator: Masalah lihat + ubah (konfirmasi/tutup pola, tautkan tiket); Tim Teknis: Masalah hanya-baca';
+
+        // 2c. Administrator Sistem (UC-10): service catalog & template notifikasi
+        ProfileRight::updateProfileRights(self::ADMINISTRATOR, self::getAdministratorCoreRights());
+        $log[] = 'Administrator: kelola service catalog (form) & template notifikasi';
 
         // 3. Knowledge Manager: buat jika belum ada, lalu set hak (semua hak lain = 0)
         $km_id = self::findKnowledgeManagerId();

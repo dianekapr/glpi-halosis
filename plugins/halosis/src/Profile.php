@@ -22,6 +22,8 @@ final class Profile extends CommonGLPI
     public const RIGHT_CHATBOT = 'plugin_halosis_chatbot';
     /** READ = melihat dashboard kinerja AI */
     public const RIGHT_DASHBOARD = 'plugin_halosis_dashboard';
+    /** READ = melihat Kandidat Knowledge (UC-09), UPDATE = Jadikan artikel / Abaikan */
+    public const RIGHT_KANDIDAT = 'plugin_halosis_kandidat';
 
     public static string $rightname = 'profile';
 
@@ -66,6 +68,15 @@ final class Profile extends CommonGLPI
                 'label'    => __('AI performance dashboard', 'halosis'),
                 'field'    => self::RIGHT_DASHBOARD,
                 'rights'   => [READ => __('Read')],
+            ],
+            [
+                'itemtype' => self::class,
+                'label'    => __('Knowledge candidates', 'halosis'),
+                'field'    => self::RIGHT_KANDIDAT,
+                'rights'   => [
+                    READ   => __('Read'),
+                    UPDATE => __('Decide (make article / dismiss)', 'halosis'),
+                ],
             ],
             [
                 'itemtype' => Config::class,

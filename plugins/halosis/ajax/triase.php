@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Aksi panel "Saran AI": buat saran, Terima, Ubah, Tolak.
+ * Aksi panel "Saran AI": buat saran, Terima, Ubah, Tolak, dan Kembalikan ke operator (Tim Teknis, UC-06).
  * Dipanggil lewat fetch() dari public/js/triase.js; selalu membalas JSON.
  * Memakai `return` (bukan exit) supaya kernel GLPI tetap menutup request dengan normal.
  */
 
 use GlpiPlugin\Halosis\Decision;
 use GlpiPlugin\Halosis\Profile;
+use GlpiPlugin\Halosis\Reassignment;
 use GlpiPlugin\Halosis\Suggestion;
 use GlpiPlugin\Halosis\Triage;
 
@@ -22,12 +23,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     $respond(405, 'POST required');
     return;
 }
+
+$action = (string) ($_POST['action'] ?? '');
+
+// Tim Teknis hanya berhak membaca triase; hak mengembalikan diperiksa per tiket (tim yang ditugaskan)
+if ($action === 'return') {
+    $ticket = new Ticket();
+    if (!Session::haveRight(Profile::RIGHT_TRIASE, READ) || !$ticket->getFromDB((int) ($_POST['ticket_id'] ?? 0))) {
+        $respond(403, __('You are not allowed to update this ticket.', 'halosis'));
+        return;
+    }
+    $error = Reassignment::returnToOperator($ticket, (string) ($_POST['reason'] ?? ''));
+    if ($error !== null) {
+        $respond(422, $error);
+        return;
+    }
+    Session::addMessageAfterRedirect(__s('Ticket returned to the operator validation queue.', 'halosis'));
+    $respond(200);
+    return;
+}
+
 if (!Session::haveRight(Profile::RIGHT_TRIASE, UPDATE)) {
     $respond(403, __('You are not allowed to decide on AI suggestions.', 'halosis'));
     return;
 }
-
-$action = (string) ($_POST['action'] ?? '');
 
 if ($action === 'generate') {
     $ticket = new Ticket();

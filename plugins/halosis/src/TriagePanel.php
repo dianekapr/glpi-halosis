@@ -63,6 +63,7 @@ final class TriagePanel
             'is_demo'     => Config::isDemoMode(),
             'decision'    => $decision,
             'can_decide'  => $can_decide,
+            'can_return'  => Reassignment::canReturn($ticket),
             'ajax_url'    => $CFG_GLPI['root_doc'] . self::AJAX_URL,
             'min_reason'  => Triage::MIN_REASON_LENGTH,
             'options'     => [

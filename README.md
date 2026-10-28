@@ -1,7 +1,7 @@
 # GLPI - HaloSIS
 
 Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh HaloSIS:
-4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 10 pengguna per role,
+4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 11 pengguna contoh (lihat langkah 6),
 SLA per prioritas, 12 tiket (lengkap dengan balasan, catatan internal, solusi),
 5 artikel knowledge base, dan 1 "masalah" sebagai contoh pola insiden.
 
@@ -290,20 +290,56 @@ python3 -m venv .venv && .venv/bin/pip install requests
 .venv/bin/python seed_halosis.py http://localhost:8080
 ```
 
+**5b. SLA otomatis & peringatan risiko SLA** (BR-02, UC-08; aman dijalankan berulang)
+```bash
+.venv/bin/python setup_sla_alerts.py http://localhost:8080
+docker compose exec glpi php bin/console config:set use_notifications 1 --allow-superuser
+docker compose exec glpi php bin/console config:set notifications_ajax 1 --allow-superuser
+```
+Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
+- **Aturan bisnis "SLA Kritis/Tinggi/Sedang/Rendah"** memasang SLA waktu penyelesaian menurut prioritas, saat tiket
+  dibuat maupun saat prioritas diubah (mis. operator menerima saran triase). Tanpa aturan ini, laporan baru tidak
+  punya SLA. Bisa diubah Administrator di menu **Workflow & aturan**.
+- **Level eskalasi "Peringatan risiko SLA"** di tiap SLA, berjalan **sebelum** batas waktu: 1 jam (Kritis),
+  1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah).
+- **Notifikasi "Ticket Recall"** dikirim ke teknisi & tim yang ditugaskan serta **supervisor tim (atasan)**, lewat
+  notifikasi browser (tanpa server email) dan email (bila SMTP diatur).
+- `sri` (Manajemen) dijadikan supervisor tiap tim teknis sebagai penerima "atasan".
+
+Aksi otomatis `slaticket` (tiap 5 menit) yang mengirim peringatan. Untuk menguji tanpa menunggu, majukan jadwalnya:
+`UPDATE glpi_slalevels_tickets SET date = NOW() WHERE tickets_id = <id>` lalu
+`docker compose exec glpi php front/cron.php slaticket`.
+
 **6. Login sebagai role berbeda** (password semua: `halosis`)
 
-| Login | Nama | Profil GLPI (role HaloSIS) | Antarmuka | Keterangan |
-| --- | --- | --- | --- | --- |
-| budi, siti, maya | Budi Santoso, dkk. | Pegawai | Helpdesk (sederhana) | Lapor & pantau tiket, chatbot |
-| rina | Rina Wulandari | Operator | Standar | Validasi & triase tiket (saran AI) |
-| andi, yoga | Andi Pratama, Yoga Saputra | Tim Teknis | Standar | Tim Aplikasi Statistik |
-| fajar | Fajar Nugroho | Tim Teknis | Standar | Tim Identitas & Akses |
-| dedi | Dedi Kurniawan | Tim Teknis | Standar | Tim Jaringan |
-| sri | Sri Handayani | Manajemen | Standar | Hanya-baca: tiket, dashboard, statistik |
-| lina | Lina Marlina | Knowledge Manager | Standar | Kelola Knowledge Base; tiket hanya-baca |
-| glpi | — | Super-Admin | Standar | Pengelola sistem (bukan role bisnis) |
+Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 
-Profil **Administrator** (bekas "Admin") disiapkan untuk admin bisnis HaloSIS, tapi belum ada pengguna contohnya.
+| Login | Nama | Profil GLPI (role HaloSIS) | Aktor dokumen | Use case | Antarmuka | Keterangan |
+| --- | --- | --- | --- | --- | --- | --- |
+| budi, siti, maya | Budi Santoso, dkk. | Pegawai | Pegawai BPS (Requester) | UC-01, UC-03, UC-07 | Helpdesk (sederhana) | Chatbot, lapor & pantau tiket |
+| rina | Rina Wulandari | Operator | Operator HaloSIS ⊂ Petugas Layanan TI | UC-05, UC-08 | Standar | Validasi saran AI & teruskan tiket; ubah Masalah (pola insiden) |
+| andi, yoga | Andi Pratama, Yoga Saputra | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Aplikasi Statistik |
+| fajar | Fajar Nugroho | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Identitas & Akses |
+| dedi | Dedi Kurniawan | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Jaringan |
+| sri | Sri Handayani | Manajemen | Manajemen / Pimpinan | UC-08 | Standar | Hanya-baca: tiket, Masalah, dashboard, statistik |
+| lina | Lina Marlina | Knowledge Manager | Knowledge Manager | UC-09 | Standar | Kelola Knowledge Base & Kandidat Knowledge; tiket hanya-baca |
+| dimas | Dimas Aditya | Administrator | Administrator Sistem | UC-10 | Standar | Konfigurasi platform (katalog, SLA, tim, aturan, AI) |
+| — | — | — | Petugas Layanan TI (abstrak) | UC-08 | — | Aktor induk Operator + Tim Teknis, tanpa akun sendiri: kemampuan bersama Monitoring SLA & Masalah (pola insiden) |
+| — | — | — | AI Engine (aktor sistem) | UC-02, UC-04 | — | Layanan `halosis-ai` (lihat [`ai/README.md`](ai/README.md)) |
+| glpi | — | Super-Admin | **Di luar aktor dokumen** | — | Standar | Akun pengelola sistem (instalasi, plugin, profil); bukan role bisnis |
+
+`dimas` dibuat oleh `seed_halosis.py` (database kosong). Database yang sudah diisi sebelumnya: buat lewat
+**Pengguna & role › Tambah** (login `dimas`, profil Administrator, entitas BPS rekursif).
+
+Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
+
+| Hak | Operator | Tim Teknis | Manajemen |
+| --- | --- | --- | --- |
+| Monitoring SLA (tiket melewati batas waktu) | lihat | lihat | lihat |
+| Masalah / pola insiden | lihat & ubah (konfirmasi/tutup pola, tautkan tiket, FR-04) | lihat | lihat |
+
+Untuk UC-10, `setup-roles` juga memberi **Administrator** hak service catalog (form) dan notifikasi, yang tidak
+termasuk hak bawaan profil Admin GLPI. Template notifikasi & pengaturan umum tetap khusus Super-Admin (hak `config`).
 
 Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › tab HaloSIS**):
 
@@ -312,6 +348,7 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 | Chatbot | ✓ | | | | | | |
 | Saran triase AI | | lihat & putuskan | lihat | | | lihat & putuskan | lihat & putuskan |
 | Dashboard kinerja AI | | | | ✓ | | ✓ | ✓ |
+| Kandidat Knowledge (UC-09) | | | | | lihat & putuskan | lihat & putuskan | lihat & putuskan |
 | Konfigurasi plugin | | | | | | ✓ | ✓ |
 
 > ⚠️ **Keamanan.** Akun `glpi` / `glpi` adalah Super-Admin dengan password bawaan yang diketahui umum.
@@ -357,20 +394,23 @@ accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variab
 | Laporan Saya, Detail Laporan (pegawai) | Login pegawai → **Tiket** (antarmuka sederhana/Helpdesk) |
 | Buat Laporan | **Service catalog** / Create a ticket |
 | Pusat Bantuan | **FAQ** (artikel KB yang ditandai FAQ) |
-| Konfirmasi "sudah beres / belum beres" | Tombol **Approve / Refuse** pada solusi tiket |
+| Konfirmasi "sudah beres / belum beres" (UC-07) | Tombol **Approve / Refuse** pada solusi tiket. *Refuse* wajib disertai alasan (ditegakkan GLPI) dan membuka kembali tiket ke tim |
+| Kembalikan ke operator, salah tim (UC-06 alur alternatif) | Panel **Saran AI** di tiket → *Kembalikan ke operator (salah tim)*, alasan wajib (plugin) |
+| Peringatan risiko SLA (BR-02) | Level eskalasi SLA + notifikasi **Ticket Recall** (langkah 5b) |
 | Antrean validasi & Semua tiket (operator) | **Bantuan › Tiket** (filter status Baru) |
 | Tiket saya & tim (Tim Teknis) | Beranda **Tampilan Personal / Tampilan Group** |
 | Komentar publik / catatan internal | **Answer › Followup** (centang *Private* untuk internal), **Task** |
 | Monitoring SLA | Kolom "Waktu untuk menyelesaikan" + **Setup › Service levels** |
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
+| Kandidat Knowledge (KM, UC-09) | Menu **Kandidat knowledge** (plugin): solusi tiket selesai & solusi berulang dari indeks AI → *Jadikan artikel* (draf KB) / *Abaikan* (dengan alasan) |
 | Dashboard manajemen, laporan | **Bantuan › Dashboard**, **Bantuan › Statistik** |
 | Service catalog, tim, pengguna & role | **Setup › Dropdowns › ITIL categories**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |
 | Workflow & aturan otomatis | **Administrasi › Rules › Business rules for tickets** |
 | Audit trail | Tab **Riwayat** di setiap tiket/objek |
 
 **Tidak ada di GLPI** (tetap dibangun sendiri di HaloSIS): chatbot AI, saran triase + keyakinan,
-alur Terima/Ubah/Tolak saran AI, deteksi pola otomatis, dan dashboard kinerja AI.
+alur Terima/Ubah/Tolak saran AI, deteksi pola otomatis, kandidat knowledge, dan dashboard kinerja AI.
 
 ## Mematikan / mengulang dari nol
 ```bash

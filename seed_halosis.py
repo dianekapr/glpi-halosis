@@ -59,6 +59,7 @@ USERS = [
     ('yoga', 'Yoga', 'Saputra', 'Tim Teknis', 'Tim Aplikasi Statistik'), ('fajar', 'Fajar', 'Nugroho', 'Tim Teknis', 'Tim Identitas & Akses'),
     ('dedi', 'Dedi', 'Kurniawan', 'Tim Teknis', 'Tim Jaringan'), ('sri', 'Sri', 'Handayani', 'Manajemen', None),
     ('lina', 'Lina', 'Marlina', 'Knowledge Manager', None),
+    ('dimas', 'Dimas', 'Aditya', 'Administrator', None),  # UC-10 Mengonfigurasi Platform ITSM
 ]
 for login, fn, ln, role, grp in USERS:
     prof = P[role]

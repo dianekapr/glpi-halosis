@@ -1,6 +1,6 @@
 /**
- * Panel "Saran AI" di form tiket: Terima / Ubah / Tolak dan buat saran.
- * Alasan wajib untuk Ubah & Tolak: tombol kirim aktif setelah alasan cukup panjang.
+ * Panel "Saran AI" di form tiket: Terima / Ubah / Tolak, buat saran, dan Kembalikan ke operator (UC-06).
+ * Alasan wajib untuk Ubah, Tolak & Kembalikan: tombol kirim aktif setelah alasan cukup panjang.
  * Setelah berhasil, halaman dimuat ulang supaya field tiket & pesan GLPI tampil terbaru.
  */
 (() => {
@@ -96,6 +96,12 @@
                 break;
             case 'show-reject':
                 toggleSection(panel, 'reject', button);
+                break;
+            case 'show-return':
+                toggleSection(panel, 'return', button);
+                break;
+            case 'return':
+                send(panel, button, { action, ticket_id: panel.dataset.ticketId, reason: sectionOf(button).querySelector('[data-reason]').value });
                 break;
             case 'modify':
             case 'reject': {
