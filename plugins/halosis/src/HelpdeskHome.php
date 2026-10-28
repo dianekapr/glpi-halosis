@@ -20,9 +20,12 @@ use Session;
 final class HelpdeskHome
 {
     public const MENU_KEY = 'halosis-chat';
+    public const MENU_HISTORY_KEY = 'halosis-chat-history';
+    public const HISTORY_PATH = '/plugins/halosis/ChatHistory';
 
     /**
-     * Hook redefine_menus: "Tanya HaloSIS" pertama, lalu Laporan saya, Buat laporan, Pusat bantuan (FAQ).
+     * Hook redefine_menus: "Tanya HaloSIS" pertama, lalu Riwayat chat, Laporan saya, Buat laporan,
+     * Pusat bantuan (FAQ).
      *
      * @param array<string, array<string, mixed>> $menu
      *
@@ -39,6 +42,11 @@ final class HelpdeskHome
                 'default' => Chatbot::PAGE_PATH,
                 'title'   => __('Ask HaloSIS', 'halosis'),
                 'icon'    => 'ti ti-message-chatbot',
+            ],
+            self::MENU_HISTORY_KEY => [
+                'default' => self::HISTORY_PATH,
+                'title'   => __('Chat history', 'halosis'),
+                'icon'    => 'ti ti-history',
             ],
         ];
         $renames = [

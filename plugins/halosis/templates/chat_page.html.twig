@@ -5,7 +5,7 @@
 {% extends "layout/page_skeleton.html.twig" %}
 
 {% block content %}
-<div class="hc hc-page" data-halosis-chat="page" data-ajax-url="{{ ajax_url }}" data-report-url="{{ report_url }}">
+<div class="hc hc-page" data-halosis-chat="page" data-ajax-url="{{ ajax_url }}" data-report-url="{{ report_url }}"{% if chat_id %} data-chat-id="{{ chat_id }}"{% endif %}>
     <header class="hc-head">
         <div class="hc-head-text">
             <h1>{{ __('Ask HaloSIS', 'halosis') }}</h1>

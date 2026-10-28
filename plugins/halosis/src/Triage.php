@@ -5,6 +5,7 @@ namespace GlpiPlugin\Halosis;
 use CommonITILActor;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Client;
+use GlpiPlugin\Halosis\Ai\Service;
 use Group;
 use Group_Ticket;
 use ITILCategory;
@@ -49,6 +50,28 @@ final class Triage
     private const DEMO_WIDE_WORDS    = ['semua', 'seluruh', 'rekan', 'satu tim', 'satker', 'banyak pengguna', 'kantor'];
 
     /**
+     * Pemetaan tim history (keluaran layanan AI) → kategori daun & grup di GLPI ini.
+     * Dipakai jika tidak ada grup GLPI yang namanya sama persis dengan nama tim. Aturan pertama yang cocok menang.
+     *
+     * @var array<int, array{0: string[], 1: ?string, 2: ?string}> [kata kunci nama tim, kategori, grup]
+     */
+    private const SERVICE_TEAM_MAP = [
+        [['single sign on', 'sso'], 'SSO / Login', null],
+        [['e-sign', 'tanda tangan'], 'TTE', null],
+        [['insiden keamanan', 'simpeg'], null, 'Tim Identitas & Akses'],
+        [['email'], 'Email Dinas', null],
+        [['sipecut'], 'SiPecut', null],
+        [['fasih', 'pendataan digital', 'capi', 'cawi'], 'FASIH', null],
+        [['meeting online'], 'Zoom / Konferensi', null],
+        [['sslvpn', 'koneksi jaringan', 'lan bps'], 'Jaringan & VPN', null],
+        [['hosting', 'infrastruktur', 'devops'], null, 'Tim Jaringan'],
+        [['perangkat ti end user'], 'Laptop / Perangkat', null],
+        [['perangkat lunak cots'], null, 'Tim Perangkat'],
+        [['operator pusat'], null, 'Operator Service Desk'],
+        [['presensi', 'back office', 'kipapp', 'sobat', 'monitoring', 'pengujian aplikasi', 'aplikasi'], null, 'Tim Aplikasi Statistik'],
+    ];
+
+    /**
      * Hook item_add Ticket: buat saran untuk tiket baru. Tidak pernah melempar exception,
      * supaya kegagalan AI tidak menggagalkan penyimpanan tiket.
      */
@@ -78,8 +101,16 @@ final class Triage
         }
 
         $context = self::getContext($ticket);
+        $result  = null;
+        if (Service::isConfigured()) {
+            try {
+                $result = self::suggestService($ticket, $context);
+            } catch (AiException $e) {
+                self::log(sprintf('Layanan AI gagal untuk tiket #%d, kembali ke mode sebelumnya: %s', $ticket->getID(), $e->getMessage()));
+            }
+        }
         try {
-            $result = Config::isDemoMode() ? self::suggestDemo($ticket, $context) : self::suggestAi($ticket, $context);
+            $result ??= Config::isDemoMode() ? self::suggestDemo($ticket, $context) : self::suggestAi($ticket, $context);
         } catch (AiException $e) {
             self::log(sprintf('AI gagal untuk tiket #%d: %s', $ticket->getID(), $e->getMessage()));
             return null;
@@ -96,7 +127,7 @@ final class Triage
             'confidence'        => $result['confidence'],
             'explanation'       => $result['explanation'],
             'model'             => $result['model'],
-            'is_demo'           => (int) Config::isDemoMode(),
+            'is_demo'           => (int) ($result['model'] === self::DEMO_MODEL),
             'status'            => Suggestion::STATUS_PENDING,
         ]);
 
@@ -215,6 +246,84 @@ final class Triage
             'explanation'       => mb_substr(trim((string) ($data['explanation'] ?? '')), 0, 1000),
             'model'             => $response['model'],
         ];
+    }
+
+    /**
+     * Saran dari layanan AI HaloSIS (model yang dilatih dari history tiket). Layanan memilih TIM;
+     * kategori & grup GLPI diturunkan lewat pemetaan, dampak/urgensi dari aturan kata kunci.
+     */
+    private static function suggestService(Ticket $ticket, array $context): array
+    {
+        $response = Service::post('/triage', [
+            'judul'     => Privacy::mask((string) $ticket->fields['name'])['text'],
+            'deskripsi' => Privacy::mask(self::plainText($ticket->fields['content']))['text'],
+            'jenis'     => (int) $ticket->fields['type'] === Ticket::DEMAND_TYPE ? 'REQ' : 'INC',
+        ]);
+        $team = trim((string) ($response['tim'] ?? ''));
+        if ($team === '') {
+            throw new AiException('Jawaban layanan AI tanpa tim');
+        }
+
+        $result = self::suggestDemo($ticket, $context);
+        [$category_id, $group_id] = self::mapServiceTeam($team, $context);
+        if ($category_id > 0) {
+            $result['itilcategories_id'] = $category_id;
+        }
+        if ($group_id > 0) {
+            $result['groups_id'] = $group_id;
+        } elseif ($category_id > 0) {
+            $group = $context['categories'][$category_id]['groups_id'];
+            $result['groups_id'] = isset($context['groups'][$group]) ? $group : 0;
+        }
+
+        $top3 = array_map(
+            static fn ($t) => sprintf('%s (%d%%)', $t['tim'] ?? '?', round(100 * (float) ($t['keyakinan'] ?? 0))),
+            array_slice((array) ($response['top3'] ?? []), 0, 3),
+        );
+        $similar = array_map(
+            static fn ($t) => sprintf('%s → %s', $t['ticket_number'] ?? '?', $t['tim'] ?? '?'),
+            array_slice((array) ($response['penjelasan']['tiket_mirip'] ?? []), 0, 3),
+        );
+        $explanation = sprintf('Model history tiket menyarankan tim "%s". Tiga teratas: %s.', $team, implode(', ', $top3));
+        if ($similar !== []) {
+            $explanation .= ' Tiket lama yang mirip: ' . implode('; ', $similar) . '.';
+        }
+        if ($group_id === 0 && $category_id === 0) {
+            $explanation .= ' Tim ini belum terpetakan ke grup GLPI; pilih grup secara manual.';
+        }
+
+        $result['confidence']  = max(0, min(100, (int) round(100 * (float) ($response['keyakinan'] ?? 0))));
+        $result['explanation'] = mb_substr($explanation, 0, 1000);
+        $result['model']       = mb_substr((string) ($response['versi_model'] ?? 'halosis-ai'), 0, 100);
+        return $result;
+    }
+
+    /**
+     * @return array{0: int, 1: int} [id kategori, id grup]; 0 = tidak terpetakan
+     */
+    private static function mapServiceTeam(string $team, array $context): array
+    {
+        $needle = mb_strtolower($team);
+        foreach ($context['groups'] as $id => $name) {
+            if (mb_strtolower($name) === $needle) {
+                return [0, $id];
+            }
+        }
+        foreach (self::SERVICE_TEAM_MAP as [$keywords, $category_leaf, $group_name]) {
+            if (array_filter($keywords, static fn ($k) => str_contains($needle, $k)) === []) {
+                continue;
+            }
+            $category_id = 0;
+            foreach ($context['categories'] as $id => $category) {
+                if ($category_leaf !== null && trim((string) strrchr(' > ' . $category['name'], '>'), '> ') === $category_leaf) {
+                    $category_id = $id;
+                    break;
+                }
+            }
+            $group_id = $group_name !== null ? (int) (array_search($group_name, $context['groups'], true) ?: 0) : 0;
+            return [$category_id, $group_id];
+        }
+        return [0, 0];
     }
 
     /**

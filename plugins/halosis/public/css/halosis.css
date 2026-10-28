@@ -1275,3 +1275,146 @@
         min-width: 640px;
     }
 }
+
+/* ---- Riwayat chat (Pegawai) ---- */
+.hc-history {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem 0 2rem;
+}
+
+.hc-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hc-history-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: 14px;
+    background: #fff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hc-history-item:hover,
+.hc-history-item:focus-within {
+    border-color: var(--halosis-secondary);
+    box-shadow: 0 2px 8px rgb(21 94 99 / 8%);
+}
+
+.hc-history-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    color: var(--halosis-text);
+    text-decoration: none;
+}
+
+.hc-history-main:hover {
+    color: var(--halosis-text);
+}
+
+.hc-history-question {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hc-history-meta {
+    color: var(--halosis-muted);
+    font-size: 0.8rem;
+}
+
+.hc-history-status {
+    flex-shrink: 0;
+}
+
+.hc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.hc-badge-ok {
+    background: var(--halosis-secondary-light);
+    color: var(--halosis-primary);
+}
+
+.hc-badge-ticket {
+    background: var(--halosis-accent-light);
+    color: #8a3f12;
+}
+
+a.hc-badge-ticket:hover {
+    color: #8a3f12;
+    text-decoration: underline;
+}
+
+.hc-badge-open {
+    background: var(--halosis-soft-2);
+    color: var(--halosis-muted);
+}
+
+.hc-history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--halosis-border);
+    border-radius: 16px;
+    background: #fff;
+    text-align: center;
+}
+
+.hc-history-empty h2 {
+    margin: 0.5rem 0 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.hc-history-empty p,
+.hc-history-note {
+    margin: 0;
+    color: var(--halosis-muted);
+}
+
+.hc-history-note {
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+@media (max-width: 576px) {
+    .hc-history {
+        padding: 1rem 16px 1.5rem;
+    }
+
+    .hc-history-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .hc-history-main {
+        width: 100%;
+    }
+}

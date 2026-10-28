@@ -4,6 +4,7 @@
  * Endpoint widget chatbot self-service (public/js/chat.js).
  *   GET  action=widget            → HTML widget (kosong jika chatbot tidak tersedia untuk pengguna)
  *   GET  action=history&chat_id   → riwayat percakapan milik pengguna
+ *   GET  action=latest[&skip]     → id percakapan terbuka terakhir yang masih aktif (0 = tidak ada)
  *   POST action=message|resolve|ticket
  * Memakai `return` (bukan exit) supaya kernel GLPI tetap menutup request dengan normal.
  */
@@ -45,6 +46,12 @@ $chat_id = (int) ($_REQUEST['chat_id'] ?? 0);
 $chat    = $chat_id > 0 ? Chat::getOwned($chat_id) : null;
 if ($chat_id > 0 && $chat === null) {
     $respond(404, ['ok' => false, 'message' => __('Conversation not found.', 'halosis')]);
+    return;
+}
+
+if ($action === 'latest') {
+    // Percakapan terbuka terakhir untuk dilanjutkan (tab/login baru); skip = yang sengaja ditinggalkan
+    $respond(200, ['ok' => true, 'chat_id' => Chat::getLatestOpen((int) ($_GET['skip'] ?? 0))?->getID() ?? 0]);
     return;
 }
 

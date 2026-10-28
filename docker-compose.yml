@@ -28,6 +28,24 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  # Layanan AI HaloSIS (triase + chatbot). Plugin memanggilnya di http://halosis-ai:8000;
+  # jika mati, plugin kembali ke mode dummy. Model & indeks dibuat dulu: lihat ai/README.md.
+  halosis-ai:
+    build: ./ai
+    restart: unless-stopped
+    environment:
+      # Opsional: isi ANTHROPIC_API_KEY di .env agar jawaban chat dirangkum Claude; kosong = ekstraktif
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      HALOSIS_CHAT_MIN_SCORE: ${HALOSIS_CHAT_MIN_SCORE:-0.83}
+    ports:
+      # Hanya untuk dicek dari laptop (http://localhost:8001/health); GLPI memakai jaringan internal
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - ./ai/models:/app/models:ro
+      - ./ai/index:/app/index:ro
+      - hf_cache:/cache/huggingface
+
 volumes:
   glpi_data:
   db_data:
+  hf_cache:

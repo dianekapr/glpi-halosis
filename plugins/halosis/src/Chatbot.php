@@ -4,6 +4,7 @@ namespace GlpiPlugin\Halosis;
 
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Client;
+use GlpiPlugin\Halosis\Ai\Service;
 use Session;
 use Ticket;
 use Toolbox;
@@ -17,6 +18,8 @@ final class Chatbot
 {
     public const MAX_MESSAGE_LENGTH = 1000;
     public const DEMO_MODEL = 'demo-extractive-v1';
+    /** Akhiran model jawaban kutipan dari layanan AI (bukan rangkuman AI) */
+    private const EXTRACTIVE_SUFFIX = '-ekstraktif';
 
     /** Pertanyaan dengan kata kunci sebanyak ini atau kurang dianggap lanjutan pertanyaan sebelumnya */
     private const FOLLOW_UP_MAX_TOKENS = 2;
@@ -79,17 +82,29 @@ final class Chatbot
         $question = $privacy['text'];
         $messages = $chat->getMessages();
 
-        // Pertanyaan lanjutan yang pendek ("masih gagal") digabung dengan pertanyaan sebelumnya.
-        // Pertanyaan yang cukup panjang dianggap topik baru, supaya tidak dijawab dengan artikel topik lama.
-        $articles = KnowledgeSearch::search($question);
-        $previous = self::lastUserMessage($messages);
-        if ($articles === [] && $previous !== null && count(KnowledgeSearch::tokens($question)) <= self::FOLLOW_UP_MAX_TOKENS) {
-            $articles = KnowledgeSearch::search($previous . ' ' . $question);
+        // Layanan AI HaloSIS lebih dulu (KB + solusi tiket lama); mati/gagal → pencarian KB lokal di bawah
+        $reply = null;
+        if (Service::isConfigured()) {
+            try {
+                $reply = self::askService($question, $messages);
+            } catch (AiException $e) {
+                Toolbox::logInFile('halosis', 'Chatbot: layanan AI gagal, memakai pencarian KB lokal. ' . $e->getMessage() . "\n", true);
+            }
         }
 
-        $reply = $articles === []
-            ? self::notFound()
-            : self::compose($question, $messages, $articles);
+        if ($reply === null) {
+            // Pertanyaan lanjutan yang pendek ("masih gagal") digabung dengan pertanyaan sebelumnya.
+            // Pertanyaan yang cukup panjang dianggap topik baru, supaya tidak dijawab dengan artikel topik lama.
+            $articles = KnowledgeSearch::search($question);
+            $previous = self::lastUserMessage($messages);
+            if ($articles === [] && $previous !== null && count(KnowledgeSearch::tokens($question)) <= self::FOLLOW_UP_MAX_TOKENS) {
+                $articles = KnowledgeSearch::search($previous . ' ' . $question);
+            }
+
+            $reply = $articles === []
+                ? self::notFound()
+                : self::compose($question, $messages, $articles);
+        }
 
         $now = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
         $messages[] = ['role' => 'user', 'text' => $question, 'at' => $now];
@@ -126,7 +141,55 @@ final class Chatbot
      */
     public static function isAiModel(?string $model): bool
     {
-        return $model !== null && $model !== '' && $model !== self::DEMO_MODEL;
+        return $model !== null && $model !== '' && $model !== self::DEMO_MODEL && !str_ends_with($model, self::EXTRACTIVE_SUFFIX);
+    }
+
+    /**
+     * Jawaban dari layanan AI HaloSIS. Null jika layanan mengutip artikel KB yang tidak boleh dilihat
+     * pengguna ini (supaya pemanggil kembali ke pencarian KB lokal yang menghormati hak akses).
+     *
+     * @param array<int, array<string, mixed>> $messages Transkrip sebelumnya (sudah tersamar)
+     */
+    private static function askService(string $question, array $messages): ?array
+    {
+        $history = [];
+        foreach (array_slice($messages, -6) as $message) {
+            $history[] = [
+                'peran' => ($message['role'] ?? '') === 'user' ? 'pengguna' : 'asisten',
+                'teks'  => mb_substr((string) ($message['text'] ?? ''), 0, 4000),
+            ];
+        }
+        $data = Service::post('/chat', ['pertanyaan' => $question, 'riwayat' => $history]);
+        if (empty($data['ditemukan'])) {
+            return self::notFound();
+        }
+
+        $sources = [];
+        foreach ((array) ($data['sumber'] ?? []) as $source) {
+            $ref = (string) ($source['sumber'] ?? '');
+            if (preg_match('/^KB-(\d+)$/', $ref, $m)) {
+                $item = new \KnowbaseItem();
+                if (!$item->getFromDB((int) $m[1]) || !$item->canViewItem()) {
+                    return null;
+                }
+                $sources[] = ['name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+            } else {
+                // Tiket history tidak ada di GLPI ini: tampilkan nomornya saja, tanpa tautan
+                $sources[] = ['name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];
+            }
+        }
+
+        $answer = trim((string) ($data['jawaban'] ?? ''));
+        if ($answer === '') {
+            throw new AiException('Jawaban layanan AI kosong');
+        }
+        $mode = (string) ($data['mode'] ?? 'ekstraktif');
+        return [
+            'answer'  => mb_substr($answer, 0, 3000),
+            'found'   => true,
+            'sources' => $sources,
+            'model'   => 'halosis-ai-' . ($mode === 'claude' ? 'claude' : 'ekstraktif'),
+        ];
     }
 
     /**

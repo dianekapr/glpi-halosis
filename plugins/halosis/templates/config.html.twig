@@ -75,6 +75,16 @@
                     })) }}
                 </div>
 
+                {{ fields.largeTitle(__('HaloSIS AI service', 'halosis'), 'ti ti-server-2') }}
+                <div class="row">
+                    {{ fields.textField('service_url', config.service_url, __('AI service URL', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Local model trained on ticket history (triage) and Help Center search (chat), e.g. http://halosis-ai:8000. Used first; if empty or unreachable, the plugin falls back to the mode above.', 'halosis')),
+                    })) }}
+                    {{ fields.numberField('service_timeout', config.service_timeout, __('Service timeout (seconds)', 'halosis'), field_opts|merge({
+                        'min': 1, 'max': 60,
+                    })) }}
+                </div>
+
                 {{ fields.largeTitle(__('Triage', 'halosis'), 'ti ti-route') }}
                 <div class="row">
                     {% set threshold_field %}
