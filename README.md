@@ -94,6 +94,13 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 > ```
 > Untuk instalasi baru, matikan dengan nilai `0`.
 
+> **Aksi otomatis → mode CLI.** Container GLPI sudah menjalankan `front/cron.php` tiap 60 detik, jadi semua
+> aksi otomatis di-set ke mode CLI (Setup › Aksi otomatis). Mode "GLPI" bawaan memicu peringatan "Automatic actions
+> may not be running as expected". Untuk instalasi baru:
+> ```bash
+> docker compose exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "UPDATE glpi_crontasks SET mode=2 WHERE mode=1"'
+> ```
+
 **7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
 
 Palet ada di `themes/halosis.scss` (di-mount ke folder tema kustom GLPI `/var/glpi/files/_themes`).

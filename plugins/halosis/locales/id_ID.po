@@ -712,3 +712,96 @@ msgstr "Bisa dilanjutkan"
 
 msgid "Showing your %d most recent conversations."
 msgstr "Menampilkan %d percakapan terbaru Anda."
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Validation queue"
+msgstr "Antrean validasi"
+
+msgid "All tickets"
+msgstr "Semua tiket"
+
+msgid "Search knowledge"
+msgstr "Cari knowledge"
+
+msgid "My & team tickets"
+msgstr "Tiket saya & tim"
+
+msgid "Performance dashboard"
+msgstr "Dashboard kinerja"
+
+msgid "Reports"
+msgstr "Laporan"
+
+msgid "Knowledge candidates"
+msgstr "Kandidat knowledge"
+
+msgid "Articles"
+msgstr "Daftar artikel"
+
+msgid "Write article"
+msgstr "Tulis artikel"
+
+msgid "Admin console"
+msgstr "Admin console"
+
+msgid "Service catalog"
+msgstr "Service catalog"
+
+msgid "Service categories"
+msgstr "Kategori layanan"
+
+msgid "SLA policy"
+msgstr "Kebijakan SLA"
+
+msgid "Technical teams"
+msgstr "Tim teknis"
+
+msgid "Users & roles"
+msgstr "Pengguna & role"
+
+msgid "Workflow & rules"
+msgstr "Workflow & aturan"
+
+msgid "AI settings"
+msgstr "Pengaturan AI"
+
+msgid "Notification templates"
+msgstr "Template notifikasi"
+
+msgid "Audit trail"
+msgstr "Audit trail"
+
+msgid "General setup"
+msgstr "Pengaturan umum"
+
+msgid "Plugins"
+msgstr "Plugin"
+
+msgid "Profiles"
+msgstr "Profil"
+
+msgid "Entities"
+msgstr "Entitas"
+
+msgid "Automatic actions"
+msgstr "Aksi otomatis"
+
+msgid "Changes"
+msgstr "Perubahan"
+
+msgid "Dropdowns"
+msgstr "Dropdown"
+
+msgid "GLPI system"
+msgstr "Sistem GLPI"
+
+msgid "SLA monitoring"
+msgstr "Monitoring SLA"
+
+msgid "Incident patterns"
+msgstr "Pola insiden"
+
+msgid "Compact menu per HaloSIS role (off = full GLPI menu)"
+msgstr "Menu ringkas per peran HaloSIS (mati = menu GLPI lengkap)"

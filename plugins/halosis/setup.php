@@ -19,6 +19,7 @@ use GlpiPlugin\Halosis\HelpdeskHome;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Reassignment;
+use GlpiPlugin\Halosis\RoleMenu;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
@@ -82,8 +83,9 @@ function plugin_init_halosis(): void
             $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] = HelpdeskHome::getRedirectHeaderTags();
         }
     }
-    // Urutan menu Helpdesk (fungsi ini sendiri tidak mengubah menu antarmuka standar)
-    $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [HelpdeskHome::class, 'redefineMenu'];
+    // Menu ringkas per peran (prototipe halosis-web): Helpdesk Pegawai + sidebar petugas. Lihat RoleMenu.
+    $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [RoleMenu::class, 'redefine'];
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/menu.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
