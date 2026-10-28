@@ -1,4 +1,4 @@
-# Coba GLPI untuk HaloSIS
+# GLPI - HaloSIS
 
 Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh HaloSIS:
 4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 10 pengguna per role,
