@@ -1,0 +1,60 @@
+{#
+ # Halaman "Riwayat chat": percakapan pegawai dengan asisten, terbaru dulu. Hanya milik pengguna sendiri.
+ # Pertanyaan yang ditampilkan adalah versi tersamar (sama dengan yang disimpan di transkrip).
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% block content %}
+<div class="hc hc-history">
+    <header class="hc-head">
+        <div class="hc-head-text">
+            <h1>{{ __('Chat history', 'halosis') }}</h1>
+            <p>{{ __('Your conversations with the assistant. Open one to read it again or continue it.', 'halosis') }}</p>
+        </div>
+        <div class="hc-head-actions">
+            <a class="hc-btn hc-btn-primary" href="{{ chat_url }}">
+                <i class="ti ti-message-plus" aria-hidden="true"></i>
+                <span>{{ __('Ask HaloSIS', 'halosis') }}</span>
+            </a>
+        </div>
+    </header>
+
+    {% if chats is empty %}
+        <div class="hc-history-empty">
+            <span class="hc-unavailable-icon" aria-hidden="true"><i class="ti ti-messages"></i></span>
+            <h2>{{ __('No conversations yet', 'halosis') }}</h2>
+            <p>{{ __('Questions you ask the assistant will appear here.', 'halosis') }}</p>
+        </div>
+    {% else %}
+        <ul class="hc-history-list">
+            {% for chat in chats %}
+                <li class="hc-history-item">
+                    <a class="hc-history-main" href="{{ chat_url }}?chat={{ chat.id }}">
+                        <span class="hc-history-question">{{ chat.question ?: __('(no question)', 'halosis') }}</span>
+                        <span class="hc-history-meta">
+                            <time datetime="{{ chat.date }}">{{ chat.date|date('d/m/Y H:i') }}</time>
+                            · {{ _n('%d question', '%d questions', chat.questions, 'halosis')|format(chat.questions) }}
+                        </span>
+                    </a>
+                    <span class="hc-history-status">
+                        {% if chat.status == 'resolved' %}
+                            <span class="hc-badge hc-badge-ok"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ __('Solved', 'halosis') }}{% if chat.rating %} · {{ chat.rating }}/5{% endif %}</span>
+                        {% elseif chat.status == 'ticket' %}
+                            {% if chat.ticket_url %}
+                                <a class="hc-badge hc-badge-ticket" href="{{ chat.ticket_url }}"><i class="ti ti-file-text" aria-hidden="true"></i> {{ __('Report #%d', 'halosis')|format(chat.tickets_id) }}</a>
+                            {% else %}
+                                <span class="hc-badge hc-badge-ticket">{{ __('Report created', 'halosis') }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="hc-badge hc-badge-open"><i class="ti ti-player-play" aria-hidden="true"></i> {{ __('Can be continued', 'halosis') }}</span>
+                        {% endif %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+        {% if chats|length >= limit %}
+            <p class="hc-history-note">{{ __('Showing your %d most recent conversations.', 'halosis')|format(limit) }}</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

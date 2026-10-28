@@ -10,6 +10,8 @@
 (() => {
     const STORE_ID = 'halosis.chat.id';
     const STORE_OPEN = 'halosis.chat.open';
+    // Percakapan yang sengaja ditinggalkan lewat "Percakapan baru": jangan dilanjutkan otomatis lagi
+    const SKIP_ID = 'halosis.chat.skip';
     const AJAX = (document.currentScript?.src || '').replace(/\/js\/chat\.js.*$/, '/ajax/chat.php');
     const LIST_ITEM = /^\s*(?:[-•*]|\d+[.)])\s+/;
 
@@ -17,6 +19,11 @@
         get: (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
         set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { /* abaikan */ } },
         del: (k) => { try { sessionStorage.removeItem(k); } catch (e) { /* abaikan */ } },
+    };
+    // Bertahan lintas tab (sessionStorage hanya per tab)
+    const shared = {
+        get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+        set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* abaikan */ } },
     };
 
     /** Buat elemen: el('div', 'kelas', [anak atau teks]) */
@@ -52,7 +59,9 @@
         const input = $('[data-chat-text]');
         const greeting = thread.innerHTML;
         const t = JSON.parse($('template[data-chat-i18n]').content.textContent);
-        let chatId = Number(store.get(STORE_ID)) || 0;
+        // Urutan: percakapan yang dibuka dari Riwayat chat (?chat=) → tab ini → terbuka terakhir di server
+        const fromHistory = Number(root.dataset.chatId) || 0;
+        let chatId = fromHistory || Number(store.get(STORE_ID)) || 0;
         let ended = false;
 
         const post = async (data) => {
@@ -251,10 +260,18 @@
             setBusy(false);
         };
 
-        const reset = () => {
+        /** @param {boolean} abandon true = pengguna sengaja memulai percakapan baru */
+        const reset = (abandon = true) => {
+            if (abandon && chatId && !ended) {
+                shared.set(SKIP_ID, String(chatId));
+            }
             chatId = 0;
             ended = false;
             store.del(STORE_ID);
+            // Buang ?chat= supaya reload tidak membuka percakapan lama lagi
+            if (fromHistory) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
             thread.innerHTML = greeting;
             root.classList.remove('hc-started');
             setBusy(false);
@@ -292,10 +309,21 @@
             input.focus();
         };
 
-        // Lanjutkan percakapan dari halaman sebelumnya (halaman penuh ↔ widget)
+        // Tab/login baru: lanjutkan percakapan terbuka terakhir di server (jika masih aktif)
+        if (!chatId) {
+            const skip = Number(shared.get(SKIP_ID)) || 0;
+            const latest = await fetch(`${root.dataset.ajaxUrl}?action=latest&skip=${skip}`, { credentials: 'same-origin' }).then((r) => r.json()).catch(() => null);
+            chatId = Number(latest?.chat_id) || 0;
+        }
+
+        // Lanjutkan percakapan dari halaman sebelumnya (halaman penuh ↔ widget) atau dari Riwayat chat
         if (chatId) {
             const res = await fetch(`${root.dataset.ajaxUrl}?action=history&chat_id=${chatId}`, { credentials: 'same-origin' }).then((r) => r.json()).catch(() => null);
             if (res?.ok && res.messages.length) {
+                // Hanya percakapan terbuka yang diingat tab ini; yang selesai cukup ditampilkan
+                if (res.status === 'open') {
+                    store.set(STORE_ID, String(chatId));
+                }
                 root.classList.add('hc-started');
                 let lastCol = null;
                 let lastFound = true;
@@ -313,7 +341,7 @@
                     attachActions(lastCol, lastFound);
                 }
             } else {
-                reset();
+                reset(false);
             }
         }
 

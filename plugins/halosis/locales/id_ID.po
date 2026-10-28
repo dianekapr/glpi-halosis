@@ -678,3 +678,37 @@ msgstr "URL layanan AI harus diawali http:// atau https://."
 
 msgid "Similar ticket %s"
 msgstr "Tiket serupa %s"
+
+msgid "Chat history"
+msgstr "Riwayat chat"
+
+msgid "Your conversations with the assistant. Open one to read it again or continue it."
+msgstr "Percakapan Anda dengan asisten. Buka untuk membaca ulang atau melanjutkannya."
+
+msgid "No conversations yet"
+msgstr "Belum ada percakapan"
+
+msgid "Questions you ask the assistant will appear here."
+msgstr "Pertanyaan yang Anda ajukan ke asisten akan muncul di sini."
+
+msgid "(no question)"
+msgstr "(tanpa pertanyaan)"
+
+msgid "%d question"
+msgid_plural "%d questions"
+msgstr[0] "%d pertanyaan"
+
+msgid "Solved"
+msgstr "Terselesaikan"
+
+msgid "Report #%d"
+msgstr "Laporan #%d"
+
+msgid "Report created"
+msgstr "Laporan dibuat"
+
+msgid "Can be continued"
+msgstr "Bisa dilanjutkan"
+
+msgid "Showing your %d most recent conversations."
+msgstr "Menampilkan %d percakapan terbaru Anda."

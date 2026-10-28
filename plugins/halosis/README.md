@@ -207,6 +207,13 @@ Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan a
   mendapat saran triase.
 - **Widget melayang** "Tanya asisten" muncul di halaman Helpdesk lain (detail tiket, FAQ) dan melanjutkan
   percakapan yang sama; tidak dimuat di halaman chat.
+- **Riwayat chat** (`/plugins/halosis/ChatHistory`, menu kedua Pegawai): 50 percakapan terbaru milik pengguna
+  sendiri dengan status *Bisa dilanjutkan* / *Terselesaikan · rating* / *Laporan #id* (tertaut ke tiket).
+  Item dibuka di halaman chat lewat `?chat=<id>`; id milik orang lain diabaikan (`Chat::getOwned`).
+  Percakapan selesai hanya bisa dibaca.
+- **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 2 jam
+  (`Chat::RESUME_HOURS`) dimuat ulang. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
+  (diingat di `localStorage` browser) dan tetap bisa dibuka dari Riwayat chat.
 - Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
 
 ### Deteksi pola insiden
