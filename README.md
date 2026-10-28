@@ -423,8 +423,17 @@ docker compose exec glpi php bin/console config:set text_login '<p style="text-a
 Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
 
 Catatan palet: GLPI memakai variabel `secondary` juga sebagai warna teks, jadi variabelnya diisi versi gelap
-`#4F7D72` agar terbaca; `#77B8A8` dipakai sebagai latar (tombol sekunder, `.bg-secondary`). Badge memakai
-accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variabel `--glpi-logo-*`.
+`#4C786E` agar terbaca (kontras ≥ 4,5:1 di putih maupun latar `#F5F8F6`); `#77B8A8` dipakai sebagai latar
+(tombol sekunder, `.bg-secondary`). Badge memakai accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa
+SVG inline di variabel `--glpi-logo-*`.
+
+Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): hanya palet ini + CSS/aset plugin.
+- Judul Plus Jakarta Sans (di-host lokal di `plugins/halosis/public/fonts`, lisensi OFL, tanpa CDN); teks Inter
+  bawaan GLPI. Kartu 16px, tombol & input 10px, badge pill, bayangan halus, tabel daftar lebih lega.
+- Antarmuka Helpdesk (Pegawai) memakai header putih seperti prototipe; sidebar petugas tetap primary.
+- Header notifikasi info & peringatan GLPI disesuaikan agar kontras teks memenuhi WCAG AA.
+- **Rollback:** `config:set palette auror` (palet bawaan GLPI) → semua gaya HaloSIS lepas; halaman plugin
+  ikut font GLPI. Kembalikan dengan `config:set palette halosis`.
 
 ## Peta HaloSIS → menu GLPI
 

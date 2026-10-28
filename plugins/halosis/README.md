@@ -380,6 +380,7 @@ front/config.form.php     halaman konfigurasi
 templates/                template Twig (@halosis/...)
 public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
                           menu, triase)
+public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
 composer.json             SDK Anthropic (vendor/ tidak di-commit)
 ```
