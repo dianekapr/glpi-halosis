@@ -24,8 +24,8 @@ final class HelpdeskHome
     public const HISTORY_PATH = '/plugins/halosis/ChatHistory';
 
     /**
-     * Hook redefine_menus: "Tanya HaloSIS" pertama, lalu Riwayat chat, Laporan saya, Buat laporan,
-     * Pusat bantuan (FAQ).
+     * Hook redefine_menus (antarmuka Helpdesk), urutan prototipe: Tanya HaloSIS, Buat laporan, Laporan saya,
+     * Pusat bantuan (FAQ), Riwayat chat. Menu Helpdesk lain (Reservasi, dll.) disembunyikan dari navigasi.
      *
      * @param array<string, array<string, mixed>> $menu
      *
@@ -37,33 +37,31 @@ final class HelpdeskHome
             return $menu;
         }
 
-        $ordered = [
-            self::MENU_KEY => [
-                'default' => Chatbot::PAGE_PATH,
-                'title'   => __('Ask HaloSIS', 'halosis'),
-                'icon'    => 'ti ti-message-chatbot',
-            ],
-            self::MENU_HISTORY_KEY => [
-                'default' => self::HISTORY_PATH,
-                'title'   => __('Chat history', 'halosis'),
-                'icon'    => 'ti ti-history',
-            ],
+        $item = static fn (string $title, string $path, string $icon): array => [
+            'default' => $path,
+            'title'   => $title,
+            'icon'    => $icon . ' ' . RoleMenu::ITEM_CLASS,
         ];
+        $ordered = [self::MENU_KEY => $item(__('Ask HaloSIS', 'halosis'), Chatbot::PAGE_PATH, 'ti ti-message-chatbot')];
         $renames = [
-            'tickets'       => __('My reports', 'halosis'),
             'create_ticket' => __('Create report', 'halosis'),
+            'tickets'       => __('My reports', 'halosis'),
             'faq'           => __('Help center (FAQ)', 'halosis'),
         ];
         foreach ($renames as $key => $title) {
             if (isset($menu[$key])) {
-                $menu[$key]['title'] = $title;
-                $ordered[$key] = $menu[$key];
+                $ordered[$key] = array_merge($menu[$key], [
+                    'title' => $title,
+                    'icon'  => trim(($menu[$key]['icon'] ?? '') . ' ' . RoleMenu::ITEM_CLASS),
+                ]);
+                unset($menu[$key]);
             }
         }
+        $ordered[self::MENU_HISTORY_KEY] = $item(__('Chat history', 'halosis'), self::HISTORY_PATH, 'ti ti-history');
 
-        // Beranda Helpdesk lama digantikan halaman chat; menu lain (reservasi, plugin) tetap di belakang
+        // Beranda Helpdesk lama digantikan halaman chat; menu lain disembunyikan (datanya tetap untuk breadcrumb)
         unset($menu['home']);
-        return $ordered + $menu;
+        return $ordered + RoleMenu::hideAll($menu);
     }
 
     /**

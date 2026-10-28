@@ -20,7 +20,7 @@ final class Config
     public const PROVIDER_ANTHROPIC = 'anthropic';
     public const PROVIDER_OPENAI    = 'openai';
 
-    public const FEATURES = ['triage', 'chat', 'pattern', 'dashboard'];
+    public const FEATURES = ['triage', 'chat', 'pattern', 'dashboard', 'menu'];
 
     private const DEFAULTS = [
         'ai_provider'      => self::PROVIDER_ANTHROPIC,
@@ -40,6 +40,8 @@ final class Config
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
         'feature_dashboard' => 1,
+        // Sidebar petugas ringkas per peran (RoleMenu); 0 = menu GLPI lengkap
+        'feature_menu'      => 1,
     ];
 
     /** Cache nilai config per request */
@@ -70,6 +72,7 @@ final class Config
             'chat'      => __('Self-service chatbot for employees', 'halosis'),
             'pattern'   => __('Incident pattern detection', 'halosis'),
             'dashboard' => __('AI performance dashboard', 'halosis'),
+            'menu'      => __('Compact menu per HaloSIS role (off = full GLPI menu)', 'halosis'),
         ];
     }
 

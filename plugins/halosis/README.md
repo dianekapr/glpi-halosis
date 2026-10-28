@@ -191,6 +191,27 @@ Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan a
 - Setiap keputusan tercatat di `glpi_plugin_halosis_decisions` (aktor, waktu, nilai saran vs final, alasan)
   dan tab Riwayat tiket.
 
+### Menu ringkas per peran
+
+Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `RoleMenu`):
+
+| Peran | Menu |
+| --- | --- |
+| Pegawai | Tanya HaloSIS · Buat laporan · Laporan saya · Pusat bantuan (FAQ) · Riwayat chat |
+| Operator | Dashboard · Antrean validasi (tiket Baru) · Semua tiket · Monitoring SLA · Pola insiden · Cari knowledge |
+| Tim Teknis | Dashboard · Tiket saya & tim · Monitoring SLA · Pola insiden · Cari knowledge |
+| Manajemen | Dashboard kinerja · Kinerja AI · Monitoring SLA · Pola insiden · Laporan (statistik) |
+| Knowledge Manager | Dashboard · Kandidat knowledge (tiket selesai) · Daftar artikel · Tulis artikel |
+| Administrator | Admin console · Service catalog · Kategori layanan · Kebijakan SLA · Tim teknis · Pengguna & role · Workflow & aturan · Pengaturan AI · Kinerja AI · Template notifikasi · Audit trail |
+| Super-Admin | seperti Administrator + grup **Sistem GLPI** (umum, plugin, profil, entitas, aksi otomatis, perubahan, dropdown) |
+
+- Item hanya tampil bila pengguna berhak membuka halamannya. Monitoring SLA = tiket belum selesai yang melewati
+  batas waktu penyelesaian; Pola insiden = Problem yang dibuat deteksi pola.
+- Menu bawaan GLPI tidak dihapus dari array menu (breadcrumb & tombol "Tambah" memakainya), hanya disembunyikan
+  dari sidebar lewat CSS. Halaman lain tetap bisa dibuka lewat URL sesuai hak akses.
+- Sorotan menu aktif diatur `public/js/menu.js` (detail tiket menyorot "Semua tiket"/daftar tiket peran itu).
+- Matikan fitur **Menu ringkas** di konfigurasi plugin untuk kembali ke menu GLPI lengkap.
+
 ### Tanya HaloSIS (chatbot)
 
 - **Beranda Pegawai**: setelah login GLPI selalu membuka `/Helpdesk`; plugin menambahkan

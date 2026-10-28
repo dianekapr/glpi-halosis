@@ -110,4 +110,13 @@ $is-dark: false;
         // !important karena selektor bawaan GLPI bersarang dalam (spesifisitas lebih tinggi)
         border-left-color: #ff965a !important;
     }
+
+    // Item aktif di sidebar: bawaan GLPI mewarnai teksnya dengan primary, yang sama dengan latar sidebar
+    // HaloSIS (#155e63) sehingga tak terbaca. Diganti teks putih di atas latar terang transparan.
+    .sidebar #navbar-menu .nav-item > .nav-link.active,
+    .sidebar #navbar-menu .nav-item > .nav-link.show {
+        color: #fff !important;
+        background-color: rgb(255 255 255 / 14%);
+        border-left-color: #ff965a !important;
+    }
 }
