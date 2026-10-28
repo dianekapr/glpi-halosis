@@ -6,7 +6,8 @@
   waktu (execution_time negatif) dengan aksi "Automatic reminders of SLA" (recall).
 - Notifikasi "Ticket Recall" dikirim ke teknisi & grup yang ditugaskan serta supervisor grup (atasan), lewat email
   dan notifikasi browser (mode ajax, terlihat tanpa server email).
-- Pengguna contoh Manajemen (sri) dijadikan supervisor tiap tim teknis supaya peringatan "atasan" punya penerima.
+- Penerima "atasan" = supervisor grup, yaitu ketua tim yang dibuat seed_halosis.py (hendra, agus, rudi, wati).
+  Skrip ini hanya memeriksa dan memperingatkan bila ada tim tanpa supervisor.
 
 Aman dijalankan berulang. Pakai (setelah seed_halosis.py):
     python setup_sla_alerts.py                      # default http://localhost:8080
@@ -34,7 +35,6 @@ LEVEL_NAME = 'Peringatan risiko SLA'
 PRIORITY_SLA = {'Kritis': (5, 6), 'Tinggi': (4,), 'Sedang': (3,), 'Rendah': (1, 2)}
 RULE_ON_ADD_AND_UPDATE = 1 | 2   # RuleCommonITILObject::ONADD | ONUPDATE
 PATTERN_IS = 0                   # Rule::PATTERN_IS
-SUPERVISOR = 'sri'
 TEAMS = ('Tim Aplikasi Statistik', 'Tim Jaringan', 'Tim Perangkat', 'Tim Identitas & Akses')
 
 # Penerima "Ticket Recall": teknisi ditugaskan, grup ditugaskan, supervisor grup (Notification::*)
@@ -84,21 +84,12 @@ for sla in get('SLA'):
     add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_ttr', 'value': sla['id']})
     print(f'Aturan "{name}": prioritas {PRIORITY_SLA[prio]} → SLA "{sla["name"]}"')
 
-users = get('User', name=f'^{SUPERVISOR}$')
-if users:
-    for team in TEAMS:
-        group = next((g for g in get('Group') if g['name'] == team), None)
-        if group is None:
-            continue
-        links = [l for l in s.get(f'{B}/Group/{group["id"]}/Group_User').json() or [] if isinstance(l, dict)
-                 and l.get('users_id') == users[0]['id']]
-        if links and links[0].get('is_manager'):
-            continue
-        if links:
-            s.put(f'{B}/Group_User/{links[0]["id"]}', data=json.dumps({'input': {'id': links[0]['id'], 'is_manager': 1}}))
-        else:
-            add('Group_User', {'groups_id': group['id'], 'users_id': users[0]['id'], 'is_manager': 1})
-    print(f'Supervisor tim teknis: {SUPERVISOR}')
+for team in TEAMS:
+    group = next((g for g in get('Group') if g['name'] == team), None)
+    links = s.get(f'{B}/Group/{group["id"]}/Group_User').json() if group else []
+    if not any(isinstance(l, dict) and l.get('is_manager') for l in links or []):
+        print(f'PERINGATAN: "{team}" belum punya supervisor (ketua tim); peringatan "atasan" tanpa penerima. '
+              'Jalankan seed_halosis.py atau tandai ketua tim di Administrasi › Grup › Pengguna.')
 
 recall = next((n for n in get('Notification') if n['itemtype'] == 'Ticket' and n['event'] == 'recall'), None)
 if recall is None:

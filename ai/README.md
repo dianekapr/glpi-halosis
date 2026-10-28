@@ -39,6 +39,28 @@ dipilih. Bila tidak ada, dipakai `resolution` lalu `close_notes` yang bukan temp
 **Batasan:** nama orang yang tidak ada di kolom pengguna dan ditulis tanpa sapaan tidak terdeteksi; bagian
 nama yang juga kata umum (sering muncul berhuruf kecil) sengaja tidak disamarkan.
 
+## FR-10 — Rekonsiliasi migrasi
+
+```bash
+.venv/bin/python ai/scripts/reconcile.py        # → reports/rekonsiliasi.md (±3 menit)
+```
+
+Menjalankan pembersihan & penyamaran yang sama dengan AI-1 (tanpa menulis ulang `data/processed/`), lalu
+merekonsiliasi setiap baris sumber. Laporan **hanya berisi angka, bulan, dan nama tim**; isi tiket, nama orang,
+dan nilai yang disamarkan tidak pernah ditulis atau dicetak.
+
+| Bagian laporan | Definisi |
+| --- | --- |
+| Sumber = berhasil + gagal | Dicek otomatis di laporan |
+| **Gagal** (per alasan) | Tanpa nomor tiket; tanggal dibuka tidak valid; status tidak dikenal (`UNKNOWN / STATE NOT FOUND`, tak bisa dipetakan ke status GLPI); masih memuat pola data pribadi setelah penyamaran. Baris gagal tetap ada di parquet untuk analisis AS-IS, tetapi tidak layak dimigrasikan |
+| **Tidak lengkap** (dari yang berhasil) | Tanpa deskripsi; tanpa tim; status selesai tetapi solusi tidak bisa diambil |
+| **Duplikat** (dari yang berhasil) | Nomor tiket ganda; isi identik (judul + deskripsi) dari pemohon yang sama. Baris pertama dianggap asli |
+| **Nilai disamarkan per jenis** | Jumlah penanda `[EMAIL]`, `[NIP]`, `[NIK]`, `[TELEPON]`, `[RAHASIA]`, `[NAMA]` di kolom teks bebas keluaran dikurangi yang sudah ada di sumber |
+| Rincian | Per bulan (tanggal dibuka) dan per tim (`assignment_group_name`, kosong = "(tanpa tim)") |
+
+Hasil terakhir: 6.682 sumber → 6.671 berhasil, 11 gagal, 731 tidak lengkap, 65 duplikat isi; 16.518 nilai
+disamarkan. Tes: `ai/tests/test_reconcile.py` (data rekaan).
+
 ## AI-2 — Analisis awal (angka AS-IS)
 
 ```bash

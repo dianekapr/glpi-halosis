@@ -1,13 +1,13 @@
 # GLPI - HaloSIS
 
 Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh HaloSIS:
-4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 11 pengguna contoh (lihat langkah 6),
+4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 15 pengguna contoh (lihat langkah 6),
 SLA per prioritas, 12 tiket (lengkap dengan balasan, catatan internal, solusi),
 5 artikel knowledge base, dan 1 "masalah" sebagai contoh pola insiden.
 
 Di atas GLPI terpasang **plugin HaloSIS** (modul AI human-in-the-loop: chatbot Tanya HaloSIS, saran triase,
-deteksi pola insiden, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo, dan **skenario
-demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
+deteksi pola insiden, kandidat knowledge, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo,
+dan **skenario demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
 
 ## Untuk anggota tim: mulai dari link GitHub
 
@@ -83,19 +83,20 @@ Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
 > ⚠️ Isi folder ini diturunkan dari history tiket BPS (sudah disamarkan, tetapi tetap **data internal**).
 > Jangan unggah ulang, jangan kirim ke orang lain/grup chat, dan jangan di-commit ke GitHub.
 
-**Syarat:** Langkah 1–6 di bawah sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi
-sekali di database kosong). Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi
-langkah 5 wajib dijalankan dulu.
+**Syarat:** Langkah 1–6 di bawah sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi).
+Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
 
-**1. Unduh dua folder dari Google Drive** (login dengan akun Google yang diberi akses oleh pemilik repo):
+**1. [Unduh folder `models` dan `index` dari sini](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link)**
+(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya: `models/triage.joblib` (±40 MB) dan
+`index/chunks.parquet` + `index/vectors.npy`.
 
-| Folder | Link | Isi |
-| --- | --- | --- |
-| `models` | [Buka di Google Drive](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link) | `triage.joblib` (±40 MB) |
-| `index` | [Buka di Google Drive](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link) | `chunks.parquet`, `vectors.npy` |
+Di Drive: pilih kedua folder (atau folder induknya) → klik kanan → **Download**. Drive mengemasnya jadi file
+`.zip` (namanya bisa seperti `drive-download-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip;
+Windows → klik kanan → **Extract All**.
 
-Di Drive: klik kanan folder → **Download**. Drive mengemasnya jadi file `.zip` (namanya bisa seperti
-`models-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip; Windows → klik kanan → **Extract All**.
+> 🔒 **Untuk pemilik repo:** bagikan folder Drive ini **hanya ke akun Google anggota tim** (Bagikan › tambahkan
+> email satu per satu, peran *Pelihat*). Jangan pakai akses umum "Siapa saja yang memiliki link": link di README
+> ini bisa terbaca siapa pun yang membuka repo, dan isinya diturunkan dari data internal.
 
 **2. Taruh di folder proyek** sehingga susunannya **persis** seperti ini (nama huruf kecil semua):
 ```text
@@ -257,7 +258,7 @@ Tunggu 1–3 menit (pertama kali GLPI menginstal dirinya sendiri). Cek dengan `d
 
 **2. Buka** http://localhost:8080 dan login `glpi` / `glpi` (akun super-admin bawaan).
 
-**3. Aktifkan API** (dibutuhkan skrip pengisi data dan nanti oleh Next.js)
+**3. Aktifkan API** (dibutuhkan skrip pengisi data dan layanan AI)
 ```bash
 docker compose exec glpi php bin/console config:set enable_api 1 --allow-superuser
 docker compose exec glpi php bin/console config:set enable_api_login_credentials 1 --allow-superuser
@@ -265,8 +266,18 @@ docker compose exec glpi php bin/console config:set enable_api_login_credentials
 Kalau perintah di atas gagal karena path, ganti `bin/console` dengan `/var/www/glpi/bin/console`.
 Atau lewat UI: **Setup › General › API** → aktifkan "Enable Rest API" dan "Enable login with credentials".
 
-Di Docker Desktop (Mac), request dari laptop terlihat berasal dari `192.168.65.1`, bukan `127.0.0.1`,
-sehingga API menolak dengan `ERROR_NOT_ALLOWED_IP`. Tambahkan klien API untuk rentang gateway Docker:
+Request dari laptop masuk lewat gateway Docker, bukan `127.0.0.1`, sehingga API bisa menolak dengan
+`ERROR_NOT_ALLOWED_IP`. Alamat gateway berbeda per sistem:
+
+| Sistem | Alamat yang biasa terlihat |
+| --- | --- |
+| Docker Desktop Mac | `192.168.65.1` (rentang `192.168.65.0`–`192.168.65.255`, dipakai perintah di bawah) |
+| Linux (Docker Engine) | umumnya `172.17.0.1` atau `172.18.x.x` (jaringan compose) |
+| Windows (Docker Desktop) | bisa berbeda; jangan menebak |
+
+**Lihat IP yang tercantum di pesan error** (mis. `ERROR_NOT_ALLOWED_IP ... 172.18.0.1`), lalu sesuaikan
+rentang `INET_ATON('…')` awal & akhir pada perintah berikut (atau isian rentang IPv4 di UI API client) agar
+mencakup IP itu. Contoh untuk Mac:
 ```bash
 docker compose exec -T db mysql -uglpi -pglpi glpi -e "INSERT INTO glpi_apiclients (entities_id,is_recursive,name,date_creation,is_active,ipv4_range_start,ipv4_range_end,dolog_method) VALUES (0,1,'HaloSIS lokal (host Docker Desktop)',NOW(),1,INET_ATON('192.168.65.0'),INET_ATON('192.168.65.255'),0);"
 ```
@@ -284,11 +295,14 @@ Perintah `setup-roles` aman dijalankan berulang. Yang dilakukannya:
 - terapkan hak plugin HaloSIS (triase, chatbot, dashboard, konfigurasi);
 - nonaktifkan akun bawaan GLPI `tech`, `normal`, `post-only`.
 
-**5. Isi data contoh HaloSIS** (jalankan sekali saja, setelah langkah 4)
+**5. Isi data contoh HaloSIS** (setelah langkah 4; aman dijalankan berulang)
 ```bash
 python3 -m venv .venv && .venv/bin/pip install requests
 .venv/bin/python seed_halosis.py http://localhost:8080
 ```
+Tim, kategori, pengguna, dan SLA dicari dulu menurut nama lalu dibuat bila belum ada, jadi pengguna contoh baru
+(mis. ketua tim) bisa ditambahkan ke database lama cukup dengan menjalankan ulang skrip ini. Tiket, artikel KB,
+dan masalah contoh hanya dibuat pada run pertama.
 
 **5b. SLA otomatis & peringatan risiko SLA** (BR-02, UC-08; aman dijalankan berulang)
 ```bash
@@ -304,7 +318,9 @@ Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
   1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah).
 - **Notifikasi "Ticket Recall"** dikirim ke teknisi & tim yang ditugaskan serta **supervisor tim (atasan)**, lewat
   notifikasi browser (tanpa server email) dan email (bila SMTP diatur).
-- `sri` (Manajemen) dijadikan supervisor tiap tim teknis sebagai penerima "atasan".
+- Penerima "atasan" adalah **ketua tim** masing-masing (`hendra`, `agus`, `rudi`, `wati`), yaitu supervisor grup
+  yang dibuat `seed_halosis.py`. Skrip memperingatkan bila ada tim tanpa supervisor. Di produksi, tandai ketua
+  tim sungguhan di **Tim teknis › (tim) › Pengguna › Supervisor**.
 
 Aksi otomatis `slaticket` (tiap 5 menit) yang mengirim peringatan. Untuk menguji tanpa menunggu, majukan jadwalnya:
 `UPDATE glpi_slalevels_tickets SET date = NOW() WHERE tickets_id = <id>` lalu
@@ -321,6 +337,10 @@ Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 | andi, yoga | Andi Pratama, Yoga Saputra | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Aplikasi Statistik |
 | fajar | Fajar Nugroho | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Identitas & Akses |
 | dedi | Dedi Kurniawan | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | Tim Jaringan |
+| hendra | Hendra Wijaya | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | **Ketua Tim Aplikasi Statistik** (supervisor grup); penerima "atasan" peringatan risiko SLA (BR-02) |
+| agus | Agus Setiawan | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | **Ketua Tim Jaringan** (supervisor grup); penerima "atasan" peringatan risiko SLA (BR-02) |
+| rudi | Rudi Hermawan | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | **Ketua Tim Perangkat** (supervisor grup); penerima "atasan" peringatan risiko SLA (BR-02) |
+| wati | Wati Susanti | Tim Teknis | Tim Teknis (Resolver) ⊂ Petugas Layanan TI | UC-06, UC-08 | Standar | **Ketua Tim Identitas & Akses** (supervisor grup); penerima "atasan" peringatan risiko SLA (BR-02) |
 | sri | Sri Handayani | Manajemen | Manajemen / Pimpinan | UC-08 | Standar | Hanya-baca: tiket, Masalah, dashboard, statistik |
 | lina | Lina Marlina | Knowledge Manager | Knowledge Manager | UC-09 | Standar | Kelola Knowledge Base & Kandidat Knowledge; tiket hanya-baca |
 | dimas | Dimas Aditya | Administrator | Administrator Sistem | UC-10 | Standar | Konfigurasi platform (katalog, SLA, tim, aturan, AI) |
@@ -328,8 +348,8 @@ Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 | — | — | — | AI Engine (aktor sistem) | UC-02, UC-04 | — | Layanan `halosis-ai` (lihat [`ai/README.md`](ai/README.md)) |
 | glpi | — | Super-Admin | **Di luar aktor dokumen** | — | Standar | Akun pengelola sistem (instalasi, plugin, profil); bukan role bisnis |
 
-`dimas` dibuat oleh `seed_halosis.py` (database kosong). Database yang sudah diisi sebelumnya: buat lewat
-**Pengguna & role › Tambah** (login `dimas`, profil Administrator, entitas BPS rekursif).
+Database yang diisi dengan versi seed lama (belum ada `dimas` atau ketua tim): jalankan ulang langkah 5
+lalu 5b; hanya pengguna yang belum ada yang dibuat.
 
 Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
 
@@ -338,8 +358,24 @@ Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
 | Monitoring SLA (tiket melewati batas waktu) | lihat | lihat | lihat |
 | Masalah / pola insiden | lihat & ubah (konfirmasi/tutup pola, tautkan tiket, FR-04) | lihat | lihat |
 
-Untuk UC-10, `setup-roles` juga memberi **Administrator** hak service catalog (form) dan notifikasi, yang tidak
-termasuk hak bawaan profil Admin GLPI. Template notifikasi & pengaturan umum tetap khusus Super-Admin (hak `config`).
+Untuk UC-10, `setup-roles` juga memberi **Administrator** hak service catalog (form) dan notifikasi (`notification`:
+lihat, ubah, buat, hapus), yang tidak termasuk hak bawaan profil Admin GLPI.
+
+**Notifikasi untuk Administrator (UC-10) — apa yang bisa & tidak.** GLPI 12 hanya memisahkan *aturan notifikasi*
+dari hak `config`. Template dan pengaturan pengiriman tetap dijaga `config` di kode inti GLPI
+(`NotificationTemplate::$rightname = 'config'`, `NotificationSetting::$rightname = 'config'`, dan halaman pengaturan
+email/browser memeriksa `config` UPDATE). Hak `config` penuh **tidak** diberikan ke Administrator karena juga membuka
+Setup › Umum, plugin, autentikasi, dan seluruh konfigurasi sistem.
+
+| Yang dikonfigurasi | `dimas` (Administrator) | Hak GLPI |
+| --- | --- | --- |
+| Daftar notifikasi: aktif/nonaktif, event, penerima (teknisi, grup, supervisor, profil…), template mana yang dipakai | ✓ ubah | `notification` |
+| Isi template notifikasi (subjek & isi email/browser) | — (Super-Admin) | `config` |
+| Pengaturan pengiriman: notifikasi aktif, SMTP, notifikasi browser | — (Super-Admin) | `config` |
+
+Opsi bila Administrator perlu mengubah isi template atau mengaktifkan saluran tanpa `config`: halaman
+**"Pengaturan notifikasi" ringkas di plugin HaloSIS** (dijaga hak plugin sendiri) yang hanya membuka subjek/isi
+template HaloSIS (mis. Ticket Recall) dan sakelar email/browser; plugin yang menyimpannya di sisi server. Belum dibuat.
 
 Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › tab HaloSIS**):
 
@@ -374,7 +410,8 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 
 **7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
 
-Palet ada di `themes/halosis.scss` (di-mount ke folder tema kustom GLPI `/var/glpi/files/_themes`).
+Palet ada di `themes/halosis.scss` (di-mount ke `/var/glpi-themes`, folder tema kustom GLPI lewat variabel
+`GLPI_THEMES_DIR` di `docker-compose.yml`).
 Jadikan default untuk semua pengguna:
 ```bash
 docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
@@ -394,6 +431,7 @@ accent `#FF965A` dengan teks `#203332`. Logo HaloSIS berupa SVG inline di variab
 | Laporan Saya, Detail Laporan (pegawai) | Login pegawai → **Tiket** (antarmuka sederhana/Helpdesk) |
 | Buat Laporan | **Service catalog** / Create a ticket |
 | Pusat Bantuan | **FAQ** (artikel KB yang ditandai FAQ) |
+| Migrasi data (FR-10) | `ai/scripts/prepare_data.py` (pembersihan & penyamaran) + `ai/scripts/reconcile.py` → `reports/rekonsiliasi.md`: jumlah sumber/berhasil/gagal, tidak lengkap, duplikat, nilai disamarkan per jenis, per bulan & per tim (lihat [`ai/README.md`](ai/README.md#fr-10--rekonsiliasi-migrasi)) |
 | Konfirmasi "sudah beres / belum beres" (UC-07) | Tombol **Approve / Refuse** pada solusi tiket. *Refuse* wajib disertai alasan (ditegakkan GLPI) dan membuka kembali tiket ke tim |
 | Kembalikan ke operator, salah tim (UC-06 alur alternatif) | Panel **Saran AI** di tiket → *Kembalikan ke operator (salah tim)*, alasan wajib (plugin) |
 | Peringatan risiko SLA (BR-02) | Level eskalasi SLA + notifikasi **Ticket Recall** (langkah 5b) |
