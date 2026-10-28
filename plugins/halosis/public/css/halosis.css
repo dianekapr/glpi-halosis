@@ -1418,3 +1418,10 @@ a.hc-badge-ticket:hover {
         width: 100%;
     }
 }
+
+/* ---- Menu ringkas per peran (RoleMenu) ----
+ * Bagian menu bawaan GLPI ditandai .halosis-menu-hidden di ikonnya dan disembunyikan dari navigasi.
+ * Datanya tetap ada di array menu karena breadcrumb & tombol "Tambah" di halaman daftar memakainya. */
+.navbar-nav > .nav-item:has(> .nav-link > i.halosis-menu-hidden) {
+    display: none !important;
+}
