@@ -77,7 +77,9 @@ function plugin_halosis_tables(): array
             `tickets_id` int {$sign} NOT NULL DEFAULT '0',
             `decisions_id` int {$sign} NOT NULL DEFAULT '0',
             `from_groups_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Grup hasil triase',
-            `to_groups_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Grup baru yang ditugaskan',
+            `to_groups_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Grup baru yang ditugaskan (0 = dikembalikan ke operator)',
+            `kind` varchar(20) NOT NULL DEFAULT 'reassign' COMMENT 'reassign|return',
+            `reason` text COMMENT 'Alasan dikembalikan ke operator (UC-06)',
             `users_id` int {$sign} NOT NULL DEFAULT '0',
             `date_creation` timestamp NULL DEFAULT NULL,
             KEY `tickets_id` (`tickets_id`),
@@ -96,6 +98,29 @@ function plugin_halosis_tables(): array
             KEY `problems_id` (`problems_id`),
             KEY `signature` (`signature`),
             KEY `date_creation` (`date_creation`)
+        ",
+        // Kandidat Knowledge (UC-09): solusi tiket selesai atau solusi berulang dari indeks AI, dikurasi
+        // Knowledge Manager menjadi draf artikel KB atau diabaikan dengan alasan.
+        'glpi_plugin_halosis_candidates' => "
+            `source` varchar(20) NOT NULL DEFAULT '' COMMENT 'ticket|ai',
+            `source_ref` varchar(100) NOT NULL DEFAULT '' COMMENT 'ID tiket GLPI atau kunci klaster AI',
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `title` varchar(255) NOT NULL DEFAULT '',
+            `problem` text COMMENT 'Masalah (tersamar)',
+            `solution` text COMMENT 'Solusi (tersamar)',
+            `occurrences` int NOT NULL DEFAULT '1' COMMENT 'Jumlah tiket dengan solusi serupa',
+            `examples` text COMMENT 'Contoh nomor tiket history (sumber AI)',
+            `is_approved` tinyint NOT NULL DEFAULT '0' COMMENT 'Solusi disetujui pemohon',
+            `status` varchar(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|article|ignored',
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `reason` text COMMENT 'Alasan diabaikan',
+            `users_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Knowledge Manager yang memutuskan',
+            `date_decision` timestamp NULL DEFAULT NULL,
+            `date_creation` timestamp NULL DEFAULT NULL,
+            `date_mod` timestamp NULL DEFAULT NULL,
+            UNIQUE KEY `source_ref` (`source`, `source_ref`),
+            KEY `status` (`status`),
+            KEY `tickets_id` (`tickets_id`)
         ",
     ];
 }
@@ -119,6 +144,21 @@ function plugin_halosis_install(): bool
                 PRIMARY KEY (`id`)
             ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation} ROW_FORMAT=DYNAMIC
         ");
+    }
+
+    // Kolom yang ditambahkan setelah versi awal (pemasangan lama tetap dimutakhirkan)
+    $added = [
+        'glpi_plugin_halosis_reassignments' => [
+            'kind'   => "varchar(20) NOT NULL DEFAULT 'reassign' AFTER `to_groups_id`",
+            'reason' => 'text AFTER `kind`',
+        ],
+    ];
+    foreach ($added as $table => $fields) {
+        foreach ($fields as $field => $definition) {
+            if (!$DB->fieldExists($table, $field)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD `{$field}` {$definition}");
+            }
+        }
     }
 
     Config::install();

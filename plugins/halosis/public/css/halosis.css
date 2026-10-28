@@ -1425,3 +1425,73 @@ a.hc-badge-ticket:hover {
 .navbar-nav > .nav-item:has(> .nav-link > i.halosis-menu-hidden) {
     display: none !important;
 }
+
+/* ---- Kandidat Knowledge (UC-09) ---- */
+.hk {
+    max-width: 960px;
+}
+
+.hk-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.hk-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.hk-meta a {
+    color: inherit;
+}
+
+.hk-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.hk-body {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 1rem;
+    margin: 0;
+}
+
+.hk-body dt {
+    color: var(--halosis-muted);
+    font-weight: 600;
+}
+
+.hk-body dd {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.hk-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.hk-decision {
+    margin: 0;
+    color: var(--halosis-muted);
+    font-size: 0.85rem;
+}
+
+.hk-empty {
+    color: var(--halosis-muted);
+    text-align: center;
+}
+
+@media (max-width: 576px) {
+    .hk-body {
+        grid-template-columns: 1fr;
+    }
+}

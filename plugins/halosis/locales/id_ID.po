@@ -805,3 +805,124 @@ msgstr "Pola insiden"
 
 msgid "Compact menu per HaloSIS role (off = full GLPI menu)"
 msgstr "Menu ringkas per peran HaloSIS (mati = menu GLPI lengkap)"
+
+msgid "Decide (make article / dismiss)"
+msgstr "Memutuskan (jadikan artikel / abaikan)"
+
+msgid "This candidate has already been decided."
+msgstr "Kandidat ini sudah diputuskan."
+
+msgid "Source: solution of ticket #%d."
+msgstr "Sumber: solusi tiket #%d."
+
+msgid "Source: recurring solution in %d historical tickets (AI index)."
+msgstr "Sumber: solusi berulang di %d tiket history (indeks AI)."
+
+msgid "Problem"
+msgstr "Masalah"
+
+msgid "Solution"
+msgstr "Solusi"
+
+msgid "Draft from Knowledge candidates; review before publishing."
+msgstr "Draf dari Kandidat knowledge; tinjau sebelum diterbitkan."
+
+msgid "The draft article could not be created."
+msgstr "Draf artikel gagal dibuat."
+
+msgid "Please give a reason of at least %d characters."
+msgstr "Tuliskan alasan minimal %d karakter."
+
+msgid "You are not allowed to decide on knowledge candidates."
+msgstr "Anda tidak berhak memutuskan kandidat knowledge."
+
+msgid "Candidate not found."
+msgstr "Kandidat tidak ditemukan."
+
+msgid "Draft article created. Review it, then publish it to make it visible."
+msgstr "Draf artikel dibuat. Tinjau, lalu terbitkan agar dapat dilihat."
+
+msgid "Candidate dismissed."
+msgstr "Kandidat diabaikan."
+
+msgid "Pending"
+msgstr "Menunggu"
+
+msgid "Made into article"
+msgstr "Dijadikan artikel"
+
+msgid "Dismissed"
+msgstr "Diabaikan"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Solutions from solved tickets and solutions that recur in ticket history (AI index). Make the useful ones into a draft article, or dismiss them with a reason."
+msgstr "Solusi dari tiket yang sudah selesai dan solusi yang sering berulang di history tiket (indeks AI). Jadikan yang bermanfaat sebagai draf artikel, atau abaikan dengan alasan."
+
+msgid "The HaloSIS AI service cannot be reached, so recurring solutions from ticket history are not refreshed. Candidates from solved tickets are still shown."
+msgstr "Layanan AI HaloSIS tidak dapat dihubungi, jadi solusi berulang dari history tiket tidak diperbarui. Kandidat dari tiket selesai tetap ditampilkan."
+
+msgid "Ticket #%d"
+msgstr "Tiket #%d"
+
+msgid "Approved by requester"
+msgstr "Disetujui pemohon"
+
+msgid "Recurring in %d historical tickets"
+msgstr "Berulang di %d tiket history"
+
+msgid "(untitled)"
+msgstr "(tanpa judul)"
+
+msgid "Example tickets"
+msgstr "Contoh tiket"
+
+msgid "Make article"
+msgstr "Jadikan artikel"
+
+msgid "Dismiss"
+msgstr "Abaikan"
+
+msgid "Reason for dismissing"
+msgstr "Alasan diabaikan"
+
+msgid "Dismiss candidate"
+msgstr "Abaikan kandidat"
+
+msgid "Open draft article"
+msgstr "Buka draf artikel"
+
+msgid "No candidates here."
+msgstr "Belum ada kandidat di sini."
+
+msgid "Knowledge candidate"
+msgid_plural "Knowledge candidates"
+msgstr[0] "Kandidat knowledge"
+
+msgid "Notifications"
+msgstr "Notifikasi"
+
+msgid "Only the assigned team can return this ticket while it is in progress."
+msgstr "Hanya tim yang ditugaskan yang dapat mengembalikan tiket ini selama masih diproses."
+
+msgid "Returned to operator (wrong team): %s"
+msgstr "Dikembalikan ke operator (salah tim): %s"
+
+msgid "Ticket returned to the operator validation queue."
+msgstr "Tiket dikembalikan ke antrean validasi operator."
+
+msgid "Return to operator (wrong team)"
+msgstr "Kembalikan ke operator (salah tim)"
+
+msgid "Return to operator"
+msgstr "Kembalikan ke operator"
+
+msgid "Why is this ticket not for your team?"
+msgstr "Mengapa tiket ini bukan untuk tim Anda?"
+
+msgid "The assigned team is removed and the ticket goes back to the validation queue. The reason is recorded for AI evaluation."
+msgstr "Tim yang ditugaskan dilepas dan tiket kembali ke antrean validasi. Alasan dicatat sebagai data evaluasi AI."
+
+msgid "%d returned by the technical team"
+msgstr "%d dikembalikan oleh tim teknis"

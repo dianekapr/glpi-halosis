@@ -135,7 +135,7 @@ final class Stats
     }
 
     /**
-     * Tiket yang triasenya diterapkan (Terima/Ubah) lalu dipindah ke grup lain.
+     * Tiket yang triasenya diterapkan (Terima/Ubah) lalu dipindah ke grup lain atau dikembalikan ke operator.
      */
     private static function reassigned(array $decisions, DateTimeImmutable $start): array
     {
@@ -146,18 +146,22 @@ final class Stats
             static fn ($d) => in_array($d['action'], [Decision::ACTION_ACCEPT, Decision::ACTION_MODIFY], true),
         ), 'tickets_id')));
 
-        $moved = 0;
+        $moved = $returned = 0;
         if ($applied !== []) {
-            $moved = (int) ($DB->request([
+            $count = static fn (array $where) => (int) ($DB->request([
                 'SELECT' => ['COUNT DISTINCT' => 'tickets_id AS cpt'],
                 'FROM'   => Reassignment::getTable(),
-                'WHERE'  => ['tickets_id' => $applied],
+                'WHERE'  => ['tickets_id' => $applied] + $where,
             ])->current()['cpt'] ?? 0);
+            $moved = $count([]);
+            // UC-06: dikembalikan Tim Teknis ke operator (bagian dari "salah tim")
+            $returned = $count(['kind' => Reassignment::KIND_RETURN]);
         }
 
         return [
-            'applied' => count($applied),
-            'moved'   => $moved,
+            'applied'  => count($applied),
+            'moved'    => $moved,
+            'returned' => $returned,
             'percent' => count($applied) > 0 ? round($moved * 100 / count($applied)) : 0,
         ];
     }

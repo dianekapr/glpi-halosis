@@ -6,11 +6,13 @@ use Change;
 use Config as CoreConfig;
 use CronTask;
 use Entity;
+use Glpi\Event;
 use Glpi\Form\Form;
+use GlpiPlugin\Halosis\Controller\KandidatController;
 use Group;
 use ITILCategory;
 use KnowbaseItem;
-use NotificationTemplate;
+use Notification;
 use Problem;
 use Profile as CoreProfile;
 use RuleTicket;
@@ -137,8 +139,8 @@ final class RoleMenu
     {
         return self::build([
             ['dashboard', __('Dashboard', 'halosis'), '/front/central.php', 'ti ti-layout-dashboard', true],
-            // Kandidat artikel: tiket yang sudah diselesaikan (solusinya bisa dijadikan artikel)
-            ['candidates', __('Knowledge candidates', 'halosis'), self::ticketSearch([self::status('old')]), 'ti ti-bulb', Ticket::canView()],
+            // UC-09: solusi tiket selesai & solusi berulang dari indeks AI → draf artikel
+            ['candidates', __('Knowledge candidates', 'halosis'), KandidatController::PAGE, 'ti ti-bulb', Session::haveRight(Profile::RIGHT_KANDIDAT, READ)],
             // GLPI 12: knowbaseitem.php membuka penjelajah artikel; daftar lengkap ada di ?list=1
             ['articles', __('Articles', 'halosis'), '/front/knowbaseitem.php?list=1', 'ti ti-book', KnowbaseItem::canView()],
             ['write', __('Write article', 'halosis'), '/front/knowbaseitem.form.php', 'ti ti-pencil-plus', KnowbaseItem::canCreate()],
@@ -157,8 +159,10 @@ final class RoleMenu
             ['rules', __('Workflow & rules', 'halosis'), '/front/ruleticket.php', 'ti ti-route', RuleTicket::canView()],
             ['ai', __('AI settings', 'halosis'), '/plugins/halosis/front/config.form.php', 'ti ti-sparkles', Session::haveRight(Profile::RIGHT_CONFIG, UPDATE)],
             ['ai-dashboard', __('AI performance', 'halosis'), DashboardMenu::PAGE, 'ti ti-robot', DashboardMenu::canViewDashboard()],
-            ['notifications', __('Notification templates', 'halosis'), '/front/notificationtemplate.php', 'ti ti-bell', NotificationTemplate::canView()],
-            ['audit', __('Audit trail', 'halosis'), '/front/event.php', 'ti ti-history', Session::haveRight('logs', READ)],
+            ['candidates', __('Knowledge candidates', 'halosis'), KandidatController::PAGE, 'ti ti-bulb', Session::haveRight(Profile::RIGHT_KANDIDAT, READ)],
+            // Notifikasi (hak "notification"); template notifikasi dijaga hak "config" (Super-Admin) di GLPI
+            ['notifications', __('Notifications', 'halosis'), '/front/notification.php', 'ti ti-bell', Notification::canView()],
+            ['audit', __('Audit trail', 'halosis'), '/front/event.php', 'ti ti-history', Event::canView()],
         ]);
         if ($super) {
             $system = array_filter([

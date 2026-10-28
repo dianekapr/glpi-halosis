@@ -1,0 +1,86 @@
+{#
+ # Kandidat Knowledge (UC-09): solusi tiket selesai & solusi berulang dari indeks AI, dikurasi Knowledge Manager.
+ # Teks kandidat sudah disamarkan saat disimpan.
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% set tabs = {
+    'pending': __('Pending', 'halosis'),
+    'article': __('Made into article', 'halosis'),
+    'ignored': __('Dismissed', 'halosis'),
+} %}
+
+{% block content %}
+<div class="hd hk" data-halosis-kandidat data-ajax-url="{{ ajax_url }}" data-min-reason="{{ min_reason }}">
+    <header class="hd-head">
+        <div>
+            <h1>{{ __('Knowledge candidates', 'halosis') }}</h1>
+            <p>{{ __('Solutions from solved tickets and solutions that recur in ticket history (AI index). Make the useful ones into a draft article, or dismiss them with a reason.', 'halosis') }}</p>
+        </div>
+        <nav class="hd-period" aria-label="{{ __('Status', 'halosis') }}">
+            {% for key, label in tabs %}
+                <a href="?status={{ key }}" class="{{ key == status ? 'active' }}" {{ key == status ? 'aria-current="page"' }}>{{ label }} ({{ counts[key] }})</a>
+            {% endfor %}
+        </nav>
+    </header>
+
+    {% if not sync.ai_available %}
+        <div class="alert alert-warning mb-0">{{ __('The HaloSIS AI service cannot be reached, so recurring solutions from ticket history are not refreshed. Candidates from solved tickets are still shown.', 'halosis') }}</div>
+    {% endif %}
+    <div class="alert alert-danger d-none mb-0" data-hk-error role="alert"></div>
+
+    {% for c in items %}
+        <article class="hd-card hk-card">
+            <div class="hk-meta">
+                {% if c.source == 'ticket' %}
+                    <span class="hc-badge hc-badge-ok"><i class="ti ti-ticket" aria-hidden="true"></i>
+                        {% if c.ticket_url %}<a href="{{ c.ticket_url }}">{{ __('Ticket #%d', 'halosis')|format(c.tickets_id) }}</a>{% else %}{{ __('Ticket #%d', 'halosis')|format(c.tickets_id) }}{% endif %}
+                    </span>
+                    {% if c.is_approved %}<span class="hc-badge hc-badge-open"><i class="ti ti-circle-check" aria-hidden="true"></i> {{ __('Approved by requester', 'halosis') }}</span>{% endif %}
+                {% else %}
+                    <span class="hc-badge hc-badge-ticket"><i class="ti ti-sparkles" aria-hidden="true"></i> {{ __('Recurring in %d historical tickets', 'halosis')|format(c.occurrences) }}</span>
+                {% endif %}
+            </div>
+            <h2 class="hk-title">{{ c.title ?: __('(untitled)', 'halosis') }}</h2>
+            <dl class="hk-body">
+                <dt>{{ __('Problem', 'halosis') }}</dt>
+                <dd>{{ c.problem|u.truncate(400, '…') }}</dd>
+                <dt>{{ __('Solution', 'halosis') }}</dt>
+                <dd>{{ c.solution|u.truncate(700, '…') }}</dd>
+                {% if c.examples %}
+                    <dt>{{ __('Example tickets', 'halosis') }}</dt>
+                    <dd>{{ c.examples }}</dd>
+                {% endif %}
+            </dl>
+
+            {% if status == 'pending' and can_decide %}
+                <div class="hk-actions">
+                    <button type="button" class="btn btn-primary btn-sm" data-hk-action="article" data-id="{{ c.id }}">
+                        <i class="ti ti-file-plus" aria-hidden="true"></i> {{ __('Make article', 'halosis') }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-hk-toggle data-id="{{ c.id }}">
+                        <i class="ti ti-x" aria-hidden="true"></i> {{ __('Dismiss', 'halosis') }}
+                    </button>
+                </div>
+                <form class="hk-ignore d-none" data-hk-ignore data-id="{{ c.id }}">
+                    <label class="form-label" for="hk-reason-{{ c.id }}">{{ __('Reason for dismissing', 'halosis') }}</label>
+                    <textarea class="form-control" id="hk-reason-{{ c.id }}" rows="2" data-track-changes="false" required></textarea>
+                    <div class="hk-actions">
+                        <button type="submit" class="btn btn-danger btn-sm" disabled>{{ __('Dismiss candidate', 'halosis') }}</button>
+                    </div>
+                </form>
+            {% elseif status == 'article' %}
+                <p class="hk-decision">
+                    <i class="ti ti-file-text" aria-hidden="true"></i>
+                    {% if c.article_url %}<a href="{{ c.article_url }}">{{ __('Open draft article', 'halosis') }}</a>{% endif %}
+                    · {{ c.date_decision|formatted_datetime }}
+                </p>
+            {% elseif status == 'ignored' %}
+                <p class="hk-decision"><strong>{{ __('Reason', 'halosis') }}:</strong> {{ c.reason }} · {{ c.date_decision|formatted_datetime }}</p>
+            {% endif %}
+        </article>
+    {% else %}
+        <div class="hd-card hk-empty">{{ __('No candidates here.', 'halosis') }}</div>
+    {% endfor %}
+</div>
+{% endblock %}

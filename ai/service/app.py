@@ -23,7 +23,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import privacy, search  # noqa: E402
+from halosis_ai import candidates, privacy, search  # noqa: E402
 
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
@@ -161,3 +161,15 @@ def chat(req: ChatRequest) -> dict:
     sources = [{'sumber': h['sumber'], 'jenis_sumber': h['jenis_sumber'], 'judul': h['judul'], 'skor': h['skor']}
                for h in hits]
     return {'ditemukan': True, 'jawaban': answer, 'sumber': sources, 'mode': mode}
+
+
+@app.get('/kandidat')
+def kandidat(min: int = 5, limit: int = 20) -> dict:
+    """Solusi yang sering berulang di history tiket, untuk dikurasi Knowledge Manager (UC-09)."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    key = (max(2, min), max(1, limit))
+    if key not in state.setdefault('kandidat', {}):
+        chunks, _ = search.load_index()
+        state['kandidat'][key] = candidates.recurring_solutions(chunks, min_size=key[0], limit=key[1])
+    return {'kandidat': state['kandidat'][key]}
