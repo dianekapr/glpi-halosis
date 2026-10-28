@@ -63,7 +63,8 @@
         <article class="hd-card hd-stat">
             <div class="hd-label">{{ __('Moved to another team after triage', 'halosis') }}</div>
             <div class="hd-value">{{ stats.reassigned.percent }}%</div>
-            <div class="hd-sub">{{ __('%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)', 'halosis')|format(stats.reassigned.moved, stats.reassigned.applied) }}</div>
+            <div class="hd-sub">{{ __('%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)', 'halosis')|format(stats.reassigned.moved, stats.reassigned.applied) }}
+                · {{ __('%d returned by the technical team', 'halosis')|format(stats.reassigned.returned) }}</div>
         </article>
     </section>
 

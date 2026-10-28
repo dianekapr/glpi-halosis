@@ -172,6 +172,24 @@
                     </div>
                 {% endif %}
             {% endif %}
+
+            {# UC-06 alur alternatif: tim yang ditugaskan mengembalikan tiket salah tim ke operator #}
+            {% if can_return %}
+                <div class="halosis-return border-top mt-2 pt-2">
+                    <button type="button" class="btn btn-sm btn-outline-warning" data-action="show-return" aria-expanded="false">
+                        <i class="ti ti-arrow-back-up" aria-hidden="true"></i><span>{{ __('Return to operator (wrong team)', 'halosis') }}</span>
+                    </button>
+                    <div class="halosis-form mt-2 d-none" data-halosis-section="return">
+                        <label class="form-label small mb-1 required" for="halosis-return-reason">{{ __('Reason (required)', 'halosis') }}</label>
+                        <textarea data-track-changes="false" class="form-control form-control-sm mb-2" id="halosis-return-reason" rows="2" data-reason
+                                  placeholder="{{ __('Why is this ticket not for your team?', 'halosis') }}"></textarea>
+                        <button type="button" class="btn btn-sm btn-warning" data-action="return" disabled>
+                            {{ __('Return to operator', 'halosis') }}
+                        </button>
+                        <div class="form-hint small text-secondary mt-1">{{ __('The assigned team is removed and the ticket goes back to the validation queue. The reason is recorded for AI evaluation.', 'halosis') }}</div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 </section>

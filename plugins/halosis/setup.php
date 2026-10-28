@@ -23,7 +23,7 @@ use GlpiPlugin\Halosis\RoleMenu;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.4.0');
+define('PLUGIN_HALOSIS_VERSION', '0.5.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -73,6 +73,10 @@ function plugin_init_halosis(): void
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'] = [plugin_halosis_asset('js/triase.js')];
     if (DashboardMenu::canViewDashboard()) {
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/dashboard.js');
+    }
+    // Kandidat Knowledge (UC-09): Knowledge Manager & Administrator
+    if (Session::haveRight(Profile::RIGHT_KANDIDAT, READ)) {
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/kandidat.js');
     }
 
     // Chatbot (antarmuka Helpdesk, pemegang hak chatbot, fitur aktif): halaman penuh "Tanya HaloSIS"

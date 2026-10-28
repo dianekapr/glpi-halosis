@@ -6,6 +6,10 @@ services:
     image: "glpi/glpi:12.0.0"
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Folder tema kustom di luar volume /var/glpi: mount di dalam /var/glpi/files membuat folder itu milik
+      # root pada instalasi baru, sehingga installer GLPI gagal ("cannot create directory .../_cache")
+      GLPI_THEMES_DIR: /var/glpi-themes
     depends_on:
       - db
     ports:
@@ -14,8 +18,8 @@ services:
       - glpi_data:/var/glpi
       # Kode plugin HaloSIS dari repo ini (langsung terbaca tanpa build/copy)
       - ./plugins/halosis:/var/www/glpi/plugins/halosis
-      # Palet tema kustom GLPI (folder GLPI_THEMES_DIR = /var/glpi/files/_themes)
-      - ./themes:/var/glpi/files/_themes
+      # Palet tema kustom GLPI (folder GLPI_THEMES_DIR di atas)
+      - ./themes:/var/glpi-themes:ro
 
   db:
     image: "mysql:8.4"

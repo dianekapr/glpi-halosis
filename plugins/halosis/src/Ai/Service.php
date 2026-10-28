@@ -24,18 +24,40 @@ final class Service
      */
     public static function post(string $path, array $payload): array
     {
+        return self::request('POST', $path, $payload);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function get(string $path): array
+    {
+        return self::request('GET', $path, null);
+    }
+
+    /**
+     * @param array<string, mixed>|null $payload
+     *
+     * @return array<string, mixed>
+     */
+    private static function request(string $method, string $path, ?array $payload): array
+    {
         $url = (string) Config::get('service_url');
         if ($url === '') {
             throw new AiException('URL layanan AI belum diatur');
         }
 
-        $context = stream_context_create(['http' => [
-            'method'        => 'POST',
-            'header'        => "Content-Type: application/json\r\nAccept: application/json\r\n",
-            'content'       => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        $http = [
+            'method'        => $method,
+            'header'        => "Accept: application/json\r\n",
             'timeout'       => (int) Config::get('service_timeout'),
             'ignore_errors' => true,
-        ]]);
+        ];
+        if ($payload !== null) {
+            $http['header']  .= "Content-Type: application/json\r\n";
+            $http['content']  = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        }
+        $context = stream_context_create(['http' => $http]);
         $body = @file_get_contents($url . $path, false, $context);
         if ($body === false) {
             throw new AiException('Layanan AI tidak bisa dihubungi');
