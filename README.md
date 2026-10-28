@@ -322,9 +322,10 @@ Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
   yang dibuat `seed_halosis.py`. Skrip memperingatkan bila ada tim tanpa supervisor. Di produksi, tandai ketua
   tim sungguhan di **Tim teknis › (tim) › Pengguna › Supervisor**.
 
-Aksi otomatis `slaticket` (tiap 5 menit) yang mengirim peringatan. Untuk menguji tanpa menunggu, majukan jadwalnya:
-`UPDATE glpi_slalevels_tickets SET date = NOW() WHERE tickets_id = <id>` lalu
-`docker compose exec glpi php front/cron.php slaticket`.
+Aksi otomatis `slaticket` yang mengirim peringatan; cron container memeriksanya tiap menit. Untuk menguji tanpa
+menunggu batas waktu, majukan jadwalnya lalu tunggu ±1 menit:
+`UPDATE glpi_slalevels_tickets SET date = NOW() WHERE tickets_id = <id>`. Peringatan muncul di
+`glpi_queuednotifications` (event `recall`) untuk teknisi & anggota tim serta ketua timnya.
 
 **6. Login sebagai role berbeda** (password semua: `halosis`)
 
@@ -359,7 +360,8 @@ Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
 | Masalah / pola insiden | lihat & ubah (konfirmasi/tutup pola, tautkan tiket, FR-04) | lihat | lihat |
 
 Untuk UC-10, `setup-roles` juga memberi **Administrator** hak service catalog (form) dan notifikasi (`notification`:
-lihat, ubah, buat, hapus), yang tidak termasuk hak bawaan profil Admin GLPI.
+lihat, ubah, buat, hapus), serta **audit trail** (`system_logs`: lihat log sistem); semuanya tidak termasuk hak
+bawaan profil Admin GLPI.
 
 **Notifikasi untuk Administrator (UC-10) — apa yang bisa & tidak.** GLPI 12 hanya memisahkan *aturan notifikasi*
 dari hak `config`. Template dan pengaturan pengiriman tetap dijaga `config` di kode inti GLPI

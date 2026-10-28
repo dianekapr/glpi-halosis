@@ -8,11 +8,13 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Tanya HaloSIS**: chatbot self-service yang menjawab hanya dari artikel Pusat Bantuan | Pegawai | Beranda Helpdesk (`/plugins/halosis/Chat`) |
 | **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak; Kembalikan ke operator (salah tim) | Operator (putuskan), Tim Teknis (lihat, kembalikan) | Panel "Saran AI" di form tiket |
 | **Deteksi pola insiden**: tiket mirip ≥ N dalam 1 jam → Problem "Pola insiden: …" | Operator | Tugas terjadwal + banner beranda |
+| **Kandidat Knowledge** (UC-09): solusi tiket selesai & solusi berulang dari indeks AI → Jadikan artikel (draf KB) / Abaikan (dengan alasan) | Knowledge Manager, Administrator | Menu Kandidat knowledge (`/plugins/halosis/Kandidat`) |
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.4.0 · GLPI 12.0.x · PHP 8.2+. Tanpa API key semua fitur berjalan dalam **mode demo**
-(jawaban contoh yang deterministik, tanpa internet).
+Versi 0.5.0 · GLPI 12.0.x · PHP 8.2+. Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan
+itu mati dan tidak ada API key, semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik,
+tanpa internet).
 
 ## Akun demo
 
@@ -22,10 +24,15 @@ Password semua akun contoh: `halosis` (kecuali `glpi`). Akun dibuat oleh `seed_h
 | --- | --- | --- | --- |
 | `budi`, `siti`, `maya` | Pegawai | Helpdesk | Tanya HaloSIS, buat laporan, approve solusi |
 | `rina` | Operator | Standar | Validasi saran AI, banner pola insiden |
-| `andi`, `yoga` | Tim Teknis (Aplikasi Statistik) | Standar | Menyelesaikan tiket; panel AI hanya-baca |
+| `andi`, `yoga` | Tim Teknis (Aplikasi Statistik) | Standar | Menyelesaikan tiket; panel AI hanya-baca, *Kembalikan ke operator* bila salah tim |
 | `fajar` / `dedi` | Tim Teknis (Identitas & Akses / Jaringan) | Standar | |
+| `hendra` | Ketua Tim Aplikasi Statistik (Tim Teknis, supervisor grup) | Standar | Penerima "atasan" peringatan risiko SLA |
+| `agus` | Ketua Tim Jaringan (Tim Teknis, supervisor grup) | Standar | Penerima "atasan" peringatan risiko SLA |
+| `rudi` | Ketua Tim Perangkat (Tim Teknis, supervisor grup) | Standar | Penerima "atasan" peringatan risiko SLA |
+| `wati` | Ketua Tim Identitas & Akses (Tim Teknis, supervisor grup) | Standar | Penerima "atasan" peringatan risiko SLA |
 | `sri` | Manajemen | Standar (hanya-baca) | Dashboard kinerja AI |
-| `lina` | Knowledge Manager | Standar | Mengelola artikel Pusat Bantuan |
+| `lina` | Knowledge Manager | Standar | Mengelola artikel Pusat Bantuan, Kandidat knowledge |
+| `dimas` | Administrator | Standar | Konfigurasi platform: katalog, SLA, tim, aturan, notifikasi, AI, audit trail |
 | `glpi` / `glpi` | Super-Admin | Standar | Konfigurasi & pengelolaan sistem |
 
 > ⚠️ `glpi`/`glpi` dan `halosis` hanya untuk demo lokal. Ganti sebelum GLPI bisa diakses dari jaringan lain.
@@ -82,7 +89,7 @@ password sebelum membukanya.
 
 ### Mode demo
 
-Tanpa API key, semua fitur tetap bisa didemokan tanpa internet, dengan hasil yang sama untuk masukan
+Tanpa layanan AI lokal dan tanpa API key, semua fitur tetap bisa didemokan tanpa internet, dengan hasil yang sama untuk masukan
 yang sama:
 
 - **Saran triase**: aturan kata kunci (mis. "vpn" → Jaringan & VPN, "sso"/"login" → SSO / Login,

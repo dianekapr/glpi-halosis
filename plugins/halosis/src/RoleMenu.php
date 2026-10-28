@@ -6,6 +6,7 @@ use Change;
 use Config as CoreConfig;
 use CronTask;
 use Entity;
+use Glpi\Event;
 use Glpi\Form\Form;
 use GlpiPlugin\Halosis\Controller\KandidatController;
 use Group;
@@ -161,7 +162,7 @@ final class RoleMenu
             ['candidates', __('Knowledge candidates', 'halosis'), KandidatController::PAGE, 'ti ti-bulb', Session::haveRight(Profile::RIGHT_KANDIDAT, READ)],
             // Notifikasi (hak "notification"); template notifikasi dijaga hak "config" (Super-Admin) di GLPI
             ['notifications', __('Notifications', 'halosis'), '/front/notification.php', 'ti ti-bell', Notification::canView()],
-            ['audit', __('Audit trail', 'halosis'), '/front/event.php', 'ti ti-history', Session::haveRight('logs', READ)],
+            ['audit', __('Audit trail', 'halosis'), '/front/event.php', 'ti ti-history', Event::canView()],
         ]);
         if ($super) {
             $system = array_filter([

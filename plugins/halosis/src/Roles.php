@@ -103,8 +103,8 @@ final class Roles
     }
 
     /**
-     * UC-10: Administrator Sistem mengonfigurasi service catalog (form) dan template notifikasi, yang tidak
-     * termasuk hak bawaan profil Admin GLPI.
+     * UC-10: Administrator Sistem mengonfigurasi service catalog (form) dan aturan notifikasi, serta membaca
+     * audit trail; hak ini tidak termasuk bawaan profil Admin GLPI. Template notifikasi tetap hak `config`.
      *
      * @return array<string, int>
      */
@@ -113,6 +113,8 @@ final class Roles
         return [
             'form'         => READ | UPDATE | CREATE | DELETE | PURGE,
             'notification' => READ | UPDATE | CREATE | PURGE,
+            // Audit trail (log sistem GLPI, halaman Event); hak `logs` hanya untuk tab Riwayat per objek
+            'system_logs'  => READ,
         ];
     }
 
@@ -215,9 +217,17 @@ final class Roles
         ProfileRight::updateProfileRights(self::TIM_TEKNIS, self::getTimTeknisCoreRights());
         $log[] = 'Operator: Masalah lihat + ubah (konfirmasi/tutup pola, tautkan tiket); Tim Teknis: Masalah hanya-baca';
 
-        // 2c. Administrator Sistem (UC-10): service catalog & template notifikasi
+        // Profil Operator berasal dari "Hotliner" GLPI yang membuka form tiket baru saat login; Operator HaloSIS
+        // mulai dari dashboard & antrean validasi
+        $operator = new CoreProfile();
+        if ($operator->getFromDB(self::OPERATOR) && (int) $operator->fields['create_ticket_on_login'] !== 0) {
+            $operator->update(['id' => self::OPERATOR, 'create_ticket_on_login' => 0]);
+            $log[] = 'Operator: tidak lagi membuka form tiket baru saat login';
+        }
+
+        // 2c. Administrator Sistem (UC-10): service catalog, aturan notifikasi, audit trail
         ProfileRight::updateProfileRights(self::ADMINISTRATOR, self::getAdministratorCoreRights());
-        $log[] = 'Administrator: kelola service catalog (form) & template notifikasi';
+        $log[] = 'Administrator: kelola service catalog (form) & notifikasi, baca audit trail';
 
         // 3. Knowledge Manager: buat jika belum ada, lalu set hak (semua hak lain = 0)
         $km_id = self::findKnowledgeManagerId();
