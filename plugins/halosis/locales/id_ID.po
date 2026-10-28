@@ -660,3 +660,55 @@ msgstr "%d penilaian"
 
 msgid "Definitions: accepted = suggestion applied unchanged; modified = applied after an officer changed values (reason required); rejected = manual triage (reason required); moved to another team = an AI-triaged ticket later assigned to a different group; helped without a ticket = conversation marked solved by the employee."
 msgstr "Definisi: diterima = saran diterapkan tanpa perubahan; diubah = diterapkan setelah petugas mengubah nilai (alasan wajib); ditolak = triase manual (alasan wajib); dipindah ke tim lain = tiket yang ditriase dengan AI kemudian ditugaskan ke grup lain; terbantu tanpa tiket = percakapan yang ditandai selesai oleh pegawai."
+
+msgid "HaloSIS AI service"
+msgstr "Layanan AI HaloSIS"
+
+msgid "AI service URL"
+msgstr "URL layanan AI"
+
+msgid "Local model trained on ticket history (triage) and Help Center search (chat), e.g. http://halosis-ai:8000. Used first; if empty or unreachable, the plugin falls back to the mode above."
+msgstr "Model lokal yang dilatih dari history tiket (triase) dan pencarian Pusat Bantuan (chat), mis. http://halosis-ai:8000. Dipakai lebih dulu; jika kosong atau tidak bisa dihubungi, plugin kembali ke mode di atas."
+
+msgid "Service timeout (seconds)"
+msgstr "Batas waktu layanan (detik)"
+
+msgid "AI service URL must start with http:// or https://."
+msgstr "URL layanan AI harus diawali http:// atau https://."
+
+msgid "Similar ticket %s"
+msgstr "Tiket serupa %s"
+
+msgid "Chat history"
+msgstr "Riwayat chat"
+
+msgid "Your conversations with the assistant. Open one to read it again or continue it."
+msgstr "Percakapan Anda dengan asisten. Buka untuk membaca ulang atau melanjutkannya."
+
+msgid "No conversations yet"
+msgstr "Belum ada percakapan"
+
+msgid "Questions you ask the assistant will appear here."
+msgstr "Pertanyaan yang Anda ajukan ke asisten akan muncul di sini."
+
+msgid "(no question)"
+msgstr "(tanpa pertanyaan)"
+
+msgid "%d question"
+msgid_plural "%d questions"
+msgstr[0] "%d pertanyaan"
+
+msgid "Solved"
+msgstr "Terselesaikan"
+
+msgid "Report #%d"
+msgstr "Laporan #%d"
+
+msgid "Report created"
+msgstr "Laporan dibuat"
+
+msgid "Can be continued"
+msgstr "Bisa dilanjutkan"
+
+msgid "Showing your %d most recent conversations."
+msgstr "Menampilkan %d percakapan terbaru Anda."
