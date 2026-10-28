@@ -72,6 +72,8 @@ password sebelum membukanya.
 | Model | `claude-opus-5-5` | ID model di penyedia |
 | URL dasar API | kosong | Opsional, untuk gateway/proxy |
 | Batas waktu | 20 detik | Jika terlewati, tiket tetap tersimpan tanpa saran |
+| URL layanan AI | `http://halosis-ai:8000` | Layanan lokal `ai/service` (model history tiket + pencarian); kosong/mati → mode di atas |
+| Batas waktu layanan | 8 detik | Untuk layanan AI lokal |
 | Ambang keyakinan | 70% | Di bawah ambang → "Perlu penilaian manual" |
 | Minimal tiket mirip | 10 | Deteksi pola insiden |
 | Jendela waktu | 60 menit | Deteksi pola insiden |
@@ -93,6 +95,17 @@ yang sama:
 Dengan API key, Claude dipanggil di server (SDK resmi, *structured output*, effort `low`, dan
 *server-side fallback* untuk model yang mendukungnya). Bila AI gagal atau timeout, triase dilewati dan
 chatbot kembali ke kutipan artikel; penyebabnya dicatat di `halosis.log` (Docker: `/var/glpi/logs/halosis.log`).
+
+### Layanan AI HaloSIS (lokal, tanpa API key)
+
+Bila service `halosis-ai` di docker-compose hidup, plugin memakainya **lebih dulu**:
+
+- **Saran triase** dari model yang dilatih dari history tiket (model tercatat `triase-tfidf-lr-<tanggal>`),
+  dengan top-3 tim dan nomor tiket lama yang mirip di penjelasan. Tim history dipetakan ke kategori/grup GLPI.
+- **Chatbot** mencari di artikel KB + solusi tiket lama (embedding lokal); sumber tiket tampil
+  "Tiket serupa <nomor>".
+- Layanan mati → otomatis kembali ke mode demo / AI penyedia di atas. Cara membangun model & indeks:
+  [`ai/README.md`](../../ai/README.md) (AI-3 s.d. AI-5).
 
 ## Skenario demo langkah demi langkah
 

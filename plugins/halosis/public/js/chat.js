@@ -102,6 +102,10 @@
             ]);
             if (sources.length) {
                 bubble.append(el('div', 'hc-sources', sources.map((s) => {
+                    // Sumber tiket history tidak punya tautan di GLPI ini
+                    if (!s.url) {
+                        return el('span', 'hc-source', [icon('ticket'), s.name]);
+                    }
                     const a = el('a', 'hc-source', [icon('book-2'), s.name]);
                     a.href = s.url;
                     return a;

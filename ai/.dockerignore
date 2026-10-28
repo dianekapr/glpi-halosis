@@ -1,0 +1,6 @@
+models/
+index/
+.venv/
+__pycache__/
+*.parquet
+*.xlsx

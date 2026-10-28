@@ -28,6 +28,9 @@ final class Config
         'api_base_url'     => '',
         'ai_model'         => 'claude-opus-5-5',
         'ai_timeout'       => 20,
+        // Layanan AI lokal (ai/service, docker-compose): dipanggil lebih dulu, gagal → mode di atas
+        'service_url'      => 'http://halosis-ai:8000',
+        'service_timeout'  => 8,
         'triage_threshold' => 70,
         // Deteksi pola insiden: minimal N tiket mirip dalam jendela waktu (menit); 0 = grup Operator bawaan
         'pattern_min_tickets' => 10,
@@ -146,6 +149,14 @@ final class Config
         } else {
             $errors[] = __('API base URL must start with http:// or https://.', 'halosis');
         }
+
+        $service_url = trim((string) ($input['service_url'] ?? ''));
+        if ($service_url === '' || preg_match('#^https?://[^\s]+$#i', $service_url) === 1) {
+            $values['service_url'] = rtrim($service_url, '/');
+        } else {
+            $errors[] = __('AI service URL must start with http:// or https://.', 'halosis');
+        }
+        $values['service_timeout'] = max(1, min(60, (int) ($input['service_timeout'] ?? self::DEFAULTS['service_timeout'])));
 
         $model = trim((string) ($input['ai_model'] ?? ''));
         $values['ai_model'] = $model !== '' ? $model : self::DEFAULTS['ai_model'];
