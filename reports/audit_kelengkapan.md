@@ -13,12 +13,12 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 | Kelompok | Jumlah | ✅ | 🟡 | ❌ | ⚪ |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Business Requirements (BR-01..08) | 8 | 6 | 2 | 0 | 0 |
-| Functional Requirements (FR-01..10) | 10 | 8 | 2 | 0 | 0 |
+| Functional Requirements (FR-01..10) | 10 | 9 | 1 | 0 | 0 |
 | Non-Functional Requirements (NFR-01..14) | 14 | 5 | 6 | 0 | 3 |
 | Use Case (UC-01..10, termasuk alur alternatif) | 10 | 9 | 1 | 0 | 0 |
 | Hasil & keputusan PoC (2.4.7) | 6 | 3 | 3 | 0 | 0 |
 | Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 5 | 2 | 0 | 3 |
-| **Total** | **58** | **36** | **16** | **0** | **6** |
+| **Total** | **58** | **37** | **15** | **0** | **6** |
 
 **Pembaruan 29 Okt 2026:** semua P1 (#1–#6) selesai; status "Diperbaiki" di tabel menunjukkan butirnya.
 
@@ -46,7 +46,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | --- | --- | --- | --- | --- |
 | FR-01 | Satu pintu masuk utama: Self-Service Conversation | ✅ | Pegawai (Helpdesk) diarahkan ke `/plugins/halosis/Chat` (`src/HelpdeskHome.php`); menu Tanya HaloSIS paling atas | — |
 | FR-02 | Self-service melalui AI chatbot | ✅ | `src/Chatbot.php`, `ai/service/app.py` `/chat`; riwayat & lanjut otomatis (`src/Chat.php`, `/plugins/halosis/ChatHistory`) | — |
-| FR-03 | Pencarian knowledge berbasis keyword **dan** semantic untuk pengguna/agent | 🟡 | Pengguna: semantik (`/chat`); agent: menu "Cari knowledge" = pencarian kata kunci bawaan GLPI; mode demo `src/KnowledgeSearch.php` | Agent belum punya pencarian semantik; tidak ada penggabungan (hybrid) skor |
+| FR-03 | Pencarian knowledge berbasis keyword **dan** semantic untuk pengguna/agent | ✅ | Pengguna: semantik (`/chat`); agent (Operator & Tim Teknis): menu Cari knowledge → `/plugins/halosis/CariKnowledge` (`CariKnowledgeController`) → `POST /cari` semantik atas KB & tiket historis; layanan AI mati → kata kunci (`KnowledgeSearch::search`); uji rina/andi 10 hasil, sri 403 | Diperbaiki (P2 #8) |
 | FR-04 | Analisis pola kemiripan request/incident dalam time window, dikirim ke operator untuk validasi | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py`; Problem ditugaskan ke grup Operator | Diperbaiki (P1 #1) |
 | FR-05 | Agent menerima, menolak, mengubah rekomendasi AI | ✅ | Tombol Terima/Ubah/Tolak (`templates/triase_panel.html.twig`, `ajax/triase.php`); uji skenario UC-04/05 | — |
 | FR-06 | Tiket Request/Incident dari percakapan; status, assignment, update, resolution, closure, history | ✅ | `Chatbot` membuat tiket dengan ringkasan; siklus tiket GLPI; uji skenario (#57: Baru → Diproses → Selesai → Ditutup) | — |
@@ -67,7 +67,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | NFR-06 | Data ke AI mengikuti data minimization | ✅ | `ai/halosis_ai/privacy.py` (email, NIP, NIK, HP, rahasia, nama), pindai ulang sebelum simpan (`prepare_data.py::residual_pii`), `src/Privacy.php` sebelum kirim; `ai/tests/test_privacy.py`; `.gitignore` data | Batasan: nama tanpa sapaan & tidak ada di kolom pengguna tidak terdeteksi |
 | NFR-07 | Rekomendasi & keputusan dapat ditelusuri ke aktor & waktu | ✅ | `glpi_plugin_halosis_decisions` (users_id, date_creation), `reassignments`, keputusan kandidat (`users_id`, `date_decision`), tab Riwayat, Audit trail `/front/event.php` | — |
 | NFR-08 | Self-service tanpa pemahaman teknis ITSM | 🟡 | Menu Helpdesk ringkas (5 item), chat dengan saran pertanyaan, tampilan HP 390px (`screenshot/modernisasi/`) | Belum ada uji usability dengan pengguna |
-| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `docker compose logs` | Belum ada metrik/monitoring terpusat (Prometheus/Grafana/Loki disebut di dokumen) |
+| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `GET /metrics` Prometheus layanan AI (jumlah permintaan, durasi per endpoint, ukuran indeks), `docker compose logs` | Metrik AI ditambahkan (P2 #13); belum ada Prometheus/Grafana terpusat untuk GLPI, DB & infra |
 | NFR-10 | Kustomisasi GLPI minimal | ✅ | Tidak ada perubahan kode inti; kustomisasi = plugin + palet `themes/halosis.scss` + konfigurasi | — |
 | NFR-11 | Integrasi via API; AI dapat diganti tanpa ganti core | ✅ | Plugin → HTTP `service_url` (`src/Ai/Service.php`) → FastAPI; penyedia Claude/OpenAI-kompatibel opsional (`src/Ai/Client.php`); fallback demo | — |
 | NFR-12 | Latensi AI: retrieval, generation, end-to-end terpisah | ✅ | `ai/service/app.py::record_latency` → `ai/logs/latency.jsonl` (angka saja); `ai/scripts/latency_report.py` → `reports/latensi.md` (chat retrieval p50 91 ms / p95 454 ms; triase p50 13 ms); `ai/tests/test_service.py::test_log_latensi_tanpa_teks` | Diperbaiki (#2); generation hanya bila Claude aktif |
@@ -110,7 +110,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern` | Tidak dipisah ke container sendiri |
 | AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/kandidat`, `/health`) | — |
 | Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, kosinus di memori; pembaruan inkremental per artikel KB dengan lock + tulis atomik (`search.update_article`) | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
-| Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health` | Tanpa metrik & dashboard observability |
+| Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health`, log latensi AI, `GET /metrics` (Prometheus) layanan AI | Belum ada server Prometheus/Grafana yang mengumpulkan metrik |
 | Reverse proxy / load balancer | ⚪ | — | Infra produksi; lokal cukup port 8080 |
 | CI / CD / registry | ⚪ | — | Pengganti: alur git `dev`/`master` di README |
 | Backup / DR | ⚪ | Volume Docker `db_data`, `glpi_data` | Pengganti: prosedur `mysqldump` + uji restore (rencana) |
@@ -159,12 +159,12 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | # | Perbaikan | Menutup | Usaha | File |
 | --- | --- | --- | --- | --- |
 | 7 | Model dampak/urgensi dari history (bukan aturan) | BR-05, FR-08 | sedang | `ai/halosis_ai/triage_model.py`, `ai/scripts/train_triage.py`, `src/Triage.php` |
-| 8 | Pencarian semantik untuk agent (Operator/Tim Teknis) di halaman plugin | FR-03 | sedang | controller & template baru di plugin, `src/RoleMenu.php` |
+| 8 | ✅ Selesai — Pencarian semantik untuk agent (Operator/Tim Teknis) di halaman plugin | FR-03 | sedang | controller & template baru di plugin, `src/RoleMenu.php` |
 | 9 | ✅ Selesai — Uji email notifikasi dengan SMTP lokal (mis. container Mailpit) | BR-02, UC-03 | kecil | `docker-compose.yml`, README |
 | 10 | Rencana uji performa & latensi (k6/Locust) + hasil satu pengguna | NFR-01, NFR-12 | sedang | `docs/` atau `reports/rencana_uji.md`, skrip uji |
 | 11 | Hardening: ganti password bawaan, TLS reverse proxy, checklist keamanan | NFR-05 | sedang | `docker-compose.yml`, README |
 | 12 | Uji usability singkat (5 pegawai, tugas UC-01/03/07) | NFR-08 | kecil | `reports/usability.md` |
-| 13 | Endpoint metrik (`/metrics`) layanan AI | NFR-09 | kecil | `ai/service/app.py`, `ai/requirements-service.txt` |
+| 13 | ✅ Selesai — Endpoint metrik (`/metrics`) layanan AI | NFR-09 | kecil | `ai/service/app.py`, `ai/requirements-service.txt` |
 
 ### P3 — opsional
 
