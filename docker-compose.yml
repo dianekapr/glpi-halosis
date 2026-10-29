@@ -52,6 +52,14 @@ services:
       - ./ai/logs:/app/logs
       - hf_cache:/cache/huggingface
 
+  # Penampung email lokal untuk uji notifikasi (BR-02, UC-03). HANYA untuk uji lokal, bukan server email produksi.
+  # GLPI mengirim ke mailpit:1025 (jaringan internal compose); kotak masuk: http://localhost:8025
+  mailpit:
+    image: "axllent/mailpit:v1.20"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+
 volumes:
   glpi_data:
   db_data:
