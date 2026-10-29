@@ -2,6 +2,8 @@
 
 - POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
+- POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
+- POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
 - GET  /health                           → status model & indeks
 
 Setiap /chat & /triage mencatat durasi (ms) dan skor ke log JSON Lines terpisah (NFR-12, UC-02 langkah 8):
@@ -23,13 +25,14 @@ import time
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import candidates, privacy, search  # noqa: E402
+from halosis_ai import candidates, patterns, privacy, search  # noqa: E402
 
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
@@ -69,8 +72,9 @@ async def lifespan(_: FastAPI):
     except Exception as e:  # noqa: BLE001
         log.error('Model triase gagal dimuat: %s', e)
     try:
-        search.load_index()
+        _, vectors = search.load_index()
         search.encoder()
+        state['corpus_mean'] = vectors.mean(axis=0)  # pemusatan vektor untuk deteksi pola
         state['search'] = True
     except Exception as e:  # noqa: BLE001
         log.error('Indeks pencarian gagal dimuat: %s', e)
@@ -89,6 +93,27 @@ class TriageRequest(BaseModel):
 class ChatTurn(BaseModel):
     peran: str = Field(description='pengguna atau asisten')
     teks: str = Field(max_length=4000)
+
+
+class PatternTicket(BaseModel):
+    id: int
+    judul: str = Field(max_length=500)
+    deskripsi: str = Field(default='', max_length=20000)
+    waktu: str = Field(default='', description='Waktu tiket dibuat (ISO / "Y-m-d H:i:s")')
+
+
+class PatternRequest(BaseModel):
+    tiket: list[PatternTicket] = Field(max_length=2000)
+    ambang: float = Field(default=patterns.DEFAULT_THRESHOLD, ge=0, le=1)
+    min_anggota: int = Field(default=patterns.DEFAULT_MIN_MEMBERS, ge=2)
+    jendela_menit: int = Field(default=patterns.DEFAULT_WINDOW_MINUTES, ge=1)
+
+
+class ArticleReindexRequest(BaseModel):
+    id: int = Field(gt=0)
+    judul: str = Field(default='', max_length=500)
+    isi: str = Field(default='', max_length=200000, description='Isi artikel (HTML GLPI)')
+    aksi: Literal['simpan', 'hapus']
 
 
 class ChatRequest(BaseModel):
@@ -196,6 +221,40 @@ def chat(req: ChatRequest) -> dict:
     sources = [{'sumber': h['sumber'], 'jenis_sumber': h['jenis_sumber'], 'judul': h['judul'], 'skor': h['skor']}
                for h in hits]
     return {'ditemukan': True, 'jawaban': answer, 'sumber': sources, 'mode': mode}
+
+
+@app.post('/pola')
+def pola(req: PatternRequest) -> dict:
+    """Kelompokkan tiket baru yang maknanya mirip dalam jendela waktu (deteksi pola insiden semantik)."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Model embedding belum tersedia')
+    if len(req.tiket) < req.min_anggota:
+        return {'kelompok': [], 'metode': 'semantik'}
+    start = time.perf_counter()
+    # Judul + awal deskripsi, disamarkan dulu (data minimization)
+    texts = [str(privacy.mask_text(f'{t.judul}. {t.deskripsi[:300]}')) for t in req.tiket]
+    vectors = patterns.center(search.embed(texts, 'query'), state.get('corpus_mean'))
+    tickets = [{'id': t.id, 'judul': str(privacy.mask_text(t.judul)), 'waktu': t.waktu} for t in req.tiket]
+    groups = patterns.group(tickets, vectors, req.ambang, req.min_anggota, req.jendela_menit)
+    record_latency('pola', total_ms=ms_since(start), tiket=len(tickets), kelompok=len(groups))
+    return {'kelompok': groups, 'metode': 'semantik'}
+
+
+@app.post('/reindex/artikel')
+def reindex_article(req: ArticleReindexRequest) -> dict:
+    """Artikel KB terbit → ganti potongannya; dihapus/tidak terbit → hapus potongannya. Tiket historis tetap."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    start = time.perf_counter()
+    try:
+        count = search.update_article(req.id, req.judul, req.isi, remove=req.aksi == 'hapus')
+    except OSError as e:
+        log.error('Indeks gagal ditulis: %s', type(e).__name__)
+        raise HTTPException(500, 'Indeks gagal ditulis; indeks lama tetap dipakai') from e
+    _, vectors = search.load_index()
+    state['corpus_mean'] = vectors.mean(axis=0)
+    record_latency('reindex', total_ms=ms_since(start), aksi=req.aksi, potongan=count)
+    return {'ok': True, 'aksi': req.aksi, 'potongan': count}
 
 
 @app.get('/kandidat')
