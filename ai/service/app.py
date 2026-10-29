@@ -4,6 +4,7 @@
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
 - POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
+- GET  /metrics                          → metrik Prometheus (jumlah permintaan, durasi, ukuran indeks)
 - GET  /health                           → status model & indeks
 
 Setiap /chat & /triage mencatat durasi (ms) dan skor ke log JSON Lines terpisah (NFR-12, UC-02 langkah 8):
@@ -28,7 +29,8 @@ from pathlib import Path
 from typing import Literal
 
 import joblib
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -82,6 +84,40 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title='HaloSIS AI', version='1.0.0', lifespan=lifespan)
+
+# Metrik Prometheus (NFR-09). Label hanya pola rute & kode status, tidak pernah teks pengguna.
+REQUESTS = Counter('halosis_ai_requests_total', 'Jumlah permintaan per endpoint & status', ['endpoint', 'status'])
+DURATION = Histogram('halosis_ai_request_duration_seconds', 'Durasi permintaan per endpoint', ['endpoint'],
+                     buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10))
+INDEX_CHUNKS = Gauge('halosis_ai_index_chunks', 'Jumlah potongan di indeks pencarian')
+TIMED = {'/chat', '/triage', '/pola', '/reindex/artikel'}
+
+
+@app.middleware('http')
+async def metrics_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    status = 500
+    try:
+        response = await call_next(request)
+        status = response.status_code
+        return response
+    finally:
+        route = request.scope.get('route')
+        endpoint = getattr(route, 'path', 'lainnya')  # pola rute terdaftar; URL tak dikenal → "lainnya"
+        if endpoint != '/metrics':
+            REQUESTS.labels(endpoint, str(status)).inc()
+            if endpoint in TIMED:
+                DURATION.labels(endpoint).observe(time.perf_counter() - start)
+
+
+@app.get('/metrics')
+def metrics() -> Response:
+    if state.get('search'):
+        try:
+            INDEX_CHUNKS.set(len(search.load_index()[0]))
+        except (OSError, ValueError):  # indeks tak terbaca: metrik lain tetap dilaporkan
+            pass
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 class TriageRequest(BaseModel):

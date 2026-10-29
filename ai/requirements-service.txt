@@ -9,5 +9,7 @@ joblib>=1.4
 sentence-transformers==6.2.0
 fastapi>=0.115
 uvicorn>=0.30
+# Metrik Prometheus di GET /metrics (NFR-09)
+prometheus-client>=0.20
 # Opsional: hanya dipakai jika ANTHROPIC_API_KEY di-set
 anthropic>=0.40
