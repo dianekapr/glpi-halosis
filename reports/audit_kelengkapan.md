@@ -1,8 +1,8 @@
 # Audit kelengkapan HaloSIS terhadap dokumen perancangan
 
-Sumber: *Kelompok 4 AKPSI-5.pdf* (212 halaman; ekstrak teks `docs/dokumen.txt`, di-ignore git).
+Sumber: *Kelompok 4 AKPSI-6.pdf* (212 halaman; ekstrak teks `docs/dokumen.txt`, di-ignore git).
 Objek audit: repo `glpi-halosis` (plugin `plugins/halosis`, `ai/`, skrip setup/seed, `docker-compose.yml`, README)
-dan aplikasi lokal `http://localhost:8080`. Tanggal audit: 29 Okt 2026. Audit saja, tidak ada perubahan kode.
+dan aplikasi lokal `http://localhost:8080`. Tanggal audit: 29 Okt 2026.
 
 Status: ✅ Ada · 🟡 Sebagian · ❌ Belum · ⚪ Di luar cakupan prototipe.
 Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 dan #57), uji peringatan SLA
@@ -34,7 +34,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | BR-01 | Konfigurasi service catalog, workflow, role, tim, SLA, notifikasi, rule tanpa ubah source core | ✅ | Menu Administrator `dimas` (`src/RoleMenu.php::admin`): Service catalog, Kategori, SLA, Tim, Pengguna & role, Workflow & aturan, Notifikasi; `setup-roles`, `setup_sla_alerts.py`, `setup_list_columns.py` hanya memakai API/konfigurasi GLPI | Template notifikasi butuh hak `config` (Super-Admin); dijelaskan di README UC-10 |
 | BR-02 | SLA otomatis, status & risiko keterlambatan, peringatan ke operator/tim | ✅ | `setup_sla_alerts.py`: aturan "SLA <prioritas>" + level "Peringatan risiko SLA" (−1 jam s.d. −24 jam) + notifikasi *Ticket Recall* ke teknisi, grup, supervisor; uji tiket #58 → penerima andi, yoga, hendra; menu Monitoring SLA | Email belum diuji (SMTP belum ada); notifikasi browser terbukti |
 | BR-03 | Knowledge management: KB, SOP, service catalog, solusi historis, hasil tiket; dapat dikurasi | 🟡 | KB GLPI + Kandidat Knowledge (`src/KnowledgeCandidates.php`) → draf artikel; artikel terbit/dihapus langsung memperbarui indeks (`src/KnowledgeIndex.php` → `POST /reindex/artikel`) | Re-index otomatis diperbaiki (P1 #5); SOP & service catalog belum masuk indeks |
-| BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §7) |
+| BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §5 dan §8) |
 | BR-05 | Rekomendasi kategori, dampak, urgensi, prioritas, routing + validasi | 🟡 | Panel Saran AI (`src/TriagePanel.php`, `src/Triage.php::suggestService`), model `triase-tfidf-lr` (`reports/triase.md`) | Model memprediksi **tim**; kategori dipetakan dari tim, dampak/urgensi dari aturan kata kunci (`suggestDemo`), prioritas dari matriks GLPI |
 | BR-06 | Percakapan self-service cek knowledge sebelum tiket, lanjut tiket bila belum selesai | ✅ | `/plugins/halosis/Chat` (`src/Chatbot.php`, `public/js/chat.js`); tawaran laporan + ringkasan percakapan (`Chatbot::summaryHtml`); uji skenario UC-01..03 | Jawaban ekstraktif (tanpa LLM) sesuai keputusan "tanpa API berbayar" |
 | BR-07 | Deteksi kemiripan/pengelompokan/lonjakan tiket → peringatan dini | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py` | Diperbaiki (P1 #1); belum analisis tren antar-periode |
