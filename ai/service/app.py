@@ -2,6 +2,7 @@
 
 - POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
+- POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
 - GET  /health                           → status model & indeks
 
 Setiap /chat & /triage mencatat durasi (ms) dan skor ke log JSON Lines terpisah (NFR-12, UC-02 langkah 8):
@@ -29,7 +30,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import candidates, privacy, search  # noqa: E402
+from halosis_ai import candidates, patterns, privacy, search  # noqa: E402
 
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
@@ -69,8 +70,9 @@ async def lifespan(_: FastAPI):
     except Exception as e:  # noqa: BLE001
         log.error('Model triase gagal dimuat: %s', e)
     try:
-        search.load_index()
+        _, vectors = search.load_index()
         search.encoder()
+        state['corpus_mean'] = vectors.mean(axis=0)  # pemusatan vektor untuk deteksi pola
         state['search'] = True
     except Exception as e:  # noqa: BLE001
         log.error('Indeks pencarian gagal dimuat: %s', e)
@@ -89,6 +91,20 @@ class TriageRequest(BaseModel):
 class ChatTurn(BaseModel):
     peran: str = Field(description='pengguna atau asisten')
     teks: str = Field(max_length=4000)
+
+
+class PatternTicket(BaseModel):
+    id: int
+    judul: str = Field(max_length=500)
+    deskripsi: str = Field(default='', max_length=20000)
+    waktu: str = Field(default='', description='Waktu tiket dibuat (ISO / "Y-m-d H:i:s")')
+
+
+class PatternRequest(BaseModel):
+    tiket: list[PatternTicket] = Field(max_length=2000)
+    ambang: float = Field(default=patterns.DEFAULT_THRESHOLD, ge=0, le=1)
+    min_anggota: int = Field(default=patterns.DEFAULT_MIN_MEMBERS, ge=2)
+    jendela_menit: int = Field(default=patterns.DEFAULT_WINDOW_MINUTES, ge=1)
 
 
 class ChatRequest(BaseModel):
@@ -196,6 +212,23 @@ def chat(req: ChatRequest) -> dict:
     sources = [{'sumber': h['sumber'], 'jenis_sumber': h['jenis_sumber'], 'judul': h['judul'], 'skor': h['skor']}
                for h in hits]
     return {'ditemukan': True, 'jawaban': answer, 'sumber': sources, 'mode': mode}
+
+
+@app.post('/pola')
+def pola(req: PatternRequest) -> dict:
+    """Kelompokkan tiket baru yang maknanya mirip dalam jendela waktu (deteksi pola insiden semantik)."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Model embedding belum tersedia')
+    if len(req.tiket) < req.min_anggota:
+        return {'kelompok': [], 'metode': 'semantik'}
+    start = time.perf_counter()
+    # Judul + awal deskripsi, disamarkan dulu (data minimization)
+    texts = [str(privacy.mask_text(f'{t.judul}. {t.deskripsi[:300]}')) for t in req.tiket]
+    vectors = patterns.center(search.embed(texts, 'query'), state.get('corpus_mean'))
+    tickets = [{'id': t.id, 'judul': str(privacy.mask_text(t.judul)), 'waktu': t.waktu} for t in req.tiket]
+    groups = patterns.group(tickets, vectors, req.ambang, req.min_anggota, req.jendela_menit)
+    record_latency('pola', total_ms=ms_since(start), tiket=len(tickets), kelompok=len(groups))
+    return {'kelompok': groups, 'metode': 'semantik'}
 
 
 @app.get('/kandidat')
