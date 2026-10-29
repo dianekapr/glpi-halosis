@@ -1,0 +1,48 @@
+{#
+ # Cari knowledge (Operator & Tim Teknis, FR-03): semantik lewat layanan AI, cadangan kata kunci artikel KB.
+ # Potongan tiket historis sudah disamarkan di indeks.
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% block content %}
+<div class="hd hk">
+    <header class="hd-head">
+        <div>
+            <h1>{{ __('Search knowledge', 'halosis') }}</h1>
+            <p>{{ __('Find knowledge base articles and similar historical tickets by meaning, not only exact words.', 'halosis') }}</p>
+        </div>
+    </header>
+
+    <form method="get" class="d-flex gap-2" role="search">
+        <label class="visually-hidden" for="halosis-cari-q">{{ __('Search knowledge', 'halosis') }}</label>
+        <input type="search" class="form-control" id="halosis-cari-q" name="q" value="{{ query }}" maxlength="500"
+               placeholder="{{ __('Describe the problem, e.g. FASIH cannot sync', 'halosis') }}" autofocus>
+        <button type="submit" class="btn btn-primary"><i class="ti ti-search" aria-hidden="true"></i> {{ __('Search') }}</button>
+    </form>
+
+    {% if query %}
+        {% if mode != 'semantik' %}
+            <div class="alert alert-warning mb-0">
+                {{ __('The HaloSIS AI service cannot be reached: showing keyword results from knowledge base articles only.', 'halosis') }}
+                <a href="{{ kb_url }}">{{ __('Open the GLPI knowledge base', 'halosis') }}</a>
+            </div>
+        {% endif %}
+        {% for r in results %}
+            <article class="hd-card hk-card">
+                <div class="hk-meta">
+                    {% if r.kind == 'kb' %}
+                        <span class="hc-badge hc-badge-ok"><i class="ti ti-book" aria-hidden="true"></i> {{ __('Article', 'halosis') }}</span>
+                    {% else %}
+                        <span class="hc-badge hc-badge-ticket"><i class="ti ti-ticket" aria-hidden="true"></i> {{ __('Similar ticket %s', 'halosis')|format(r.ref) }}</span>
+                    {% endif %}
+                    {% if r.score is not null %}<span class="text-secondary small">{{ __('Relevance', 'halosis') }} {{ (r.score * 100)|round }}%</span>{% endif %}
+                </div>
+                <h2 class="hk-title">{% if r.url %}<a href="{{ r.url }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %}</h2>
+                <p class="mb-0">{{ r.text|u.truncate(500, '…') }}</p>
+            </article>
+        {% else %}
+            <p class="text-secondary mb-0">{{ __('No knowledge found. Try other words.', 'halosis') }}</p>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

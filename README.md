@@ -127,6 +127,7 @@ docker compose restart halosis-ai
 ```text
 {"status":"ok","triase":true,"versi_model":"triase-tfidf-lr-…","pencarian":true, …}
 ```
+Metrik: http://localhost:8001/metrics
 
 | Yang muncul | Artinya | Yang dilakukan |
 | --- | --- | --- |
@@ -523,6 +524,7 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 | Monitoring SLA | Kolom "Waktu untuk menyelesaikan" + **Setup › Service levels** |
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
+| Cari knowledge (Operator & Tim Teknis) | Menu **Cari knowledge** (plugin, `/plugins/halosis/CariKnowledge`): pencarian semantik artikel KB & tiket historis; layanan AI mati → kata kunci artikel KB |
 | Kandidat Knowledge (KM, UC-09) | Menu **Kandidat knowledge** (plugin): solusi tiket selesai & solusi berulang dari indeks AI → *Jadikan artikel* (draf KB) / *Abaikan* (dengan alasan) |
 | Dashboard manajemen, laporan | **Bantuan › Dashboard**, **Bantuan › Statistik** |
 | Service catalog, tim, pengguna & role | **Setup › Dropdowns › ITIL categories**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |

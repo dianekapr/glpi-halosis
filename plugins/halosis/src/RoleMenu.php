@@ -8,6 +8,7 @@ use CronTask;
 use Entity;
 use Glpi\Event;
 use Glpi\Form\Form;
+use GlpiPlugin\Halosis\Controller\CariKnowledgeController;
 use GlpiPlugin\Halosis\Controller\KandidatController;
 use Group;
 use ITILCategory;
@@ -107,7 +108,7 @@ final class RoleMenu
             ['queue', __('Validation queue', 'halosis'), self::ticketSearch([self::status('1')], self::BY_DEADLINE), 'ti ti-sparkles', Ticket::canView()],
             ['tickets', __('All tickets', 'halosis'), '/front/ticket.php?reset=reset', 'ti ti-ticket', Ticket::canView()],
             ...self::monitoring(),
-            ['knowledge', __('Search knowledge', 'halosis'), '/front/knowbaseitem.php', 'ti ti-search', KnowbaseItem::canView()],
+            ['knowledge', __('Search knowledge', 'halosis'), CariKnowledgeController::PAGE, 'ti ti-search', Session::haveRight(Profile::RIGHT_TRIASE, READ)],
         ]);
     }
 
@@ -123,7 +124,7 @@ final class RoleMenu
                 ]],
             ], self::BY_DEADLINE), 'ti ti-ticket', Ticket::canView()],
             ...self::monitoring(),
-            ['knowledge', __('Search knowledge', 'halosis'), '/front/knowbaseitem.php', 'ti ti-search', KnowbaseItem::canView()],
+            ['knowledge', __('Search knowledge', 'halosis'), CariKnowledgeController::PAGE, 'ti ti-search', Session::haveRight(Profile::RIGHT_TRIASE, READ)],
         ]);
     }
 
