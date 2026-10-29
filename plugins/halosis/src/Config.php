@@ -33,7 +33,7 @@ final class Config
         'service_timeout'  => 8,
         'triage_threshold' => 70,
         // Deteksi pola insiden: minimal N tiket mirip dalam jendela waktu (menit); 0 = grup Operator bawaan
-        'pattern_min_tickets' => 10,
+        'pattern_min_tickets' => 3, // PoC hal. 56: minimum 3 incident
         'pattern_window'      => 60,
         'pattern_group_id'    => 0,
         'feature_triage'    => 1,
