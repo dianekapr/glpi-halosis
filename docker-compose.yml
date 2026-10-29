@@ -46,7 +46,8 @@ services:
       - "127.0.0.1:8001:8000"
     volumes:
       - ./ai/models:/app/models:ro
-      - ./ai/index:/app/index:ro
+      # Bisa ditulis: artikel KB yang diterbitkan/dihapus memperbarui indeks (POST /reindex/artikel)
+      - ./ai/index:/app/index
       # Log latensi per permintaan (NFR-12); laporan: ai/scripts/latency_report.py
       - ./ai/logs:/app/logs
       - hf_cache:/cache/huggingface

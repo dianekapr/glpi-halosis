@@ -5,11 +5,14 @@ namespace GlpiPlugin\Halosis;
 use CommonDBTM;
 use CommonITILObject;
 use CronTask;
+use GlpiPlugin\Halosis\Ai\AiException;
+use GlpiPlugin\Halosis\Ai\Service;
 use Group;
 use Problem;
 use Problem_Ticket;
 use Session;
 use Ticket;
+use Toolbox;
 
 /**
  * Deteksi pola insiden (tugas terjadwal GLPI, tiap 15 menit).
@@ -104,8 +107,11 @@ final class PatternDetector extends CommonDBTM
         $window  = max(15, (int) Config::get('pattern_window'));
         $tickets = self::getRecentTickets($window);
 
+        // Semantik lewat layanan AI bila tersedia; gagal/tidak dikonfigurasi → metode kata kunci
+        $patterns = self::groupSemantic($tickets, $min, $window) ?? self::group($tickets, $min);
+
         $results = [];
-        foreach (self::group($tickets, $min) as $pattern) {
+        foreach ($patterns as $pattern) {
             $results[] = self::upsertProblem($pattern, $window);
         }
         return $results;
@@ -124,7 +130,7 @@ final class PatternDetector extends CommonDBTM
 
         $tickets = [];
         foreach ($DB->request([
-            'SELECT' => ['id', 'name', 'entities_id', 'urgency', 'itilcategories_id'],
+            'SELECT' => ['id', 'name', 'content', 'date', 'entities_id', 'urgency', 'itilcategories_id'],
             'FROM'   => Ticket::getTable(),
             'WHERE'  => [
                 'is_deleted' => 0,
@@ -136,6 +142,8 @@ final class PatternDetector extends CommonDBTM
             $tickets[(int) $row['id']] = [
                 'id'          => (int) $row['id'],
                 'name'        => (string) $row['name'],
+                'content'     => mb_substr(trim(html_entity_decode(strip_tags((string) $row['content']))), 0, 300),
+                'date'        => (string) $row['date'],
                 'entities_id' => (int) $row['entities_id'],
                 'urgency'     => (int) $row['urgency'],
                 'category'    => (int) $row['itilcategories_id'],
@@ -159,7 +167,53 @@ final class PatternDetector extends CommonDBTM
     }
 
     /**
-     * Kelompokkan tiket menjadi pola (≥ $min tiket).
+     * Kelompokkan tiket berdasarkan kemiripan makna (POST /pola layanan AI HaloSIS).
+     * Null bila layanan tidak dikonfigurasi atau gagal, supaya pemanggil memakai metode kata kunci.
+     *
+     * @return array<int, array{criteria: string, signature: string, label: string, category: int, tickets: array}>|null
+     */
+    private static function groupSemantic(array $tickets, int $min, int $window): ?array
+    {
+        if (!Service::isConfigured() || count($tickets) < $min) {
+            return Service::isConfigured() ? [] : null;
+        }
+        try {
+            $response = Service::post('/pola', [
+                'tiket'         => array_map(static fn ($t) => [
+                    'id' => $t['id'], 'judul' => $t['name'], 'deskripsi' => $t['content'], 'waktu' => $t['date'],
+                ], array_values($tickets)),
+                'min_anggota'   => $min,
+                'jendela_menit' => $window,
+            ]);
+        } catch (AiException $e) {
+            Toolbox::logInFile('halosis', 'Deteksi pola semantik gagal, memakai kata kunci: ' . $e->getMessage() . "\n", true);
+            return null;
+        }
+
+        $patterns = [];
+        foreach ($response['kelompok'] ?? [] as $group) {
+            $members = array_values(array_filter(array_map(static fn ($id) => $tickets[(int) $id] ?? null, $group['ids'] ?? [])));
+            if (count($members) < $min) {
+                continue;
+            }
+            // Kategori terbanyak di antara anggota (0 bila belum berkategori)
+            $categories = array_count_values(array_filter(array_column($members, 'category')));
+            arsort($categories);
+            $patterns[] = [
+                'criteria'  => 'semantic',
+                // Anggota tertua stabil antar-jalannya cron selama pola masih terbuka
+                'signature' => 'sem:' . min(array_column($members, 'id')),
+                'label'     => (string) ($group['judul_wakil'] ?? $members[0]['name']),
+                'category'  => (int) (array_key_first($categories) ?? 0),
+                'score'     => (float) ($group['skor_rata'] ?? 0),
+                'tickets'   => $members,
+            ];
+        }
+        return $patterns;
+    }
+
+    /**
+     * Metode kata kunci: kelompokkan tiket menjadi pola (≥ $min tiket).
      *
      * @return array<int, array{criteria: string, signature: string, label: string, category: int, tickets: array}>
      */
@@ -343,9 +397,12 @@ final class PatternDetector extends CommonDBTM
      */
     private static function describe(array $pattern, int $window): string
     {
-        $criteria = $pattern['criteria'] === 'category'
-            ? sprintf(__('same category (%s)', 'halosis'), $pattern['label'])
-            : __('similar titles', 'halosis');
+        $criteria = match ($pattern['criteria']) {
+            'category' => sprintf(__('same category (%s)', 'halosis'), $pattern['label']),
+            'semantic' => sprintf(__('similar meaning (average similarity %s)', 'halosis'), number_format($pattern['score'] ?? 0, 2)),
+            default    => __('similar titles', 'halosis'),
+        };
+        $method = $pattern['criteria'] === 'semantic' ? __('semantic', 'halosis') : __('keyword', 'halosis');
 
         $items = [];
         foreach ($pattern['tickets'] as $ticket) {
@@ -353,13 +410,14 @@ final class PatternDetector extends CommonDBTM
         }
 
         return sprintf(
-            '<p>%s</p><p>%s</p><ul>%s</ul><p><em>%s</em></p>',
+            '<p>%s</p><p>%s</p><p>%s</p><ul>%s</ul><p><em>%s</em></p>',
             htmlescape(sprintf(
                 __('HaloSIS detected %1$d new tickets within the last %2$d minutes with %3$s.', 'halosis'),
                 count($pattern['tickets']),
                 $window,
                 $criteria,
             )),
+            htmlescape(sprintf(__('Detection method: %s', 'halosis'), $method)),
             htmlescape(__('Linked tickets:', 'halosis')),
             implode('', $items),
             htmlescape(__('Detected automatically. An officer decides the follow-up (investigate, assign a team, or close if unrelated).', 'halosis')),

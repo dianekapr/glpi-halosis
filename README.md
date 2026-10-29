@@ -530,8 +530,8 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | --- | --- | --- | --- | --- |
 | Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dipilih saat implementasi (multilingual, lokal & gratis); belum dibandingkan langsung dengan MiniLM | Uji banding MRR kedua model pada set uji yang sama |
 | LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Tanpa LLM: jawaban **ekstraktif** dari artikel/tiket; Claude opsional | Tanpa API berbayar & tanpa GPU; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Ollama + Qwen2.5 3B sebagai perangkum opsional |
-| Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar; update inkremental |
-| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Kategori sama / judul mirip (kata kunci), jendela 60 menit, min. 10 tiket | Berjalan di cron GLPI tanpa layanan AI | Endpoint semantik di `halosis-ai` dengan fallback kata kunci |
+| Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori; artikel KB diperbarui inkremental (`POST /reindex/artikel`) | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar |
+| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang; tanpa DBSCAN agar ringan | DBSCAN & analisis tren antar-periode |
 | Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal | Model dampak/urgensi dari history |
 | Login | SSO BPS | Login lokal GLPI | Prototipe tanpa akses SSO BPS | Autentikasi LDAP/SAML GLPI |
 
@@ -541,11 +541,11 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | --- | --- | --- |
 | ITSM core (tiket, role, menu per peran) | Uji skenario 12 langkah lintas 6 role | Proven |
 | SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Rencana |
-| Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), `ai/tests/test_candidates.py` | Proven |
+| Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), re-index otomatis saat artikel terbit/dihapus; `ai/tests/test_candidates.py`, `test_reindex.py` | Proven |
 | AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end | Proven |
 | AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07% (`reports/triase.md`) | Partially proven |
 | Conversation (self-service) | Chat → laporan → tiket, riwayat & rating | Partially proven (ekstraktif, tanpa uji usability) |
-| Deteksi pola insiden | Kata kunci + jendela waktu, Problem + banner | Partially proven |
+| Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci | Partially proven |
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat | Proven |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md` | Partially proven (belum di-load ke GLPI) |
 | Performa, ketersediaan, keamanan | — | Rencana |

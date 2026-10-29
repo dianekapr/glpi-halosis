@@ -1,8 +1,8 @@
 # Audit kelengkapan HaloSIS terhadap dokumen perancangan
 
-Sumber: *Kelompok 4 AKPSI-5.pdf* (212 halaman; ekstrak teks `docs/dokumen.txt`, di-ignore git).
+Sumber: *Kelompok 4 AKPSI-6.pdf* (212 halaman; ekstrak teks `docs/dokumen.txt`, di-ignore git).
 Objek audit: repo `glpi-halosis` (plugin `plugins/halosis`, `ai/`, skrip setup/seed, `docker-compose.yml`, README)
-dan aplikasi lokal `http://localhost:8080`. Tanggal audit: 29 Okt 2026. Audit saja, tidak ada perubahan kode.
+dan aplikasi lokal `http://localhost:8080`. Tanggal audit: 29 Okt 2026.
 
 Status: ✅ Ada · 🟡 Sebagian · ❌ Belum · ⚪ Di luar cakupan prototipe.
 Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 dan #57), uji peringatan SLA
@@ -12,21 +12,20 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 
 | Kelompok | Jumlah | ✅ | 🟡 | ❌ | ⚪ |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Business Requirements (BR-01..08) | 8 | 5 | 3 | 0 | 0 |
-| Functional Requirements (FR-01..10) | 10 | 7 | 3 | 0 | 0 |
+| Business Requirements (BR-01..08) | 8 | 6 | 2 | 0 | 0 |
+| Functional Requirements (FR-01..10) | 10 | 8 | 2 | 0 | 0 |
 | Non-Functional Requirements (NFR-01..14) | 14 | 5 | 6 | 0 | 3 |
-| Use Case (UC-01..10, termasuk alur alternatif) | 10 | 7 | 3 | 0 | 0 |
-| Hasil & keputusan PoC (2.4.7) | 6 | 3 | 2 | 1 | 0 |
+| Use Case (UC-01..10, termasuk alur alternatif) | 10 | 9 | 1 | 0 | 0 |
+| Hasil & keputusan PoC (2.4.7) | 6 | 3 | 3 | 0 | 0 |
 | Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 5 | 2 | 0 | 3 |
-| **Total** | **58** | **32** | **19** | **1** | **6** |
+| **Total** | **58** | **36** | **16** | **0** | **6** |
 
-**Pembaruan 29 Okt 2026:** P1 #2, #3, #4, #6 sudah dikerjakan (lihat status "Diperbaiki" di tabel); sisa P1: #1
-(deteksi pola semantik) dan #5 (re-index otomatis).
+**Pembaruan 29 Okt 2026:** semua P1 (#1–#6) selesai; status "Diperbaiki" di tabel menunjukkan butirnya.
 
-Kesimpulan awal: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
-berjalan end-to-end. Celah terbesar ada di **deteksi pola semantik** (dokumen: embedding + DBSCAN; sistem:
-kata kunci judul/kategori), **pencatatan retrieval & latensi AI**, **re-index otomatis knowledge**, dan beberapa
-teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
+Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
+berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
+AI. Sisa celah: teknologi yang berbeda dari PoC (embedding, tanpa LLM, indeks file, tanpa DBSCAN), SOP & service
+catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, observability terpusat).
 
 ## 1. Business Requirements (Tabel 1.2, hal. 5–6)
 
@@ -34,11 +33,11 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | --- | --- | --- | --- | --- |
 | BR-01 | Konfigurasi service catalog, workflow, role, tim, SLA, notifikasi, rule tanpa ubah source core | ✅ | Menu Administrator `dimas` (`src/RoleMenu.php::admin`): Service catalog, Kategori, SLA, Tim, Pengguna & role, Workflow & aturan, Notifikasi; `setup-roles`, `setup_sla_alerts.py`, `setup_list_columns.py` hanya memakai API/konfigurasi GLPI | Template notifikasi butuh hak `config` (Super-Admin); dijelaskan di README UC-10 |
 | BR-02 | SLA otomatis, status & risiko keterlambatan, peringatan ke operator/tim | ✅ | `setup_sla_alerts.py`: aturan "SLA <prioritas>" + level "Peringatan risiko SLA" (−1 jam s.d. −24 jam) + notifikasi *Ticket Recall* ke teknisi, grup, supervisor; uji tiket #58 → penerima andi, yoga, hendra; menu Monitoring SLA | Email belum diuji (SMTP belum ada); notifikasi browser terbukti |
-| BR-03 | Knowledge management: KB, SOP, service catalog, solusi historis, hasil tiket; dapat dikurasi | 🟡 | KB GLPI + Kandidat Knowledge (`src/KnowledgeCandidates.php`, `/plugins/halosis/Kandidat`): solusi tiket selesai & klaster solusi history (`ai/halosis_ai/candidates.py`) → draf artikel | SOP & service catalog tidak masuk indeks; indeks dibangun ulang manual (`ai/scripts/build_index.py`) |
-| BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §7) |
+| BR-03 | Knowledge management: KB, SOP, service catalog, solusi historis, hasil tiket; dapat dikurasi | 🟡 | KB GLPI + Kandidat Knowledge (`src/KnowledgeCandidates.php`) → draf artikel; artikel terbit/dihapus langsung memperbarui indeks (`src/KnowledgeIndex.php` → `POST /reindex/artikel`) | Re-index otomatis diperbaiki (P1 #5); SOP & service catalog belum masuk indeks |
+| BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §5 dan §8) |
 | BR-05 | Rekomendasi kategori, dampak, urgensi, prioritas, routing + validasi | 🟡 | Panel Saran AI (`src/TriagePanel.php`, `src/Triage.php::suggestService`), model `triase-tfidf-lr` (`reports/triase.md`) | Model memprediksi **tim**; kategori dipetakan dari tim, dampak/urgensi dari aturan kata kunci (`suggestDemo`), prioritas dari matriks GLPI |
 | BR-06 | Percakapan self-service cek knowledge sebelum tiket, lanjut tiket bila belum selesai | ✅ | `/plugins/halosis/Chat` (`src/Chatbot.php`, `public/js/chat.js`); tawaran laporan + ringkasan percakapan (`Chatbot::summaryHtml`); uji skenario UC-01..03 | Jawaban ekstraktif (tanpa LLM) sesuai keputusan "tanpa API berbayar" |
-| BR-07 | Deteksi kemiripan/pengelompokan/lonjakan tiket → peringatan dini | 🟡 | `src/PatternDetector.php` (tugas `IncidentPattern` tiap 15 menit, jendela `pattern_window` 60 menit, ambang `pattern_min_tickets` 10) → Problem "Pola insiden" + banner beranda | Kemiripan = kategori sama / judul mirip (kata kunci), **bukan semantik**; tanpa analisis tren temporal |
+| BR-07 | Deteksi kemiripan/pengelompokan/lonjakan tiket → peringatan dini | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py` | Diperbaiki (P1 #1); belum analisis tren antar-periode |
 | BR-08 | Terima/ubah/tolak rekomendasi AI, penjelasan, audit trail | ✅ | `Triage::decide` (alasan wajib ≥ 5 karakter untuk Ubah/Tolak), tabel `glpi_plugin_halosis_decisions`, `Log::history` di tab Riwayat tiket, penjelasan + 3 tim teratas di panel | — |
 
 ## 2. Functional Requirements (§4.2.1, hal. 77–78)
@@ -48,7 +47,7 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | FR-01 | Satu pintu masuk utama: Self-Service Conversation | ✅ | Pegawai (Helpdesk) diarahkan ke `/plugins/halosis/Chat` (`src/HelpdeskHome.php`); menu Tanya HaloSIS paling atas | — |
 | FR-02 | Self-service melalui AI chatbot | ✅ | `src/Chatbot.php`, `ai/service/app.py` `/chat`; riwayat & lanjut otomatis (`src/Chat.php`, `/plugins/halosis/ChatHistory`) | — |
 | FR-03 | Pencarian knowledge berbasis keyword **dan** semantic untuk pengguna/agent | 🟡 | Pengguna: semantik (`/chat`); agent: menu "Cari knowledge" = pencarian kata kunci bawaan GLPI; mode demo `src/KnowledgeSearch.php` | Agent belum punya pencarian semantik; tidak ada penggabungan (hybrid) skor |
-| FR-04 | Analisis pola kemiripan request/incident dalam time window, dikirim ke operator untuk validasi | 🟡 | `PatternDetector::detect` (jendela waktu), Problem ditugaskan ke grup Operator, operator konfirmasi/tutup (hak ubah Masalah) | Kemiripan berbasis kata kunci, bukan semantik |
+| FR-04 | Analisis pola kemiripan request/incident dalam time window, dikirim ke operator untuk validasi | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py`; Problem ditugaskan ke grup Operator | Diperbaiki (P1 #1) |
 | FR-05 | Agent menerima, menolak, mengubah rekomendasi AI | ✅ | Tombol Terima/Ubah/Tolak (`templates/triase_panel.html.twig`, `ajax/triase.php`); uji skenario UC-04/05 | — |
 | FR-06 | Tiket Request/Incident dari percakapan; status, assignment, update, resolution, closure, history | ✅ | `Chatbot` membuat tiket dengan ringkasan; siklus tiket GLPI; uji skenario (#57: Baru → Diproses → Selesai → Ditutup) | — |
 | FR-07 | Mengarahkan, memantau, mengonfirmasi penyelesaian | ✅ | "Laporan saya", Approve/Refuse solusi (Refuse wajib alasan, ditegakkan GLPI); uji UC-07 | — |
@@ -86,8 +85,8 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | UC-05 | Validasi Rekomendasi & Meneruskan | ✅ | Menu Antrean validasi (urut waktu penyelesaian), Terima → tiket ditugaskan, keputusan tercatat | S-1 Ubah + alasan ✅; S-2 Tolak + alasan ✅; operator menyelesaikan langsung (solusi GLPI) ✅ | — |
 | UC-06 | Menangani & Menyelesaikan Tiket | ✅ | Menu Tiket saya & tim; panel Saran AI (tiket mirip); solusi → Selesai; solusi masuk Kandidat knowledge | Penugasan tidak sesuai → **Kembalikan ke operator** + alasan, `reassignments.kind=return` ✅; S-1 Pending (status Menunggu GLPI) ✅ | — |
 | UC-07 | Memantau Status & Konfirmasi | ✅ | "Laporan saya" dengan kolom Waktu untuk menyelesaikan, Approve → Ditutup, survei kepuasan GLPI 100% tiket ditutup (`setup_list_columns.py`) | 3a follow-up ✅; 5a Refuse wajib alasan → diproses lagi ✅ | Diperbaiki (#3) |
-| UC-08 | Memantau SLA & Pola Insiden | 🟡 | Cron `slaticket` + peringatan ke petugas & ketua tim ✅; cron `IncidentPattern` → Problem + banner; dashboard (filter periode `/plugins/halosis/Dashboard`); tautkan tiket ke Masalah (Operator) | 3a/4a tanpa peringatan bila tidak ada risiko/lonjakan ✅; 7a ✅ | Pengelompokan **bukan semantik** (dokumen: "AI Engine mengelompokkan berdasarkan kemiripan semantik") |
-| UC-09 | Mengelola Knowledge Base | 🟡 | Kandidat dari tiket Selesai + klaster AI, sunting & terbitkan artikel KB, revisi artikel bawaan GLPI (`KnowbaseItem_Revision`) | 3a/3b perbarui/buat baru ✅; 5a draf (Jadikan artikel = draf tanpa target) ✅ | Langkah 7 **re-index embedding otomatis** belum ada (manual `build_index.py` + restart `halosis-ai`) |
+| UC-08 | Memantau SLA & Pola Insiden | ✅ | Cron `slaticket` + peringatan & eskalasi ke petugas, ketua tim, operator; cron `IncidentPattern` → `/pola` semantik (fallback kata kunci) → Problem + banner; dashboard (filter periode); tautkan tiket ke Masalah | 3a/4a/7a ✅ | Diperbaiki (P1 #1) |
+| UC-09 | Mengelola Knowledge Base | ✅ | Kandidat dari tiket Selesai + klaster AI, sunting & terbitkan artikel KB, revisi artikel bawaan GLPI (`KnowbaseItem_Revision`); langkah 7: hook `item_add/item_update/item_purge` KnowbaseItem & target visibilitas → `/reindex/artikel` (uji: artikel FAQ baru langsung ditemukan chat, setelah dihapus hilang; `ai/tests/test_reindex.py`) | 3a/3b perbarui/buat baru ✅; 5a draf ✅; gagal re-index → artikel tetap tersimpan, pesan "memakai indeks lama" | Diperbaiki (P1 #5) |
 | UC-10 | Mengonfigurasi Platform ITSM | 🟡 | Admin console `dimas`, RBAC, simpan tanpa kode, audit trail (`system_logs`) | 2a tanpa hak → 403 / menu tidak tampil ✅ (pencatatan percobaan akses mengikuti log GLPI); 5a validasi (mis. URL layanan AI, rentang ambang di `Config.php`) ✅ | Langkah 6 **pratinjau dampak** & notifikasi perubahan ke pihak terkait belum ada; template notifikasi butuh `config` |
 
 ## 5. Hasil & keputusan PoC (§2.4.7, hal. 48–60)
@@ -97,7 +96,7 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | Model embedding | `paraphrase-multilingual-MiniLM-L12-v2` (hal. 54, 56) | `intfloat/multilingual-e5-base` (`ai/halosis_ai/search.py`, `/health`) | 🟡 | Model lebih besar, sama-sama multilingual & lokal; belum ada perbandingan terdokumentasi |
 | LLM | Qwen2.5 3B via Ollama; keputusan akhir: RAG grounded, bukan LLM bebas (hal. 54–55) | Default **ekstraktif** (kutipan artikel, tanpa LLM); Claude opsional via `ANTHROPIC_API_KEY` | 🟡 | Sejalan dengan prinsip "grounded"; tidak ada LLM lokal |
 | Metode triase + metrik | TF-IDF vs embedding, 39 grup: Top-1 68,33/70,43%, Top-3 90,89/90,29%, MRR 0,7989/0,8092; confidence-aware + HITL (hal. 54) | TF-IDF + regresi logistik terkalibrasi, 21 kelas: Top-1 74,41%, Top-3 93,07%, F1 makro 67,69%, ambang keyakinan 70% (`reports/triase.md`) | ✅ | MRR tidak dilaporkan; jumlah kelas berbeda (tim < 30 tiket → "Lainnya") sehingga angka tidak sebanding langsung |
-| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5) → 14 klaster; sliding window 1 jam, similarity 0,70, min. 3 insiden (hal. 56) | Kategori sama / kemiripan judul kata kunci, jendela 60 menit, min. 10 tiket (`PatternDetector.php`) | ❌ | Metode berbeda: tanpa embedding, tanpa DBSCAN, tanpa threshold similarity 0,70 |
+| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5) → 14 klaster; sliding window 1 jam, similarity 0,70, min. 3 insiden (hal. 56) | Embedding e5 dipusatkan + pengelompokan rakus average-link, ambang 0,50, jendela 60 menit, **min. 3 tiket** (`pattern_min_tickets`, sesuai PoC) (`patterns.py`, `/pola`); fallback kata kunci | 🟡 | Semantik ✅ & minimum sesuai PoC; tanpa DBSCAN; ambang 0,50 karena skala kosinus e5 berbeda dari MiniLM (0,70) |
 | HITL | Approval native GLPI + audit (hal. 57) | Panel Saran AI Terima/Ubah/Tolak + alasan + audit; Approve/Refuse solusi | ✅ | Melebihi PoC (keputusan per rekomendasi) |
 | Evidence Maturity | Klasifikasi Proven PoC / Partially proven per area (hal. 59) | Tabel Evidence Maturity implementasi di README "Keputusan desain & keterbatasan" | ✅ | Diperbaiki (#6) |
 
@@ -110,7 +109,7 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | Database | ✅ | MySQL 8.4 (layanan `db`), tabel plugin `glpi_plugin_halosis_*` (`hook.php`) | — |
 | Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern` | Tidak dipisah ke container sendiri |
 | AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/kandidat`, `/health`) | — |
-| Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, pencarian kosinus di memori | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
+| Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, kosinus di memori; pembaruan inkremental per artikel KB dengan lock + tulis atomik (`search.update_article`) | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
 | Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health` | Tanpa metrik & dashboard observability |
 | Reverse proxy / load balancer | ⚪ | — | Infra produksi; lokal cukup port 8080 |
 | CI / CD / registry | ⚪ | — | Pengganti: alur git `dev`/`master` di README |
@@ -127,7 +126,7 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | Manajemen / Pimpinan | sri · Manajemen (hanya-baca) | UC-08 | Dashboard kinerja, Kinerja AI, Monitoring SLA, Pola insiden, Laporan (Statistik) |
 | Knowledge Manager | lina · Knowledge Manager | UC-09 | Kandidat knowledge (Jadikan artikel / Abaikan), Daftar artikel, Tulis artikel |
 | Administrator Sistem | dimas · Administrator | UC-10 | Admin console, Service catalog, Kategori, SLA, Tim, Pengguna & role, Workflow & aturan, Pengaturan AI, Notifikasi, Audit trail |
-| AI Engine (aktor sistem) | layanan `halosis-ai` | UC-02, UC-04 (+UC-08, UC-09) | `/chat` (retrieval), `/triage`, `/kandidat`; deteksi pola **tidak** memakai AI Engine |
+| AI Engine (aktor sistem) | layanan `halosis-ai` | UC-02, UC-04 (+UC-08, UC-09) | `/chat` (retrieval), `/triage`, `/pola` (deteksi pola semantik, UC-08), `/kandidat` & `/reindex/artikel` (UC-09) |
 | (di luar dokumen) | glpi · Super-Admin | — | Pengelola instalasi: plugin, profil, pengaturan umum |
 
 ## 8. Ketidaksesuaian dengan dokumen & dampaknya
@@ -136,8 +135,8 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 | --- | --- | --- | --- |
 | Embedding | MiniLM-L12-v2 | multilingual-e5-base | Hasil retrieval tidak bisa dibandingkan langsung dengan PoC; model ±2× lebih besar (unduhan ±1 GB, startup lebih lama). Perlu disebut sebagai keputusan desain |
 | LLM | Qwen2.5 3B (Ollama) untuk RAG | Tanpa LLM (ekstraktif); Claude opsional | Jawaban berupa kutipan, bukan ringkasan natural; risiko halusinasi nol; BR-06 tetap terpenuhi |
-| Vector DB | Vector database (layanan) | File numpy di memori | Cukup untuk ±ribuan potongan; tidak ada update inkremental → re-index manual (UC-09 langkah 7) |
-| Deteksi pola | Semantik (DBSCAN / similarity 0,70) + temporal | Kata kunci kategori/judul + jendela waktu | Laporan bertema sama tetapi berbeda kata ("lemot" vs "lambat") tidak terkelompok; BR-07, FR-04, UC-08 hanya sebagian |
+| Vector DB | Vector database (layanan) | File numpy di memori, update inkremental per artikel | Cukup untuk ±ribuan potongan; tanpa layanan terpisah, skala & konkurensi terbatas pada satu instans `halosis-ai` |
+| Deteksi pola | Embedding + DBSCAN, similarity 0,70, min. 3 | Embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, min. 3, jendela 60 menit; fallback kata kunci | Hasil tidak sebanding langsung dengan 14 klaster PoC; tanpa DBSCAN tiket "noise" tidak diberi label khusus |
 | Triase | Routing ke 39 grup | 21 kelas (tim kecil → "Lainnya"); dampak/urgensi berbasis aturan | Tim kecil tidak pernah disarankan; BR-05 sebagian untuk dampak/urgensi |
 | SSO | Pre-kondisi UC-03: login SSO BPS | Login lokal GLPI | Hanya untuk prototipe |
 | Frontend | Portal (prototipe Next.js) | UI GLPI + plugin bertema | Tampilan mengikuti prototipe, tetapi aplikasi Next.js tidak dipakai |
@@ -148,11 +147,11 @@ teknologi yang berbeda dari PoC (embedding, LLM, vector DB).
 
 | # | Perbaikan | Menutup | Usaha | File |
 | --- | --- | --- | --- | --- |
-| 1 | Deteksi pola semantik: endpoint `/pola` di `halosis-ai` (embedding tiket baru dalam jendela 1 jam, similarity ≥ 0,70 atau DBSCAN eps 0,25), dipanggil `PatternDetector` dengan fallback kata kunci | BR-07, FR-04, UC-08, PoC | sedang | `ai/service/app.py`, `ai/halosis_ai/patterns.py` (baru), `ai/tests/test_patterns.py`, `plugins/halosis/src/PatternDetector.php`, `src/Config.php` |
+| 1 | ✅ Selesai — Deteksi pola semantik: endpoint `/pola` di `halosis-ai` (embedding tiket baru dalam jendela 1 jam, similarity ≥ 0,70 atau DBSCAN eps 0,25), dipanggil `PatternDetector` dengan fallback kata kunci | BR-07, FR-04, UC-08, PoC | sedang | `ai/service/app.py`, `ai/halosis_ai/patterns.py` (baru), `ai/tests/test_patterns.py`, `plugins/halosis/src/PatternDetector.php`, `src/Config.php` |
 | 2 | ✅ Selesai — Log retrieval + latensi terpisah (retrieval, generation, end-to-end) per permintaan `/chat` & `/triage`, plus laporan ringkas | UC-02 langkah 8, NFR-12, NFR-09 | kecil | `ai/service/app.py`, `plugins/halosis/src/Chatbot.php` (simpan skor & durasi), `reports/latensi.md` |
 | 3 | ✅ Selesai — UC-07: kolom "Waktu untuk menyelesaikan" di Laporan saya + aktifkan survei kepuasan saat penutupan | UC-07 langkah 2 & 5 | kecil | `setup_list_columns.py`, skrip setup (konfigurasi entitas `inquest_config/inquest_rate`), README |
 | 4 | ✅ Selesai — Eskalasi setelah SLA terlampaui (level SLA pada t = batas: notifikasi ke ketua tim / naikkan prioritas) | FR-09 | kecil | `setup_sla_alerts.py`, README 5b |
-| 5 | Re-index knowledge setelah artikel diterbitkan (endpoint `/reindex` atau tugas terjadwal + muat ulang indeks) | UC-09 langkah 7, BR-03 | sedang | `ai/service/app.py`, `ai/scripts/build_index.py`, `plugins/halosis/hook.php`/`setup.php` (hook `item_update` KnowbaseItem) |
+| 5 | ✅ Selesai — Re-index knowledge setelah artikel diterbitkan/dihapus (`POST /reindex/artikel`, hook KnowbaseItem) | UC-09 langkah 7, BR-03 | sedang | `ai/service/app.py`, `ai/halosis_ai/search.py`, `plugins/halosis/src/KnowledgeIndex.php`, `setup.php`, `ai/tests/test_reindex.py` |
 | 6 | ✅ Selesai — Dokumentasikan ketidaksesuaian teknologi (§8) + tabel Evidence Maturity implementasi | PoC, NFR-14 | kecil | `README.md`, `ai/README.md` |
 
 ### P2 — sebaiknya
