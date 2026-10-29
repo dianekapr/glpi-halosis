@@ -9,9 +9,7 @@ Pakai (dari folder induk proyek):  .venv/bin/python ai/scripts/build_index.py
 """
 from __future__ import annotations
 
-import html
 import io
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -21,11 +19,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from halosis_ai import privacy  # noqa: E402
-from halosis_ai.search import INDEX_DIR, MODEL_NAME, embed  # noqa: E402
+from halosis_ai.search import INDEX_DIR, MODEL_NAME, chunk, embed, strip_html  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 QA = ROOT / 'data/processed/qa_pairs.parquet'
-MAX_WORDS = 220  # panjang potongan (kata); artikel KB panjang dipecah
 
 KB_SQL = """
 SELECT k.id, k.name, REPLACE(REPLACE(k.answer, '\\t', ' '), '\\n', ' ') AS answer
@@ -35,16 +32,6 @@ WHERE EXISTS (SELECT 1 FROM glpi_entities_knowbaseitems e WHERE e.knowbaseitems_
    OR EXISTS (SELECT 1 FROM glpi_groups_knowbaseitems g WHERE g.knowbaseitems_id = k.id)
    OR EXISTS (SELECT 1 FROM glpi_knowbaseitems_users u WHERE u.knowbaseitems_id = k.id)
 """
-
-
-def strip_html(value: str) -> str:
-    text = re.sub(r'<[^>]+>', ' ', html.unescape(html.unescape(value or '')))
-    return re.sub(r'\s+', ' ', text).strip()
-
-
-def chunk(text: str) -> list[str]:
-    words = text.split()
-    return [' '.join(words[i:i + MAX_WORDS]) for i in range(0, max(len(words), 1), MAX_WORDS)]
 
 
 def load_kb() -> pd.DataFrame:
