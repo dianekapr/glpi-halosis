@@ -926,3 +926,15 @@ msgstr "Tim yang ditugaskan dilepas dan tiket kembali ke antrean validasi. Alasa
 
 msgid "%d returned by the technical team"
 msgstr "%d dikembalikan oleh tim teknis"
+
+msgid "similar meaning (average similarity %s)"
+msgstr "makna serupa (rata-rata kemiripan %s)"
+
+msgid "semantic"
+msgstr "semantik"
+
+msgid "keyword"
+msgstr "kata kunci"
+
+msgid "Detection method: %s"
+msgstr "Metode deteksi: %s"
