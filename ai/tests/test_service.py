@@ -17,8 +17,9 @@ class FakeTriage:
                 'top3': [{'tim': 'SSO', 'keyakinan': 0.8}], 'tiket_mirip': [], 'versi_model': self.version}
 
 
-def client(monkeypatch, hits):
+def client(monkeypatch, hits, tmp_log=None):
     monkeypatch.setattr(service.search, 'cari', lambda q, k=3: hits)
+    monkeypatch.setattr(service, 'LATENCY_LOG', tmp_log or Path('/dev/null'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     service.state.clear()
     service.state.update({'triage': FakeTriage(), 'search': True})
@@ -45,3 +46,20 @@ def test_chat_ekstraktif_tanpa_key(monkeypatch):
     r = c.post('/chat', json={'pertanyaan': 'email penuh'}).json()
     assert r['ditemukan'] and r['mode'] == 'ekstraktif'
     assert 'hapus lampiran besar' in r['jawaban'] and [s['sumber'] for s in r['sumber']] == ['T1']
+
+
+def test_log_latensi_tanpa_teks(monkeypatch, tmp_path):
+    import json
+    log_file = tmp_path / 'latency.jsonl'
+    hit = {'potongan': 'Solusi: reset', 'skor': 0.9, 'sumber': 'KB1', 'jenis_sumber': 'kb', 'judul': 'Reset SSO'}
+    c = client(monkeypatch, [hit], log_file)
+    c.post('/chat', json={'pertanyaan': 'lupa password budi@contoh.go.id'})
+    c.post('/triage', json={'judul': 'SSO gagal', 'deskripsi': 'tidak bisa login'})
+    rows = [json.loads(line) for line in log_file.read_text().splitlines()]
+    assert [r['endpoint'] for r in rows] == ['chat', 'triage']
+    assert rows[0]['retrieval_ms'] >= 0 and rows[0]['total_ms'] >= rows[0]['retrieval_ms']
+    assert rows[0]['generation_ms'] is None and rows[0]['skor_teratas'] == 0.9
+    assert rows[1]['skor_teratas'] == 0.8
+    text = log_file.read_text()
+    for secret in ('budi', 'password', 'SSO gagal', 'Reset SSO'):
+        assert secret not in text

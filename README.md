@@ -316,7 +316,11 @@ Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
   punya SLA. Bisa diubah Administrator di menu **Workflow & aturan**.
 - **Level eskalasi "Peringatan risiko SLA"** di tiap SLA, berjalan **sebelum** batas waktu: 1 jam (Kritis),
   1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah).
-- **Notifikasi "Ticket Recall"** dikirim ke teknisi & tim yang ditugaskan serta **supervisor tim (atasan)**, lewat
+- **Level eskalasi "Eskalasi SLA terlewati"** tepat saat batas waktu (FR-09): Ticket Recall dikirim lagi dan
+  prioritas dinaikkan ke *Sangat tinggi* (SLA Kritis tidak diubah). Karena prioritas berubah, aturan SLA memasang
+  SLA Kritis sehingga tiket mendapat jadwal peringatan berikutnya.
+- **Notifikasi "Ticket Recall"** dikirim ke teknisi & tim yang ditugaskan, **supervisor tim (atasan)**, dan grup
+  **Operator Service Desk**, lewat
   notifikasi browser (tanpa server email) dan email (bila SMTP diatur).
 - Penerima "atasan" adalah **ketua tim** masing-masing (`hendra`, `agus`, `rudi`, `wati`), yaitu supervisor grup
   yang dibuat `seed_halosis.py`. Skrip memperingatkan bila ada tim tanpa supervisor. Di produksi, tandai ketua
@@ -341,6 +345,8 @@ docker compose exec glpi php bin/console config:set duedatewarning_color '#f7670
 docker compose exec glpi php bin/console config:set duedatecritical_color '#e03131' --allow-superuser
 ```
 Warna di atas menjadi **titik** pada pill prioritas/SLA di tabel (palet membuat pill lembut + titik).
+Skrip ini juga mengaktifkan **survei kepuasan** GLPI untuk setiap tiket yang ditutup (UC-07: pegawai memberi
+penilaian), berlaku untuk tiket yang ditutup setelah skrip dijalankan.
 
 `setup_list_columns.py` menulis *Display preferences* global (Administrasi › … › ikon "pilih kolom"). GLPI selalu
 menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri → kanan):
@@ -349,7 +355,7 @@ menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri →
 | --- | --- | --- |
 | Tiket — Antrean validasi & Semua tiket (Operator) | Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui | Tanggal buka (dobel tanggal), Teknisi (Operator menugaskan ke tim) |
 | Tiket — Tiket saya & tim (kolom pribadi tiap pengguna Tim Teknis) | Status, Prioritas, Kategori, Pemohon, Teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui | Grup teknisi (sudah tersaring ke tim sendiri), Tanggal buka |
-| Tiket — Laporan saya (Pegawai, Helpdesk) | Status, Kategori, Terakhir diperbarui | Tanggal buka (dobel tanggal) |
+| Tiket — Laporan saya (Pegawai, Helpdesk) | Status, Kategori, Waktu untuk menyelesaikan, Terakhir diperbarui | Tanggal buka (dobel tanggal) |
 | Masalah / pola insiden | Status, Prioritas, Kategori, Jumlah tiket, Tanggal buka | Deskripsi (panjang), Waktu untuk menyelesaikan (kosong untuk pola) |
 | Knowledge Base (Daftar artikel) | Kategori, FAQ, Pengguna (penulis), Tampilan, Terakhir diperbarui | Parent article, Unsur terkait (kosong) |
 | Pengguna | Nama depan, Nama belakang, Email, Profil (Entitas), Grup, Aktif, Terakhir login | Telepon, Lokasi (kosong) |
@@ -514,6 +520,35 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 
 **Tidak ada di GLPI** (tetap dibangun sendiri di HaloSIS): chatbot AI, saran triase + keyakinan,
 alur Terima/Ubah/Tolak saran AI, deteksi pola otomatis, kandidat knowledge, dan dashboard kinerja AI.
+
+## Keputusan desain & keterbatasan
+
+Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
+(audit lengkap: [`reports/audit_kelengkapan.md`](reports/audit_kelengkapan.md)).
+
+| Area | Dokumen / PoC | Implementasi | Alasan | Rencana lanjut |
+| --- | --- | --- | --- | --- |
+| Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dipilih saat implementasi (multilingual, lokal & gratis); belum dibandingkan langsung dengan MiniLM | Uji banding MRR kedua model pada set uji yang sama |
+| LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Tanpa LLM: jawaban **ekstraktif** dari artikel/tiket; Claude opsional | Tanpa API berbayar & tanpa GPU; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Ollama + Qwen2.5 3B sebagai perangkum opsional |
+| Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar; update inkremental |
+| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Kategori sama / judul mirip (kata kunci), jendela 60 menit, min. 10 tiket | Berjalan di cron GLPI tanpa layanan AI | Endpoint semantik di `halosis-ai` dengan fallback kata kunci |
+| Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal | Model dampak/urgensi dari history |
+| Login | SSO BPS | Login lokal GLPI | Prototipe tanpa akses SSO BPS | Autentikasi LDAP/SAML GLPI |
+
+**Evidence Maturity** (format §2.4.7.8; PoC evidence ≠ production readiness):
+
+| Area | Evidence | Status |
+| --- | --- | --- |
+| ITSM core (tiket, role, menu per peran) | Uji skenario 12 langkah lintas 6 role | Proven |
+| SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Rencana |
+| Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), `ai/tests/test_candidates.py` | Proven |
+| AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end | Proven |
+| AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07% (`reports/triase.md`) | Partially proven |
+| Conversation (self-service) | Chat → laporan → tiket, riwayat & rating | Partially proven (ekstraktif, tanpa uji usability) |
+| Deteksi pola insiden | Kata kunci + jendela waktu, Problem + banner | Partially proven |
+| HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat | Proven |
+| Migrasi data (FR-10) | `reports/rekonsiliasi.md` | Partially proven (belum di-load ke GLPI) |
+| Performa, ketersediaan, keamanan | — | Rencana |
 
 ## Mematikan / mengulang dari nol
 ```bash
