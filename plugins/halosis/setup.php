@@ -16,6 +16,7 @@ use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
+use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Reassignment;
@@ -93,10 +94,17 @@ function plugin_init_halosis(): void
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
+    // Re-index knowledge (UC-09 langkah 7): artikel KB & target visibilitasnya → indeks pencarian layanan AI
+    $kb_visibility = [Entity_KnowbaseItem::class, KnowbaseItem_Profile::class, Group_KnowbaseItem::class, KnowbaseItem_User::class];
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
         Ticket::class       => [Triage::class, 'onTicketAdd'],
         Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
-    ];
+        KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave'],
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
+    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['halosis'] = [KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave']];
+    $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['halosis'] = [
+        KnowbaseItem::class => [KnowledgeIndex::class, 'onArticlePurge'],
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
     $PLUGIN_HOOKS[Hooks::PRE_ITIL_INFO_SECTION]['halosis'] = [TriagePanel::class, 'display'];
 
     // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas

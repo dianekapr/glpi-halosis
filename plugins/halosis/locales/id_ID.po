@@ -938,3 +938,9 @@ msgstr "kata kunci"
 
 msgid "Detection method: %s"
 msgstr "Metode deteksi: %s"
+
+msgid "Search index updated."
+msgstr "Indeks pencarian diperbarui."
+
+msgid "Failed to update the search index; the previous index is still used."
+msgstr "Gagal memperbarui indeks, memakai indeks lama."

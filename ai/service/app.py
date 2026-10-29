@@ -3,6 +3,7 @@
 - POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
+- POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
 - GET  /health                           → status model & indeks
 
 Setiap /chat & /triage mencatat durasi (ms) dan skor ke log JSON Lines terpisah (NFR-12, UC-02 langkah 8):
@@ -24,6 +25,7 @@ import time
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 import joblib
 from fastapi import FastAPI, HTTPException
@@ -105,6 +107,13 @@ class PatternRequest(BaseModel):
     ambang: float = Field(default=patterns.DEFAULT_THRESHOLD, ge=0, le=1)
     min_anggota: int = Field(default=patterns.DEFAULT_MIN_MEMBERS, ge=2)
     jendela_menit: int = Field(default=patterns.DEFAULT_WINDOW_MINUTES, ge=1)
+
+
+class ArticleReindexRequest(BaseModel):
+    id: int = Field(gt=0)
+    judul: str = Field(default='', max_length=500)
+    isi: str = Field(default='', max_length=200000, description='Isi artikel (HTML GLPI)')
+    aksi: Literal['simpan', 'hapus']
 
 
 class ChatRequest(BaseModel):
@@ -229,6 +238,23 @@ def pola(req: PatternRequest) -> dict:
     groups = patterns.group(tickets, vectors, req.ambang, req.min_anggota, req.jendela_menit)
     record_latency('pola', total_ms=ms_since(start), tiket=len(tickets), kelompok=len(groups))
     return {'kelompok': groups, 'metode': 'semantik'}
+
+
+@app.post('/reindex/artikel')
+def reindex_article(req: ArticleReindexRequest) -> dict:
+    """Artikel KB terbit → ganti potongannya; dihapus/tidak terbit → hapus potongannya. Tiket historis tetap."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    start = time.perf_counter()
+    try:
+        count = search.update_article(req.id, req.judul, req.isi, remove=req.aksi == 'hapus')
+    except OSError as e:
+        log.error('Indeks gagal ditulis: %s', type(e).__name__)
+        raise HTTPException(500, 'Indeks gagal ditulis; indeks lama tetap dipakai') from e
+    _, vectors = search.load_index()
+    state['corpus_mean'] = vectors.mean(axis=0)
+    record_latency('reindex', total_ms=ms_since(start), aksi=req.aksi, potongan=count)
+    return {'ok': True, 'aksi': req.aksi, 'potongan': count}
 
 
 @app.get('/kandidat')
