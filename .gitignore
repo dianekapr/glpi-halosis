@@ -16,3 +16,6 @@ ai/index/
 
 # Tangkapan Kandidat knowledge memuat solusi history tiket (tersamar, data internal) — jangan di-commit
 screenshot/modernisasi/**/*kandidat*
+
+# Dokumen perancangan & ekstrak teksnya (bahan audit) — jangan di-commit
+docs/
