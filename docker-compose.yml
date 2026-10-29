@@ -47,6 +47,8 @@ services:
     volumes:
       - ./ai/models:/app/models:ro
       - ./ai/index:/app/index:ro
+      # Log latensi per permintaan (NFR-12); laporan: ai/scripts/latency_report.py
+      - ./ai/logs:/app/logs
       - hf_cache:/cache/huggingface
 
 volumes:

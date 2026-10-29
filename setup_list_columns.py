@@ -31,8 +31,8 @@ GLOBAL = {
     # Operator: antrean validasi & semua tiket. Tanpa "Tanggal buka" (dobel dengan Terakhir diperbarui)
     # dan tanpa "Teknisi" (Operator menugaskan ke tim).
     ('Ticket', 'central'): [12, 3, 7, 4, 8, 18, 19],      # Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui
-    # Pegawai (Helpdesk, "Laporan saya"): progres laporan saja
-    ('Ticket', 'helpdesk'): [12, 7, 19],                  # Status, Kategori, Terakhir diperbarui
+    # Pegawai (Helpdesk, "Laporan saya"): progres laporan + sisa waktu SLA (UC-07 langkah 2)
+    ('Ticket', 'helpdesk'): [12, 7, 18, 19],              # Status, Kategori, Waktu untuk menyelesaikan, Terakhir diperbarui
     # Masalah / pola insiden: tanpa Deskripsi (panjang) & Waktu untuk menyelesaikan (kosong untuk pola)
     ('Problem', 'central'): [12, 3, 7, 141, 15],          # Status, Prioritas, Kategori, Jumlah tiket, Tanggal buka
     # Knowledge Base: tanpa Parent article / Unsur terkait (kosong)
@@ -79,5 +79,15 @@ users = {u['id']: u['name'] for u in s.get(f'{B}/User', params={'range': '0-1000
 for uid in sorted(set(teknis)):
     changed = apply('Ticket', 'central', TIM_TEKNIS_TICKET, users_id=uid)
     print(f'Ticket (pribadi {users.get(uid, uid)}): {TIM_TEKNIS_TICKET} {"(diperbarui)" if changed else "(sudah sesuai)"}')
+
+# UC-07 langkah 5: survei kepuasan GLPI untuk setiap tiket yang ditutup (entitas induk, diwarisi sub-entitas).
+# inquest_config 1 = survei internal GLPI; rate 100% tiket; dikirim tanpa jeda; batas isi 0 = tanpa batas.
+INQUEST = {'inquest_config': 1, 'inquest_rate': 100, 'inquest_delay': 0, 'inquest_duration': 0}
+entity = s.get(f'{B}/Entity/0').json()
+if all(entity.get(k) == v for k, v in INQUEST.items()):
+    print('Survei kepuasan saat tiket ditutup: sudah aktif')
+else:
+    s.put(f'{B}/Entity/0', data=json.dumps({'input': {'id': 0, **INQUEST}}))
+    print('Survei kepuasan saat tiket ditutup: diaktifkan (100% tiket, tanpa jeda)')
 
 s.get(B + '/killSession')

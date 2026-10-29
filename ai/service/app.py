@@ -4,6 +4,9 @@
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
 - GET  /health                           → status model & indeks
 
+Setiap /chat & /triage mencatat durasi (ms) dan skor ke log JSON Lines terpisah (NFR-12, UC-02 langkah 8):
+HALOSIS_LATENCY_LOG (default ai/logs/latency.jsonl). Isinya hanya angka, mode, dan versi model; tanpa teks.
+
 Semua input pengguna disamarkan (privacy.mask_text) sebelum diproses. Jawaban chat dirangkum Claude HANYA
 jika ANTHROPIC_API_KEY ada di environment; tanpa key → jawaban ekstraktif (solusi teratas apa adanya).
 
@@ -12,9 +15,12 @@ Jalankan lokal (dari folder induk proyek):
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import sys
+import time
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -34,8 +40,25 @@ CLAUDE_MODEL = os.environ.get('HALOSIS_CLAUDE_MODEL', 'claude-opus-5-5')
 NOT_FOUND = ('Maaf, saya belum menemukan jawaban untuk pertanyaan ini. Coba kata lain, atau buat laporan '
              'agar petugas membantu Anda.')
 
+LATENCY_LOG = Path(os.environ.get('HALOSIS_LATENCY_LOG', AI_DIR / 'logs/latency.jsonl'))
+
 log = logging.getLogger('halosis-ai')
 state: dict = {}
+
+
+def ms_since(start: float) -> float:
+    return round((time.perf_counter() - start) * 1000, 1)
+
+
+def record_latency(endpoint: str, **fields) -> None:
+    """Satu baris JSON per permintaan: angka & label saja (tanpa pertanyaan, jawaban, atau judul)."""
+    entry = {'waktu': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'endpoint': endpoint, **fields}
+    try:
+        LATENCY_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with LATENCY_LOG.open('a', encoding='utf-8') as f:
+            f.write(json.dumps(entry) + '\n')
+    except OSError as e:  # pencatatan tidak boleh menggagalkan permintaan
+        log.warning('Log latensi gagal ditulis: %s', type(e).__name__)
 
 
 @asynccontextmanager
@@ -94,7 +117,11 @@ def triage(req: TriageRequest) -> dict:
     model = state.get('triage')
     if model is None:
         raise HTTPException(503, 'Model triase belum tersedia')
+    start = time.perf_counter()
     result = model.predict(req.judul, req.deskripsi, normalize_type(req.jenis))
+    # Inferensi model + pencarian tiket mirip (satu langkah di TriageModel.predict); tanpa generation
+    record_latency('triage', inferensi_ms=ms_since(start), generation_ms=None, total_ms=ms_since(start),
+                   skor_teratas=round(float(result['keyakinan']), 4), versi_model=result['versi_model'])
     return {
         'tim': result['tim'],
         'top3': result['top3'],
@@ -147,17 +174,25 @@ def extractive(hit: dict) -> str:
 def chat(req: ChatRequest) -> dict:
     if not state.get('search'):
         raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    start = time.perf_counter()
     question = str(privacy.mask_text(req.pertanyaan))
-    hits = search.cari(question, k=CHAT_TOP_K)
-    hits = [h for h in hits if h['skor'] >= CHAT_MIN_SCORE]
+    found = search.cari(question, k=CHAT_TOP_K)
+    retrieval_ms = ms_since(start)
+    top_score = round(float(found[0]['skor']), 4) if found else None
+    hits = [h for h in found if h['skor'] >= CHAT_MIN_SCORE]
     if not hits:
+        record_latency('chat', retrieval_ms=retrieval_ms, generation_ms=None, total_ms=ms_since(start),
+                       skor_teratas=top_score, mode='tidak-ditemukan')
         return {'ditemukan': False, 'jawaban': NOT_FOUND, 'sumber': [], 'mode': 'tidak-ditemukan'}
 
+    generation_start = time.perf_counter()
     answer = generate_with_claude(question, req.riwayat, hits)
     mode = 'claude' if answer else 'ekstraktif'
     if answer is None:
         hits = hits[:1]  # ekstraktif: hanya solusi teratas
         answer = extractive(hits[0])
+    record_latency('chat', retrieval_ms=retrieval_ms, generation_ms=ms_since(generation_start) if mode == 'claude' else None,
+                   total_ms=ms_since(start), skor_teratas=top_score, mode=mode)
     sources = [{'sumber': h['sumber'], 'jenis_sumber': h['jenis_sumber'], 'judul': h['judul'], 'skor': h['skor']}
                for h in hits]
     return {'ditemukan': True, 'jawaban': answer, 'sumber': sources, 'mode': mode}
