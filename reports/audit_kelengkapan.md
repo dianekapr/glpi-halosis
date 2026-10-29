@@ -67,7 +67,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | NFR-06 | Data ke AI mengikuti data minimization | ✅ | `ai/halosis_ai/privacy.py` (email, NIP, NIK, HP, rahasia, nama), pindai ulang sebelum simpan (`prepare_data.py::residual_pii`), `src/Privacy.php` sebelum kirim; `ai/tests/test_privacy.py`; `.gitignore` data | Batasan: nama tanpa sapaan & tidak ada di kolom pengguna tidak terdeteksi |
 | NFR-07 | Rekomendasi & keputusan dapat ditelusuri ke aktor & waktu | ✅ | `glpi_plugin_halosis_decisions` (users_id, date_creation), `reassignments`, keputusan kandidat (`users_id`, `date_decision`), tab Riwayat, Audit trail `/front/event.php` | — |
 | NFR-08 | Self-service tanpa pemahaman teknis ITSM | 🟡 | Menu Helpdesk ringkas (5 item), chat dengan saran pertanyaan, tampilan HP 390px (`screenshot/modernisasi/`) | Belum ada uji usability dengan pengguna |
-| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `docker compose logs` | Belum ada metrik/monitoring terpusat (Prometheus/Grafana/Loki disebut di dokumen) |
+| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `GET /metrics` Prometheus layanan AI (jumlah permintaan, durasi per endpoint, ukuran indeks), `docker compose logs` | Metrik AI ditambahkan (P2 #13); belum ada Prometheus/Grafana terpusat untuk GLPI, DB & infra |
 | NFR-10 | Kustomisasi GLPI minimal | ✅ | Tidak ada perubahan kode inti; kustomisasi = plugin + palet `themes/halosis.scss` + konfigurasi | — |
 | NFR-11 | Integrasi via API; AI dapat diganti tanpa ganti core | ✅ | Plugin → HTTP `service_url` (`src/Ai/Service.php`) → FastAPI; penyedia Claude/OpenAI-kompatibel opsional (`src/Ai/Client.php`); fallback demo | — |
 | NFR-12 | Latensi AI: retrieval, generation, end-to-end terpisah | ✅ | `ai/service/app.py::record_latency` → `ai/logs/latency.jsonl` (angka saja); `ai/scripts/latency_report.py` → `reports/latensi.md` (chat retrieval p50 91 ms / p95 454 ms; triase p50 13 ms); `ai/tests/test_service.py::test_log_latensi_tanpa_teks` | Diperbaiki (#2); generation hanya bila Claude aktif |
@@ -110,7 +110,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern` | Tidak dipisah ke container sendiri |
 | AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/kandidat`, `/health`) | — |
 | Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, kosinus di memori; pembaruan inkremental per artikel KB dengan lock + tulis atomik (`search.update_article`) | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
-| Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health` | Tanpa metrik & dashboard observability |
+| Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health`, log latensi AI, `GET /metrics` (Prometheus) layanan AI | Belum ada server Prometheus/Grafana yang mengumpulkan metrik |
 | Reverse proxy / load balancer | ⚪ | — | Infra produksi; lokal cukup port 8080 |
 | CI / CD / registry | ⚪ | — | Pengganti: alur git `dev`/`master` di README |
 | Backup / DR | ⚪ | Volume Docker `db_data`, `glpi_data` | Pengganti: prosedur `mysqldump` + uji restore (rencana) |
@@ -164,7 +164,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | 10 | Rencana uji performa & latensi (k6/Locust) + hasil satu pengguna | NFR-01, NFR-12 | sedang | `docs/` atau `reports/rencana_uji.md`, skrip uji |
 | 11 | Hardening: ganti password bawaan, TLS reverse proxy, checklist keamanan | NFR-05 | sedang | `docker-compose.yml`, README |
 | 12 | Uji usability singkat (5 pegawai, tugas UC-01/03/07) | NFR-08 | kecil | `reports/usability.md` |
-| 13 | Endpoint metrik (`/metrics`) layanan AI | NFR-09 | kecil | `ai/service/app.py`, `ai/requirements-service.txt` |
+| 13 | ✅ Selesai — Endpoint metrik (`/metrics`) layanan AI | NFR-09 | kecil | `ai/service/app.py`, `ai/requirements-service.txt` |
 
 ### P3 — opsional
 

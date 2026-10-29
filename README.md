@@ -127,6 +127,7 @@ docker compose restart halosis-ai
 ```text
 {"status":"ok","triase":true,"versi_model":"triase-tfidf-lr-…","pencarian":true, …}
 ```
+Metrik: http://localhost:8001/metrics
 
 | Yang muncul | Artinya | Yang dilakukan |
 | --- | --- | --- |
