@@ -944,3 +944,24 @@ msgstr "Indeks pencarian diperbarui."
 
 msgid "Failed to update the search index; the previous index is still used."
 msgstr "Gagal memperbarui indeks, memakai indeks lama."
+
+msgid "Find knowledge base articles and similar historical tickets by meaning, not only exact words."
+msgstr "Temukan artikel knowledge base dan tiket historis serupa berdasarkan makna, bukan hanya kata yang sama persis."
+
+msgid "Describe the problem, e.g. FASIH cannot sync"
+msgstr "Jelaskan masalahnya, mis. FASIH tidak bisa sinkron"
+
+msgid "The HaloSIS AI service cannot be reached: showing keyword results from knowledge base articles only."
+msgstr "Layanan AI HaloSIS tidak dapat dihubungi: menampilkan hasil kata kunci dari artikel knowledge base saja."
+
+msgid "Open the GLPI knowledge base"
+msgstr "Buka knowledge base GLPI"
+
+msgid "Article"
+msgstr "Artikel"
+
+msgid "Relevance"
+msgstr "Relevansi"
+
+msgid "No knowledge found. Try other words."
+msgstr "Knowledge tidak ditemukan. Coba kata lain."

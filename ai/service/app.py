@@ -4,6 +4,7 @@
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
 - POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
+- POST /cari   {q, k}                    → artikel KB & tiket historis paling relevan (pencarian semantik agent, FR-03)
 - GET  /metrics                          → metrik Prometheus (jumlah permintaan, durasi, ukuran indeks)
 - GET  /health                           → status model & indeks
 
@@ -90,7 +91,7 @@ REQUESTS = Counter('halosis_ai_requests_total', 'Jumlah permintaan per endpoint 
 DURATION = Histogram('halosis_ai_request_duration_seconds', 'Durasi permintaan per endpoint', ['endpoint'],
                      buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10))
 INDEX_CHUNKS = Gauge('halosis_ai_index_chunks', 'Jumlah potongan di indeks pencarian')
-TIMED = {'/chat', '/triage', '/pola', '/reindex/artikel'}
+TIMED = {'/chat', '/triage', '/pola', '/reindex/artikel', '/cari'}
 
 
 @app.middleware('http')
@@ -150,6 +151,11 @@ class ArticleReindexRequest(BaseModel):
     judul: str = Field(default='', max_length=500)
     isi: str = Field(default='', max_length=200000, description='Isi artikel (HTML GLPI)')
     aksi: Literal['simpan', 'hapus']
+
+
+class SearchRequest(BaseModel):
+    q: str = Field(min_length=1, max_length=2000)
+    k: int = Field(default=10, ge=1, le=50)
 
 
 class ChatRequest(BaseModel):
@@ -291,6 +297,19 @@ def reindex_article(req: ArticleReindexRequest) -> dict:
     state['corpus_mean'] = vectors.mean(axis=0)
     record_latency('reindex', total_ms=ms_since(start), aksi=req.aksi, potongan=count)
     return {'ok': True, 'aksi': req.aksi, 'potongan': count}
+
+
+@app.post('/cari')
+def cari(req: SearchRequest) -> dict:
+    """Pencarian semantik untuk Operator & Tim Teknis: tanpa ambang, petugas menilai sendiri relevansinya."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    start = time.perf_counter()
+    hits = search.cari(str(privacy.mask_text(req.q)), k=req.k)
+    record_latency('cari', retrieval_ms=ms_since(start), total_ms=ms_since(start),
+                   skor_teratas=round(float(hits[0]['skor']), 4) if hits else None, hasil=len(hits))
+    return {'hasil': [{'judul': h['judul'], 'potongan': h['potongan'], 'skor': h['skor'], 'sumber': h['sumber'],
+                       'jenis_sumber': h['jenis_sumber']} for h in hits]}
 
 
 @app.get('/kandidat')
