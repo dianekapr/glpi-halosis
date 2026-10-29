@@ -63,3 +63,13 @@ def test_log_latensi_tanpa_teks(monkeypatch, tmp_path):
     text = log_file.read_text()
     for secret in ('budi', 'password', 'SSO gagal', 'Reset SSO'):
         assert secret not in text
+
+
+def test_metrics_prometheus(monkeypatch):
+    c = client(monkeypatch, [])
+    c.post('/triage', json={'judul': 'SSO gagal rahasia-uji'})
+    r = c.get('/metrics')
+    assert r.status_code == 200
+    for name in ('halosis_ai_requests_total', 'halosis_ai_request_duration_seconds', 'halosis_ai_index_chunks'):
+        assert name in r.text
+    assert 'endpoint="/triage"' in r.text and 'rahasia-uji' not in r.text
