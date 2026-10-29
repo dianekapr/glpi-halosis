@@ -7,6 +7,8 @@ plugins/halosis/vendor/
 # Termasuk semua hasil olahan & turunan yang masih memuat teks tiket (parquet, model, indeks pencarian).
 data/
 ai/models/
+# Log latensi layanan AI (angka saja, tetap data operasional lokal)
+ai/logs/
 ai/index/
 *.xlsx
 *.parquet
@@ -16,3 +18,6 @@ ai/index/
 
 # Tangkapan Kandidat knowledge memuat solusi history tiket (tersamar, data internal) — jangan di-commit
 screenshot/modernisasi/**/*kandidat*
+
+# Dokumen perancangan & ekstrak teksnya (bahan audit) — jangan di-commit
+docs/

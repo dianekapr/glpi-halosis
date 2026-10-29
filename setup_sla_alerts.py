@@ -30,6 +30,8 @@ HOUR = 3600
 # Waktu peringatan sebelum batas penyelesaian, ±25% dari target SLA
 BEFORE = {'Kritis': HOUR, 'Tinggi': int(1.5 * HOUR), 'Sedang': 4 * HOUR, 'Rendah': 24 * HOUR}
 LEVEL_NAME = 'Peringatan risiko SLA'
+ESCALATION_NAME = 'Eskalasi SLA terlewati'
+OPERATOR_GROUP = 'Operator Service Desk'
 
 # Prioritas GLPI (1 sangat rendah … 6 mayor) → SLA HaloSIS; nilai prioritas mengikuti seed_halosis.py
 PRIORITY_SLA = {'Kritis': (5, 6), 'Tinggi': (4,), 'Sedang': (3,), 'Rendah': (1, 2)}
@@ -37,8 +39,8 @@ RULE_ON_ADD_AND_UPDATE = 1 | 2   # RuleCommonITILObject::ONADD | ONUPDATE
 PATTERN_IS = 0                   # Rule::PATTERN_IS
 TEAMS = ('Tim Aplikasi Statistik', 'Tim Jaringan', 'Tim Perangkat', 'Tim Identitas & Akses')
 
-# Penerima "Ticket Recall": teknisi ditugaskan, grup ditugaskan, supervisor grup (Notification::*)
-ASSIGN_TECH, ASSIGN_GROUP, SUPERVISOR_ASSIGN_GROUP, USER_TYPE = 2, 9, 10, 1
+# Penerima "Ticket Recall": teknisi ditugaskan, grup ditugaskan, supervisor grup (Notification::*), grup Operator
+ASSIGN_TECH, ASSIGN_GROUP, SUPERVISOR_ASSIGN_GROUP, USER_TYPE, GROUP_TYPE = 2, 9, 10, 1, 3
 
 
 def get(itemtype, **criteria):
@@ -66,6 +68,22 @@ for sla in get('SLA'):
                              'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
     add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
     print(f'SLA "{sla["name"]}": peringatan {BEFORE[prio] // 60} menit sebelum batas waktu')
+
+# FR-09: eskalasi saat batas waktu terlewati (execution_time 0 = tepat di batas) → Ticket Recall ke ketua tim
+# & operator, dan prioritas dinaikkan ke "Sangat tinggi" agar tiket naik di antrean
+for sla in get('SLA'):
+    prio = sla['name'].split(' ')[0]
+    if prio not in BEFORE or sla['type'] != 0:
+        continue
+    if any(l['slas_id'] == sla['id'] and l['name'] == ESCALATION_NAME for l in get('SlaLevel')):
+        print(f'SLA "{sla["name"]}": level eskalasi sudah ada')
+        continue
+    level = add('SlaLevel', {'name': ESCALATION_NAME, 'slas_id': sla['id'], 'execution_time': 0,
+                             'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
+    add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
+    if prio != 'Kritis':
+        add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'assign', 'field': 'priority', 'value': 5})
+    print(f'SLA "{sla["name"]}": eskalasi saat batas waktu terlewati')
 
 rules = {r['name'] for r in get('RuleTicket')}
 for sla in get('SLA'):
@@ -98,10 +116,13 @@ targets = {(t['type'], t['items_id']) for t in s.get(f'{B}/Notification/{recall[
 for items_id in (ASSIGN_TECH, ASSIGN_GROUP, SUPERVISOR_ASSIGN_GROUP):
     if (USER_TYPE, items_id) not in targets:
         add('NotificationTarget', {'notifications_id': recall['id'], 'type': USER_TYPE, 'items_id': items_id})
+operator = next((g for g in get('Group') if g['name'] == OPERATOR_GROUP), None)
+if operator and (GROUP_TYPE, operator['id']) not in targets:
+    add('NotificationTarget', {'notifications_id': recall['id'], 'type': GROUP_TYPE, 'items_id': operator['id']})
 templates = s.get(f'{B}/Notification/{recall["id"]}/Notification_NotificationTemplate').json() or []
 if templates and not any(t['mode'] == 'ajax' for t in templates):
     add('Notification_NotificationTemplate', {'notifications_id': recall['id'], 'mode': 'ajax',
                                               'notificationtemplates_id': templates[0]['notificationtemplates_id']})
 if not recall['is_active']:
     s.put(f'{B}/Notification/{recall["id"]}', data=json.dumps({'input': {'id': recall['id'], 'is_active': 1}}))
-print('Notifikasi "Ticket Recall": teknisi, grup, supervisor grup; email + browser')
+print(f'Notifikasi "Ticket Recall": teknisi, grup, supervisor grup (ketua tim), grup {OPERATOR_GROUP}; email + browser')
