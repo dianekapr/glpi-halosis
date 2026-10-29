@@ -309,7 +309,18 @@ dan masalah contoh hanya dibuat pada run pertama.
 .venv/bin/python setup_sla_alerts.py http://localhost:8080
 docker compose exec glpi php bin/console config:set use_notifications 1 --allow-superuser
 docker compose exec glpi php bin/console config:set notifications_ajax 1 --allow-superuser
+# Email lewat Mailpit (layanan `mailpit` di docker-compose; kotak masuk http://localhost:8025)
+docker compose exec glpi php bin/console config:set smtp_mode 1 --allow-superuser            # SMTP tanpa SSL/TLS
+docker compose exec glpi php bin/console config:set smtp_host mailpit --allow-superuser
+docker compose exec glpi php bin/console config:set smtp_port 1025 --allow-superuser
+docker compose exec glpi php bin/console config:set smtp_username '' --allow-superuser       # tanpa autentikasi
+docker compose exec glpi php bin/console config:set smtp_check_certificate 0 --allow-superuser
+docker compose exec glpi php bin/console config:set from_email halosis@bps.local --allow-superuser
+docker compose exec glpi php bin/console config:set admin_email halosis@bps.local --allow-superuser
+docker compose exec glpi php bin/console config:set notifications_mailing 1 --allow-superuser
 ```
+> ⚠️ **Mailpit hanya untuk uji lokal**: semua email ditahan di http://localhost:8025 dan tidak pernah terkirim
+> ke alamat sungguhan. Untuk produksi, ganti SMTP ke server email BPS.
 Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
 - **Aturan bisnis "SLA Kritis/Tinggi/Sedang/Rendah"** memasang SLA waktu penyelesaian menurut prioritas, saat tiket
   dibuat maupun saat prioritas diubah (mis. operator menerima saran triase). Tanpa aturan ini, laporan baru tidak
@@ -540,7 +551,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Area | Evidence | Status |
 | --- | --- | --- |
 | ITSM core (tiket, role, menu per peran) | Uji skenario 12 langkah lintas 6 role | Proven |
-| SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Rencana |
+| SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Proven (Mailpit lokal) |
 | Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), re-index otomatis saat artikel terbit/dihapus; `ai/tests/test_candidates.py`, `test_reindex.py` | Proven |
 | AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end | Proven |
 | AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07% (`reports/triase.md`) | Partially proven |
