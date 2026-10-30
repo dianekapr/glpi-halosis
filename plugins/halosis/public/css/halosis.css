@@ -100,6 +100,17 @@
     font-size: 0.85rem;
 }
 
+/* Keyakinan tinggi ("Disarankan") & sedang ("Pilih dari 3 kandidat") */
+.halosis-triase .halosis-review-high {
+    background: transparent;
+    border: 1px solid var(--halosis-primary);
+}
+
+.halosis-triase .halosis-review-medium {
+    background: transparent;
+    border: 1px dashed var(--halosis-accent);
+}
+
 .halosis-triase .halosis-values {
     display: grid;
     grid-template-columns: max-content 1fr;

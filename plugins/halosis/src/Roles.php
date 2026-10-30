@@ -177,6 +177,23 @@ final class Roles
         ];
     }
 
+    /**
+     * Hak `ticket` baru untuk profil (selain Super-Admin) yang masih punya hak hapus/purge tiket.
+     *
+     * @return array<int, int> ID profil → hak tiket tanpa DELETE & PURGE
+     */
+    public static function getTicketDeleteRevocations(): array
+    {
+        $revoked = [];
+        foreach ((new CoreProfile())->find(['NOT' => ['id' => self::SUPER_ADMIN]]) as $profile) {
+            $right = (int) (ProfileRight::getProfileRights((int) $profile['id'], ['ticket'])['ticket'] ?? 0);
+            if ($right & (DELETE | PURGE)) {
+                $revoked[(int) $profile['id']] = $right & ~(DELETE | PURGE);
+            }
+        }
+        return $revoked;
+    }
+
     public static function findKnowledgeManagerId(): ?int
     {
         $profile = new CoreProfile();
@@ -244,6 +261,12 @@ final class Roles
         $km_rights = array_fill_keys(array_keys(ProfileRight::getAllPossibleRights()), 0);
         ProfileRight::updateProfileRights($km_id, array_merge($km_rights, self::getKnowledgeManagerRights()));
         $log[] = 'Knowledge Manager: hak penuh Knowledge Base, tiket hanya baca, tanpa konfigurasi';
+
+        // 3b. CRUDE hal. 198: tiket tidak pernah dihapus (audit). Hanya Super-Admin yang tetap boleh hapus/purge
+        foreach (self::getTicketDeleteRevocations() as $id => $right) {
+            ProfileRight::updateProfileRights($id, ['ticket' => $right]);
+        }
+        $log[] = 'Hak hapus/purge tiket dicabut dari semua profil kecuali Super-Admin';
 
         // 4. Hak plugin HaloSIS ditegaskan ke nilai default untuk semua profil
         Profile::applyRights(self::getPluginRights(), true);

@@ -11,7 +11,7 @@ R = mengerjakan · A = memutuskan/bertanggung jawab akhir · C = dimintai pendap
 | Keputusan | Administrator Sistem | Pengelola AI (tim pengembang) | Knowledge Manager | Operator | Manajemen |
 | --- | :-: | :-: | :-: | :-: | :-: |
 | Rilis/rollback model triase | C | R | I | C | **A** |
-| Ambang keyakinan triase (`ai_threshold`, bawaan 70%) | R | C | I | C | **A** |
+| Ambang keyakinan triase (`triage_threshold` 70% & `ai_threshold_low` 40%) | R | C | I | C | **A** |
 | Ambang chat (`CHAT_MIN_SCORE` 0,83) | R | C | **A** | I | I |
 | Parameter deteksi pola (ambang 0,50, jendela 60 mnt, min. 3 tiket) | R | C | I | **A** | I |
 | Sumber knowledge (artikel KB, tiket historis yang diindeks) | I | R | **A** | C | I |
@@ -30,6 +30,7 @@ Pengelola AI = 1–2 orang yang melatih ulang model (`ai/README.md`); di prototi
 | 3. Syarat lulus | Top-1 & Top-3 **tidak turun** > 2 poin dari versi aktif; akurasi pada keyakinan ≥ 70% tetap ≥ 85%; tidak ada tim besar yang recall-nya < 50% | Tabel banding di `reports/triase.md` |
 | 4. Persetujuan | Manajemen (A) setelah konsultasi Operator (C) | Catatan persetujuan di tabel §5 |
 | 5. Pasang | Ganti `ai/models/triage.joblib`, `docker compose restart halosis-ai`, cek `/health` menampilkan versi baru | `/health` → `versi_model` |
+| 1b. Data koreksi (T10) | Keputusan **Ubah/Tolak** Operator (`glpi_plugin_halosis_decisions`: nilai saran, nilai final, alasan) diekspor dan ditinjau Pengelola AI; tim final yang dikoreksi Operator ditambahkan ke data latih berikutnya (tiket GLPI, teks disamarkan). Proses **manual** sebelum langkah 1; belum otomatis | Jumlah koreksi yang dipakai dicatat di §5 |
 | 6. Pantau 2 minggu | Rasio Ubah/Tolak di dashboard Kinerja AI dibanding versi lama | Dashboard Kinerja AI |
 | 7. Rollback | Bila rasio Ubah+Tolak naik > 10 poin atau ada keluhan routing berulang: pasang kembali file versi sebelumnya (simpan minimal 2 versi terakhir di luar repo) | Catatan di tabel §5 |
 
@@ -54,6 +55,24 @@ tetap bisa ditelusuri ke model yang menghasilkannya.
 | SOP & service catalog | Belum (rencana lanjut) | Knowledge Manager | — |
 
 Artikel yang terbukti salah: Knowledge Manager menarik artikel → indeks terhapus otomatis → catat di §5.
+Artikel terbit yang tidak diubah > `kb_review_months` (bawaan 6 bulan) muncul di tab **Perlu ditinjau** halaman
+Kandidat knowledge; menyuntingnya menandai sudah ditinjau.
+
+### 4b. Pemilik per domain knowledge (KR-01)
+
+Knowledge Manager tetap **A** (menerbitkan/menarik). Pemilik domain **R**: menjamin isi teknis benar dan
+meninjau artikel domainnya saat muncul di "Perlu ditinjau".
+
+Domain mengikuti kategori layanan (service catalog) dan grup penanganannya di `seed_halosis.py`.
+
+| Domain | Kategori layanan | Pemilik domain (R) | Penyetuju terbit (A) |
+| --- | --- | --- | --- |
+| Identitas & akses | SSO / Login, TTE, hak akses folder | Ketua Tim Identitas & Akses | Knowledge Manager |
+| Email & kolaborasi | Email Dinas, Zoom / Konferensi | Ketua Tim Aplikasi Statistik | Knowledge Manager |
+| Jaringan | Jaringan & VPN | Ketua Tim Jaringan | Knowledge Manager |
+| Aplikasi statistik | FASIH, SiPecut, SIMDASI | Ketua Tim Aplikasi Statistik | Knowledge Manager |
+| Perangkat TI end user | Laptop / Perangkat, Printer | Ketua Tim Perangkat | Knowledge Manager |
+| Layanan umum & service catalog | Form permintaan, SOP layanan | Operator Service Desk (koordinator) | Knowledge Manager |
 
 ## 5. Log perubahan tata kelola (diisi)
 
