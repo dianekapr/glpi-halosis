@@ -16,6 +16,7 @@ use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
+use GlpiPlugin\Halosis\KeycloakAuth;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
@@ -59,6 +60,10 @@ function plugin_version_halosis(): array
 function plugin_init_halosis(): void
 {
     global $PLUGIN_HOOKS;
+
+    // Login SSO Keycloak: password dari form login GLPI diperiksa ke Keycloak sebelum front/login.php berjalan
+    KeycloakAuth::handleLoginRequest();
+    $PLUGIN_HOOKS[Hooks::INIT_SESSION]['halosis'] = [KeycloakAuth::class, 'onInitSession'];
 
     // API key disimpan terenkripsi oleh GLPI (GLPIKey) dan ikut diproses oleh `glpi:security:changekey`
     $PLUGIN_HOOKS[Hooks::SECURED_CONFIGS]['halosis'] = [Config::API_KEY];
