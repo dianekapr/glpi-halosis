@@ -24,6 +24,10 @@ Versi `triase-tfidf-lr-20261028` · dibuat oleh `ai/scripts/train_triage.py`. Ha
 - Fitur: TF-IDF kata (1–2 gram) + karakter (3–5 gram, tahan salah ketik). Model: Logistic Regression,
   probabilitas dikalibrasi (sigmoid, 5-fold) → "keyakinan" = probabilitas tim teratas.
 - Split berdasarkan waktu: latih Jan–Jun, uji Jul–Ags (meniru pemakaian nyata: model dilatih dari masa lalu).
+- Populasi (DQR-05): `data/processed/tickets_clean.parquet` (ekspor history tiket 2026 hasil `prepare_data.py`,
+  teks disamarkan); **semua status** (terbuka maupun selesai) dan **kedua jenis** INC & REQ (jenis menjadi fitur);
+  hanya tiket dengan `assignment_group_name` terisi (tanpa tim tidak punya label). Latih: `opened` < 1 Jul 2026;
+  uji: `opened` ≥ 1 Jul 2026. Tim dengan < 30 tiket di data latih → "Lainnya" (juga di data uji).
 - Pemilihan pengaturan tanpa menyentuh data uji: latih Jan–Mei, validasi Juni.
 
 | C | Bobot kelas | Validasi Juni: top-1 | F1 makro |

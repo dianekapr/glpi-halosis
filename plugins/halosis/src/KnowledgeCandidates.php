@@ -153,6 +153,39 @@ final class KnowledgeCandidates
     }
 
     /**
+     * Artikel terbit yang terakhir diubah lebih dari `kb_review_months` bulan lalu (tinjau berkala, hal. 139),
+     * terlama dulu. Meninjau = menyunting artikel di KB GLPI, sehingga date_mod maju dan artikel keluar dari daftar.
+     *
+     * @return array<int, array{id: int, name: string, date_mod: string, url: string}>
+     */
+    public static function dueForReview(): array
+    {
+        global $DB;
+
+        $months = max(1, (int) Config::get('kb_review_months'));
+        $before = date('Y-m-d H:i:s', strtotime(($_SESSION['glpi_currenttime'] ?? 'now') . " -{$months} months"));
+        $items = [];
+        foreach ($DB->request([
+            'FROM'  => KnowbaseItem::getTable(),
+            'WHERE' => ['date_mod' => ['<', $before]],
+            'ORDER' => ['date_mod ASC', 'id ASC'],
+        ]) as $fields) {
+            $article = new KnowbaseItem();
+            $article->fields = $fields;
+            if (!KnowledgeIndex::isPublished($article)) {
+                continue;
+            }
+            $items[] = [
+                'id'       => (int) $fields['id'],
+                'name'     => (string) $fields['name'],
+                'date_mod' => (string) $fields['date_mod'],
+                'url'      => KnowbaseItem::getFormURLWithID((int) $fields['id']),
+            ];
+        }
+        return $items;
+    }
+
+    /**
      * @return array<string, int> Jumlah kandidat per status
      */
     public static function counts(): array

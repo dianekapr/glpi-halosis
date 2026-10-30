@@ -614,7 +614,7 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 | Antrean validasi & Semua tiket (operator) | **Bantuan › Tiket** (filter status Baru) |
 | Tiket saya & tim (Tim Teknis) | Beranda **Tampilan Personal / Tampilan Group** |
 | Komentar publik / catatan internal | **Answer › Followup** (centang *Private* untuk internal), **Task** |
-| Monitoring SLA | Kolom "Waktu untuk menyelesaikan" + **Setup › Service levels** |
+| Monitoring SLA (respons & penyelesaian) | Kolom "Waktu untuk mengambil alih" (SLA respons) & "Waktu untuk menyelesaikan" + **Setup › Service levels** |
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
 | Cari knowledge (Operator & Tim Teknis) | Menu **Cari knowledge** (plugin, `/plugins/halosis/CariKnowledge`): pencarian semantik artikel KB & tiket historis; layanan AI mati → kata kunci artikel KB |
@@ -640,6 +640,24 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang; tanpa DBSCAN agar ringan | DBSCAN & analisis tren antar-periode |
 | Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal | Model dampak/urgensi dari history |
 | Login | SSO BPS | SSO Keycloak lokal (realm `halosis`), dicek dari form login HaloSIS lewat password grant | Prototipe tanpa akses SSO BPS; satu kali login tanpa halaman Keycloak | Arahkan `HALOSIS_KEYCLOAK_URL` ke Keycloak SSO BPS + client resmi (Direct Access Grants aktif) |
+| Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
+| Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
+| Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
+| Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | **Belum ada**; perubahan tercatat di log GLPI (**Setup › Log** / tab Riwayat) | GLPI tidak menyediakan pratinjau aturan; mengubahnya berarti mengubah kode inti | Prosedur manual: uji aturan di **Rules › Test** sebelum diaktifkan |
+| Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 87% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi < 50% (pita 30–50% = 47%) | Kalibrasi ulang setelah data keputusan Operator cukup |
+| SLA respons (T1) | `KebijakanSLA.targetRespons` (hal. 162) | SLA *time to own* GLPI per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam (`setup_sla_alerts.py`) | Dokumen tidak memberi angka; asumsi prototipe | Sesuaikan dengan SLA resmi BPS |
+
+**Padanan status tiket** (state machine Tiket hal. 191 ↔ GLPI):
+
+| Dokumen | GLPI (id_ID) | Keterangan |
+| --- | --- | --- |
+| Baru | Baru (*New*) | Menunggu validasi Operator (antrean validasi) |
+| Assigned | Diproses (ditugaskan) | Setelah Operator menerima/ubah saran AI dan menugaskan tim; SLA respons berhenti |
+| Dalam Penanganan | Diproses (direncanakan) | Tim Teknis mengerjakan (tugas/tindak lanjut) |
+| Pending | Menunggu (*Pending*) | Menunggu pegawai/pihak lain; jam SLA berhenti |
+| Resolved | Selesai (*Solved*) | Solusi diajukan, menunggu konfirmasi pegawai (Approve/Refuse) |
+| Closed | Ditutup (*Closed*) | Pegawai menyetujui solusi atau tutup otomatis; survei kepuasan dikirim |
+| Reopened | Diproses kembali | Pegawai menolak solusi (*Refuse* + alasan) → tiket kembali ke tim |
 
 **Evidence Maturity** (format §2.4.7.8; PoC evidence ≠ production readiness):
 

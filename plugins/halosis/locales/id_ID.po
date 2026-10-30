@@ -113,8 +113,8 @@ msgstr "Triase"
 msgid "Confidence threshold"
 msgstr "Ambang keyakinan"
 
-msgid "Suggestions below this confidence are flagged “Needs manual review”."
-msgstr "Saran dengan keyakinan di bawah ambang ini diberi tanda “Perlu penilaian manual”."
+msgid "Suggestions at or above this confidence are marked “Recommended”."
+msgstr "Saran dengan keyakinan sama dengan atau di atas ambang ini diberi tanda “Disarankan”."
 
 msgid "AI features"
 msgstr "Fitur AI"
@@ -980,3 +980,55 @@ msgstr "Laporkan masalah"
 
 msgid "Something is not working. The assistant looks for a solution first; a report is created if it is not solved."
 msgstr "Ada yang tidak berfungsi? Asisten mencarikan solusi dulu; laporan dibuat bila belum terselesaikan."
+
+msgid "Low threshold"
+msgstr "Ambang bawah"
+
+msgid "Recommended"
+msgstr "Disarankan"
+
+msgid "confidence at or above the %d%% threshold"
+msgstr "keyakinan mencapai ambang %d%%"
+
+msgid "Choose from 3 candidates"
+msgstr "Pilih dari 3 kandidat"
+
+msgid "check the top three teams in the explanation before deciding"
+msgstr "periksa tiga tim teratas di penjelasan sebelum memutuskan"
+
+msgid "Low confidence threshold"
+msgstr "Ambang keyakinan rendah"
+
+msgid "Between the two thresholds the Operator chooses from the top 3 candidates; below this one the suggestion needs manual review."
+msgstr "Di antara kedua ambang, Operator memilih dari 3 kandidat teratas; di bawah ambang ini saran perlu penilaian manual."
+
+msgid "Needs review"
+msgstr "Perlu ditinjau"
+
+msgid "Published articles not updated for more than %d months. Review each one in the Knowledge Base: editing the article marks it as reviewed."
+msgstr "Artikel terbit yang tidak diperbarui lebih dari %d bulan. Tinjau satu per satu di Knowledge Base: menyunting artikel menandainya sudah ditinjau."
+
+msgid "Last updated"
+msgstr "Terakhir diperbarui"
+
+msgid "No articles need review."
+msgstr "Tidak ada artikel yang perlu ditinjau."
+
+msgid "Knowledge base"
+msgstr "Knowledge base"
+
+msgid "Review published articles after (months)"
+msgstr "Tinjau artikel terbit setelah (bulan)"
+
+msgid "Published articles not updated for this long appear in the “Needs review” tab of Knowledge candidates."
+msgstr "Artikel terbit yang tidak diperbarui selama ini muncul di tab “Perlu ditinjau” halaman Kandidat knowledge."
+
+msgid "Ended (inactive)"
+msgstr "Berakhir (tidak aktif)"
+
+msgid "Articles most used by the chatbot"
+msgstr "Artikel yang paling sering dipakai chatbot"
+
+msgid "used %d time"
+msgid_plural "used %d times"
+msgstr[0] "dipakai %d kali"

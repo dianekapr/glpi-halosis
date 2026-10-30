@@ -45,6 +45,8 @@
                             {% else %}
                                 <span class="hc-badge hc-badge-ticket">{{ __('Report created', 'halosis') }}</span>
                             {% endif %}
+                        {% elseif chat.status == 'expired' %}
+                            <span class="hc-badge"><i class="ti ti-clock-off" aria-hidden="true"></i> {{ __('Ended (inactive)', 'halosis') }}</span>
                         {% else %}
                             <span class="hc-badge hc-badge-open"><i class="ti ti-player-play" aria-hidden="true"></i> {{ __('Can be continued', 'halosis') }}</span>
                         {% endif %}

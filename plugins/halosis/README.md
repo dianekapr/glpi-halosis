@@ -275,8 +275,9 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   sendiri dengan status *Bisa dilanjutkan* / *Terselesaikan · rating* / *Laporan #id* (tertaut ke tiket).
   Item dibuka di halaman chat lewat `?chat=<id>`; id milik orang lain diabaikan (`Chat::getOwned`).
   Percakapan selesai hanya bisa dibaca.
-- **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 2 jam
-  (`Chat::RESUME_HOURS`) dimuat ulang. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
+- **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 30 menit
+  (`Chat::IDLE_MINUTES`) dimuat ulang. Percakapan terbuka yang menganggur lebih lama berstatus `expired`
+  ("Berakhir (tidak aktif)", state machine SesiChat hal. 192); diperiksa saat chat/riwayat/dashboard dibuka. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
   (diingat di `localStorage` browser) dan tetap bisa dibuka dari Riwayat chat.
 - Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
 
