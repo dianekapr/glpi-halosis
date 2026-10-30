@@ -1,0 +1,429 @@
+{
+  "realm": "halosis",
+  "displayName": "SSO BPS (lokal HaloSIS)",
+  "enabled": true,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "maxFailureWaitSeconds": 900,
+  "waitIncrementSeconds": 60,
+  "roles": {
+    "realm": [
+      {
+        "name": "pegawai",
+        "description": "Pegawai BPS (Requester): profil GLPI Pegawai"
+      },
+      {
+        "name": "operator",
+        "description": "Operator HaloSIS: profil GLPI Operator"
+      },
+      {
+        "name": "tim-teknis",
+        "description": "Tim Teknis (Resolver): profil GLPI Tim Teknis"
+      },
+      {
+        "name": "manajemen",
+        "description": "Manajemen / Pimpinan: profil GLPI Manajemen"
+      },
+      {
+        "name": "knowledge-manager",
+        "description": "Knowledge Manager: profil GLPI Knowledge Manager"
+      },
+      {
+        "name": "administrator",
+        "description": "Administrator Sistem: profil GLPI Administrator"
+      },
+      {
+        "name": "ketua-tim",
+        "description": "Ketua tim: supervisor di grup timnya (penerima \"atasan\" peringatan risiko SLA)"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Tim Aplikasi Statistik"
+    },
+    {
+      "name": "Tim Jaringan"
+    },
+    {
+      "name": "Tim Perangkat"
+    },
+    {
+      "name": "Tim Identitas & Akses"
+    },
+    {
+      "name": "Operator Service Desk"
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "halosis-glpi",
+      "name": "HaloSIS (GLPI)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "halosis-dev-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "protocolMappers": [
+        {
+          "name": "halosis roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "halosis_roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "tim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "budi",
+      "firstName": "Budi",
+      "lastName": "Santoso",
+      "email": "budi@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "pegawai"
+      ],
+      "groups": []
+    },
+    {
+      "username": "siti",
+      "firstName": "Siti",
+      "lastName": "Rahma",
+      "email": "siti@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "pegawai"
+      ],
+      "groups": []
+    },
+    {
+      "username": "maya",
+      "firstName": "Maya",
+      "lastName": "Putri",
+      "email": "maya@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "pegawai"
+      ],
+      "groups": []
+    },
+    {
+      "username": "rina",
+      "firstName": "Rina",
+      "lastName": "Wulandari",
+      "email": "rina@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "operator"
+      ],
+      "groups": [
+        "/Operator Service Desk"
+      ]
+    },
+    {
+      "username": "andi",
+      "firstName": "Andi",
+      "lastName": "Pratama",
+      "email": "andi@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis"
+      ],
+      "groups": [
+        "/Tim Aplikasi Statistik"
+      ]
+    },
+    {
+      "username": "yoga",
+      "firstName": "Yoga",
+      "lastName": "Saputra",
+      "email": "yoga@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis"
+      ],
+      "groups": [
+        "/Tim Aplikasi Statistik"
+      ]
+    },
+    {
+      "username": "fajar",
+      "firstName": "Fajar",
+      "lastName": "Nugroho",
+      "email": "fajar@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis"
+      ],
+      "groups": [
+        "/Tim Identitas & Akses"
+      ]
+    },
+    {
+      "username": "dedi",
+      "firstName": "Dedi",
+      "lastName": "Kurniawan",
+      "email": "dedi@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis"
+      ],
+      "groups": [
+        "/Tim Jaringan"
+      ]
+    },
+    {
+      "username": "sri",
+      "firstName": "Sri",
+      "lastName": "Handayani",
+      "email": "sri@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "manajemen"
+      ],
+      "groups": []
+    },
+    {
+      "username": "lina",
+      "firstName": "Lina",
+      "lastName": "Marlina",
+      "email": "lina@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "knowledge-manager"
+      ],
+      "groups": []
+    },
+    {
+      "username": "dimas",
+      "firstName": "Dimas",
+      "lastName": "Aditya",
+      "email": "dimas@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "administrator"
+      ],
+      "groups": []
+    },
+    {
+      "username": "hendra",
+      "firstName": "Hendra",
+      "lastName": "Wijaya",
+      "email": "hendra@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis",
+        "ketua-tim"
+      ],
+      "groups": [
+        "/Tim Aplikasi Statistik"
+      ]
+    },
+    {
+      "username": "agus",
+      "firstName": "Agus",
+      "lastName": "Setiawan",
+      "email": "agus@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis",
+        "ketua-tim"
+      ],
+      "groups": [
+        "/Tim Jaringan"
+      ]
+    },
+    {
+      "username": "rudi",
+      "firstName": "Rudi",
+      "lastName": "Hermawan",
+      "email": "rudi@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis",
+        "ketua-tim"
+      ],
+      "groups": [
+        "/Tim Perangkat"
+      ]
+    },
+    {
+      "username": "wati",
+      "firstName": "Wati",
+      "lastName": "Susanti",
+      "email": "wati@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "tim-teknis",
+        "ketua-tim"
+      ],
+      "groups": [
+        "/Tim Identitas & Akses"
+      ]
+    },
+    {
+      "username": "ani",
+      "firstName": "Ani",
+      "lastName": "Lestari",
+      "email": "ani@bps.go.id",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "halosis",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "pegawai"
+      ],
+      "groups": []
+    }
+  ]
+}

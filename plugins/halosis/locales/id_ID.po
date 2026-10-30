@@ -965,3 +965,18 @@ msgstr "Relevansi"
 
 msgid "No knowledge found. Try other words."
 msgstr "Knowledge tidak ditemukan. Coba kata lain."
+
+msgid "What do you need today?"
+msgstr "Apa yang Anda butuhkan hari ini?"
+
+msgid "Make a request"
+msgstr "Ajukan permintaan"
+
+msgid "New account, access, device, or service. A request ticket is created directly."
+msgstr "Akun, akses, perangkat, atau layanan baru. Tiket permintaan langsung dibuat."
+
+msgid "Report a problem"
+msgstr "Laporkan masalah"
+
+msgid "Something is not working. The assistant looks for a solution first; a report is created if it is not solved."
+msgstr "Ada yang tidak berfungsi? Asisten mencarikan solusi dulu; laporan dibuat bila belum terselesaikan."
