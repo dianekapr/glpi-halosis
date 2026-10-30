@@ -2,13 +2,34 @@
  # Isi percakapan chatbot, dipakai bersama oleh halaman penuh (chat_page) dan widget melayang (chat_widget).
  # Gaya mengikuti prototipe halosis-web (ChatRoom). Pesan, aksi, dan kartu laporan dibuat oleh
  # public/js/chat.js dengan textContent (tanpa HTML dari server/model).
- # Variabel: user_name, max_length, suggestions (opsional), compact (widget)
+ # Variabel: user_name, max_length, suggestions (opsional), compact (widget),
+ #           request_url (opsional, halaman penuh): tampilkan pilihan "Ajukan permintaan" / "Laporkan masalah"
  #}
 <div class="hc-thread" data-chat-messages aria-live="polite">
     <div class="hc-row hc-row-ai" data-chat-greeting>
         <span class="hc-avatar" aria-hidden="true"><i class="ti ti-sparkles"></i></span>
         <div class="hc-col">
-            <div class="hc-bubble hc-bubble-ai">{{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }} {{ __('Describe your IT problem and I will look for the answer in the Help Center.', 'halosis') }}</div>
+            {% if request_url is defined and request_url %}
+                <div class="hc-bubble hc-bubble-ai">{{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }} {{ __('What do you need today?', 'halosis') }}</div>
+                <div class="hc-intent" role="group" aria-label="{{ __('What do you need today?', 'halosis') }}">
+                    <a class="hc-intent-card" href="{{ request_url }}">
+                        <span class="hc-intent-icon" aria-hidden="true"><i class="ti ti-clipboard-plus"></i></span>
+                        <span class="hc-intent-text">
+                            <strong>{{ __('Make a request', 'halosis') }}</strong>
+                            <span>{{ __('New account, access, device, or service. A request ticket is created directly.', 'halosis') }}</span>
+                        </span>
+                    </a>
+                    <button type="button" class="hc-intent-card" data-chat-focus>
+                        <span class="hc-intent-icon hc-intent-icon-issue" aria-hidden="true"><i class="ti ti-tool"></i></span>
+                        <span class="hc-intent-text">
+                            <strong>{{ __('Report a problem', 'halosis') }}</strong>
+                            <span>{{ __('Something is not working. The assistant looks for a solution first; a report is created if it is not solved.', 'halosis') }}</span>
+                        </span>
+                    </button>
+                </div>
+            {% else %}
+                <div class="hc-bubble hc-bubble-ai">{{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }} {{ __('Describe your IT problem and I will look for the answer in the Help Center.', 'halosis') }}</div>
+            {% endif %}
         </div>
     </div>
 </div>

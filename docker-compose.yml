@@ -12,6 +12,7 @@ services:
       GLPI_THEMES_DIR: /var/glpi-themes
     depends_on:
       - db
+      - keycloak
     ports:
       - "8080:80"
     volumes:
@@ -52,7 +53,32 @@ services:
       - ./ai/logs:/app/logs
       - hf_cache:/cache/huggingface
 
+  # SSO lokal pengganti SSO BPS: GLPI memeriksa username & password ke Keycloak dari form login HaloSIS
+  # (tanpa halaman login kedua). Realm "halosis" + akun uji diimpor dari keycloak/halosis-realm.json saat
+  # pertama kali jalan. Konsol admin: http://localhost:8180 (admin/admin, HANYA untuk uji lokal).
+  keycloak:
+    image: "quay.io/keycloak/keycloak:26.4.2"
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "127.0.0.1:8180:8080"
+    volumes:
+      - ./keycloak/halosis-realm.json:/opt/keycloak/data/import/halosis-realm.json:ro
+      - keycloak_data:/opt/keycloak/data
+
+  # Penampung email lokal untuk uji notifikasi (BR-02, UC-03). HANYA untuk uji lokal, bukan server email produksi.
+  # GLPI mengirim ke mailpit:1025 (jaringan internal compose); kotak masuk: http://localhost:8025
+  mailpit:
+    image: "axllent/mailpit:v1.20"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+
 volumes:
   glpi_data:
   db_data:
   hf_cache:
+  keycloak_data:

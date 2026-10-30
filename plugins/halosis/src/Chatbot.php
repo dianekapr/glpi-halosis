@@ -2,9 +2,16 @@
 
 namespace GlpiPlugin\Halosis;
 
+use Glpi\Form\Destination\CommonITILField\RequestTypeField;
+use Glpi\Form\Destination\CommonITILField\RequestTypeFieldConfig;
+use Glpi\Form\Destination\FormDestination;
+use Glpi\Form\Destination\FormDestinationTicket;
+use Glpi\Form\Form;
+use Glpi\Form\ServiceCatalog\ServiceCatalog;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Client;
 use GlpiPlugin\Halosis\Ai\Service;
+use Html;
 use Session;
 use Ticket;
 use Toolbox;
@@ -49,6 +56,37 @@ final class Chatbot
     {
         global $CFG_GLPI;
         return $CFG_GLPI['root_doc'] . self::PAGE_PATH;
+    }
+
+    /**
+     * Form katalog untuk tiket permintaan (pilihan "Ajukan permintaan" di halaman chat): form aktif pertama yang
+     * tujuan tiketnya bertipe Permintaan (bawaan GLPI: "Request a service"). Tidak ada → katalog layanan.
+     */
+    public static function getRequestFormUrl(): string
+    {
+        global $DB;
+
+        $forms = Form::getTable();
+        $destinations = FormDestination::getTable();
+        $iterator = $DB->request([
+            'SELECT'     => ["$forms.id", "$destinations.config"],
+            'FROM'       => $forms,
+            'INNER JOIN' => [$destinations => ['ON' => [$destinations => 'forms_forms_id', $forms => 'id']]],
+            'WHERE'      => [
+                "$forms.is_active"         => 1,
+                "$forms.is_deleted"        => 0,
+                "$forms.is_draft"          => 0,
+                "$destinations.itemtype"   => FormDestinationTicket::class,
+            ],
+            'ORDER'      => "$forms.id",
+        ]);
+        foreach ($iterator as $row) {
+            $config = json_decode((string) $row['config'], true)[RequestTypeField::getKey()] ?? [];
+            if ((int) ($config[RequestTypeFieldConfig::SPECIFIC_REQUEST_TYPE] ?? 0) === Ticket::DEMAND_TYPE) {
+                return Html::getPrefixedUrl('/Form/Render/' . $row['id']);
+            }
+        }
+        return ServiceCatalog::getSearchURL();
     }
 
     /**
