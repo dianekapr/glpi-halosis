@@ -46,6 +46,8 @@ final class ChatController extends AbstractController
             'max_length'  => Chatbot::MAX_MESSAGE_LENGTH,
             'user_name'   => $_SESSION['glpifirstname'] ?? '',
             'report_url'  => ServiceCatalog::getSearchURL(),
+            // Dua pilihan awal: permintaan → langsung form tiket; masalah/insiden → chatbot dulu
+            'request_url' => Chatbot::getRequestFormUrl(),
             'faq_url'     => KnowbaseItem::getSearchURL(),
             'suggestions' => [
                 __('Forgot my SSO password', 'halosis'),

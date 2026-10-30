@@ -9,6 +9,11 @@ Di atas GLPI terpasang **plugin HaloSIS** (modul AI human-in-the-loop: chatbot T
 deteksi pola insiden, kandidat knowledge, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo,
 dan **skenario demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
 
+**Login lewat SSO Keycloak** (pengganti SSO BPS, langkah 6b): pegawai login sekali di form HaloSIS, password
+dicek ke Keycloak di belakang layar, lalu langsung masuk **Tanya HaloSIS** dengan dua pilihan: *Ajukan
+permintaan* (langsung tiket) atau *Laporkan masalah* (chatbot dulu, tiket bila belum terselesaikan).
+Akun, role, dan tim diatur di Keycloak.
+
 ## Untuk anggota tim: mulai dari link GitHub
 
 Belum pernah pakai Git/GitHub? Ikuti bagian ini dari atas sampai bawah. Cukup sekali di langkah A–C;
@@ -64,8 +69,10 @@ File `.env` berisi pengaturan lokal dan sengaja tidak ikut ke GitHub.
 
 Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
 
-- `docker compose up -d` pertama kali juga membangun layanan AI (`halosis-ai`) dan mengunduh beberapa GB;
-  bisa 10–20 menit. Selanjutnya cepat.
+- `docker compose up -d` pertama kali juga membangun layanan AI (`halosis-ai`), mengunduh Keycloak, dan
+  mengunduh beberapa GB; bisa 10–20 menit. Selanjutnya cepat.
+- **Sudah punya `.env` dari sebelumnya?** Salin blok `HALOSIS_KEYCLOAK_*` dari `.env.example` ke `.env`, lalu
+  `docker compose up -d`. Tanpa blok itu SSO mati dan login memakai password lokal GLPI.
 - **Data history tiket, model AI, dan indeks pencarian TIDAK ada di GitHub** (berisi data pribadi, lihat
   [`ai/README.md`](ai/README.md)). Siapa perlu apa:
 
@@ -141,7 +148,8 @@ URL harus `http://halosis-ai:8000` (bawaan). Jangan diganti `localhost:8001`: GL
 dan memanggil layanan lewat nama `halosis-ai`.
 
 **6. Uji cepat**
-- Login `budi` → tanya *"kuota email saya penuh"* → jawaban punya sumber **"Tiket serupa …"**
+- Login `budi` / `halosis` → langsung di **Tanya HaloSIS** dengan kartu *Ajukan permintaan* & *Laporkan masalah*.
+- Klik **Laporkan masalah** → tanya *"kuota email saya penuh"* → jawaban punya sumber **"Tiket serupa …"**
   (tanpa model: jawaban dari artikel FAQ saja).
 - Login `budi` → tanya *"resep nasi goreng"* → asisten menjawab belum menemukan jawaban.
 - Buat tiket *"tidak bisa login SSO"* → login `rina` → buka tiketnya → panel **Saran AI** menyebut model
@@ -257,7 +265,15 @@ docker compose up -d
 ```
 Tunggu 1–3 menit (pertama kali GLPI menginstal dirinya sendiri). Cek dengan `docker compose logs -f glpi`.
 
-**2. Buka** http://localhost:8080 dan login `glpi` / `glpi` (akun super-admin bawaan).
+| Layanan | Alamat | Keterangan |
+| --- | --- | --- |
+| GLPI + plugin HaloSIS | http://localhost:8080 | Aplikasi utama |
+| Keycloak (SSO) | http://localhost:8180 | Konsol admin `admin`/`admin`; realm `halosis` diimpor otomatis (langkah 6b) |
+| Mailpit | http://localhost:8025 | Kotak masuk email uji (langkah 5b) |
+| Layanan AI | http://localhost:8001/health | Triase & chatbot (lihat [`ai/README.md`](ai/README.md)) |
+
+**2. Buka** http://localhost:8080 dan login `glpi` / `glpi` (akun super-admin bawaan; akun lokal GLPI, tidak
+ada di Keycloak, jadi tetap login dengan password GLPI).
 
 **3. Aktifkan API** (dibutuhkan skrip pengisi data dan layanan AI)
 ```bash
@@ -335,8 +351,9 @@ Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
   **Operator Service Desk**, lewat
   notifikasi browser (tanpa server email) dan email (bila SMTP diatur).
 - Penerima "atasan" adalah **ketua tim** masing-masing (`hendra`, `agus`, `rudi`, `wati`), yaitu supervisor grup
-  yang dibuat `seed_halosis.py`. Skrip memperingatkan bila ada tim tanpa supervisor. Di produksi, tandai ketua
-  tim sungguhan di **Tim teknis › (tim) › Pengguna › Supervisor**.
+  yang dibuat `seed_halosis.py`. Skrip memperingatkan bila ada tim tanpa supervisor. Ketua tim diatur dengan
+  **role `ketua-tim` di Keycloak** (langkah 6b); tanda *Supervisor* yang diubah langsung di GLPI tertimpa lagi
+  saat orangnya login.
 
 Aksi otomatis `slaticket` yang mengirim peringatan; cron container memeriksanya tiap menit. Untuk menguji tanpa
 menunggu batas waktu, majukan jadwalnya lalu tunggu ±1 menit:
@@ -384,7 +401,7 @@ validasi dan Semua tiket sama-sama daftar Tiket milik Operator, jadi kolom Statu
 (isinya selalu "Baru") karena dibutuhkan di Semua tiket. Pengguna yang berhak (hak *Search config*) tetap bisa
 mengubah kolomnya sendiri; menjalankan ulang skrip menimpa kolom global & kolom pribadi Tim Teknis.
 
-**6. Login sebagai role berbeda** (password semua: `halosis`)
+**6. Login sebagai role berbeda** (password semua: `halosis`; diperiksa SSO Keycloak, role & tim diatur di Keycloak — lihat 6b)
 
 Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 
@@ -408,6 +425,10 @@ Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 
 Database yang diisi dengan versi seed lama (belum ada `dimas` atau ketua tim): jalankan ulang langkah 5
 lalu 5b; hanya pengguna yang belum ada yang dibuat.
+
+Akun di tabel ini juga ada di realm Keycloak (`keycloak/halosis-realm.json`) dengan role & tim yang sama. Saat
+login, **profil & tim mengikuti Keycloak**. Menambah atau mengubah akun contoh berarti mengubah keduanya
+(`seed_halosis.py` dan file realm) supaya tetap sama.
 
 Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
 
@@ -467,6 +488,76 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 > docker compose exec db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "UPDATE glpi_crontasks SET mode=2 WHERE mode=1"'
 > ```
 
+**6b. Login SSO Keycloak** (pengganti SSO BPS untuk uji lokal)
+
+Pegawai cukup login **sekali** di form login HaloSIS. GLPI mengirim username & password ke Keycloak di belakang
+layar (*Direct Access Grant*), tanpa diarahkan ke halaman login Keycloak. Keycloak hanya dipakai untuk autentikasi:
+sesi Keycloak langsung ditutup, sesi kerja tetap sesi GLPI. Setelah login, Pegawai langsung masuk ke **Tanya
+HaloSIS** dan memilih:
+
+- **Ajukan permintaan** → langsung ke form katalog *Request a service* (tiket bertipe Permintaan).
+- **Laporkan masalah** → menulis kendala ke chatbot dulu; tiket dibuat dari percakapan bila solusinya belum ketemu.
+
+Layanan `keycloak` di docker-compose mengimpor realm `halosis` dari `keycloak/halosis-realm.json` saat pertama kali
+jalan: semua akun langkah 6 (kecuali `glpi`) lengkap dengan role & timnya, password `halosis`, ditambah `ani`
+(Ani Lestari, Pegawai) yang **belum ada** di GLPI untuk menguji pembuatan akun otomatis.
+Konsol admin: http://localhost:8180 (`admin`/`admin`, hanya lokal; pilih realm **halosis** di kiri atas).
+Pengaturan di `.env` (lihat `.env.example`): `HALOSIS_KEYCLOAK_URL`, `_REALM`, `_CLIENT_ID`, `_CLIENT_SECRET`.
+Setelah mengubahnya: `docker compose up -d glpi`.
+
+**Keycloak = sumber akun, role, dan tim.** Setiap kali login, plugin menyamakan pengguna GLPI dengan Keycloak
+sebelum sesi dimulai (perubahan di Keycloak berlaku pada login berikutnya):
+
+| Di Keycloak (realm `halosis`) | Di GLPI |
+| --- | --- |
+| User | Pengguna GLPI (dibuat otomatis bila belum ada; nama & email ikut Keycloak) |
+| Realm role `pegawai` / `operator` / `tim-teknis` / `manajemen` / `knowledge-manager` / `administrator` | Profil Pegawai / Operator / Tim Teknis / Manajemen / Knowledge Manager / Administrator (tanpa role HaloSIS → Pegawai) |
+| Group `Tim Aplikasi Statistik`, `Tim Jaringan`, `Tim Perangkat`, `Tim Identitas & Akses`, `Operator Service Desk` | Keanggotaan grup GLPI bernama sama (grup yang tidak ada di GLPI dilewati & dicatat di log) |
+| Realm role `ketua-tim` | Supervisor di grup timnya (penerima "atasan" peringatan risiko SLA) |
+
+Menambah pegawai baru: konsol admin › realm *halosis* › **Users › Create user** (isi email, nama depan & belakang)
+› tab *Credentials* (set password, *Temporary* off) › *Role mapping* (role HaloSIS) › *Groups* (tim, bila petugas).
+Profil di luar daftar di atas (mis. Super-Admin) tidak disentuh sinkron, jadi tetap diatur di GLPI.
+
+Realm hanya diimpor bila belum ada. Setelah `keycloak/halosis-realm.json` berubah, buat ulang data Keycloak lokal
+(perubahan lewat konsol admin ikut hilang):
+```bash
+docker compose rm -sf keycloak && docker volume rm glpi-halosis_keycloak_data && docker compose up -d keycloak
+```
+
+Dropdown "Sumber login" disembunyikan karena isinya hanya database GLPI:
+```bash
+docker compose exec glpi php bin/console config:set display_login_source 0 --allow-superuser
+```
+
+| Kondisi | Hasil |
+| --- | --- |
+| Password benar di Keycloak | Login; profil & tim disamakan dengan Keycloak; akun ditandai dikelola SSO (authtype *Other*), password lokalnya dihapus |
+| Password salah / akun nonaktif di Keycloak | Ditolak ("Incorrect username or password"); 5× salah → dikunci sementara oleh Keycloak |
+| Akun yang tidak ada di Keycloak (`glpi`) | Login dengan password lokal GLPI (jalur darurat Super-Admin) |
+| Keycloak mati | Akun SSO tidak bisa login, `glpi` tetap bisa; tercatat di `docker compose exec glpi tail /var/glpi/logs/halosis.log` |
+
+**Cara menguji SSO**
+1. Login `budi` / `halosis` di http://localhost:8080 → langsung di **Tanya HaloSIS**.
+2. Login `ani` / `halosis` → akun GLPI baru dibuat otomatis (profil Pegawai).
+3. Konsol admin http://localhost:8180 → realm **halosis** › *Users* › `budi` › *Role mapping*: ganti `pegawai`
+   menjadi `operator` → login lagi sebagai `budi` → masuk antarmuka Operator. Kembalikan ke `pegawai` setelahnya.
+4. Login `budi` dengan password salah → ditolak; login `glpi` / `glpi` → tetap bisa (akun lokal).
+
+**Kalau login gagal**
+
+| Gejala | Penyebab & solusi |
+| --- | --- |
+| Akun SSO selalu "Incorrect username or password" | Cek `.env` punya blok `HALOSIS_KEYCLOAK_*` lalu `docker compose up -d glpi`; cek Keycloak hidup (`docker compose ps keycloak`) dan `/var/glpi/logs/halosis.log` |
+| Tadinya bisa, sekarang ditolak | Keycloak mengunci akun sementara setelah 5× salah password. Tunggu ±15 menit, atau konsol admin › realm *halosis* › *Users* › (akun) › matikan *Temporarily locked* |
+| Tidak bisa login di http://localhost:8180 dengan `budi` | Halaman itu konsol **admin** (realm *master*): login `admin`/`admin`. Akun pegawai dicek di http://localhost:8180/realms/halosis/account |
+| Role/tim di GLPI belum berubah | Perubahan di Keycloak berlaku saat login berikutnya: logout lalu login lagi |
+| Plugin HaloSIS tiba-tiba nonaktif | Error PHP saat plugin dimuat membuat GLPI menonaktifkannya. Cek `php-errors.log`, perbaiki, lalu `docker compose exec glpi php bin/console plugin:activate halosis` |
+
+> Password akun SSO diganti di Keycloak, bukan di GLPI (link "Forgot password" GLPI tidak berlaku untuk akun ini).
+> Kosongkan `HALOSIS_KEYCLOAK_URL` untuk mematikan SSO; akun yang sudah dikelola SSO lalu perlu password lokal lagi
+> (ubah *Authentication* pengguna ke database GLPI dan set password di Administrasi › Pengguna).
+
 **7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
 
 Palet ada di `themes/halosis.scss` (di-mount ke `/var/glpi-themes`, folder tema kustom GLPI lewat variabel
@@ -511,6 +602,8 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 
 | Halaman HaloSIS | Di GLPI |
 | --- | --- |
+| Login (SSO BPS) | Form login HaloSIS, password dicek ke **Keycloak** (langkah 6b) |
+| Beranda pegawai: permintaan / masalah | **Tanya HaloSIS** › *Ajukan permintaan* (form *Request a service*) / *Laporkan masalah* (chatbot → laporan) |
 | Laporan Saya, Detail Laporan (pegawai) | Login pegawai → **Tiket** (antarmuka sederhana/Helpdesk) |
 | Buat Laporan | **Service catalog** / Create a ticket |
 | Pusat Bantuan | **FAQ** (artikel KB yang ditandai FAQ) |
@@ -546,13 +639,14 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori; artikel KB diperbarui inkremental (`POST /reindex/artikel`) | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar |
 | Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang; tanpa DBSCAN agar ringan | DBSCAN & analisis tren antar-periode |
 | Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal | Model dampak/urgensi dari history |
-| Login | SSO BPS | Login lokal GLPI | Prototipe tanpa akses SSO BPS | Autentikasi LDAP/SAML GLPI |
+| Login | SSO BPS | SSO Keycloak lokal (realm `halosis`), dicek dari form login HaloSIS lewat password grant | Prototipe tanpa akses SSO BPS; satu kali login tanpa halaman Keycloak | Arahkan `HALOSIS_KEYCLOAK_URL` ke Keycloak SSO BPS + client resmi (Direct Access Grants aktif) |
 
 **Evidence Maturity** (format §2.4.7.8; PoC evidence ≠ production readiness):
 
 | Area | Evidence | Status |
 | --- | --- | --- |
 | ITSM core (tiket, role, menu per peran) | Uji skenario 12 langkah lintas 6 role | Proven |
+| Login SSO & sinkron role/tim | 16 akun login lewat Keycloak lokal; user baru, pindah tim, dan ketua tim dari Keycloak terbawa ke GLPI | Proven (Keycloak lokal); SSO BPS: belum diuji |
 | SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Proven (Mailpit lokal) |
 | Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), re-index otomatis saat artikel terbit/dihapus; `ai/tests/test_candidates.py`, `test_reindex.py` | Proven |
 | AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end | Proven |
@@ -568,5 +662,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 docker compose down          # matikan (data tetap)
 docker compose down -v       # hapus semua data, lalu ulangi dari langkah 1
 ```
+`down -v` juga menghapus data Keycloak; realm `halosis` diimpor ulang dari `keycloak/halosis-realm.json` saat
+`docker compose up -d` berikutnya.
 
 Folder `screenshot/` berisi contoh tampilan hasil akhirnya (GLPI 12 dengan data ini).
