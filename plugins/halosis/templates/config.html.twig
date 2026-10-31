@@ -96,8 +96,20 @@
                         </div>
                     {% endset %}
                     {{ fields.field('triage_threshold', threshold_field, __('Confidence threshold', 'halosis'), field_opts|merge({
-                        'add_field_html': self.hint(__('Suggestions below this confidence are flagged “Needs manual review”.', 'halosis')),
+                        'add_field_html': self.hint(__('Suggestions at or above this confidence are marked “Recommended”.', 'halosis')),
                         'id': 'halosis_triage_threshold',
+                    })) }}
+                    {% set threshold_low_field %}
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="range" class="form-range flex-grow-1" min="0" max="100" step="5"
+                                   name="ai_threshold_low" id="halosis_ai_threshold_low"
+                                   value="{{ config.ai_threshold_low }}" data-halosis-threshold>
+                            <output for="halosis_ai_threshold_low" class="badge fs-4" data-halosis-threshold-output>{{ config.ai_threshold_low }}%</output>
+                        </div>
+                    {% endset %}
+                    {{ fields.field('ai_threshold_low', threshold_low_field, __('Low confidence threshold', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Between the two thresholds the Operator chooses from the top 3 candidates; below this one the suggestion needs manual review.', 'halosis')),
+                        'id': 'halosis_ai_threshold_low',
                     })) }}
                 </div>
 
@@ -115,6 +127,14 @@
                         'condition': {'is_assign': 1},
                         'emptylabel': __('Default (Operator Service Desk)', 'halosis'),
                         'add_field_html': self.hint(__('The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up.', 'halosis')),
+                    })) }}
+                </div>
+
+                {{ fields.largeTitle(__('Knowledge base', 'halosis'), 'ti ti-books') }}
+                <div class="row">
+                    {{ fields.numberField('kb_review_months', config.kb_review_months, __('Review published articles after (months)', 'halosis'), field_opts|merge({
+                        'min': 1, 'max': 36,
+                        'add_field_html': self.hint(__('Published articles not updated for this long appear in the “Needs review” tab of Knowledge candidates.', 'halosis')),
                     })) }}
                 </div>
 

@@ -69,6 +69,19 @@ final class Suggestion extends CommonDBTM
     }
 
     /**
+     * Tingkat keyakinan (TO-BE hal. 100): high = saran utama, medium = pilih dari 3 kandidat, low = manual.
+     */
+    public function getConfidenceLevel(): string
+    {
+        $confidence = (int) $this->fields['confidence'];
+        return match (true) {
+            $confidence >= Config::getTriageThreshold() => 'high',
+            $confidence >= Config::getLowThreshold()    => 'medium',
+            default                                     => 'low',
+        };
+    }
+
+    /**
      * Uraian nilai triase yang mudah dibaca, mis. untuk riwayat tiket.
      *
      * @param array<string, int> $values

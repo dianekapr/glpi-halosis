@@ -33,6 +33,7 @@ final class Stats
             'by_band'      => self::byConfidenceBand($decisions),
             'reassigned'   => self::reassigned($decisions, $start),
             'chats'        => self::chats($start),
+            'articles'     => self::articleUsage($start),
             'threshold'    => Config::getTriageThreshold(),
         ];
     }
@@ -167,12 +168,39 @@ final class Stats
     }
 
     /**
+     * Artikel KB yang paling sering dikutip chatbot dalam periode.
+     *
+     * @return array<int, array{name: string, url: string, uses: int}>
+     */
+    private static function articleUsage(DateTimeImmutable $start, int $limit = 5): array
+    {
+        global $DB;
+
+        $rows = [];
+        foreach ($DB->request([
+            'SELECT'  => ['knowbaseitems_id', 'COUNT' => 'id AS uses'],
+            'FROM'    => 'glpi_plugin_halosis_article_uses',
+            'WHERE'   => ['date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
+            'GROUPBY' => 'knowbaseitems_id',
+            'ORDER'   => 'uses DESC',
+            'LIMIT'   => $limit,
+        ]) as $row) {
+            $article = new \KnowbaseItem();
+            if ($article->getFromDB((int) $row['knowbaseitems_id'])) {
+                $rows[] = ['name' => (string) $article->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($article->getID()), 'uses' => (int) $row['uses']];
+            }
+        }
+        return $rows;
+    }
+
+    /**
      * Percakapan chatbot: terbantu tanpa tiket, jadi laporan, rating rata-rata.
      */
     private static function chats(DateTimeImmutable $start): array
     {
         global $DB;
 
+        Chat::expireIdle();
         $counts = ['total' => 0, Chat::STATUS_RESOLVED => 0, Chat::STATUS_TICKET => 0, Chat::STATUS_OPEN => 0];
         $ratings = [];
         foreach ($DB->request([
