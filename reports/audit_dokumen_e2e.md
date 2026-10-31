@@ -36,7 +36,7 @@ serta WBS/jadwal.
 | BR-01..08, FR-01..10, UC-01..10 (normal flow) | 5–6, 77–78, 128–142 | Sudah tercakup audit lama; FR-01 (SSO) & FR-03 kini ✅ |
 | NFR-01..14 | 78 | Sesuai audit lama; dokumen pendukung NFR-01/05/08/14 sudah ada |
 | **Technical Requirements DQR/AIR/KR** | 79–80 | 17 butir (AIR-01..04 dihitung 4): 17 ✅ → §3 |
-| **TO-BE detail (kebijakan confidence, self-service, pola)** | 96–102 | Confidence 3 tingkat, chatbot confidence sedang (T3), pola INC ✅; jenis REQ/INC (T4) = keterbatasan terdokumentasi → §2 |
+| **TO-BE detail (kebijakan confidence, self-service, pola)** | 96–102 | Confidence 3 tingkat, chatbot confidence sedang (T3), pola INC, saran jenis REQ/INC (T4) ✅ → §2 |
 | **Business Process BP-01..25** | 103–121 | 24 ✅; BP-25 ⚪ → §4 |
 | **Atribut kelas & state machine** | 155–170, 191–192 | 5 state machine ✅; atribut pengguna (T11) & beban kerja (T5) ✅ (31 Okt) → §2, §6 |
 | **Batas scope (yang dilarang)** | 8, 96 | ✅ semua (akses DB `halosis-ai` dicek; Claude didokumentasikan) → §5 |
@@ -48,7 +48,7 @@ CRC card, dan state machine, bukan fitur besar yang hilang.
 
 | # | Dokumen menyebut | Hal. | Implementasi (dari README) | Status | Saran | Usaha |
 | --- | --- | --- | --- | --- | --- | --- |
-| T1 | **SLA respons (TTO)** selain penyelesaian: `KebijakanSLA.targetRespons`; baseline Response 42,62% dipakai sebagai KPI | 114, 162 | **Diperbaiki:** SLA *time to own* per prioritas (Kritis 15 mnt … Rendah 4 jam) + aksi `slas_id_tto` di aturan "SLA <prioritas>" (`setup_sla_alerts.py:41`, `:125`); kolom "Waktu untuk mengambil alih" di daftar Operator (`setup_list_columns.py:34`). Uji: tiket prioritas 5 → TTO 15 menit jam kerja | ✅ | Target menit masih asumsi; samakan dengan SLA resmi | — |
+| T1 | **SLA respons (TTO)** selain penyelesaian: `KebijakanSLA.targetRespons`; baseline Response 42,62% dipakai sebagai KPI | 114, 162 | **SLA resmi BPS dari history** (kolom `response_sla_name`: "SLA Incident Response 15Minutes" / "BPS-SLA Request Response 15Minutes", 6.655 tiket) → SLA *time to own* **15 menit** semua tiket (`config/sla_layanan.json`, `setup_sla_alerts.py`); kolom "Waktu untuk mengambil alih" di daftar Operator | ✅ | — | — |
 | T2 | **Kebijakan confidence 3 tingkat** (tinggi/sedang/rendah): tinggi = Top-1 default; sedang = Top-3 + review; rendah = manual | 100 | **Diperbaiki:** ambang kedua `ai_threshold_low` 40% (`plugins/halosis/src/Config.php:36`, Pengaturan AI); `Suggestion::getConfidenceLevel()` (`plugins/halosis/src/Suggestion.php:74`) → panel "Disarankan" / "Pilih dari 3 kandidat" / "Perlu penilaian manual" (`plugins/halosis/templates/triase_panel.html.twig`) | ✅ | — | — |
 | T3 | **Chatbot confidence sedang** → jawaban terbatas / pertanyaan klarifikasi / opsi lanjutan | 100 | **Diperbaiki (31 Okt):** skor 0,78–0,83 (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`, `ai/service/app.py:46`, `:258`) → tidak menjawab, ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`plugins/halosis/src/Chatbot.php:337`); tes `test_chat_keyakinan_sedang_menawarkan_pilihan` | ✅ | Jarang muncul selama KB sedikit (± 6 artikel vs ribuan potongan tiket) | — |
 | T4 | **Triase merekomendasikan jenis REQ/INC** | 97, 100, 104 | **Diperbaiki (31 Okt):** klasifier ringan TF-IDF + LR dari kolom `ticket_type` history (`ai/scripts/train_jenis.py`, artefak `ai/models/jenis.joblib`): akurasi 68,25% (pembanding 57,28%), keyakinan ≥ 70% → akurasi 84,17% pada 40,92% tiket; panel menampilkan "Jenis disarankan" hanya bila berbeda dari jenis tiket & yakin (`plugins/halosis/src/TriagePanel.php` `typeHint`); tanpa artefak → diam | ✅ | Operator tetap memutuskan (ubah jenis di form tiket) | — |
@@ -148,7 +148,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | # | Dokumen menyebut | Hal./bagian | Implementasi | Status |
 | --- | --- | --- | --- | --- |
 | T21 | Rekomendasi penutupan; hilangkan tiket menggantung (Activity Elimination/Duration) | 5.1, 5.2.3.2, E18 | Menu Operator **Siap ditutup**: Selesai > 48 jam tanpa respons pemohon, tutup per tiket/massal, tanpa otomatis (`plugins/halosis/src/Closure.php`) | ✅ |
-| T22 | SLA per layanan (KebijakanSLA dari LayananTI) | E3, CRC, 5.2.1.5 | `config/sla_layanan.json` → 22 aturan kategori × jenis (respons + penyelesaian/pemenuhan), cadangan per prioritas (`setup_sla_alerts.py`) | ✅ |
+| T22 | SLA per layanan (KebijakanSLA dari LayananTI) | E3, CRC, 5.2.1.5 | **SLA resmi BPS dari history** (`resolution_/fulfillment_sla_name`): insiden Crit 2 hari (9 tiket), Medium 8 (2.201), Low 15 (500) per prioritas; permintaan 7 hari (1.666), 14 hari (138) untuk layanan tim > 50% 14 hari (Server Hosting 52/55, SOBAT 36/41, LAN 27/27, WAN 2/2, Container 1/1); kategori contoh "Server Hosting" diuji → 15 menit + 14 hari; kalender jam kerja, peringatan ±20% | ✅ |
 | T23 | Notifikasi tidak hanya sekali (balasan sampai ke petugas) | 5.1 akar masalah | "New followup" → teknisi & grup ditugaskan (uji Mailpit: andi + anggota tim) | ✅ |
 | T24 | KPI SLA breach, waktu sampai diterima tim, first-level resolution | Tabel 1.3 | Dashboard **KPI layanan** (`Stats::serviceKpi`) | ✅ |
 | T25 | Volume tiket per minggu/kategori | E8, Tabel 1.3 | Dashboard volume 12 minggu per jenis & 5 kategori (`Stats::ticketVolume`) | ✅ |
@@ -158,7 +158,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | T29 | Pelatihan per peran | WBS 6.3, 7.3 | `reports/panduan_peran.md` | ✅ (dok.) |
 | T30 | Self-service dimulai dari Email, SSO, SiPecut (48,2% tiket) | 5.1 Outcome | FAQ ketiga layanan (9 artikel KB terindeks; SiPecut ditambah 2) | ✅ |
 | T31 | Pertanyaan di luar layanan TI | wawancara Operator | Chatbot mengarahkan ke Kepegawaian/Keuangan/Umum tanpa tawaran laporan | ✅ |
-| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang kualitas `/health` & `/triage` (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85%); panel "belum lolos uji kualitas" | ✅ |
+| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang memeriksa **semua** syarat `tata_kelola_ai.md` dari metrik tersimpan (`ai/halosis_ai/quality.py`): triase Top-1 0,7441 ≥ 0,68, akurasi pada ambang 0,8703 ≥ 0,85, recall tim besar terendah 0,786 ≥ 0,50 (`ai/models/triage.metrics.json`, dihitung tanpa latih ulang); jenis F1 makro > pembanding; prioritas tidak lolos → tidak dipakai. `/health` → status per model; panel "belum lolos uji kualitas" | ✅ |
 
 ### 8.2 Risiko R1–R4 (Tabel 1.4) & risiko organisasi (Tabel 2.21) → mitigasi di sistem
 
@@ -193,7 +193,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | --- | --- | --- |
 | 2.1.2 Arsitektur: ITSM + layanan AI terpisah ber-API | ✅ | GLPI + plugin + `halosis-ai` (FastAPI) |
 | 2.1.3 Data: profiling, cleansing, masking | ✅ | `prepare_data.py`, `reconcile.py`, `eda.md` |
-| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 | Model tim lolos gerbang; prioritas/urgensi tetap aturan (history tanpa kolom, README Keputusan desain) |
+| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 | Model tim & jenis lolos gerbang (`/health`); **model prioritas insiden diuji** (proksi `resolution_sla_name`, F1 makro 44,80% = pembanding "selalu Medium") → ditolak gerbang, prioritas dari matriks; urgensi/dampak aturan (history tanpa kolom) |
 | 2.1.5 Integrasi: SSO, data historis, notifikasi, monitoring, pemisahan lingkungan, uji beban | 🟡 | SSO Keycloak lokal ✅, migrasi sampel ✅, notifikasi ✅, monitoring profile ✅, uji beban ✅ (laptop); SSO BPS & lingkungan staging/produksi = rencana (`rencana_implementasi.md`) |
 | 2.1.6 Infrastruktur: VM/OpenShift, sizing | ⚪ | Docker lokal; sizing dari uji beban (AI ±8,7 core pada 200 VU) |
 | Skenario 2: kandidat platform & fit-gap BR-01..08 | ✅ | GLPI 12 + plugin; audit BR/FR/UC (`audit_kelengkapan.md`) |

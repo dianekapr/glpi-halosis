@@ -54,6 +54,7 @@ docker compose ps                              # semua "running"
 | 2b Telepon | rina | Tiket atas nama pegawai lain | "Laporan telepon/walk-in tetap masuk jalur yang sama." (EI input tiket operator) |
 | 3 Penanganan | andi | Panel tanpa tombol keputusan, Kembalikan ke operator, solusi | "Tim Teknis fokus menyelesaikan; salah tim bisa dikembalikan dengan alasan." (UC-06, BR-02 SLA respons & penyelesaian) |
 | 4 Konfirmasi | budi | Approve / Refuse dengan alasan, survei | "Tiket ditutup oleh pegawai, bukan sepihak." (UC-07) |
+| 2d SLA resmi | rina | Buat permintaan kategori **Jaringan & Perangkat > Server Hosting** → kolom SLA: respons 15 menit + pemenuhan 14 hari; insiden biasa → 15 menit + Medium 8 hari | "SLA mengikuti kebijakan BPS yang tercatat di history ESTIM, dihitung jam kerja." (BR-02, T22) |
 | 5b Siap ditutup | rina | Menu **Siap ditutup**: tiket Selesai tanpa respons > 48 jam → Tutup per tiket/massal | "Penutupan tetap keputusan manusia; menghapus antrean tiket menggantung." (5.1, T21) |
 | 5 Kinerja AI | sri, dimas | Dashboard: KPI tabel 1.3 (SLA breach, median penugasan, L1), volume per minggu, % diterima, drift, tren pola, filter, ekspor koreksi | "Manajemen memantau apakah AI bisa dipercaya dari keputusan petugas." (UC-08, BR-08, BP-17, BP-19) |
 | Bonus | glpi + rina | 3 laporan SSO mirip → Problem pola + banner + notifikasi | "Lonjakan insiden terdeteksi lebih awal; tindak lanjut tetap oleh Operator." (BR-07, UC-08, BP-21) |

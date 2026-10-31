@@ -43,11 +43,14 @@ def main() -> None:
     classes = np.array(pipeline.classes_)
     pred, conf = classes[probs.argmax(axis=1)], probs.max(axis=1)
     sure = conf >= THRESHOLD
+    majority = train['jenis'].value_counts().index[0]
     metrics = {
+        'versi': f'jenis-tfidf-lr-{date.today():%Y%m%d}', 'tanggal': date.today().isoformat(),
         'latih': len(train), 'uji': len(test),
         'akurasi': accuracy_score(test['jenis'], pred),
         'f1_makro': f1_score(test['jenis'], pred, average='macro'),
-        'pembanding': float((test['jenis'] == train['jenis'].value_counts().index[0]).mean()),
+        'pembanding': float((test['jenis'] == majority).mean()),
+        'f1_makro_pembanding': f1_score(test['jenis'], [majority] * len(test), average='macro'),
         'cakupan_yakin': float(sure.mean()),
         'akurasi_yakin': accuracy_score(test['jenis'][sure], pred[sure]) if sure.any() else float('nan'),
         'beda_yakin': int((sure & (pred != test['jenis'].to_numpy())).sum()),

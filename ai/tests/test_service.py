@@ -108,7 +108,8 @@ def test_triage_saran_jenis_opsional(monkeypatch):
     """T4: tanpa model jenis → jenis_saran None (tidak error); dengan model → jenis + keyakinan."""
     c = client(monkeypatch, [])
     assert c.post('/triage', json={'judul': 'Minta akun zoom', 'deskripsi': 'rapat'}).json()['jenis_saran'] is None
-    service.state['jenis'] = {'pipeline': FakeJenis(), 'version': 'jenis-uji'}
+    service.state['jenis'] = {'pipeline': FakeJenis(), 'version': 'jenis-uji',
+                              'metrics': {'f1_makro': 0.67, 'f1_makro_pembanding': 0.36}}
     r = c.post('/triage', json={'judul': 'Minta akun zoom', 'deskripsi': 'rapat', 'jenis': 'INC'}).json()
     assert r['jenis_saran'] == {'jenis': 'REQ', 'keyakinan': 0.8, 'versi_model': 'jenis-uji'}
 
@@ -131,11 +132,25 @@ def test_gerbang_kualitas_model(monkeypatch):
     """T32: metrik artefak di bawah syarat → /health & /triage menyatakan tidak lolos."""
     c = client(monkeypatch, [])
     model = service.state['triage']
-    monkeypatch.setattr(model, 'metadata', {'top1': 0.74, 'akurasi_yakin': 0.87}, raising=False)
-    assert c.get('/health').json()['kualitas_model']['lolos'] is True
+    monkeypatch.setattr(model, 'metadata', {'top1': 0.74, 'akurasi_yakin': 0.87, 'recall_tim_besar_min': 0.78}, raising=False)
+    assert c.get('/health').json()['kualitas_model']['triase']['lolos'] is True
     assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is True
-    monkeypatch.setattr(model, 'metadata', {'top1': 0.55, 'akurasi_yakin': 0.80}, raising=False)
-    gate = c.get('/health').json()['kualitas_model']
-    assert gate['lolos'] is False and len(gate['alasan']) == 2
+    monkeypatch.setattr(model, 'metadata', {'top1': 0.55, 'akurasi_yakin': 0.80, 'recall_tim_besar_min': 0.3}, raising=False)
+    gate = c.get('/health').json()['kualitas_model']['triase']
+    assert gate['lolos'] is False and len(gate['alasan']) == 3 and gate['syarat']['recall_tim_besar'] == 'gagal'
     assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is False
+
+
+def test_prioritas_hanya_bila_lolos_dan_yakin(monkeypatch):
+    """Saran prioritas insiden: model tidak unggul pembanding → None; unggul & yakin → prioritas GLPI; REQ → None."""
+    c = client(monkeypatch, [])
+    artifact = {'pipeline': FakeJenis(), 'version': 'prio-uji', 'threshold': 0.7, 'prioritas_glpi': {'INC': 3, 'REQ': 2},
+                'metrics': {'f1_makro': 0.448, 'f1_makro_pembanding': 0.448}}
+    service.state['prioritas'] = artifact
+    body = {'judul': 'akun zoom', 'deskripsi': 'x', 'jenis': 'INC'}
+    assert c.post('/triage', json=body).json()['prioritas_saran'] is None
+    artifact['metrics'] = {'f1_makro': 0.6, 'f1_makro_pembanding': 0.448}
+    assert c.post('/triage', json=body).json()['prioritas_saran']['prioritas'] == 2
+    assert c.post('/triage', json={**body, 'jenis': 'REQ'}).json()['prioritas_saran'] is None
+    assert c.get('/health').json()['kualitas_model']['prioritas']['lolos'] is True
 

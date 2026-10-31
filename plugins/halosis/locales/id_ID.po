@@ -1294,3 +1294,9 @@ msgstr "Model belum lolos uji kualitas"
 
 msgid "triage manually; the suggestion is for reference only"
 msgstr "triase manual; saran hanya sebagai rujukan"
+
+msgid "SLA compliance (passed)"
+msgstr "Kepatuhan SLA (lolos)"
+
+msgid "%d decided tickets · ESTIM baseline 27.59%%"
+msgstr "%d tiket sudah ditentukan · baseline ESTIM 27,59%%"

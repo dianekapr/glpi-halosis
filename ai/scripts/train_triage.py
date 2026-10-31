@@ -153,6 +153,9 @@ def main() -> None:
     model = TriageModel(pipeline=pipeline, similar=similar, version=VERSION, metadata=metadata)
     MODEL_OUT.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, MODEL_OUT, compress=3)
+    # Metrik gerbang kualitas (T32) → ai/models/triage.metrics.json, dibaca halosis-ai
+    import model_metrics  # noqa: PLC0415  (impor di sini: model_metrics mengimpor modul ini)
+    model_metrics.main()
 
     report = '\n'.join([
         '# Model saran triase HaloSIS (routing ke tim)',

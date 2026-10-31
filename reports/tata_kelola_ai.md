@@ -27,12 +27,19 @@ Pengelola AI = 1–2 orang yang melatih ulang model (`ai/README.md`); di prototi
 | --- | --- | --- |
 | 1. Latih | `ai/scripts/train_triage.py` dari data history yang sudah disamarkan (`prepare_data.py`) | Versi model `triase-tfidf-lr-<tanggal>` |
 | 2. Evaluasi | Set uji terpisah; laporkan Top-1, Top-3, F1 makro, akurasi pada keyakinan ≥ ambang | `reports/triase.md` |
-| 3. Syarat lulus | Top-1 & Top-3 **tidak turun** > 2 poin dari versi aktif; akurasi pada keyakinan ≥ 70% tetap ≥ 85%; tidak ada tim besar yang recall-nya < 50% | Tabel banding di `reports/triase.md` |
+| 3. Syarat lulus | Top-1 & Top-3 **tidak turun** > 2 poin dari versi aktif; akurasi pada keyakinan ≥ 70% tetap ≥ 85%; tidak ada tim besar (≥ 5% tiket uji; kelas gabungan "Lainnya" dicatat terpisah) yang recall-nya < 50%; Top-1 ≥ 0,68 (baseline PoC). Model pendukung (jenis, prioritas): F1 makro harus mengungguli pembanding kelas mayoritas | Metrik di artefak / `ai/models/triage.metrics.json` (`ai/scripts/model_metrics.py`); `halosis-ai` memeriksa otomatis (`/health` → `kualitas_model` per model); model tidak lolos tidak dipakai / panel "belum lolos uji kualitas" |
 | 4. Persetujuan | Manajemen (A) setelah konsultasi Operator (C) | Catatan persetujuan di tabel §5 |
 | 5. Pasang | Ganti `ai/models/triage.joblib`, `docker compose restart halosis-ai`, cek `/health` menampilkan versi baru | `/health` → `versi_model` |
 | 1b. Data koreksi (T10) | Keputusan **Ubah/Tolak** Operator (`glpi_plugin_halosis_decisions`: nilai saran, nilai final, alasan) diekspor lewat tombol **Ekspor koreksi (CSV, tersamar)** di dashboard Kinerja AI (hak Pengaturan AI; `/plugins/halosis/Dashboard/Koreksi`: judul & deskripsi tersamar, jenis, tim saran vs final, alasan) dan ditinjau Pengelola AI; tim final yang dikoreksi Operator ditambahkan ke data latih berikutnya (tiket GLPI, teks disamarkan). Penggabungan ke data latih masih **manual** sebelum langkah 1 | Jumlah koreksi yang dipakai dicatat di §5 |
 | 6. Pantau 2 minggu | Rasio Ubah/Tolak di dashboard Kinerja AI dibanding versi lama | Dashboard Kinerja AI |
 | 7. Rollback | Bila rasio Ubah+Tolak naik > 10 poin atau ada keluhan routing berulang: pasang kembali file versi sebelumnya (simpan minimal 2 versi terakhir di luar repo) | Catatan di tabel §5 |
+
+**Kelas gabungan "Lainnya" dikecualikan dari syarat recall tim besar.** "Lainnya" menggabungkan tim dengan < 30
+tiket latih (21 kelas → 1 kelas gabungan); kelas ini bukan tim tujuan sehingga recall-nya (0,335 pada uji Jul–Ags)
+tidak mengukur ketepatan routing ke tim nyata, dan menggabungkannya ke syarat akan menolak model hanya karena tim kecil
+memang tidak dipelajari. Gantinya: setiap saran dengan tim teratas "Lainnya" **selalu** berstatus *Perlu penilaian
+manual* (`triage_model.py`, plugin `Triage.php`; tes `test_lainnya_selalu_penilaian_manual`), dan recall "Lainnya"
+tetap dicatat terpisah di `triage.metrics.json` (`recall_lainnya`) untuk dipantau di audit bulanan.
 
 Versi model tercatat di setiap saran (`glpi_plugin_halosis_suggestions.model`), sehingga keputusan lama
 tetap bisa ditelusuri ke model yang menghasilkannya.

@@ -94,11 +94,13 @@ Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
 Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
 
 **1. [Unduh folder `models` dan `index` dari sini](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link)**
-(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya **4 file**: `models/triage.joblib` (±40 MB,
-saran tim), `models/jenis.joblib` (saran jenis REQ/INC, T4), dan `index/chunks.parquet` + `index/vectors.npy`.
+(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya **6 file**: `models/triage.joblib` (±40 MB,
+saran tim) + `models/triage.metrics.json` (metrik gerbang kualitas), `models/jenis.joblib` (saran jenis REQ/INC),
+`models/prioritas.joblib` (prioritas insiden; saat ini tidak lolos gerbang sehingga tidak dipakai), dan
+`index/chunks.parquet` + `index/vectors.npy`.
 **Anggota tim tidak melatih ulang model**: cukup pakai file ini (melatih ulang butuh data history mentah yang hanya
-dipegang Pengelola AI; lihat `reports/tata_kelola_ai.md`). Tanpa `jenis.joblib`, panel hanya tidak menampilkan
-saran jenis.
+dipegang Pengelola AI; lihat `reports/tata_kelola_ai.md`). Tanpa berkas opsional (`jenis`/`prioritas`), panel hanya
+tidak menampilkan saran itu; tanpa `triage.metrics.json` model triase dinyatakan belum lolos uji kualitas.
 
 Di Drive: pilih kedua folder (atau folder induknya) → klik kanan → **Download**. Drive mengemasnya jadi file
 `.zip` (namanya bisa seperti `drive-download-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip;
@@ -114,7 +116,9 @@ glpi-halosis/
 └── ai/
     ├── models/
     │   ├── triage.joblib
-    │   └── jenis.joblib
+    │   ├── triage.metrics.json
+    │   ├── jenis.joblib
+    │   └── prioritas.joblib
     └── index/
         ├── chunks.parquet
         └── vectors.npy
@@ -125,7 +129,7 @@ naik satu tingkat. Cek dari folder proyek:
 ls ai/models ai/index          # Mac/Linux
 dir ai\models ai\index         # Windows (cmd)
 ```
-Harus terlihat tepat empat file di atas.
+Harus terlihat tepat enam file di atas.
 
 **3. Nyalakan ulang layanan AI**
 ```bash
@@ -369,18 +373,21 @@ docker compose exec glpi php bin/console config:set notifications_mailing 1 --al
 > ke alamat sungguhan. Untuk produksi, ganti SMTP ke server email BPS.
 
 Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
-- **SLA respons (*time to own*, TTO)** per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam
-  (batas tiket diambil/ditugaskan), di samping SLA penyelesaian (*time to resolve*, TTR) dari `seed_halosis.py`.
-- **Aturan bisnis "SLA Kritis/Tinggi/Sedang/Rendah"** memasang **SLA respons (TTO) dan penyelesaian (TTR)** menurut
-  prioritas, saat tiket dibuat maupun saat prioritas diubah (mis. operator menerima saran triase). Tanpa aturan ini, laporan baru tidak
-  punya SLA. Bisa diubah Administrator di menu **Workflow & aturan**.
-- **Level eskalasi "Peringatan risiko SLA"** di tiap SLA penyelesaian, berjalan **sebelum** batas waktu: 1 jam
-  (Kritis), 1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah). Dokumen memodelkan `ambangPeringatan` sebagai
-  persentase (hal. 162); GLPI hanya mendukung level eskalasi berupa waktu tetap sebelum batas, jadi persentase
-  diwujudkan sebagai jam tetap per prioritas (±25% dari target).
-- **Level eskalasi "Eskalasi SLA terlewati"** tepat saat batas waktu (FR-09): Ticket Recall dikirim lagi dan
-  prioritas dinaikkan ke *Sangat tinggi* (SLA Kritis tidak diubah). Karena prioritas berubah, aturan SLA memasang
-  SLA Kritis sehingga tiket mendapat jadwal peringatan berikutnya.
+- **SLA resmi BPS dari history ESTIM** (`config/sla_layanan.json`, sumber history Jan–Ags 2026): respons (*time to
+  own*) **15 menit** untuk semua tiket; penyelesaian insiden menurut tier prioritas: **Crit 2 hari** (prioritas
+  Sangat tinggi/Mayor), **Medium 8 hari** (Sedang/Tinggi), **Low 15 hari** (Rendah/Sangat rendah); pemenuhan
+  permintaan **7 hari**, **14 hari** untuk layanan tim yang di history dominan 14 hari (Server Hosting, SOBAT, LAN/WAN
+  BPS Pusat, Container Hosting; kategori dipasang saat sudah ada di katalog). Dihitung dengan kalender jam kerja GLPI
+  (Senin–Jumat 08.00–20.00).
+- **Aturan bisnis "SLA BPS …"** (jenis × prioritas, dan kategori 14 hari) memasang SLA respons & penyelesaian saat
+  tiket dibuat maupun saat prioritas/kategori diubah (mis. operator menerima saran triase). Aturan versi lama ("SLA
+  Kritis/Tinggi/Sedang/Rendah", "SLA layanan: …") dinonaktifkan. Bisa diubah Administrator di **Workflow & aturan**.
+- **Level eskalasi "Peringatan risiko SLA"** di tiap SLA penyelesaian/pemenuhan, **±20% sebelum batas** dalam jam
+  kerja (2 hari → 5 jam, 7 hari → 17 jam, 8 hari → 19 jam, 14 hari → 34 jam, 15 hari → 36 jam). Dokumen memodelkan
+  `ambangPeringatan` sebagai persentase (hal. 162); GLPI memakai waktu tetap sebelum batas, jadi persentase
+  dihitung per SLA.
+- **Level eskalasi "Eskalasi SLA terlewati"** tepat saat batas waktu (FR-09): Ticket Recall dikirim lagi ke tim,
+  ketua tim, dan Operator (prioritas tidak diubah, agar SLA resmi tiket tidak berganti).
 - **Notifikasi "Ticket Recall"** dikirim ke teknisi & tim yang ditugaskan, **supervisor tim (atasan)**, dan grup
   **Operator Service Desk**, lewat
   notifikasi browser (tanpa server email) dan email (bila SMTP diatur).
@@ -701,13 +708,13 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
-| Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | Dampak/urgensi dari **aturan kata kunci**, prioritas dari matriks GLPI, selalu divalidasi Operator | Ekspor history ESTIM (137 kolom) **tidak punya** kolom dampak/urgensi/prioritas (hanya 58 kolom SLA, mis. respons 99,6% terisi); dokumen sendiri menempatkan prioritas P1 dan urgensi P2 dengan validasi manusia, dan E9 menyebut AI kategorisasi masih dikembangkan bertahap | Tahap 2: rekam dampak/urgensi final Operator di GLPI (sudah terjadi lewat Terima/Ubah) → latih model setelah ±3 bulan data, lalu uji dengan syarat lulus `tata_kelola_ai.md` |
+| Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | Prioritas insiden: model TF-IDF + LR dari proksi `resolution_sla_name` (Medium/Low) **hanya dipakai bila lolos gerbang** (F1 makro > pembanding); saat ini F1 makro 44,80% = pembanding "selalu Medium" (akurasi 81,14%) → tidak lolos → matriks urgensi × dampak GLPI. Urgensi & dampak: aturan kata kunci; Crit (9 tiket): aturan | History tidak punya kolom dampak/urgensi/prioritas; tier SLA penyelesaian hanya proksi dan sangat timpang (81% Medium); dokumen menempatkan urgensi P2 dengan validasi manusia, E9 bertahap | Rekam prioritas final Operator (sudah lewat Terima/Ubah) → latih ulang setelah data seimbang; gerbang `/health` mencegah model lemah dipakai |
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`): akurasi 68,25%, ≥ 70% yakin → 84,17%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
 | HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
 | Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | Pratinjau dampak ambang AI (tanpa menyimpan); perubahan Pengaturan AI, aturan SLA, SLA, kategori → log sistem GLPI + Catatan untuk Administrator | Tanpa ubah kode inti: memakai Event log & Reminder GLPI | Pratinjau aturan SLA/kategori |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 87% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi < 50% (pita 30–50% = 47%) | Kalibrasi ulang setelah data keputusan Operator cukup |
-| SLA respons (T1) | `KebijakanSLA.targetRespons` (hal. 162) | SLA *time to own* GLPI per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam (`setup_sla_alerts.py`) | Dokumen tidak memberi angka; asumsi prototipe | Sesuaikan dengan SLA resmi BPS |
+| SLA respons & penyelesaian (T1, T22) | `KebijakanSLA.targetRespons` (hal. 162), SLA per layanan (E3) | **SLA resmi BPS dari history ESTIM** (`config/sla_layanan.json`): respons 15 menit; insiden Crit 2 / Medium 8 / Low 15 hari; permintaan 7 hari (14 hari untuk layanan tim yang dominan 14 hari); kalender jam kerja GLPI | Nama SLA di kolom `*_sla_name` history (6.655 tiket respons, 2.710 insiden, 1.804 permintaan) | Pasang SLA 14 hari ke kategori Server Hosting/SOBAT/LAN-WAN/Container saat katalog memuatnya |
 
 **Padanan status tiket** (state machine Tiket hal. 191 ↔ GLPI):
 
@@ -737,7 +744,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Login SSO bersamaan (beban halaman) | k6 10 akun petugas, 5 menit: 0% galat, login p95 60 ms, daftar tiket p95 56 ms; bug duplikat Jabatan ditemukan & ditutup (`reports/rencana_uji.md` §7) | Proven (laptop) |
 | Kesiapan demo | Snapshot simpan/pulihkan (tiket uji hilang setelah pulihkan, 11 dtk), `reports/checklist_demo.md` | Proven |
 | Upgrade platform (Skenario 2) | GLPI 12.0.0 → 12.0.1 dari snapshot di lingkungan terpisah: skema OK, plugin Enabled, data utuh (`reports/uji_upgrade.md`) | Proven (patch) |
-| SLA per layanan & KPI tabel 1.3 | 22 aturan kategori × jenis (uji: insiden SSO 30 mnt/4 jam, permintaan Zoom 2 jam/1 hari, cadangan prioritas); dashboard KPI layanan | Proven (data contoh) |
+| SLA resmi BPS & KPI tabel 1.3 | Aturan SLA BPS (uji: insiden prioritas 3 → respons 15 menit + Medium 8 hari, permintaan → 7 hari, prioritas 5 → Crit 2 hari); KPI kepatuhan SLA sebanding baseline ESTIM 27,59% lolos | Proven (data contoh) |
 | Gerbang kualitas model (UC-04) | `/health` & panel "belum lolos uji kualitas" saat syarat dinaikkan (tes + uji container) | Proven |
 | Ketahanan triase saat AI mati (NFR-03) | Tugas `TriageRetry`: gagal → percobaan tercatat; pulih → saran dibuat; tanpa duplikat; batas 5 percobaan | Proven (uji skrip) |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md`; sampel 200 tiket ke entitas "Arsip ESTIM" lewat API (`ai/scripts/migrate_sample.py`): 199 berhasil + 1 gagal, idempoten, bisa dihapus | Proven (sampel); skala penuh belum |

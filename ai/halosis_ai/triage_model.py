@@ -95,7 +95,8 @@ class TriageModel:
         return {
             'tim': top[0]['tim'],
             'keyakinan': top[0]['keyakinan'],
-            'perlu_penilaian_manual': top[0]['keyakinan'] < self.threshold,
+            # Kelas gabungan "Lainnya" (tim kecil) bukan tim tujuan: selalu penilaian manual (tata_kelola_ai.md §2)
+            'perlu_penilaian_manual': top[0]['keyakinan'] < self.threshold or top[0]['tim'] == OTHER,
             'top3': top,
             'tiket_mirip': self.similar.search(text, k=k),
             'versi_model': self.version,

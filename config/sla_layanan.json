@@ -1,14 +1,28 @@
 {
-  "_keterangan": "SLA per layanan (E3, CRC LayananTI → KebijakanSLA, 5.2.1.5), dipasang setup_sla_alerts.py sebagai aturan bisnis per kategori & jenis. Insiden = respons (TTO) + penyelesaian (TTR); Permintaan = respons + pemenuhan (fulfillment, TTR GLPI). Angka ASUMSI prototipe (dokumen tidak memberi target per layanan; history ESTIM memuat target per tiket tetapi bukan per layanan): layanan kritis survei/akses 30 menit respons, perangkat fisik lebih longgar. Satuan: m = menit, h = jam, d = hari. Kategori tanpa entri memakai SLA per prioritas (cadangan).",
-  "Akun & Akses > SSO / Login":            {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
-  "Akun & Akses > TTE":                    {"insiden": {"respons": "1h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}},
-  "Akun & Akses > Hak akses folder":       {"insiden": {"respons": "2h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "2d"}},
-  "Aplikasi Statistik > FASIH":            {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "2d"}},
-  "Aplikasi Statistik > SiPecut":          {"insiden": {"respons": "30m", "selesai": "6h"}, "permintaan": {"respons": "2h", "selesai": "2d"}},
-  "Aplikasi Statistik > SIMDASI":          {"insiden": {"respons": "1h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}},
-  "Aplikasi Statistik > Email Dinas":      {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
-  "Aplikasi Statistik > Zoom / Konferensi": {"insiden": {"respons": "1h", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
-  "Jaringan & Perangkat > Jaringan & VPN":   {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "4h", "selesai": "2d"}},
-  "Jaringan & Perangkat > Laptop / Perangkat": {"insiden": {"respons": "2h", "selesai": "2d"}, "permintaan": {"respons": "4h", "selesai": "5d"}},
-  "Jaringan & Perangkat > Printer":        {"insiden": {"respons": "2h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}}
+  "sumber": "history BPS Jan–Ags 2026 (ekspor ESTIM, kolom response_/fulfillment_/resolution_sla_name)",
+  "kalender": "Kalender GLPI 'Default' (Senin–Jumat 08.00–20.00); hari = hari kerja",
+  "peringatan_sebelum_batas": 0.2,
+  "respons": {"target": "15m", "nama_bps": ["SLA Incident Response 15Minutes", "BPS-SLA Request Response 15Minutes"], "tiket": 6655},
+  "insiden": {
+    "_keterangan": "Tier resolution_sla_name history → prioritas GLPI (1 sangat rendah … 6 mayor)",
+    "Crit":   {"target": "2d",  "nama_bps": "SLA Incident Resolution Crit 2Days",   "tiket": 9,    "prioritas_glpi": [5, 6]},
+    "Medium": {"target": "8d",  "nama_bps": "SLA Incident Resolution Medium 8Days", "tiket": 2201, "prioritas_glpi": [3, 4]},
+    "Low":    {"target": "15d", "nama_bps": "SLA Incident Resolution Low 15Days",   "tiket": 500,  "prioritas_glpi": [1, 2]}
+  },
+  "permintaan": {
+    "bawaan": {"target": "7d", "nama_bps": "BPS-SLA Request Fulfillment 7Days", "tiket": 1666},
+    "14_hari": {
+      "target": "14d", "nama_bps": "BPS-SLA Request Fulfillment 14Days", "tiket": 138,
+      "_keterangan": "Tim yang di history > 50% permintaannya 14 hari. Pasang ke kategori GLPI layanan tim tsb; kategori yang belum ada di katalog dilewati dengan peringatan.",
+      "tim_history": {
+        "Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting": "52/55",
+        "Technical Layanan SOBAT": "36/41",
+        "Technical Layanan Koneksi Jaringan - LAN BPS Pusat": "27/27",
+        "Technical Layanan Koneksi Jaringan - WAN BPS Pusat": "2/2",
+        "Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting": "1/1"
+      },
+      "kategori_glpi": ["Server Hosting", "SOBAT", "LAN/WAN BPS Pusat", "Container Hosting"]
+    }
+  },
+  "baseline_kepatuhan": {"pass": 1621, "breach": 4255, "persen_pass": 27.59, "dasar": "overall_sla_result PASS ÷ (PASS + BREACH)"}
 }

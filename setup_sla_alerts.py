@@ -1,11 +1,12 @@
 """Peringatan risiko SLA sebelum terlampaui (BR-02, UC-08) — konfigurasi GLPI bawaan, tanpa kode.
 
-- SLA respons "time to own" (T1, KebijakanSLA.targetRespons) per prioritas dibuat di SLM "SLA HaloSIS": batas
-  tiket diambil/ditugaskan, dihitung GLPI dari tanggal "diambil alih" (takeintoaccountdate).
-- Aturan bisnis tiket "SLA <prioritas>": SLA waktu respons & penyelesaian dipasang otomatis menurut prioritas, saat
-  tiket dibuat maupun saat prioritas diubah (mis. operator menerima triase). Bisa diubah admin di menu Workflow.
-- Tiap SLA "time to resolve" HaloSIS mendapat level eskalasi "Peringatan risiko SLA" yang berjalan SEBELUM batas
-  waktu (execution_time negatif) dengan aksi "Automatic reminders of SLA" (recall).
+- SLA resmi BPS dari history ESTIM (config/sla_layanan.json, T1/T22): respons 15 menit semua tiket; penyelesaian
+  insiden menurut tier prioritas (Crit 2 hari, Medium 8 hari, Low 15 hari); pemenuhan permintaan 7 hari, 14 hari untuk
+  layanan tim yang di history dominan 14 hari. Dihitung dengan kalender jam kerja GLPI.
+- Aturan bisnis "SLA BPS …" (jenis × prioritas, dan kategori 14 hari) memasang SLA saat tiket dibuat maupun diubah.
+  Aturan lama ("SLA <prioritas>", "SLA layanan: …") dinonaktifkan, tidak dihapus (riwayat tiket tetap merujuknya).
+- Tiap SLA penyelesaian/pemenuhan mendapat level "Peringatan risiko SLA" ±20% sebelum batas dan "Eskalasi SLA
+  terlewati" tepat di batas, keduanya dengan aksi "Automatic reminders of SLA" (recall).
 - Notifikasi "Ticket Recall" dikirim ke teknisi & grup yang ditugaskan serta supervisor grup (atasan), lewat email
   dan notifikasi browser (mode ajax, terlihat tanpa server email).
 - Notifikasi "New problem" dikirim ke grup yang ditugaskan & grup Operator: pola insiden baru dari plugin
@@ -31,18 +32,12 @@ P = {p['name']: p['id'] for p in s.get(B + '/Profile', params={'range': '0-100'}
 s.post(B + '/changeActiveProfile', json={'profiles_id': P['Super-Admin']})
 
 HOUR = 3600
-# Waktu peringatan sebelum batas penyelesaian, ±25% dari target SLA
-BEFORE = {'Kritis': HOUR, 'Tinggi': int(1.5 * HOUR), 'Sedang': 4 * HOUR, 'Rendah': 24 * HOUR}
 LEVEL_NAME = 'Peringatan risiko SLA'
 ESCALATION_NAME = 'Eskalasi SLA terlewati'
 OPERATOR_GROUP = 'Operator Service Desk'
 
-# Target respons (time to own) per prioritas; dokumen tidak memberi angka, nilai ini asumsi prototipe
-TTO = {'Kritis': (15, 'minute'), 'Tinggi': (30, 'minute'), 'Sedang': (2, 'hour'), 'Rendah': (4, 'hour')}
 SLM_NAME = 'SLA HaloSIS'
 SLA_TTR, SLA_TTO = 0, 1          # SLM::TTR | SLM::TTO
-# Prioritas GLPI (1 sangat rendah … 6 mayor) → SLA HaloSIS; nilai prioritas mengikuti seed_halosis.py
-PRIORITY_SLA = {'Kritis': (5, 6), 'Tinggi': (4,), 'Sedang': (3,), 'Rendah': (1, 2)}
 RULE_ON_ADD_AND_UPDATE = 1 | 2   # RuleCommonITILObject::ONADD | ONUPDATE
 PATTERN_IS = 0                   # Rule::PATTERN_IS
 TEAMS = ('Tim Aplikasi Statistik', 'Tim Jaringan', 'Tim Perangkat', 'Tim Identitas & Akses')
@@ -64,118 +59,92 @@ def add(itemtype, data):
     raise SystemExit(f'{itemtype} gagal: {r.status_code} {r.text[:300]}')
 
 
-for sla in get('SLA'):
-    prio = sla['name'].split(' ')[0]
-    if prio not in BEFORE or sla['type'] != 0:
-        continue
-    levels = [l for l in get('SlaLevel') if l['slas_id'] == sla['id'] and l['name'] == LEVEL_NAME]
-    if levels:
-        print(f'SLA "{sla["name"]}": level peringatan sudah ada')
-        continue
-    level = add('SlaLevel', {'name': LEVEL_NAME, 'slas_id': sla['id'], 'execution_time': -BEFORE[prio],
-                             'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
-    add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
-    print(f'SLA "{sla["name"]}": peringatan {BEFORE[prio] // 60} menit sebelum batas waktu')
+# --- SLA resmi BPS (config/sla_layanan.json) ---------------------------------------------------------------------
+CFG = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config/sla_layanan.json'), encoding='utf-8'))
+UNITS = {'m': ('minute', 'menit', 60), 'h': ('hour', 'jam', HOUR), 'd': ('day', 'hari', None)}
+INCIDENT, REQUEST = 1, 2          # Ticket::INCIDENT_TYPE, Ticket::DEMAND_TYPE
+LEGACY_RULES = ('SLA Kritis', 'SLA Tinggi', 'SLA Sedang', 'SLA Rendah')
 
-# FR-09: eskalasi saat batas waktu terlewati (execution_time 0 = tepat di batas) → Ticket Recall ke ketua tim
-# & operator, dan prioritas dinaikkan ke "Sangat tinggi" agar tiket naik di antrean
-for sla in get('SLA'):
-    prio = sla['name'].split(' ')[0]
-    if prio not in BEFORE or sla['type'] != 0:
-        continue
-    if any(l['slas_id'] == sla['id'] and l['name'] == ESCALATION_NAME for l in get('SlaLevel')):
-        print(f'SLA "{sla["name"]}": level eskalasi sudah ada')
-        continue
-    level = add('SlaLevel', {'name': ESCALATION_NAME, 'slas_id': sla['id'], 'execution_time': 0,
-                             'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
-    add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
-    if prio != 'Kritis':
-        add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'assign', 'field': 'priority', 'value': 5})
-    print(f'SLA "{sla["name"]}": eskalasi saat batas waktu terlewati')
-
-# SLA respons (time to own) per prioritas, di SLM yang sama dengan SLA penyelesaian dari seed_halosis.py
 slm = next((m for m in get('SLM') if m['name'] == SLM_NAME), None)
 if slm is None:
     raise SystemExit(f'SLM "{SLM_NAME}" tidak ditemukan; jalankan seed_halosis.py dulu')
-for prio, (n, unit) in TTO.items():
-    if any(x['slms_id'] == slm['id'] and x['type'] == SLA_TTO and x['name'].split(' ')[0] == prio for x in get('SLA')):
-        print(f'SLA respons {prio}: sudah ada')
-        continue
-    label = f'{n} menit' if unit == 'minute' else f'{n} jam'
-    add('SLA', {'name': f'{prio} · respons {label}', 'slms_id': slm['id'], 'type': SLA_TTO, 'number_time': n,
-                'definition_time': unit, 'calendars_id': slm.get('calendars_id', 1)})
-    print(f'SLA respons {prio}: {label}')
-
-rules = {r['name']: r['id'] for r in get('RuleTicket')}
-actions = [a for a in get('RuleAction') if isinstance(a, dict)]
-for prio, values in PRIORITY_SLA.items():
-    name = f'SLA {prio}'
-    rule = rules.get(name)
-    if rule is None:
-        rule = add('RuleTicket', {'name': name, 'sub_type': 'RuleTicket', 'match': 'OR', 'is_active': 1,
-                                  'condition': RULE_ON_ADD_AND_UPDATE, 'entities_id': 0, 'is_recursive': 1,
-                                  'description': 'HaloSIS: SLA respons & penyelesaian menurut prioritas (BR-02)'})
-        for value in values:
-            add('RuleCriteria', {'rules_id': rule, 'criteria': 'priority', 'condition': PATTERN_IS, 'pattern': value})
-        print(f'Aturan "{name}": prioritas {values}')
-    # Satu aksi per jenis SLA (TTR & TTO); aturan lama dari versi sebelumnya mendapat aksi TTO saja
-    for sla in get('SLA'):
-        if sla['name'].split(' ')[0] != prio or sla['type'] not in (SLA_TTR, SLA_TTO):
-            continue
-        field = 'slas_id_ttr' if sla['type'] == SLA_TTR else 'slas_id_tto'
-        if any(a['rules_id'] == rule and a['field'] == field for a in actions):
-            continue
-        add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': field, 'value': sla['id']})
-        print(f'Aturan "{name}": {field} → SLA "{sla["name"]}"')
-
-# T22: SLA per layanan (config/sla_layanan.json): aturan per kategori & jenis, dipasang SETELAH aturan per prioritas
-# (ranking lebih besar), jadi menimpa SLA prioritas untuk kategori yang dipetakan; kategori lain tetap pakai cadangan.
-SERVICE_SLA = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config/sla_layanan.json'), encoding='utf-8'))
-UNITS = {'m': ('minute', 'menit'), 'h': ('hour', 'jam'), 'd': ('day', 'hari')}
-TICKET_TYPE = {'insiden': 1, 'permintaan': 2}       # Ticket::INCIDENT_TYPE, Ticket::DEMAND_TYPE
+calendar = slm.get('calendars_id') or 1
+# Jam kerja per hari dari kalender GLPI (segmen hari Senin), untuk menghitung peringatan ±20% dalam waktu kerja
+segment = next(iter(s.get(f'{B}/Calendar/{calendar}/CalendarSegment').json() or []), None)
+WORKDAY = (int(segment['end'][:2]) - int(segment['begin'][:2])) * HOUR if segment else 8 * HOUR
+WARN = float(CFG.get('peringatan_sebelum_batas', 0.2))
+slas = {x['name']: x for x in get('SLA')}
 
 
-def service_sla(kind, target):
-    """SLA bersama per target (mis. "Layanan · respons 30 menit"), dibuat sekali; kind: respons | selesai | pemenuhan."""
-    n, unit = int(target[:-1]), UNITS[target[-1]]
-    name = f'Layanan · {kind} {n} {unit[1]}'
-    found = next((x for x in get('SLA') if x['name'] == name), None)
-    if found:
-        return found['id'], False
-    sla_type = SLA_TTO if kind == 'respons' else SLA_TTR
+def official_sla(label, target, sla_type):
+    """SLA "BPS · <label>" (dibuat sekali) + level peringatan ±20% & eskalasi untuk SLA penyelesaian."""
+    n, (unit, word, seconds) = int(target[:-1]), UNITS[target[-1]]
+    name = f'BPS · {label} {n} {word}'
+    if name in slas:
+        return slas[name]['id']
     sla_id = add('SLA', {'name': name, 'slms_id': slm['id'], 'type': sla_type, 'number_time': n,
-                         'definition_time': unit[0], 'calendars_id': slm.get('calendars_id', 1)})
-    if sla_type == SLA_TTR:  # peringatan risiko ±25% sebelum batas, sama seperti SLA prioritas
-        seconds = n * {'minute': 60, 'hour': HOUR, 'day': 8 * HOUR}[unit[0]]
-        level = add('SlaLevel', {'name': LEVEL_NAME, 'slas_id': sla_id, 'execution_time': -max(900, seconds // 4),
-                                 'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
-        add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
-    return sla_id, True
+                         'definition_time': unit, 'calendars_id': calendar, 'end_of_working_day': 0,
+                         'comment': f'Sumber: {CFG["sumber"]}'})
+    slas[name] = {'id': sla_id}
+    if sla_type == SLA_TTR:
+        total = n * (seconds or WORKDAY)
+        before = int(round(total * WARN / HOUR)) * HOUR or 900
+        for level_name, when in ((LEVEL_NAME, -before), (ESCALATION_NAME, 0)):
+            level = add('SlaLevel', {'name': level_name, 'slas_id': sla_id, 'execution_time': when, 'is_active': 1,
+                                     'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
+            add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
+        print(f'SLA "{name}": peringatan {before // HOUR} jam kerja sebelum batas, eskalasi di batas')
+    else:
+        print(f'SLA "{name}"')
+    return sla_id
 
 
-categories = {c['completename']: c['id'] for c in get('ITILCategory')}
-rules = {r['name']: r['id'] for r in get('RuleTicket')}
-for category, kinds in SERVICE_SLA.items():
-    if category.startswith('_'):
+tto = official_sla('respons', CFG['respons']['target'], SLA_TTO)
+rules = {r['name']: r for r in get('RuleTicket')}
+actions = [a for a in get('RuleAction') if isinstance(a, dict)]
+
+
+def ensure_rule(name, criteria, ttr):
+    """Aturan "SLA BPS …": semua kriteria (AND) → SLA respons 15 menit + SLA penyelesaian/pemenuhan."""
+    if name in rules:
+        return
+    rule = add('RuleTicket', {'name': name, 'sub_type': 'RuleTicket', 'match': 'AND', 'is_active': 1,
+                              'condition': RULE_ON_ADD_AND_UPDATE, 'entities_id': 0, 'is_recursive': 1,
+                              'description': f'HaloSIS: SLA resmi BPS ({CFG["sumber"]})'})
+    for field, value in criteria:
+        add('RuleCriteria', {'rules_id': rule, 'criteria': field, 'condition': PATTERN_IS, 'pattern': value})
+    add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_tto', 'value': tto})
+    add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_ttr', 'value': ttr})
+    print(f'Aturan "{name}"')
+
+
+# Insiden: tier resolution_sla_name history → prioritas GLPI (satu aturan per nilai prioritas)
+for tier, spec in CFG['insiden'].items():
+    if tier.startswith('_'):
         continue
+    ttr = official_sla(f'insiden {tier}', spec['target'], SLA_TTR)
+    for priority in spec['prioritas_glpi']:
+        ensure_rule(f'SLA BPS insiden {tier} · prioritas {priority}', [('type', INCIDENT), ('priority', priority)], ttr)
+
+# Permintaan: 7 hari; kategori layanan tim yang dominan 14 hari (aturan dipasang belakangan → menimpa)
+ensure_rule('SLA BPS permintaan', [('type', REQUEST)], official_sla('permintaan', CFG['permintaan']['bawaan']['target'], SLA_TTR))
+long = CFG['permintaan']['14_hari']
+ttr14 = official_sla('permintaan', long['target'], SLA_TTR)
+categories = {}
+for c in get('ITILCategory'):
+    categories.setdefault(c['name'], c['id'])
+    categories.setdefault(c['completename'], c['id'])
+for category in long['kategori_glpi']:
     if category not in categories:
-        print(f'PERINGATAN: kategori "{category}" tidak ada di GLPI, SLA layanan dilewati')
+        print(f'Info: kategori "{category}" belum ada di katalog GLPI; SLA 14 hari dipasang saat kategori dibuat (jalankan ulang)')
         continue
-    for kind, target in kinds.items():
-        name = f'SLA layanan: {category} · {kind}'
-        if name in rules:
-            continue
-        tto, _ = service_sla('respons', target['respons'])
-        ttr, _ = service_sla('selesai' if kind == 'insiden' else 'pemenuhan', target['selesai'])
-        rule = add('RuleTicket', {'name': name, 'sub_type': 'RuleTicket', 'match': 'AND', 'is_active': 1,
-                                  'condition': RULE_ON_ADD_AND_UPDATE, 'entities_id': 0, 'is_recursive': 1,
-                                  'description': 'HaloSIS: SLA per layanan (config/sla_layanan.json, T22)'})
-        add('RuleCriteria', {'rules_id': rule, 'criteria': 'itilcategories_id', 'condition': PATTERN_IS,
-                             'pattern': categories[category]})
-        add('RuleCriteria', {'rules_id': rule, 'criteria': 'type', 'condition': PATTERN_IS, 'pattern': TICKET_TYPE[kind]})
-        add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_tto', 'value': tto})
-        add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_ttr', 'value': ttr})
-        print(f'Aturan "{name}": respons {target["respons"]}, {"penyelesaian" if kind == "insiden" else "pemenuhan"} {target["selesai"]}')
+    ensure_rule(f'SLA BPS permintaan 14 hari · {category}', [('type', REQUEST), ('itilcategories_id', categories[category])], ttr14)
+
+# Aturan versi sebelumnya (angka asumsi) dinonaktifkan, tidak dihapus
+for name, rule in rules.items():
+    if (name in LEGACY_RULES or name.startswith('SLA layanan: ')) and rule.get('is_active'):
+        s.put(f'{B}/RuleTicket/{rule["id"]}', data=json.dumps({'input': {'id': rule['id'], 'is_active': 0}}))
+        print(f'Aturan lama "{name}" dinonaktifkan')
 
 for team in TEAMS:
     group = next((g for g in get('Group') if g['name'] == team), None)
