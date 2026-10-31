@@ -114,6 +114,9 @@ SLA = {}
 for nama, n, unit in [('Kritis · 4 jam', 4, 'hour'), ('Tinggi · 6 jam', 6, 'hour'), ('Sedang · 1 hari', 1, 'day'), ('Rendah · 3 hari', 3, 'day')]:
     SLA[nama.split(' ')[0]] = ensure('SLA', {'name': nama, 'slms_id': slm, 'type': 0, 'number_time': n, 'definition_time': unit, 'calendars_id': 1})
 
+# BR-03: SOP = artikel KB berkategori "SOP"; artikel terbit otomatis masuk indeks layanan AI (re-index plugin)
+ensure('Glpi%5CForm%5CCategory', {'name': 'SOP'})
+
 # Data transaksi contoh (tiket, KB, masalah): hanya pada run pertama
 FIRST_TICKET = 'FASIH tidak bisa sinkron data, error 502'
 seeded = FIRST_TICKET in existing('Ticket')

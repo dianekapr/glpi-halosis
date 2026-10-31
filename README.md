@@ -643,11 +643,11 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 
 | Area | Dokumen / PoC | Implementasi | Alasan | Rencana lanjut |
 | --- | --- | --- | --- | --- |
-| Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dipilih saat implementasi (multilingual, lokal & gratis); belum dibandingkan langsung dengan MiniLM | Uji banding MRR kedua model pada set uji yang sama |
+| Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dibandingkan pada set uji yang sama ([`reports/banding_embedding.md`](reports/banding_embedding.md)): e5 Top-1 72,74% / MRR 0,8144 vs MiniLM 67,99% / 0,7650; lokal & gratis | — |
 | LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Tanpa LLM: jawaban **ekstraktif** dari artikel/tiket; Claude opsional | Tanpa API berbayar & tanpa GPU; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Ollama + Qwen2.5 3B sebagai perangkum opsional |
 | Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori; artikel KB diperbarui inkremental (`POST /reindex/artikel`) | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar |
 | Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang; tanpa DBSCAN agar ringan | DBSCAN & analisis tren antar-periode |
-| Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal | Model dampak/urgensi dari history |
+| Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal; history **tidak punya kolom dampak/urgensi/prioritas**, jadi tidak bisa dilatih | Catat dampak/urgensi final Operator di GLPI sebagai data latih ke depan |
 | Login | SSO BPS | SSO Keycloak lokal (realm `halosis`), dicek dari form login HaloSIS lewat password grant | Prototipe tanpa akses SSO BPS; satu kali login tanpa halaman Keycloak | Arahkan `HALOSIS_KEYCLOAK_URL` ke Keycloak SSO BPS + client resmi (Direct Access Grants aktif) |
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
@@ -677,14 +677,16 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | ITSM core (tiket, role, menu per peran) | Uji skenario 12 langkah lintas 6 role | Proven |
 | Login SSO & sinkron role/tim | 16 akun login lewat Keycloak lokal; user baru, pindah tim, dan ketua tim dari Keycloak terbawa ke GLPI | Proven (Keycloak lokal); SSO BPS: belum diuji |
 | SLA & peringatan risiko | Aturan SLA + level peringatan, notifikasi ke teknisi/tim/ketua tim (tiket uji #58) | Proven (browser); email: Proven (Mailpit lokal) |
-| Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), re-index otomatis saat artikel terbit/dihapus; `ai/tests/test_candidates.py`, `test_reindex.py` | Proven |
-| AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end | Proven |
-| AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07% (`reports/triase.md`) | Partially proven |
+| Knowledge & Kandidat Knowledge | Kandidat → draf KB (UC-09), re-index otomatis saat artikel terbit/dihapus, katalog layanan & SOP terindeks; `ai/tests/test_candidates.py`, `test_reindex.py` | Proven |
+| AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end; banding embedding 906 kueri (`reports/banding_embedding.md`) | Proven |
+| AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07%, MRR 0,8420 (`reports/triase.md`) | Partially proven |
 | Conversation (self-service) | Chat → laporan → tiket, riwayat & rating | Partially proven (ekstraktif, tanpa uji usability) |
 | Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci | Partially proven |
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat | Proven |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md` | Partially proven (belum di-load ke GLPI) |
-| Performa, ketersediaan, keamanan | Rencana uji performa [`reports/rencana_uji.md`](reports/rencana_uji.md); checklist keamanan & backup [`reports/keamanan_backup.md`](reports/keamanan_backup.md) | Rencana (belum diuji di lingkungan produksi) |
+| Performa (layanan AI) | Normal 10 VU 5 menit: 552 permintaan, galat 0%, `/chat` p95 140 ms, `/triage` p95 25 ms ([`reports/rencana_uji.md`](reports/rencana_uji.md) §7) | Partially proven (laptop; Peak/Stress & halaman GLPI belum) |
+| Backup & restore DB | `mysqldump` → DB terpisah: 455 tabel & jumlah baris sama, pulih 6 dtk ([`reports/keamanan_backup.md`](reports/keamanan_backup.md) §3) | Proven (DB saja; volume berkas belum) |
+| Ketersediaan, keamanan | Checklist keamanan [`reports/keamanan_backup.md`](reports/keamanan_backup.md); TLS belum | Rencana |
 
 ## Mematikan / mengulang dari nol
 ```bash

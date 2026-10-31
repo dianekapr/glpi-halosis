@@ -2,6 +2,7 @@
 
 - POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode, pilihan?}
+- POST /reindex/layanan {layanan: [{id, nama, deskripsi}]} → katalog layanan masuk indeks (jenis_sumber 'layanan')
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
 - POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
 - POST /cari   {q, k}                    → artikel KB & tiket historis paling relevan (pencarian semantik agent, FR-03)
@@ -151,6 +152,16 @@ class PatternRequest(BaseModel):
     jendela_menit: int = Field(default=patterns.DEFAULT_WINDOW_MINUTES, ge=1)
 
 
+class ServiceItem(BaseModel):
+    id: str = Field(pattern=r'^[CF]\d{1,9}$', description='C<id> kategori layanan atau F<id> form katalog GLPI')
+    nama: str = Field(max_length=255)
+    deskripsi: str = Field(default='', max_length=5000)
+
+
+class ServiceCatalogReindexRequest(BaseModel):
+    layanan: list[ServiceItem] = Field(max_length=500)
+
+
 class ArticleReindexRequest(BaseModel):
     id: int = Field(gt=0)
     judul: str = Field(default='', max_length=500)
@@ -238,6 +249,8 @@ def extractive(hit: dict) -> str:
         text = text.split('Solusi:', 1)[1].strip()
     # Judul tiket di indeks = awal teks "masalah" (bisa ikut deskripsi): ambil baris pertama saja
     title = hit['judul'].strip().split('\n', 1)[0][:80].rstrip()
+    if hit['jenis_sumber'] == 'layanan':
+        return f'Permintaan ini bisa diajukan lewat layanan "{title}" di katalog layanan.\n{text}'
     return f'Berdasarkan {"artikel" if hit["jenis_sumber"] == "kb" else "penanganan tiket serupa"} '\
            f'"{title}":\n{text}'
 
@@ -305,6 +318,23 @@ def reindex_article(req: ArticleReindexRequest) -> dict:
     state['corpus_mean'] = vectors.mean(axis=0)
     record_latency('reindex', total_ms=ms_since(start), aksi=req.aksi, potongan=count)
     return {'ok': True, 'aksi': req.aksi, 'potongan': count}
+
+
+@app.post('/reindex/layanan')
+def reindex_services(req: ServiceCatalogReindexRequest) -> dict:
+    """Katalog layanan (kategori & form GLPI) → potongan 'layanan', agar chatbot bisa mengarahkan ke layanan (BR-03)."""
+    if not state.get('search'):
+        raise HTTPException(503, 'Indeks pencarian belum tersedia')
+    start = time.perf_counter()
+    try:
+        count = search.replace_services([item.model_dump() for item in req.layanan])
+    except OSError as e:
+        log.error('Indeks gagal ditulis: %s', type(e).__name__)
+        raise HTTPException(500, 'Indeks gagal ditulis; indeks lama tetap dipakai') from e
+    _, vectors = search.load_index()
+    state['corpus_mean'] = vectors.mean(axis=0)
+    record_latency('reindex', total_ms=ms_since(start), aksi='layanan', potongan=count)
+    return {'ok': True, 'potongan': count}
 
 
 @app.post('/cari')

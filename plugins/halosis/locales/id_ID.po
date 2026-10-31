@@ -1108,3 +1108,33 @@ msgstr "Diubah + ditolak"
 
 msgid "Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits."
 msgstr "Maksud Anda salah satu artikel berikut? Buka yang sesuai, atau klik “Buat laporan” bila tidak ada yang cocok."
+
+msgid "Choose a review date after today."
+msgstr "Pilih tanggal tinjau setelah hari ini."
+
+msgid "Article not found."
+msgstr "Artikel tidak ditemukan."
+
+msgid "Next review date saved."
+msgstr "Tanggal tinjau berikut tersimpan."
+
+msgid "Review due"
+msgstr "Jatuh tempo tinjau"
+
+msgid "automatic"
+msgstr "otomatis"
+
+msgid "Reviewed; next review on"
+msgstr "Sudah ditinjau; tinjau lagi pada"
+
+msgid "Save date"
+msgstr "Simpan tanggal"
+
+msgid "Incident pattern trend: tickets per week by topic (12 weeks)"
+msgstr "Tren pola insiden: tiket per minggu per topik (12 minggu)"
+
+msgid "Topic"
+msgstr "Topik"
+
+msgid "No incident patterns in the last 12 weeks."
+msgstr "Belum ada pola insiden dalam 12 minggu terakhir."

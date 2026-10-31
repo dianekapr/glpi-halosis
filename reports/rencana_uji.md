@@ -122,11 +122,18 @@ Mode jawaban chat: ekstraktif 18, tidak ditemukan 2.
 
 ## 7. Hasil uji beban (diisi saat uji)
 
-Lingkungan: ____ (CPU/RAM server, versi image, jumlah data tiket & potongan indeks) · Tanggal: ____ · Penguji: ____
+Lingkungan (Normal): laptop Apple M4 (10 core, 24 GB), Docker Desktop dibatasi 10 CPU / 7,7 GB; semua layanan di satu
+mesin (GLPI 12, MySQL 8.4, `halosis-ai` CPU tanpa GPU, model `triase-tfidf-lr-20261028`, embedding e5-base,
+indeks 4.243 potongan (4.238 tiket, 5 artikel KB), generasi ekstraktif tanpa Claude); k6 v2.3.0 (`grafana/k6`) di jaringan docker-compose ·
+Tanggal: 31 Okt 2026 · Penguji: tim proyek (dibantu Claude Code).
+
+Cakupan baris Normal: **hanya layanan AI** (`/chat` & `/triage` langsung ke `halosis-ai`, skrip
+[`tests/load/halosis_ai.js`](../tests/load/halosis_ai.js), 10 VU tetap 5 menit, jeda 3–8 dtk, 8 kalimat buatan, tanpa
+data asli). Halaman GLPI & API tiket belum diuji beban (perlu akun uji & sesi), jadi kolomnya "–".
 
 | Kondisi | VU | Permintaan | Galat % | Halaman p95 | API tiket p95 | `/chat` e2e p95 | `/triage` p95 | CPU maks (glpi/db/ai) | Lulus? |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Normal | 10 | | | | | | | | |
+| Normal (AI) | 10 | 552 (1,4/dtk) | 0,00% | – | – | 140 ms (langsung ke layanan; median 64 ms) | 25 ms (median 21 ms) | glpi 11% · db 2% · ai 294% (≈3 core) | ✅ untuk AI (≤ 1,5 s & ≤ 0,2 s); halaman/API belum |
 | Peak | 50 | | | | | | | | |
 | Stress | sampai ___ | | | | | | | | titik jenuh: ___ VU |
 
@@ -134,7 +141,7 @@ Temuan & tindak lanjut:
 
 | # | Temuan | Dampak | Tindak lanjut (mis. replika `halosis-ai`, indeks DB, cache) |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | `/chat` memakai ±3 core CPU saat 10 VU (embedding e5 di CPU) walau p95 masih 140 ms | Beban Peak (50 VU) berisiko antre di satu container | Uji Peak; bila p95 naik, tambah replika `halosis-ai` atau GPU/ONNX untuk embedding |
 
 ## 8. Batasan
 

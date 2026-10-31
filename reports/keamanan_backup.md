@@ -51,6 +51,12 @@ Nama volume bisa berbeda; cek dengan `docker volume ls`. Folder `backup/` harus 
 
 ## 3. Uji restore (lakukan minimal sekali sebelum demo/pengumpulan)
 
+Uji 31 Okt 2026 dilakukan **tanpa menyentuh DB utama**: dump dibaca dari `db`, lalu dipulihkan ke database
+`glpi_restore_test` di **container MySQL 8.4 sementara** (image sama dengan `db`). Container `db` utama tidak bisa
+dipakai karena user aplikasi hanya berhak atas DB `glpi` dan password root-nya acak (tidak tersimpan). Setelah
+jumlah baris dibandingkan, database, container, volume anonim, dan file dump dihapus. Cakupan: database saja;
+volume `glpi_data` (lampiran, konfigurasi) dan `ai/models` + `ai/index` belum ikut diuji.
+
 ```bash
 docker compose down -v                    # HANYA di laptop uji: menghapus semua data
 docker compose up -d db && sleep 20
@@ -64,7 +70,7 @@ Saran AI & riwayat keputusannya, dan `/health` layanan AI `"status":"ok"`.
 
 | Tanggal uji | Backup yang dipakai | Waktu pulih (RTO) | Data hilang (RPO) | Hasil | Penguji |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| 31 Okt 2026 | `mysqldump --single-transaction` DB `glpi` (344 KB gzip, 1 dtk) | **6 dtk** restore DB (container MySQL 8.4 baru siap ± 20 dtk) | 0 (backup diambil saat uji) | ✅ 455 tabel; tiket 67, pengguna 21, keputusan AI 39, saran AI 62, artikel KB 10 = sama persis dengan sumber | tim proyek (dibantu Claude Code) |
 
 ## 4. Target pemulihan (usulan, disepakati dengan BPS)
 

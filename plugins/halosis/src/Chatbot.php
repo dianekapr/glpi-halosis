@@ -218,6 +218,9 @@ final class Chatbot
                     return null;
                 }
                 $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+            } elseif (($url = KnowledgeIndex::serviceUrl($ref)) !== null) {
+                // Katalog layanan (BR-03): arahkan ke form / katalog layanan
+                $sources[] = ['id' => 0, 'name' => (string) ($source['judul'] ?? $ref), 'url' => $url];
             } else {
                 // Tiket history tidak ada di GLPI ini: tampilkan nomornya saja, tanpa tautan
                 $sources[] = ['id' => 0, 'name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];

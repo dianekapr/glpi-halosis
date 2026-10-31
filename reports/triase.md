@@ -10,6 +10,7 @@ Versi `triase-tfidf-lr-20261028` · dibuat oleh `ai/scripts/train_triage.py`. Ha
 | Kelas (tim) | 21 (tim < 30 tiket di data latih → "Lainnya") |
 | **Akurasi top-1** | **74,41%** |
 | **Akurasi top-3** | **93,07%** |
+| MRR | 0,8420 (PoC hal. 54: 0,7989 TF-IDF / 0,8092 embedding, 39 grup) |
 | F1 makro / tertimbang | 67,69% / 73,68% |
 | Pembanding: selalu tim terbanyak | 10,97% ("Technical Layanan SiPecut") |
 | Keyakinan ≥ 70% (saran bisa langsung diterima) | akurasi 87,03% · cakupan 51,44% tiket |

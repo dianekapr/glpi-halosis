@@ -8,6 +8,7 @@
  */
 
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
 
@@ -122,6 +123,15 @@ function plugin_halosis_tables(): array
             KEY `knowbaseitems_id` (`knowbaseitems_id`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Tanggal tinjau berikut per artikel KB (KR-03); tanpa baris = date_mod + kb_review_months.
+        'glpi_plugin_halosis_kb_reviews' => "
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `date_review` date DEFAULT NULL COMMENT 'Tanggal tinjau berikut',
+            `users_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Yang mengatur tanggal',
+            `date_mod` timestamp NULL DEFAULT NULL,
+            UNIQUE KEY `knowbaseitems_id` (`knowbaseitems_id`),
+            KEY `date_review` (`date_review`)
+        ",
         // Kandidat Knowledge (UC-09): solusi tiket selesai atau solusi berulang dari indeks AI, dikurasi
         // Knowledge Manager menjadi draf artikel KB atau diabaikan dengan alasan.
         'glpi_plugin_halosis_candidates' => "
@@ -189,6 +199,8 @@ function plugin_halosis_install(): bool
 
     Config::install();
     Profile::install();
+    // Katalog layanan awal ke indeks AI (BR-03); layanan mati → dilewati, tersinkron saat kategori/form berubah
+    KnowledgeIndex::syncServiceCatalog();
 
     // Deteksi pola insiden tiap 15 menit (tidak menimpa jadwal yang sudah diubah admin)
     CronTask::register(PatternDetector::class, PatternDetector::CRON_NAME, 15 * MINUTE_TIMESTAMP, [

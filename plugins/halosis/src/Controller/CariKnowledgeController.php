@@ -7,6 +7,7 @@ use Glpi\Http\Firewall;
 use Glpi\Security\Attribute\SecurityStrategy;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Service;
+use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\KnowledgeSearch;
 use GlpiPlugin\Halosis\Profile;
 use KnowbaseItem;
@@ -77,6 +78,8 @@ final class CariKnowledgeController extends AbstractController
                     continue;
                 }
                 $url = KnowbaseItem::getFormURLWithID((int) $m[1]);
+            } else {
+                $url = KnowledgeIndex::serviceUrl($ref) ?? '';
             }
             $items[] = [
                 'title' => (string) ($hit['judul'] ?? ''),

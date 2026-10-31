@@ -152,37 +152,74 @@ final class KnowledgeCandidates
         ]), false);
     }
 
+    /** Tanggal tinjau berikut per artikel (KR-03) */
+    public const REVIEW_TABLE = 'glpi_plugin_halosis_kb_reviews';
+
     /**
-     * Artikel terbit yang terakhir diubah lebih dari `kb_review_months` bulan lalu (tinjau berkala, hal. 139),
-     * terlama dulu. Meninjau = menyunting artikel di KB GLPI, sehingga date_mod maju dan artikel keluar dari daftar.
+     * Artikel terbit yang jatuh tempo ditinjau (hal. 139), terlama dulu. Tanggal tinjau berikut = tanggal yang diatur
+     * Knowledge Manager (KR-03) atau, bila belum diatur, `date_mod` + `kb_review_months`. Menyunting artikel di KB
+     * memajukan date_mod; mengatur tanggal baru menjadwalkan tinjauan berikutnya.
      *
-     * @return array<int, array{id: int, name: string, date_mod: string, url: string}>
+     * @return array<int, array{id: int, name: string, date_mod: string, next_review: string, explicit: bool, url: string}>
      */
     public static function dueForReview(): array
     {
         global $DB;
 
         $months = max(1, (int) Config::get('kb_review_months'));
-        $before = date('Y-m-d H:i:s', strtotime(($_SESSION['glpi_currenttime'] ?? 'now') . " -{$months} months"));
+        $today  = date('Y-m-d', strtotime($_SESSION['glpi_currenttime'] ?? 'now'));
         $items = [];
         foreach ($DB->request([
-            'FROM'  => KnowbaseItem::getTable(),
-            'WHERE' => ['date_mod' => ['<', $before]],
-            'ORDER' => ['date_mod ASC', 'id ASC'],
+            'SELECT'    => [KnowbaseItem::getTable() . '.*', 'r.date_review'],
+            'FROM'      => KnowbaseItem::getTable(),
+            'LEFT JOIN' => [self::REVIEW_TABLE . ' AS r' => ['ON' => ['r' => 'knowbaseitems_id', KnowbaseItem::getTable() => 'id']]],
+            'ORDER'     => ['date_mod ASC', 'id ASC'],
         ]) as $fields) {
+            $explicit = !empty($fields['date_review']);
+            $next = $explicit ? (string) $fields['date_review'] : date('Y-m-d', strtotime($fields['date_mod'] . " +{$months} months"));
+            if ($next > $today) {
+                continue;
+            }
             $article = new KnowbaseItem();
             $article->fields = $fields;
             if (!KnowledgeIndex::isPublished($article)) {
                 continue;
             }
             $items[] = [
-                'id'       => (int) $fields['id'],
-                'name'     => (string) $fields['name'],
-                'date_mod' => (string) $fields['date_mod'],
-                'url'      => KnowbaseItem::getFormURLWithID((int) $fields['id']),
+                'id'          => (int) $fields['id'],
+                'name'        => (string) $fields['name'],
+                'date_mod'    => (string) $fields['date_mod'],
+                'next_review' => $next,
+                'explicit'    => $explicit,
+                'url'         => KnowbaseItem::getFormURLWithID((int) $fields['id']),
             ];
         }
         return $items;
+    }
+
+    /**
+     * Atur tanggal tinjau berikut satu artikel (KR-03): artikel keluar dari "Perlu ditinjau" sampai tanggal itu.
+     *
+     * @return array{ok: bool, message?: string}
+     */
+    public static function setReviewDate(int $kb_id, string $date): array
+    {
+        global $DB;
+
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+        $today  = date('Y-m-d', strtotime($_SESSION['glpi_currenttime'] ?? 'now'));
+        if ($parsed === false || $parsed->format('Y-m-d') !== $date || $date <= $today) {
+            return ['ok' => false, 'message' => __('Choose a review date after today.', 'halosis')];
+        }
+        if (!(new KnowbaseItem())->getFromDB($kb_id)) {
+            return ['ok' => false, 'message' => __('Article not found.', 'halosis')];
+        }
+        $DB->updateOrInsert(self::REVIEW_TABLE, [
+            'date_review' => $date,
+            'users_id'    => Session::getLoginUserID(),
+            'date_mod'    => $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s'),
+        ], ['knowbaseitems_id' => $kb_id]);
+        return ['ok' => true];
     }
 
     /**
