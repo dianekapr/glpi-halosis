@@ -30,7 +30,8 @@ s.post(B + '/changeActiveProfile', json={'profiles_id': P['Super-Admin']})
 GLOBAL = {
     # Operator: antrean validasi & semua tiket. Tanpa "Tanggal buka" (dobel dengan Terakhir diperbarui)
     # dan tanpa "Teknisi" (Operator menugaskan ke tim).
-    ('Ticket', 'central'): [12, 3, 7, 4, 8, 18, 19],      # Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui
+    # Waktu untuk mengambil alih = SLA respons (T1, setup_sla_alerts.py).
+    ('Ticket', 'central'): [12, 3, 7, 4, 8, 155, 18, 19], # Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk mengambil alih, Waktu untuk menyelesaikan, Terakhir diperbarui
     # Pegawai (Helpdesk, "Laporan saya"): progres laporan + sisa waktu SLA (UC-07 langkah 2)
     ('Ticket', 'helpdesk'): [12, 7, 18, 19],              # Status, Kategori, Waktu untuk menyelesaikan, Terakhir diperbarui
     # Masalah / pola insiden: tanpa Deskripsi (panjang) & Waktu untuk menyelesaikan (kosong untuk pola)

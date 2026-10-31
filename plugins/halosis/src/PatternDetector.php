@@ -24,6 +24,7 @@ use Toolbox;
  * Kelompok dengan ≥ N tiket menjadi Problem "Pola insiden: …" yang ditautkan ke tiketnya dan ditugaskan
  * ke grup Operator. Problem dibiarkan berstatus Baru: petugas yang memutuskan tindak lanjut.
  * Pola yang sama dan Problem-nya masih terbuka tidak dibuat ulang; tiket barunya ditautkan ke Problem itu.
+ * Hanya tiket Insiden yang dihitung (PoC hal. 56: pola dari tiket INC); permintaan layanan tidak membentuk pola.
  *
  * Tabel glpi_plugin_halosis_patterns mencatat pola yang terdeteksi.
  */
@@ -118,7 +119,7 @@ final class PatternDetector extends CommonDBTM
     }
 
     /**
-     * Tiket yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
+     * Tiket Insiden yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
      *
      * @return array<int, array{id: int, name: string, entities_id: int, urgency: int, category: int}>
      */
@@ -134,6 +135,7 @@ final class PatternDetector extends CommonDBTM
             'FROM'   => Ticket::getTable(),
             'WHERE'  => [
                 'is_deleted' => 0,
+                'type'       => Ticket::INCIDENT_TYPE,
                 'date'       => ['>=', $since],
                 'status'     => ['<', CommonITILObject::SOLVED],
             ],
@@ -292,7 +294,10 @@ final class PatternDetector extends CommonDBTM
      */
     private static function upsertProblem(array $pattern, int $window): array
     {
-        $record  = self::findOpenRecord($pattern['signature']);
+        // Tanda pola bisa bergeser antar-jalannya cron (mis. anggota tertua sudah selesai): anggota yang sudah
+        // tertaut ke Problem pola yang masih terbuka membawa tiket mirip yang baru ke Problem itu
+        $record  = self::findOpenRecord($pattern['signature'])
+            ?? self::findOpenRecordForTickets(array_column($pattern['tickets'], 'id'));
         $created = $record === null;
         $problem = new Problem();
 
@@ -370,6 +375,38 @@ final class PatternDetector extends CommonDBTM
                 'p.date_creation' => ['>=', $since],
                 'pr.is_deleted'   => 0,
                 'pr.status'       => ['<', CommonITILObject::SOLVED],
+            ],
+            'ORDER'      => 'p.id DESC',
+            'LIMIT'      => 1,
+        ])->current();
+
+        $record = new self();
+        return $row !== null && $record->getFromDB((int) $row['id']) ? $record : null;
+    }
+
+    /**
+     * Catatan pola yang Problem-nya masih terbuka dan sudah menaungi salah satu tiket ini.
+     *
+     * @param int[] $tickets_ids
+     */
+    private static function findOpenRecordForTickets(array $tickets_ids): ?self
+    {
+        global $DB;
+
+        if ($tickets_ids === []) {
+            return null;
+        }
+        $row = $DB->request([
+            'SELECT'     => ['p.id'],
+            'FROM'       => self::getTable() . ' AS p',
+            'INNER JOIN' => [
+                Problem::getTable() . ' AS pr'           => ['ON' => ['p' => 'problems_id', 'pr' => 'id']],
+                Problem_Ticket::getTable() . ' AS pt' => ['ON' => ['p' => 'problems_id', 'pt' => 'problems_id']],
+            ],
+            'WHERE'      => [
+                'pt.tickets_id' => $tickets_ids,
+                'pr.is_deleted' => 0,
+                'pr.status'     => ['<', CommonITILObject::SOLVED],
             ],
             'ORDER'      => 'p.id DESC',
             'LIMIT'      => 1,

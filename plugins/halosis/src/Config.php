@@ -32,10 +32,14 @@ final class Config
         'service_url'      => 'http://halosis-ai:8000',
         'service_timeout'  => 8,
         'triage_threshold' => 70,
+        // Ambang bawah (TO-BE hal. 100): di bawahnya penilaian manual; antara keduanya pilih dari 3 kandidat
+        'ai_threshold_low' => 40,
         // Deteksi pola insiden: minimal N tiket mirip dalam jendela waktu (menit); 0 = grup Operator bawaan
         'pattern_min_tickets' => 3, // PoC hal. 56: minimum 3 incident
         'pattern_window'      => 60,
         'pattern_group_id'    => 0,
+        // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
+        'kb_review_months'    => 6,
         'feature_triage'    => 1,
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
@@ -116,6 +120,11 @@ final class Config
         return (int) self::get('triage_threshold');
     }
 
+    public static function getLowThreshold(): int
+    {
+        return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
+    }
+
     /**
      * Nilai untuk ditampilkan di form konfigurasi. API key tidak ikut, hanya status tersimpan/tidak.
      */
@@ -166,11 +175,13 @@ final class Config
 
         $values['ai_timeout']       = max(5, min(120, (int) ($input['ai_timeout'] ?? self::DEFAULTS['ai_timeout'])));
         $values['triage_threshold'] = max(0, min(100, (int) ($input['triage_threshold'] ?? self::DEFAULTS['triage_threshold'])));
+        $values['ai_threshold_low'] = max(0, min($values['triage_threshold'], (int) ($input['ai_threshold_low'] ?? self::DEFAULTS['ai_threshold_low'])));
 
         $values['pattern_min_tickets'] = max(2, min(500, (int) ($input['pattern_min_tickets'] ?? self::DEFAULTS['pattern_min_tickets'])));
         $values['pattern_window']      = max(15, min(1440, (int) ($input['pattern_window'] ?? self::DEFAULTS['pattern_window'])));
         $group_id = (int) ($input['pattern_group_id'] ?? 0);
         $values['pattern_group_id'] = $group_id > 0 && (new \Group())->getFromDB($group_id) ? $group_id : 0;
+        $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 
         foreach (self::FEATURES as $feature) {
             $values['feature_' . $feature] = (int) !empty($input['feature_' . $feature]);
