@@ -71,6 +71,12 @@ for parent, kids in {'Akun & Akses': ['SSO / Login', 'TTE', 'Hak akses folder'],
         grp = {'Akun & Akses': 'Tim Identitas & Akses', 'Aplikasi Statistik': 'Tim Aplikasi Statistik'}.get(parent, 'Tim Jaringan' if k == 'Jaringan & VPN' else 'Tim Perangkat')
         C[k] = ensure('ITILCategory', {'name': k, 'itilcategories_id': pid, 'groups_id': G[grp], 'is_recursive': 1, 'is_helpdeskvisible': 1, 'is_incident': 1, 'is_request': 1})
 
+# Contoh layanan tim yang di history dominan SLA pemenuhan 14 hari (config/sla_layanan.json), agar aturan
+# "SLA BPS permintaan 14 hari" bisa didemokan
+C['Server Hosting'] = ensure('ITILCategory', {'name': 'Server Hosting', 'itilcategories_id': C['Jaringan & Perangkat'],
+                                              'groups_id': G['Tim Jaringan'], 'is_recursive': 1, 'is_helpdeskvisible': 1,
+                                              'is_incident': 1, 'is_request': 1})
+
 # Pengguna & role (profile)
 U = {}
 USERS = [

@@ -12,6 +12,12 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
 - **Layanan AI:** rate limit per klien (T26, `HALOSIS_RATE_LIMIT_PER_MIN`), gerbang kualitas model (T32, kolom
   `quality_ok`), FAQ Email/SSO/SiPecut (T30), chatbot mengarahkan pertanyaan non-TI (T31).
 - Snapshot demo ikut menyimpan & memulihkan indeks AI.
+- **Koreksi sebelum rilis (masih 1.0.0):** SLA resmi BPS dari history ESTIM (respons 15 menit; insiden Crit 2 /
+  Medium 8 / Low 15 hari; permintaan 7/14 hari; kalender jam kerja; peringatan ±20%) menggantikan angka asumsi; KPI
+  kepatuhan SLA sebanding baseline 27,59%; gerbang kualitas memeriksa semua syarat tata kelola per model
+  (`quality.py`, `triage.metrics.json`); model prioritas insiden (`train_prioritas.py`) hanya dipakai bila lolos.
+- Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
+  kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.
 
 ## 0.10.0 — 31 Okt 2026

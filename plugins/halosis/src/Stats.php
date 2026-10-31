@@ -249,7 +249,8 @@ final class Stats
             $where[] = ['NOT' => ['entities_id' => $archive]];
         }
         $operator = PatternDetector::getOperatorGroupId();
-        $k = ['tickets' => 0, 'tto_n' => 0, 'tto_b' => 0, 'ttr_n' => 0, 'ttr_b' => 0, 'solved' => 0, 'l1' => 0, 'delays' => []];
+        $k = ['tickets' => 0, 'tto_n' => 0, 'tto_b' => 0, 'ttr_n' => 0, 'ttr_b' => 0, 'solved' => 0, 'l1' => 0, 'delays' => [],
+            'pass' => 0, 'breach' => 0];
         foreach ($DB->request([
             'SELECT' => ['id', 'date', 'status', 'time_to_own', 'time_to_resolve', 'takeintoaccountdate', 'solvedate'],
             'FROM'   => Ticket::getTable(),
@@ -263,6 +264,17 @@ final class Stats
             if ($t['time_to_resolve']) {
                 $k['ttr_n']++;
                 $k['ttr_b'] += (int) (($t['solvedate'] ?: $now) > $t['time_to_resolve']);
+            }
+            // Kepatuhan keseluruhan, sebanding baseline ESTIM overall_sla_result (PASS ÷ (PASS + BREACH)):
+            // BREACH bila respons atau penyelesaian terlampaui; PASS bila selesai tanpa terlampaui; sisanya berjalan
+            $breached = ($t['time_to_own'] && ($t['takeintoaccountdate'] ?: $now) > $t['time_to_own'])
+                || ($t['time_to_resolve'] && ($t['solvedate'] ?: $now) > $t['time_to_resolve']);
+            if ($t['time_to_own'] || $t['time_to_resolve']) {
+                if ($breached) {
+                    $k['breach']++;
+                } elseif ((int) $t['status'] >= CommonITILObject::SOLVED) {
+                    $k['pass']++;
+                }
             }
             if ($t['takeintoaccountdate']) {
                 $k['delays'][] = (strtotime($t['takeintoaccountdate']) - strtotime($t['date'])) / 60;
@@ -284,6 +296,7 @@ final class Stats
             'tickets' => $k['tickets'], 'tto_n' => $k['tto_n'], 'tto_breach' => $pct($k['tto_b'], $k['tto_n']),
             'ttr_n' => $k['ttr_n'], 'ttr_breach' => $pct($k['ttr_b'], $k['ttr_n']),
             'assign_median_min' => $median, 'solved' => $k['solved'], 'l1_pct' => $pct($k['l1'], $k['solved']),
+            'pass_pct' => $pct($k['pass'], $k['pass'] + $k['breach']), 'decided' => $k['pass'] + $k['breach'],
         ];
     }
 

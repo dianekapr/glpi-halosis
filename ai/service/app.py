@@ -39,16 +39,14 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, ge
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import candidates, patterns, privacy, search, triage_model  # noqa: E402
+from halosis_ai import candidates, patterns, privacy, quality, search, triage_model  # noqa: E402
 
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
 # Opsional (T4): klasifier jenis REQ/INC (ai/scripts/train_jenis.py); tidak ada → /triage tanpa saran jenis
-# T32 gerbang kualitas (pre-kondisi UC-04, 2.1.4; syarat lulus reports/tata_kelola_ai.md §2): Top-1 minimal (bawaan
-# 0,68 = baseline TF-IDF PoC) dan akurasi pada keyakinan ≥ ambang minimal 85% bila artefak mencatatnya
-GATE_MIN_TOP1 = float(os.environ.get('HALOSIS_GATE_MIN_TOP1', '0.68'))
-GATE_MIN_ACC_CONFIDENT = float(os.environ.get('HALOSIS_GATE_MIN_ACC_CONFIDENT', '0.85'))
 JENIS_PATH = Path(os.environ.get('HALOSIS_JENIS_MODEL', AI_DIR / 'models/jenis.joblib'))
+# Opsional: prioritas insiden Medium/Low (ai/scripts/train_prioritas.py); dipakai hanya bila lolos gerbang kualitas
+PRIORITAS_PATH = Path(os.environ.get('HALOSIS_PRIORITAS_MODEL', AI_DIR / 'models/prioritas.joblib'))
 # Skor kosinus E5 di bawah ambang ini → "belum menemukan jawaban" (lihat ai/README.md, AI-4)
 CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))
 # Keyakinan sedang (TO-BE hal. 100): skor di antara ambang ini dan CHAT_MIN_SCORE → tidak menjawab, hanya
@@ -89,11 +87,16 @@ async def lifespan(_: FastAPI):
         state['triage'] = joblib.load(MODEL_PATH)
     except Exception as e:  # noqa: BLE001
         log.error('Model triase gagal dimuat: %s', e)
-    if JENIS_PATH.exists():
-        try:
-            state['jenis'] = joblib.load(JENIS_PATH)
-        except Exception as e:  # noqa: BLE001
-            log.error('Model jenis gagal dimuat (saran jenis dilewati): %s', e)
+    for key, path in (('jenis', JENIS_PATH), ('prioritas', PRIORITAS_PATH)):
+        if path.exists():
+            try:
+                state[key] = joblib.load(path)
+            except Exception as e:  # noqa: BLE001
+                log.error('Model %s gagal dimuat (saran dilewati): %s', key, e)
+    # Metrik gerbang kualitas per model: berkas pendamping *.metrics.json atau metrik di artefak (T32)
+    state['metrics'] = {key: quality.load_metrics(path, state[name]) for key, name, path in (
+        ('triase', 'triage', MODEL_PATH), ('jenis', 'jenis', JENIS_PATH), ('prioritas', 'prioritas', PRIORITAS_PATH),
+    ) if state.get(name) is not None}
     try:
         _, vectors = search.load_index()
         search.encoder()
@@ -226,19 +229,13 @@ def normalize_type(jenis: str) -> str:
     return 'REQ' if value.startswith(('req', 'perm', 'dem')) or value == '2' else 'INC'
 
 
-def quality_gate(model) -> dict:
-    """Lolos/tidak model triase menurut metrik uji yang tersimpan di artefak (tanpa menghitung ulang)."""
-    if model is None:
-        return {'lolos': False, 'alasan': ['model triase tidak tersedia']}
-    meta = getattr(model, 'metadata', {}) or {}
-    top1, acc = meta.get('top1'), meta.get('akurasi_yakin')
-    reasons = []
-    if top1 is None or float(top1) < GATE_MIN_TOP1:
-        reasons.append(f'Top-1 {top1} < {GATE_MIN_TOP1}')
-    if acc is not None and float(acc) < GATE_MIN_ACC_CONFIDENT:
-        reasons.append(f'akurasi pada ambang {acc} < {GATE_MIN_ACC_CONFIDENT}')
-    return {'lolos': not reasons, 'alasan': reasons, 'top1': top1, 'akurasi_yakin': acc,
-            'syarat': {'top1_min': GATE_MIN_TOP1, 'akurasi_yakin_min': GATE_MIN_ACC_CONFIDENT}}
+def quality_gate(kind: str) -> dict:
+    """Status gerbang kualitas satu model (syarat tata_kelola_ai.md); model tidak dimuat → tidak lolos."""
+    artifact = state.get('triage' if kind == 'triase' else kind)
+    if artifact is None:
+        return {'lolos': False, 'alasan': [f'model {kind} tidak tersedia'], 'syarat': {}}
+    metrics = state.get('metrics', {}).get(kind) or quality.load_metrics(Path('/nonexistent'), artifact)
+    return quality.check(kind, metrics)
 
 
 @app.get('/health')
@@ -247,7 +244,8 @@ def health() -> dict:
     return {
         'status': 'ok' if model and state.get('search') else 'sebagian',
         'triase': bool(model), 'versi_model': model.version if model else None,
-        'kualitas_model': quality_gate(model),
+        'kualitas_model': {kind: quality_gate(kind) for kind in ('triase', 'jenis', 'prioritas')
+                           if kind == 'triase' or state.get(kind) is not None},
         'pencarian': bool(state.get('search')), 'model_embedding': search.MODEL_NAME,
         'generasi': 'claude' if os.environ.get('ANTHROPIC_API_KEY') else 'ekstraktif',
     }
@@ -256,11 +254,25 @@ def health() -> dict:
 def suggest_type(title: str, description: str) -> dict | None:
     """Saran jenis REQ/INC + keyakinan (T4); None bila model jenis tidak tersedia."""
     artifact = state.get('jenis')
-    if not artifact:
+    if not artifact or not quality_gate('jenis')['lolos']:
         return None
     probs = artifact['pipeline'].predict_proba([triage_model.jenis_text(title, description)])[0]
     best = int(np.argmax(probs))
     return {'jenis': str(artifact['pipeline'].classes_[best]), 'keyakinan': round(float(probs[best]), 4),
+            'versi_model': artifact['version']}
+
+
+def suggest_priority(title: str, description: str, kind: str) -> dict | None:
+    """Saran prioritas insiden (Medium/Low → prioritas GLPI) hanya bila model lolos gerbang & keyakinan ≥ ambang."""
+    artifact = state.get('prioritas')
+    if kind != 'INC' or not artifact or not quality_gate('prioritas')['lolos']:
+        return None
+    probs = artifact['pipeline'].predict_proba([triage_model.jenis_text(title, description)])[0]
+    best = int(np.argmax(probs))
+    if float(probs[best]) < float(artifact.get('threshold', 0.7)):
+        return None
+    tier = str(artifact['pipeline'].classes_[best])
+    return {'tier': tier, 'prioritas': artifact['prioritas_glpi'][tier], 'keyakinan': round(float(probs[best]), 4),
             'versi_model': artifact['version']}
 
 
@@ -274,11 +286,12 @@ def triage(req: TriageRequest) -> dict:
     # Inferensi model + pencarian tiket mirip (satu langkah di TriageModel.predict); tanpa generation
     record_latency('triage', inferensi_ms=ms_since(start), generation_ms=None, total_ms=ms_since(start),
                    skor_teratas=round(float(result['keyakinan']), 4), versi_model=result['versi_model'])
-    gate = quality_gate(model)
+    gate = quality_gate('triase')
     return {
         'lolos_uji_kualitas': gate['lolos'],
         'alasan_kualitas': gate['alasan'],
         'jenis_saran': suggest_type(req.judul, req.deskripsi),
+        'prioritas_saran': suggest_priority(req.judul, req.deskripsi, normalize_type(req.jenis)),
         'tim': result['tim'],
         'top3': result['top3'],
         'keyakinan': result['keyakinan'],

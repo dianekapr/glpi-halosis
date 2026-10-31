@@ -131,3 +131,20 @@ Versi `jenis-tfidf-lr-20261031` · `ai/scripts/train_jenis.py` · artefak `ai/mo
 
 Panel Saran AI menampilkan "Jenis disarankan" hanya bila saran berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator tetap memutuskan (ubah jenis di form tiket).
 <!-- jenis:selesai -->
+
+<!-- prioritas:mulai -->
+## Saran prioritas insiden (BR-05, 2.1.4 Priority P1)
+
+Versi `prioritas-tfidf-lr-20261031` · `ai/scripts/train_prioritas.py` · artefak `ai/models/prioritas.joblib` (di-ignore git). Label = tier `resolution_sla_name` history (Medium 8 hari / Low 15 hari) sebagai proksi prioritas; Crit (9 tiket) & urgensi/dampak tetap aturan.
+
+| Indikator | Nilai |
+| --- | --- |
+| Data latih / uji (insiden) | 2054 / 647 tiket |
+| **F1 makro** | **44,80%** |
+| Akurasi | 81,14% |
+| Pembanding: selalu Medium | akurasi 81,14% · F1 makro 44,80% |
+| Keyakinan ≥ 70% | akurasi 82,39% · cakupan 98,30% tiket |
+| Gerbang kualitas (F1 makro > pembanding) | tidak lolos |
+
+Dipakai di saran prioritas insiden hanya bila gerbang lolos dan keyakinan ≥ ambang; selain itu prioritas dari matriks urgensi × dampak GLPI (aturan). Operator tetap memutuskan.
+<!-- prioritas:selesai -->

@@ -127,7 +127,7 @@ final class Triage
             'itilcategories_id' => $result['itilcategories_id'],
             'impact'            => $result['impact'],
             'urgency'           => $result['urgency'],
-            'priority'          => Ticket::computePriority($result['urgency'], $result['impact']),
+            'priority'          => $result['priority'] ?? Ticket::computePriority($result['urgency'], $result['impact']),
             'groups_id'         => $result['groups_id'],
             'confidence'        => $result['confidence'],
             'explanation'       => $result['explanation'],
@@ -290,6 +290,14 @@ final class Triage
             $result['quality_ok'] = 0;
         }
 
+        // Prioritas insiden dari model (BR-05, P1) hanya bila layanan menyatakan model lolos gerbang & yakin;
+        // selain itu matriks urgensi × dampak GLPI (aturan)
+        $priority = (array) ($response['prioritas_saran'] ?? []);
+        if ((int) $ticket->fields['type'] === Ticket::INCIDENT_TYPE && in_array((int) ($priority['prioritas'] ?? 0), range(1, 6), true)) {
+            $result['priority'] = (int) $priority['prioritas'];
+            $result['explanation_priority'] = sprintf(' Prioritas dari model history (tier %s, keyakinan %d%%).', $priority['tier'] ?? '?', (int) round(100 * (float) ($priority['keyakinan'] ?? 0)));
+        }
+
         // Saran jenis REQ/INC (T4), hanya bila layanan punya model jenis
         $kind = (array) ($response['jenis_saran'] ?? []);
         if (in_array($kind['jenis'] ?? '', ['REQ', 'INC'], true)) {
@@ -327,7 +335,13 @@ final class Triage
         }
 
         $result['confidence']  = max(0, min(100, (int) round(100 * (float) ($response['keyakinan'] ?? 0))));
-        $result['explanation'] = mb_substr($explanation, 0, 1000);
+        // Kelas gabungan "Lainnya" / layanan menyatakan perlu penilaian manual → tingkat "Perlu penilaian manual"
+        // (keyakinan dibatasi di bawah ambang rendah; nilai asli tetap tertulis di penjelasan "Tiga teratas")
+        if (!empty($response['perlu_penilaian_manual']) && $team === 'Lainnya') {
+            $result['confidence'] = min($result['confidence'], max(0, Config::getLowThreshold() - 1));
+            $explanation .= ' Kelas gabungan "Lainnya" (tim kecil): tentukan tim secara manual.';
+        }
+        $result['explanation'] = mb_substr($explanation . ($result['explanation_priority'] ?? ''), 0, 1000);
         $result['model']       = mb_substr((string) ($response['versi_model'] ?? 'halosis-ai'), 0, 100);
         return $result;
     }

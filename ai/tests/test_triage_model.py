@@ -35,3 +35,17 @@ def test_prediksi_lengkap_dan_konsisten():
     assert result['perlu_penilaian_manual'] == (result['keyakinan'] < 0.70)
     assert result['tiket_mirip'][0]['tim'] == 'SSO'
     assert result['versi_model'] == 'uji'
+
+
+def test_lainnya_selalu_penilaian_manual():
+    """Top-1 kelas gabungan "Lainnya" → perlu penilaian manual walau keyakinannya tinggi."""
+    data = [(t, d, k, 'Lainnya' if team == 'Email' else team) for t, d, k, team in DATA]
+    texts = [model_text(t, d, k) for t, d, k, _ in data]
+    teams = [team for *_, team in data]
+    pipeline = build_pipeline(calibrate=False).fit(texts, teams)
+    similar = SimilarIndex.fit(texts, [f'T{i}' for i in range(len(data))], teams, [t for t, *_ in data])
+    model = TriageModel(pipeline, similar, version='uji', threshold=0.0)  # ambang 0: hanya aturan Lainnya yang berlaku
+    result = model.predict('Email penuh', 'kuota email penuh mohon ditambah', 'REQ')
+    assert result['tim'] == 'Lainnya' and result['perlu_penilaian_manual'] is True
+    assert model.predict('SSO error', 'login SSO gagal terus', 'INC')['perlu_penilaian_manual'] is False
+
