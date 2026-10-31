@@ -10,6 +10,8 @@
     'reject': __('Rejected', 'halosis'),
 } %}
 {% set d = stats.decisions %}
+{% set f = stats.filter %}
+{% set qs = '&group=' ~ f.groups_id ~ '&category=' ~ f.categories_id %}
 
 {% block content %}
 <div class="hd" data-halosis-dashboard>
@@ -20,10 +22,35 @@
         </div>
         <nav class="hd-period" aria-label="{{ __('Period', 'halosis') }}">
             {% for w in periods %}
-                <a href="?weeks={{ w }}" class="{{ w == stats.weeks ? 'active' }}" {{ w == stats.weeks ? 'aria-current="page"' }}>{{ __('%d weeks', 'halosis')|format(w) }}</a>
+                <a href="?weeks={{ w }}{{ qs }}" class="{{ w == stats.weeks ? 'active' }}" {{ w == stats.weeks ? 'aria-current="page"' }}>{{ __('%d weeks', 'halosis')|format(w) }}</a>
             {% endfor %}
         </nav>
     </header>
+
+    {# T18: filter tim & kategori (berlaku untuk angka triase, salah tim, dan drift) #}
+    <form method="get" class="d-flex flex-wrap gap-2 align-items-end" aria-label="{{ __('Filter', 'halosis') }}">
+        <input type="hidden" name="weeks" value="{{ stats.weeks }}">
+        <div>
+            <label class="form-label small mb-1" for="hd-group">{{ __('Team', 'halosis') }}</label>
+            <select class="form-select form-select-sm" id="hd-group" name="group">
+                <option value="0">{{ __('All teams', 'halosis') }}</option>
+                {% for id, name in options.groups %}<option value="{{ id }}" {{ id == f.groups_id ? 'selected' }}>{{ name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-1" for="hd-category">{{ __('Service category', 'halosis') }}</label>
+            <select class="form-select form-select-sm" id="hd-category" name="category">
+                <option value="0">{{ __('All categories', 'halosis') }}</option>
+                {% for id, name in options.categories %}<option value="{{ id }}" {{ id == f.categories_id ? 'selected' }}>{{ name }}</option>{% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-sm btn-outline-primary">{{ __('Apply', 'halosis') }}</button>
+        {% if can_export %}
+            <a class="btn btn-sm btn-outline-secondary ms-auto" href="{{ export_url }}">
+                <i class="ti ti-download" aria-hidden="true"></i> {{ __('Export corrections (CSV, masked)', 'halosis') }}
+            </a>
+        {% endif %}
+    </form>
 
     {# ---- Saran triase AI ---- #}
     <section class="hd-grid">
@@ -159,6 +186,14 @@
                     <div class="hd-sub">{{ __('%d ratings', 'halosis')|format(stats.chats.rating_count) }}</div>
                 </div>
             </div>
+            {% if stats.unhelpful %}
+                <div class="hd-label mt-3">{{ __('Articles most often marked not helpful', 'halosis') }}</div>
+                <ol class="mb-0">
+                    {% for a in stats.unhelpful %}
+                        <li><a href="{{ a.url }}">{{ a.name }}</a> · {{ __('%d chats not resolved, %d agent votes', 'halosis')|format(a.chat, a.agent) }}</li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
             {% if stats.articles %}
                 <div class="hd-label mt-3">{{ __('Articles most used by the chatbot', 'halosis') }}</div>
                 <ol class="mb-0">
@@ -167,6 +202,27 @@
                     {% endfor %}
                 </ol>
             {% endif %}
+        </section>
+
+        {# BP-17: pola insiden; BP-19: drift = rasio Ubah+Tolak per bulan #}
+        <section class="hd-card">
+            <h2>{{ __('Incident patterns', 'halosis') }}</h2>
+            <div class="hd-mini-grid">
+                <div><div class="hd-label">{{ __('Detected', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.detected }}</div></div>
+                <div><div class="hd-label">{{ __('Confirmed', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.confirmed }}</div></div>
+                <div><div class="hd-label">{{ __('Closed', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.closed }}</div></div>
+            </div>
+        </section>
+        <section class="hd-card">
+            <h2>{{ __('Drift indicator: modified + rejected per month', 'halosis') }}</h2>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>{{ __('Month', 'halosis') }}</th><th class="text-end">{{ __('Decisions', 'halosis') }}</th><th class="text-end">{{ __('Modified + rejected', 'halosis') }}</th></tr></thead>
+                <tbody>
+                    {% for m in stats.drift %}
+                        <tr><td>{{ m.label }}</td><td class="text-end">{{ m.total }}</td><td class="text-end">{{ m.percent is not null ? m.percent ~ '%' : '–' }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </section>
     </div>
 

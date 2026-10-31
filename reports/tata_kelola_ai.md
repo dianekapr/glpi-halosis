@@ -30,7 +30,7 @@ Pengelola AI = 1–2 orang yang melatih ulang model (`ai/README.md`); di prototi
 | 3. Syarat lulus | Top-1 & Top-3 **tidak turun** > 2 poin dari versi aktif; akurasi pada keyakinan ≥ 70% tetap ≥ 85%; tidak ada tim besar yang recall-nya < 50% | Tabel banding di `reports/triase.md` |
 | 4. Persetujuan | Manajemen (A) setelah konsultasi Operator (C) | Catatan persetujuan di tabel §5 |
 | 5. Pasang | Ganti `ai/models/triage.joblib`, `docker compose restart halosis-ai`, cek `/health` menampilkan versi baru | `/health` → `versi_model` |
-| 1b. Data koreksi (T10) | Keputusan **Ubah/Tolak** Operator (`glpi_plugin_halosis_decisions`: nilai saran, nilai final, alasan) diekspor dan ditinjau Pengelola AI; tim final yang dikoreksi Operator ditambahkan ke data latih berikutnya (tiket GLPI, teks disamarkan). Proses **manual** sebelum langkah 1; belum otomatis | Jumlah koreksi yang dipakai dicatat di §5 |
+| 1b. Data koreksi (T10) | Keputusan **Ubah/Tolak** Operator (`glpi_plugin_halosis_decisions`: nilai saran, nilai final, alasan) diekspor lewat tombol **Ekspor koreksi (CSV, tersamar)** di dashboard Kinerja AI (hak Pengaturan AI; `/plugins/halosis/Dashboard/Koreksi`: judul & deskripsi tersamar, jenis, tim saran vs final, alasan) dan ditinjau Pengelola AI; tim final yang dikoreksi Operator ditambahkan ke data latih berikutnya (tiket GLPI, teks disamarkan). Penggabungan ke data latih masih **manual** sebelum langkah 1 | Jumlah koreksi yang dipakai dicatat di §5 |
 | 6. Pantau 2 minggu | Rasio Ubah/Tolak di dashboard Kinerja AI dibanding versi lama | Dashboard Kinerja AI |
 | 7. Rollback | Bila rasio Ubah+Tolak naik > 10 poin atau ada keluhan routing berulang: pasang kembali file versi sebelumnya (simpan minimal 2 versi terakhir di luar repo) | Catatan di tabel §5 |
 

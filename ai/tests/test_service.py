@@ -83,3 +83,16 @@ def test_cari_semantik_agent(monkeypatch):
     r = c.post('/cari', json={'q': 'sso budi@contoh.go.id', 'k': 5})
     assert r.status_code == 200 and r.json()['hasil'][0]['sumber'] == 'KB1'
     assert seen['k'] == 5 and 'budi@contoh.go.id' not in seen['q']  # disamarkan sebelum dicari
+
+
+def test_chat_keyakinan_sedang_menawarkan_pilihan(monkeypatch):
+    kb = {'potongan': 'langkah', 'jenis_sumber': 'kb', 'judul': 'Reset password SSO'}
+    hits = [{**kb, 'skor': 0.80, 'sumber': 'KB-2'}, {**kb, 'skor': 0.79, 'sumber': 'KB-2'},
+            {**kb, 'skor': 0.79, 'sumber': 'KB-6', 'judul': 'Lampiran email'},
+            {'potongan': 'x', 'skor': 0.81, 'sumber': 'T9', 'jenis_sumber': 'tiket', 'judul': 'tiket'},
+            {**kb, 'skor': 0.70, 'sumber': 'KB-4'}]
+    body = client(monkeypatch, hits).post('/chat', json={'pertanyaan': 'sso error', 'riwayat': []}).json()
+    assert body['ditemukan'] is False and body['mode'] == 'pilihan'
+    assert [p['sumber'] for p in body['pilihan']] == ['KB-2', 'KB-6']  # hanya KB, tanpa duplikat, ≥ 0,78
+    assert body['sumber'] == []  # tidak mengarang jawaban
+

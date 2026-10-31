@@ -42,6 +42,8 @@ services:
       # Opsional: isi ANTHROPIC_API_KEY di .env agar jawaban chat dirangkum Claude; kosong = ekstraktif
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       HALOSIS_CHAT_MIN_SCORE: ${HALOSIS_CHAT_MIN_SCORE:-0.83}
+      # Skor di antara ini dan CHAT_MIN_SCORE → tawarkan judul artikel "Maksud Anda…?" (tanpa jawaban)
+      HALOSIS_CHAT_SUGGEST_MIN_SCORE: ${HALOSIS_CHAT_SUGGEST_MIN_SCORE:-0.78}
     ports:
       # Hanya untuk dicek dari laptop (http://localhost:8001/health); GLPI memakai jaringan internal
       - "127.0.0.1:8001:8000"

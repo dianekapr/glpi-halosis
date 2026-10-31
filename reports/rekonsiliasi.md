@@ -1,6 +1,6 @@
 # Rekonsiliasi migrasi data history tiket (FR-10)
 
-Dibuat `ai/scripts/reconcile.py` · 2026-10-28 13:27 · sumber `data/raw/ticketing_history_202601_202608.xlsx`
+Dibuat `ai/scripts/reconcile.py` · 2026-10-31 06:53 · sumber `data/raw/ticketing_history_202601_202608.xlsx`
 
 Laporan ini hanya berisi angka, bulan, dan nama tim. Isi tiket, nama orang, dan nilai yang disamarkan tidak pernah ditampilkan.
 
@@ -35,6 +35,7 @@ Tetap diproses, tetapi perlu dilengkapi atau diperlakukan khusus (mis. tidak dip
 | Tanpa deskripsi | 34 |
 | Tanpa tim (assignment group) | 3 |
 | Selesai tanpa solusi yang bisa diambil | 699 |
+| Urutan tanggal tidak valid (selesai/ditutup sebelum dibuka) | 0 |
 
 ## Duplikat
 

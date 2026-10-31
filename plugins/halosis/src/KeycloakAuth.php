@@ -3,11 +3,14 @@
 namespace GlpiPlugin\Halosis;
 
 use Auth;
+use CommonDropdown;
 use Group;
 use Group_User;
+use Location;
 use Profile_User;
 use Toolbox;
 use User;
+use UserTitle;
 
 /**
  * Login SSO Keycloak dari form login HaloSIS sendiri (satu kali isi username & password).
@@ -19,7 +22,8 @@ use User;
  *
  * Keycloak adalah sumber akun: setiap login, pengguna GLPI dibuat bila belum ada, lalu profilnya mengikuti
  * role realm (ROLE_PROFILES), timnya mengikuti grup Keycloak bernama sama dengan grup GLPI, dan role ketua-tim
- * menjadikannya supervisor tim. Semua ini dikerjakan sebelum GLPI memulai sesi, jadi langsung berlaku.
+ * menjadikannya supervisor tim. Atribut kepegawaian (NIP, unit kerja, jabatan) disalin ke field GLPI yang setara
+ * (ATTRIBUTE_FIELDS). Semua ini dikerjakan sebelum GLPI memulai sesi, jadi langsung berlaku.
  *
  * Pengguna yang pernah login lewat Keycloak ditandai authtype "Other" (Auth::EXTERNAL) tanpa password lokal,
  * jadi tidak bisa lagi masuk dengan password GLPI. Akun lokal yang tidak ada di Keycloak (mis. Super-Admin
@@ -37,6 +41,16 @@ final class KeycloakAuth
         'given_name'  => ['firstname_ssofield', 'HALOSIS_SSO_FIRSTNAME'],
         'family_name' => ['realname_ssofield', 'HALOSIS_SSO_REALNAME'],
         'email'       => ['email1_ssofield', 'HALOSIS_SSO_EMAIL'],
+    ];
+
+    /**
+     * Atribut pengguna Keycloak (klaim ID token, T11 / kelas Pengguna hal. 156) → field GLPI.
+     * Jabatan & unit kerja disimpan sebagai dropdown GLPI (Jabatan pengguna, Lokasi); dibuat bila belum ada.
+     */
+    private const ATTRIBUTE_FIELDS = [
+        'nip'        => 'registration_number',
+        'jabatan'    => 'usertitles_id',
+        'unit_kerja' => 'locations_id',
     ];
 
     /** Role realm Keycloak → profil GLPI, urut prioritas profil default (seed: satu pegawai = satu role) */
@@ -269,7 +283,45 @@ final class KeycloakAuth
         if ($user !== null) {
             self::syncProfiles($user, self::getClaimList($claims, self::ROLES_CLAIM));
             self::syncTeams($user, self::getClaimList($claims, self::GROUPS_CLAIM), in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
+            self::syncAttributes($user, $claims);
         }
+    }
+
+    /**
+     * NIP, jabatan, unit kerja dari Keycloak → field GLPI (ATTRIBUTE_FIELDS). Klaim kosong tidak menghapus nilai.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private static function syncAttributes(User $user, array $claims): void
+    {
+        $input = [];
+        foreach (self::ATTRIBUTE_FIELDS as $claim => $field) {
+            $value = is_string($claims[$claim] ?? null) ? mb_substr(trim($claims[$claim]), 0, 255) : '';
+            if ($value === '') {
+                continue;
+            }
+            $input[$field] = match ($field) {
+                'usertitles_id' => self::dropdownId(new UserTitle(), $value),
+                'locations_id'  => self::dropdownId(new Location(), $value),
+                default         => $value,
+            };
+        }
+        $changed = array_filter($input, static fn ($v, $f) => (string) ($user->fields[$f] ?? '') !== (string) $v, ARRAY_FILTER_USE_BOTH);
+        if ($changed !== []) {
+            $user->update(['id' => $user->getID()] + $changed);
+        }
+    }
+
+    private static function dropdownId(CommonDropdown $dropdown, string $name): int
+    {
+        if ($dropdown->getFromDBByCrit(['name' => $name])) {
+            return $dropdown->getID();
+        }
+        $input = ['name' => $name];
+        if ($dropdown->isEntityAssign()) {
+            $input += ['entities_id' => 0, 'is_recursive' => 1];
+        }
+        return (int) $dropdown->add($input);
     }
 
     /**

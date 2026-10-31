@@ -26,6 +26,12 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 3 tingkat, pola hanya INC + tambah ke Problem terbuka + notifikasi, artikel "Perlu ditinjau", sesi chat 30 menit,
 sumber tiket "HaloSIS Chat", hitungan pemakaian artikel, hak hapus tiket dicabut; NFR-14 → ✅.
 
+**Pembaruan 1 Nov 2026:** beban kerja per kandidat tim, filter dashboard tim & kategori, umpan balik agent di Cari
+knowledge, dashboard BP-13/17/19 (artikel tidak membantu, pola terdeteksi/dikonfirmasi/ditutup, drift bulanan),
+ekspor koreksi CSV, flag data DQR-02/04, chatbot keyakinan sedang, atribut NIP/unit kerja/jabatan dari Keycloak.
+Status tabel di bawah tidak berubah: sisa 🟡 di sini (SOP belum diindeks, dampak/urgensi berbasis aturan, migrasi
+belum di-load, NFR produksi, pratinjau UC-10) bukan bagian revisi ini. Ringkasan tetap 38 ✅ · 14 🟡 · 6 ⚪.
+
 Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
 berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
 AI. Sisa celah: teknologi yang berbeda dari PoC (embedding, tanpa LLM, indeks file, tanpa DBSCAN), SOP & service
@@ -85,7 +91,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | UC-01 | Berkonsultasi melalui AI Chatbot | ✅ | `/plugins/halosis/Chat`: catat percakapan, jawaban + sumber, rating (`glpi_plugin_halosis_chats.rating`) | 4a tidak ditemukan → tawaran laporan ✅; 6a belum selesai → laporan + ringkasan ✅; 6b tidak lapor → riwayat tersimpan ✅; 3a AI tidak tersedia → pemberitahuan + arah ke portal (`.hc-unavailable`) ✅ | — |
 | UC-02 | Mencari Knowledge Relevan | ✅ | Masking → embedding → cari KB & tiket historis → skor `CHAT_MIN_SCORE` 0,83 → sumber (`ai/service/app.py`, `search.py`) | 7a skor di bawah ambang → "belum menemukan" ✅; **4a vector DB tidak merespons** → `AiException` → kutipan KB mode demo (`Chatbot.php`) ✅ | Langkah 8 diperbaiki (#2): log retrieval per permintaan (skor teratas, mode, durasi) di `latency.jsonl` |
 | UC-03 | Membuat Tiket | ✅ | "Buat laporan" (`/ServiceCatalog`) atau dari chat; status Baru; SLA mulai (aturan SLA); triase AI; antrean validasi | 1a dari chat → S-1 ringkasan otomatis ✅; 4a data belum lengkap → validasi (judul min. 5 karakter / form GLPI) ✅; AI tidak tersedia → tiket tersimpan, triase manual ✅ | Notifikasi konfirmasi email terbukti di Mailpit lokal (tiket uji #70, P2 #9) |
-| UC-04 | Rekomendasi Triase & Routing | ✅ | `Triage::generate` saat `item_add`; keyakinan, penjelasan, tiket mirip; disimpan di `suggestions` | AI tidak tersedia → tanpa saran, tombol "Buat saran AI" ✅; keyakinan 3 tingkat (31 Okt): ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" ✅ | Dampak/urgensi berbasis aturan |
+| UC-04 | Rekomendasi Triase & Routing | ✅ | `Triage::generate` saat `item_add`; keyakinan, penjelasan, tiket mirip, tiket aktif per kandidat tim (1 Nov); disimpan di `suggestions` | AI tidak tersedia → tanpa saran, tombol "Buat saran AI" ✅; keyakinan 3 tingkat (31 Okt): ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" ✅ | Dampak/urgensi berbasis aturan |
 | UC-05 | Validasi Rekomendasi & Meneruskan | ✅ | Menu Antrean validasi (urut waktu penyelesaian), Terima → tiket ditugaskan, keputusan tercatat | S-1 Ubah + alasan ✅; S-2 Tolak + alasan ✅; operator menyelesaikan langsung (solusi GLPI) ✅ | — |
 | UC-06 | Menangani & Menyelesaikan Tiket | ✅ | Menu Tiket saya & tim; panel Saran AI (tiket mirip); solusi → Selesai; solusi masuk Kandidat knowledge | Penugasan tidak sesuai → **Kembalikan ke operator** + alasan, `reassignments.kind=return` ✅; S-1 Pending (status Menunggu GLPI) ✅ | — |
 | UC-07 | Memantau Status & Konfirmasi | ✅ | "Laporan saya" dengan kolom Waktu untuk menyelesaikan, Approve → Ditutup, survei kepuasan GLPI 100% tiket ditutup (`setup_list_columns.py`) | 3a follow-up ✅; 5a Refuse wajib alasan → diproses lagi ✅ | Diperbaiki (#3) |

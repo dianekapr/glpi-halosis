@@ -2,7 +2,7 @@
 
 Menjalankan pembersihan & penyamaran yang sama dengan prepare_data.py (AI-1), lalu menghitung:
 - baris sumber, berhasil diproses, gagal (per kategori alasan);
-- ditandai tidak lengkap (tanpa deskripsi / tim / solusi) dan duplikat;
+- ditandai tidak lengkap (tanpa deskripsi / tim / solusi, urutan tanggal tidak valid) dan duplikat;
 - jumlah nilai yang disamarkan per jenis (email, NIP, NIK, telepon, rahasia, nama);
 - rincian per bulan (tanggal dibuka) dan per tim.
 
@@ -22,7 +22,9 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from halosis_ai import privacy  # noqa: E402
-from prepare_data import RAW, ROOT, SOLVED_STATES, USER_COLUMNS, clean, common_words, load, text_columns  # noqa: E402
+from prepare_data import (  # noqa: E402
+    INCOMPLETE_REASONS, RAW, ROOT, USER_COLUMNS, clean, common_words, incomplete_flags, load, text_columns,
+)
 
 REPORT = ROOT / 'reports/rekonsiliasi.md'
 NO_TEAM = '(tanpa tim)'
@@ -44,11 +46,6 @@ FAIL_REASONS = {
     'bad_date': 'Tanggal dibuka tidak valid',
     'unknown_state': 'Status tidak dikenal (tidak bisa dipetakan ke status GLPI)',
     'residual_pii': 'Masih memuat pola data pribadi setelah penyamaran',
-}
-INCOMPLETE_REASONS = {
-    'no_description': 'Tanpa deskripsi',
-    'no_team': 'Tanpa tim (assignment group)',
-    'no_solution': 'Selesai tanpa solusi yang bisa diambil',
 }
 DUPLICATE_REASONS = {
     'dup_number': 'Nomor tiket ganda',
@@ -94,9 +91,8 @@ def flags(raw: pd.DataFrame, cleaned: pd.DataFrame) -> pd.DataFrame:
     f['residual_pii'] = residual_rows(cleaned, raw)
     f['failed'] = f[list(FAIL_REASONS)].any(axis=1)
 
-    f['no_description'] = blank(raw['description'])
-    f['no_team'] = blank(raw['assignment_group_name'])
-    f['no_solution'] = raw['state_name'].isin(SOLVED_STATES) & cleaned['solusi'].isna()
+    # Aturan kelengkapan sama dengan kolom `tidak_lengkap` di tickets_clean.parquet (prepare_data.py)
+    f = f.join(incomplete_flags(cleaned))
     f['incomplete'] = ~f['failed'] & f[list(INCOMPLETE_REASONS)].any(axis=1)
 
     numbered = ~f['no_number']

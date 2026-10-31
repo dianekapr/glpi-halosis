@@ -94,6 +94,25 @@
                     <dt>{{ __('Group') }}</dt><dd>{{ values.group }}</dd>
                 </dl>
 
+                {# T5: beban kerja tiap kandidat tim (info saja, urutan dari model) #}
+                {% if workload|filter(w => w.group)|length > 0 %}
+                    <div class="small mb-2">
+                        <div class="text-secondary">{{ __('Active tickets per candidate team', 'halosis') }}</div>
+                        <ul class="list-unstyled mb-0">
+                            {% for w in workload %}
+                                <li>
+                                    {{ w.team ?: w.group }}{% if w.confidence is not null %} ({{ w.confidence }}%){% endif %}
+                                    {% if w.group %}
+                                        → {{ w.group }} · <strong>{{ _n('%d active ticket', '%d active tickets', w.active, 'halosis')|format(w.active) }}</strong>
+                                    {% else %}
+                                        · {{ __('not mapped to a GLPI group', 'halosis') }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
                 {% if suggestion.explanation %}
                     <p class="small mb-1 halosis-explanation">{{ suggestion.explanation }}</p>
                 {% endif %}

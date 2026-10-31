@@ -41,6 +41,15 @@ USER_COLUMNS = {
 }
 SOLVED_STATES = {'Closed', 'Resolved', 'Completed'}
 
+# Data historis kurang lengkap (DQR-04) & urutan tanggal tidak valid (DQR-02): tetap diproses, tetapi ditandai
+# di kolom `tidak_lengkap` + `alasan_tidak_lengkap` (dipakai juga oleh reconcile.py)
+INCOMPLETE_REASONS = {
+    'no_description': 'Tanpa deskripsi',
+    'no_team': 'Tanpa tim (assignment group)',
+    'no_solution': 'Selesai tanpa solusi yang bisa diambil',
+    'bad_order': 'Urutan tanggal tidak valid (selesai/ditutup sebelum dibuka)',
+}
+
 
 def text_columns(df: pd.DataFrame) -> list[str]:
     """Kolom teks (pandas 3 memakai dtype 'str', versi lama 'object')."""
@@ -112,7 +121,30 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
     result.loc[conv_solution.isna() & res_note.notna(), 'solusi_sumber'] = 'resolution'
     result.loc[conv_solution.isna() & res_note.isna() & close_note.notna(), 'solusi_sumber'] = 'close_notes'
     result.loc[result['solusi'].isna(), 'solusi_sumber'] = None
+
+    flags = incomplete_flags(result)
+    result['tidak_lengkap'] = flags.any(axis=1)
+    result['alasan_tidak_lengkap'] = flags.apply(
+        lambda row: '; '.join(INCOMPLETE_REASONS[k] for k, v in row.items() if v) or None, axis=1)
     return result
+
+
+def _blank(series: pd.Series) -> pd.Series:
+    return series.isna() | (series.astype('string').str.strip().fillna('') == '')
+
+
+def incomplete_flags(df: pd.DataFrame) -> pd.DataFrame:
+    """Satu kolom boolean per alasan INCOMPLETE_REASONS untuk tiket yang sudah dibersihkan (kolom `solusi` ada)."""
+    def date(col: str) -> pd.Series:
+        return pd.to_datetime(df[col], errors='coerce') if col in df else pd.Series(pd.NaT, index=df.index)
+
+    opened = date('opened')
+    f = pd.DataFrame(index=df.index)
+    f['no_description'] = _blank(df['description'])
+    f['no_team'] = _blank(df['assignment_group_name'])
+    f['no_solution'] = df['state_name'].isin(SOLVED_STATES) & df['solusi'].isna()
+    f['bad_order'] = (date('resolved') < opened) | (date('closed') < opened)
+    return f
 
 
 def qa_pairs(clean_df: pd.DataFrame) -> pd.DataFrame:
@@ -190,6 +222,8 @@ def main() -> None:
     print(f'Total pesan percakapan  : {int(tickets["message_count"].sum())}')
     print(f'Tiket dengan solusi     : {int(tickets["solusi"].notna().sum())} '
           f'(sumber: {tickets["solusi_sumber"].value_counts().to_dict()})')
+    print(f'Ditandai tidak lengkap  : {int(tickets["tidak_lengkap"].sum())} '
+          + str({k: int(v) for k, v in incomplete_flags(tickets).sum().items()}))
     print(f'qa_pairs.parquet        : {len(pairs)} pasangan (status {sorted(SOLVED_STATES)})')
     print(f'  per jenis             : {pairs["jenis"].value_counts().to_dict()}')
     print(f'  panjang solusi (kata) : median {int(pairs["solusi"].str.split().str.len().median())}')

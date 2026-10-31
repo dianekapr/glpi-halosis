@@ -30,6 +30,8 @@ final class CariKnowledgeController extends AbstractController
     #[Route('/CariKnowledge', name: 'cari_knowledge', methods: 'GET')]
     public function __invoke(Request $request): Response
     {
+        global $CFG_GLPI;
+
         if (!Session::haveRight(Profile::RIGHT_TRIASE, READ)) {
             throw new AccessDeniedHttpException();
         }
@@ -55,6 +57,7 @@ final class CariKnowledgeController extends AbstractController
             'mode'    => $mode,
             'results' => $result,
             'kb_url'  => KnowbaseItem::getSearchURL(),
+            'ajax_url' => $CFG_GLPI['root_doc'] . '/plugins/halosis/ajax/feedback.php',
         ]);
     }
 
