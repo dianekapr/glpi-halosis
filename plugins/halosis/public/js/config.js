@@ -1,5 +1,5 @@
 /**
- * Halaman konfigurasi HaloSIS: tampilkan nilai ambang keyakinan secara langsung saat slider digeser.
+ * Halaman konfigurasi HaloSIS: tampilkan nilai kedua ambang keyakinan secara langsung saat slider digeser.
  */
 (() => {
     const form = document.querySelector('[data-halosis-config]');
@@ -7,11 +7,12 @@
         return;
     }
 
-    const slider = form.querySelector('[data-halosis-threshold]');
-    const output = form.querySelector('[data-halosis-threshold-output]');
-    if (slider && output) {
-        slider.addEventListener('input', () => {
-            output.textContent = `${slider.value}%`;
-        });
-    }
+    form.querySelectorAll('[data-halosis-threshold]').forEach((slider) => {
+        const output = form.querySelector(`output[for="${slider.id}"]`);
+        if (output) {
+            slider.addEventListener('input', () => {
+                output.textContent = `${slider.value}%`;
+            });
+        }
+    });
 })();

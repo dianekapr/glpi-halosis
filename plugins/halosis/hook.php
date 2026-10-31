@@ -60,7 +60,7 @@ function plugin_halosis_tables(): array
         'glpi_plugin_halosis_chats' => "
             `users_id` int {$sign} NOT NULL DEFAULT '0',
             `tickets_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Tiket yang dibuat dari percakapan',
-            `status` varchar(20) NOT NULL DEFAULT 'open' COMMENT 'open|resolved|ticket',
+            `status` varchar(20) NOT NULL DEFAULT 'open' COMMENT 'open|resolved|ticket|expired',
             `rating` tinyint unsigned DEFAULT NULL COMMENT '1-5, saat masalah terselesaikan',
             `message_count` int NOT NULL DEFAULT '0',
             `answered_count` int NOT NULL DEFAULT '0' COMMENT 'Jawaban yang bersumber dari artikel KB',
@@ -97,6 +97,15 @@ function plugin_halosis_tables(): array
             `date_mod` timestamp NULL DEFAULT NULL,
             KEY `problems_id` (`problems_id`),
             KEY `signature` (`signature`),
+            KEY `date_creation` (`date_creation`)
+        ",
+        // Artikel KB yang dikutip chatbot per jawaban (catatPemakaian(), hal. 176): dasar hitungan pemakaian.
+        'glpi_plugin_halosis_article_uses' => "
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `chats_id` int {$sign} NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            KEY `knowbaseitems_id` (`knowbaseitems_id`),
+            KEY `chats_id` (`chats_id`),
             KEY `date_creation` (`date_creation`)
         ",
         // Kandidat Knowledge (UC-09): solusi tiket selesai atau solusi berulang dari indeks AI, dikurasi
