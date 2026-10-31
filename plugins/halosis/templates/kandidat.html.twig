@@ -8,6 +8,7 @@
     'pending': __('Pending', 'halosis'),
     'article': __('Made into article', 'halosis'),
     'ignored': __('Dismissed', 'halosis'),
+    'review': __('Needs review', 'halosis'),
 } %}
 
 {% block content %}
@@ -29,6 +30,17 @@
     {% endif %}
     <div class="alert alert-danger d-none mb-0" data-hk-error role="alert"></div>
 
+    {% if status == 'review' %}
+        <p class="mb-0">{{ __('Published articles not updated for more than %d months. Review each one in the Knowledge Base: editing the article marks it as reviewed.', 'halosis')|format(review_months) }}</p>
+        {% for a in items %}
+            <article class="hd-card hk-card">
+                <h2 class="hk-title"><a href="{{ a.url }}">{{ a.name }}</a></h2>
+                <p class="hk-decision"><i class="ti ti-calendar-time" aria-hidden="true"></i> {{ __('Last updated', 'halosis') }}: {{ a.date_mod|formatted_datetime }}</p>
+            </article>
+        {% else %}
+            <div class="hd-card hk-empty">{{ __('No articles need review.', 'halosis') }}</div>
+        {% endfor %}
+    {% else %}
     {% for c in items %}
         <article class="hd-card hk-card">
             <div class="hk-meta">
@@ -82,5 +94,6 @@
     {% else %}
         <div class="hd-card hk-empty">{{ __('No candidates here.', 'halosis') }}</div>
     {% endfor %}
+    {% endif %}
 </div>
 {% endblock %}

@@ -2,9 +2,17 @@
 
 namespace GlpiPlugin\Halosis;
 
+use Glpi\Form\Destination\CommonITILField\RequestTypeField;
+use Glpi\Form\Destination\CommonITILField\RequestTypeFieldConfig;
+use Glpi\Form\Destination\FormDestination;
+use Glpi\Form\Destination\FormDestinationTicket;
+use Glpi\Form\Form;
+use Glpi\Form\ServiceCatalog\ServiceCatalog;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Client;
 use GlpiPlugin\Halosis\Ai\Service;
+use Html;
+use RequestType;
 use Session;
 use Ticket;
 use Toolbox;
@@ -18,6 +26,9 @@ final class Chatbot
 {
     public const MAX_MESSAGE_LENGTH = 1000;
     public const DEMO_MODEL = 'demo-extractive-v1';
+    /** Nama sumber permintaan (Request source) GLPI untuk tiket yang dibuat dari chatbot */
+    public const REQUEST_TYPE = 'HaloSIS Chat';
+
     /** Akhiran model jawaban kutipan dari layanan AI (bukan rangkuman AI) */
     private const EXTRACTIVE_SUFFIX = '-ekstraktif';
 
@@ -52,10 +63,41 @@ final class Chatbot
     }
 
     /**
+     * Form katalog untuk tiket permintaan (pilihan "Ajukan permintaan" di halaman chat): form aktif pertama yang
+     * tujuan tiketnya bertipe Permintaan (bawaan GLPI: "Request a service"). Tidak ada → katalog layanan.
+     */
+    public static function getRequestFormUrl(): string
+    {
+        global $DB;
+
+        $forms = Form::getTable();
+        $destinations = FormDestination::getTable();
+        $iterator = $DB->request([
+            'SELECT'     => ["$forms.id", "$destinations.config"],
+            'FROM'       => $forms,
+            'INNER JOIN' => [$destinations => ['ON' => [$destinations => 'forms_forms_id', $forms => 'id']]],
+            'WHERE'      => [
+                "$forms.is_active"         => 1,
+                "$forms.is_deleted"        => 0,
+                "$forms.is_draft"          => 0,
+                "$destinations.itemtype"   => FormDestinationTicket::class,
+            ],
+            'ORDER'      => "$forms.id",
+        ]);
+        foreach ($iterator as $row) {
+            $config = json_decode((string) $row['config'], true)[RequestTypeField::getKey()] ?? [];
+            if ((int) ($config[RequestTypeFieldConfig::SPECIFIC_REQUEST_TYPE] ?? 0) === Ticket::DEMAND_TYPE) {
+                return Html::getPrefixedUrl('/Form/Render/' . $row['id']);
+            }
+        }
+        return ServiceCatalog::getSearchURL();
+    }
+
+    /**
      * Jawab pertanyaan pegawai dan simpan ke transkrip.
      *
      * @return array{ok: bool, message?: string, chat_id?: int, answer?: string, found?: bool,
-     *               sources?: array<int, array{name: string, url: string}>, masked?: bool}
+     *               sources?: array<int, array{id: int, name: string, url: string}>, masked?: bool}
      */
     public static function ask(?Chat $chat, string $text): array
     {
@@ -123,6 +165,7 @@ final class Chatbot
             'message_count'  => count($messages),
             'answered_count' => (int) $chat->fields['answered_count'] + ($reply['found'] ? 1 : 0),
         ]);
+        self::recordUsage($chat, $reply['sources']);
 
         return [
             'ok'      => true,
@@ -172,10 +215,10 @@ final class Chatbot
                 if (!$item->getFromDB((int) $m[1]) || !$item->canViewItem()) {
                     return null;
                 }
-                $sources[] = ['name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+                $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
             } else {
                 // Tiket history tidak ada di GLPI ini: tampilkan nomornya saja, tanpa tautan
-                $sources[] = ['name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];
+                $sources[] = ['id' => 0, 'name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];
             }
         }
 
@@ -296,11 +339,24 @@ final class Chatbot
     }
 
     /**
-     * @return array<int, array{name: string, url: string}>
+     * @return array<int, array{id: int, name: string, url: string}>
      */
     private static function sources(array $articles): array
     {
-        return array_map(static fn ($a) => ['name' => $a['name'], 'url' => $a['url']], $articles);
+        return array_map(static fn ($a) => ['id' => (int) $a['id'], 'name' => $a['name'], 'url' => $a['url']], $articles);
+    }
+
+    /**
+     * Catat artikel KB yang dikutip satu jawaban (hitungan "dipakai chatbot" di dashboard).
+     */
+    private static function recordUsage(Chat $chat, array $sources): void
+    {
+        global $DB;
+
+        $now = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        foreach (array_unique(array_filter(array_map('intval', array_column($sources, 'id')))) as $kb_id) {
+            $DB->insert('glpi_plugin_halosis_article_uses', ['knowbaseitems_id' => $kb_id, 'chats_id' => $chat->getID(), 'date_creation' => $now]);
+        }
     }
 
     private static function lastUserMessage(array $messages): ?string
@@ -351,6 +407,7 @@ final class Chatbot
             'name'                => $title,
             'content'             => self::summaryHtml($chat),
             'type'                => Ticket::INCIDENT_TYPE,
+            'requesttypes_id'     => self::getRequestTypeId(),
             'entities_id'         => $_SESSION['glpiactive_entity'] ?? 0,
             '_users_id_requester' => Session::getLoginUserID(),
         ]);
@@ -360,6 +417,18 @@ final class Chatbot
 
         $chat->update(['id' => $chat->getID(), 'status' => Chat::STATUS_TICKET, 'tickets_id' => $id]);
         return ['ok' => true, 'ticket_id' => (int) $id, 'url' => Ticket::getFormURLWithID($id)];
+    }
+
+    /**
+     * Sumber permintaan GLPI untuk tiket dari chatbot (atribut sumber tiket, hal. 163); dibuat bila belum ada.
+     */
+    public static function getRequestTypeId(): int
+    {
+        $type = new RequestType();
+        if ($type->getFromDBByCrit(['name' => self::REQUEST_TYPE])) {
+            return $type->getID();
+        }
+        return (int) $type->add(['name' => self::REQUEST_TYPE, 'is_active' => 1, 'is_ticketheader' => 1, 'is_itilfollowup' => 0]);
     }
 
     /**

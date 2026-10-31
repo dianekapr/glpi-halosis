@@ -64,13 +64,25 @@
                          aria-valuenow="{{ suggestion.confidence }}" aria-label="{{ __('Confidence', 'halosis') }}">
                         <div class="progress-bar {{ needs_review ? 'halosis-meter-low' : 'halosis-meter-ok' }}" style="width: {{ suggestion.confidence }}%"></div>
                         <span class="halosis-meter-threshold" style="left: {{ threshold }}%" title="{{ __('Threshold', 'halosis') }} {{ threshold }}%"></span>
+                        <span class="halosis-meter-threshold" style="left: {{ threshold_low }}%" title="{{ __('Low threshold', 'halosis') }} {{ threshold_low }}%"></span>
                     </div>
                 </div>
 
-                {% if needs_review %}
+                {# Tiga tingkat keyakinan (TO-BE hal. 100) #}
+                {% if level == 'high' %}
+                    <div class="halosis-review halosis-review-high mb-2" role="status">
+                        <i class="ti ti-circle-check" aria-hidden="true"></i>
+                        <span><strong>{{ __('Recommended', 'halosis') }}</strong> · {{ __('confidence at or above the %d%% threshold', 'halosis')|format(threshold) }}</span>
+                    </div>
+                {% elseif level == 'medium' %}
+                    <div class="halosis-review halosis-review-medium mb-2" role="status">
+                        <i class="ti ti-list-check" aria-hidden="true"></i>
+                        <span><strong>{{ __('Choose from 3 candidates', 'halosis') }}</strong> · {{ __('check the top three teams in the explanation before deciding', 'halosis') }}</span>
+                    </div>
+                {% else %}
                     <div class="halosis-review mb-2" role="status">
                         <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-                        <span><strong>{{ __('Needs manual review', 'halosis') }}</strong> · {{ __('confidence below the %d%% threshold', 'halosis')|format(threshold) }}</span>
+                        <span><strong>{{ __('Needs manual review', 'halosis') }}</strong> · {{ __('confidence below the %d%% threshold', 'halosis')|format(threshold_low) }}</span>
                     </div>
                 {% endif %}
 
