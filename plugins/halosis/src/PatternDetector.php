@@ -186,6 +186,9 @@ final class PatternDetector extends CommonDBTM
                 ], array_values($tickets)),
                 'min_anggota'   => $min,
                 'jendela_menit' => $window,
+                'metode'        => Config::get('pattern_method') === 'dbscan' ? 'dbscan' : 'rata',
+                'eps'           => (float) Config::get('pattern_eps'),
+                'min_sampel'    => (int) Config::get('pattern_min_samples'),
             ]);
         } catch (AiException $e) {
             Toolbox::logInFile('halosis', 'Deteksi pola semantik gagal, memakai kata kunci: ' . $e->getMessage() . "\n", true);
@@ -440,6 +443,9 @@ final class PatternDetector extends CommonDBTM
             default    => __('similar titles', 'halosis'),
         };
         $method = $pattern['criteria'] === 'semantic' ? __('semantic', 'halosis') : __('keyword', 'halosis');
+        if ($pattern['criteria'] === 'semantic' && Config::get('pattern_method') === 'dbscan') {
+            $method .= ' (DBSCAN)';
+        }
 
         $items = [];
         foreach ($pattern['tickets'] as $ticket) {

@@ -129,19 +129,26 @@ Tanggal: 31 Okt 2026 · Penguji: tim proyek (dibantu Claude Code).
 
 Cakupan baris Normal: **hanya layanan AI** (`/chat` & `/triage` langsung ke `halosis-ai`, skrip
 [`tests/load/halosis_ai.js`](../tests/load/halosis_ai.js), 10 VU tetap 5 menit, jeda 3–8 dtk, 8 kalimat buatan, tanpa
-data asli). Halaman GLPI & API tiket belum diuji beban (perlu akun uji & sesi), jadi kolomnya "–".
+data asli). Peak (`-e SCENARIO=peak`) & Stress (`-e SCENARIO=stress`) memakai skrip yang sama. API GLPI:
+[`tests/load/glpi_api.js`](../tests/load/glpi_api.js) (initSession → buat tiket → killSession, akun lokal `glpi`,
+10 VU 5 menit) lewat port host karena klien API GLPI dibatasi IP; 531 tiket uji `K6UJI …` beserta saran AI & notifikasi
+antre dihapus setelah uji. Halaman GLPI (render HTML berbasis sesi browser) belum diuji beban, jadi kolomnya "–".
+Catatan Stress: durasi total 23m52s untuk 16 menit beban dan latensi maksimal 7 menit menunjukkan jeda ±7 menit
+(kemungkinan Docker Desktop/laptop tertidur); p95 tetap di bawah 1 dtk.
 
 | Kondisi | VU | Permintaan | Galat % | Halaman p95 | API tiket p95 | `/chat` e2e p95 | `/triage` p95 | CPU maks (glpi/db/ai) | Lulus? |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | Normal (AI) | 10 | 552 (1,4/dtk) | 0,00% | – | – | 140 ms (langsung ke layanan; median 64 ms) | 25 ms (median 21 ms) | glpi 11% · db 2% · ai 294% (≈3 core) | ✅ untuk AI (≤ 1,5 s & ≤ 0,2 s); halaman/API belum |
-| Peak | 50 | | | | | | | | |
-| Stress | sampai ___ | | | | | | | | titik jenuh: ___ VU |
+| Normal (API GLPI) | 10 | 1.593 (5,2/dtk; 531 tiket) | 0,00% | – | 71 ms (median 53 ms; termasuk saran triase AI) | – | – | glpi 198% · db 40% · ai 18% | ✅ (≤ 1 s) |
+| Peak (AI) | 50 | 2.742 (7,5/dtk) | 0,03% (1 koneksi direset di detik awal) | – | – | 223 ms (median 77 ms) | 27 ms | glpi 11% · db 3% · ai 698% (≈7 core) | ✅ (≤ 3 s & ≤ 0,5 s, galat < 2%) |
+| Stress (AI) | 25 → 200 (+25 / 2 menit) | 17.440 (12,2/dtk) | 0,04% | – | – | 846 ms (median 195 ms) | 113 ms | ai 868% (≈8,7 core, mendekati batas 10 CPU Docker) | **tidak jenuh sampai 200 VU** (galat < 5%) |
 
 Temuan & tindak lanjut:
 
 | # | Temuan | Dampak | Tindak lanjut (mis. replika `halosis-ai`, indeks DB, cache) |
 | --- | --- | --- | --- |
-| 1 | `/chat` memakai ±3 core CPU saat 10 VU (embedding e5 di CPU) walau p95 masih 140 ms | Beban Peak (50 VU) berisiko antre di satu container | Uji Peak; bila p95 naik, tambah replika `halosis-ai` atau GPU/ONNX untuk embedding |
+| 1 | `/chat` memakai ±3 core (10 VU) sampai ±8,7 core (200 VU) karena embedding e5 di CPU | Satu container `halosis-ai` memakai hampir semua CPU Docker saat 200 VU; layanan lain bisa ikut melambat | Batasi CPU container AI (`cpus:`), tambah replika di balik load balancer, atau GPU/ONNX untuk embedding |
+| 2 | Klien API GLPI dibatasi IP; dari jaringan docker ditolak `ERROR_NOT_ALLOWED_IP` | Uji/integrasi dari container lain perlu IP yang diizinkan | Pertahankan pembatasan (NFR-05); daftarkan IP integrasi resmi di Setup › Umum › API |
 
 ## 8. Batasan
 

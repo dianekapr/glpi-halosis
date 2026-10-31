@@ -1138,3 +1138,42 @@ msgstr "Topik"
 
 msgid "No incident patterns in the last 12 weeks."
 msgstr "Belum ada pola insiden dalam 12 minggu terakhir."
+
+msgid "< %d%% (below threshold)"
+msgstr "< %d%% (di bawah ambang)"
+
+msgid "Published articles due for review: on the review date set here, or %d months after the last update when no date is set. After reviewing, set the next review date or edit the article."
+msgstr "Artikel terbit yang jatuh tempo ditinjau: pada tanggal tinjau yang diatur di sini, atau %d bulan setelah terakhir diperbarui bila belum diatur. Setelah meninjau, atur tanggal tinjau berikutnya atau sunting artikelnya."
+
+msgid "HaloSIS: create missing AI triage suggestions for new tickets"
+msgstr "HaloSIS: buat saran triase AI yang terlewat untuk tiket baru"
+
+msgid "AI triage is disabled in the HaloSIS configuration."
+msgstr "Saran triase AI dinonaktifkan di konfigurasi HaloSIS."
+
+msgid "Ticket #%d: AI suggestion created"
+msgstr "Tiket #%d: saran AI dibuat"
+
+msgid "Ticket #%1$d: no suggestion yet (attempt %2$d of %3$d)"
+msgstr "Tiket #%1$d: belum ada saran (percobaan %2$d dari %3$d)"
+
+msgid "Average similarity (default)"
+msgstr "Rata-rata kemiripan (bawaan)"
+
+msgid "DBSCAN (as in the PoC)"
+msgstr "DBSCAN (seperti PoC)"
+
+msgid "Semantic method"
+msgstr "Metode semantik"
+
+msgid "Used when the HaloSIS AI service is running. DBSCAN uses the two settings below; see reports/banding_pola.md."
+msgstr "Dipakai bila layanan AI HaloSIS hidup. DBSCAN memakai dua pengaturan di bawah; lihat reports/banding_pola.md."
+
+msgid "DBSCAN eps (cosine distance)"
+msgstr "eps DBSCAN (jarak kosinus)"
+
+msgid "Default 0.50 for centred e5 vectors (the PoC used 0.25 with MiniLM)."
+msgstr "Bawaan 0,50 untuk vektor e5 yang dipusatkan (PoC memakai 0,25 dengan MiniLM)."
+
+msgid "DBSCAN min_samples"
+msgstr "min_samples DBSCAN"

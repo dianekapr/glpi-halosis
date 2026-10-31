@@ -567,6 +567,26 @@ docker compose exec glpi php bin/console config:set display_login_source 0 --all
 > Kosongkan `HALOSIS_KEYCLOAK_URL` untuk mematikan SSO; akun yang sudah dikelola SSO lalu perlu password lokal lagi
 > (ubah *Authentication* pengguna ke database GLPI dan set password di Administrasi › Pengguna).
 
+**6c. HTTPS lokal (opsional, NFR-05)**
+
+```bash
+docker compose --profile tls up -d tls      # Caddy reverse proxy → https://localhost:8443
+```
+Caddy (`tls/Caddyfile`) memakai sertifikat **CA internal** (self-signed): browser menampilkan peringatan sekali,
+lalu GLPI, login SSO, dan chatbot berjalan seperti di :8080. Ditambahkan HSTS, `nosniff`, dan penanda `Secure` pada
+cookie sesi. `docker compose up -d` biasa tidak menyalakan layanan ini. Matikan: `docker compose --profile tls stop
+tls`. Produksi: ganti `tls internal` dengan sertifikat BPS dan jangan buka port 8080 ke luar jaringan internal.
+
+**6d. Monitoring (opsional, NFR-09)**
+
+```bash
+docker compose --profile monitoring up -d   # Prometheus + mysqld-exporter + Grafana
+```
+Grafana http://localhost:3001 (`admin`/`admin`, hanya lokal) langsung membuka dasbor **HaloSIS – operasional**
+(`monitoring/grafana/dashboards/halosis.json`): status layanan AI & MySQL, permintaan & latensi p95 AI per endpoint
+(dari `/metrics`), galat 5xx, jumlah potongan indeks, koneksi & query MySQL. Prometheus: http://localhost:9090.
+Matikan: `docker compose --profile monitoring stop`. Unduhan pertama ±600 MB image.
+
 **7. Tampilan HaloSIS** (palet, logo, bahasa, teks login)
 
 Palet ada di `themes/halosis.scss` (di-mount ke `/var/glpi-themes`, folder tema kustom GLPI lewat variabel
@@ -646,7 +666,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dibandingkan pada set uji yang sama ([`reports/banding_embedding.md`](reports/banding_embedding.md)): e5 Top-1 72,74% / MRR 0,8144 vs MiniLM 67,99% / 0,7650; lokal & gratis | — |
 | LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Tanpa LLM: jawaban **ekstraktif** dari artikel/tiket; Claude opsional | Tanpa API berbayar & tanpa GPU; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Ollama + Qwen2.5 3B sebagai perangkum opsional |
 | Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori; artikel KB diperbarui inkremental (`POST /reindex/artikel`) | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar |
-| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang; tanpa DBSCAN agar ringan | DBSCAN & analisis tren antar-periode |
+| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang. **DBSCAN tersedia sebagai opsi** (Pengaturan AI, eps 0,50); pada 666 insiden hasilnya setara, bawaan tetap rata-rata kemiripan karena lebih cepat & tanpa efek rantai ([`reports/banding_pola.md`](reports/banding_pola.md)); tren 12 minggu di dashboard | — |
 | Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dampak/urgensi dari aturan | Kelas kecil tidak bisa dipelajari andal; history **tidak punya kolom dampak/urgensi/prioritas**, jadi tidak bisa dilatih | Catat dampak/urgensi final Operator di GLPI sebagai data latih ke depan |
 | Login | SSO BPS | SSO Keycloak lokal (realm `halosis`), dicek dari form login HaloSIS lewat password grant | Prototipe tanpa akses SSO BPS; satu kali login tanpa halaman Keycloak | Arahkan `HALOSIS_KEYCLOAK_URL` ke Keycloak SSO BPS + client resmi (Direct Access Grants aktif) |
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
@@ -654,6 +674,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | **Tidak disarankan AI**: jenis ditentukan jalur masuk (form *Ajukan permintaan* = REQ, chatbot/laporan masalah = INC, Operator memilih untuk tiket telepon) dan dipakai sebagai **input** model tim | Klasifier jenis butuh model baru di `ai/models/` (artefak latih di luar repo) padahal jalur masuk sudah memisahkan jenis; Operator tetap bisa mengubah jenis di form tiket | Klasifier TF-IDF + LR REQ/INC dari kolom `ticket_type` history bila jalur masuk tidak lagi memisahkan jenis |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
+| HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
 | Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | **Belum ada**; perubahan tercatat di log GLPI (**Setup › Log** / tab Riwayat) | GLPI tidak menyediakan pratinjau aturan; mengubahnya berarti mengubah kode inti | Prosedur manual: uji aturan di **Rules › Test** sebelum diaktifkan |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 87% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi < 50% (pita 30–50% = 47%) | Kalibrasi ulang setelah data keputusan Operator cukup |
 | SLA respons (T1) | `KebijakanSLA.targetRespons` (hal. 162) | SLA *time to own* GLPI per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam (`setup_sla_alerts.py`) | Dokumen tidak memberi angka; asumsi prototipe | Sesuaikan dengan SLA resmi BPS |
@@ -681,12 +702,15 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | AI retrieval (chatbot) | `ai/tests/test_search.py`, uji chat end-to-end; banding embedding 906 kueri (`reports/banding_embedding.md`) | Proven |
 | AI routing (triase) | 1.559 tiket uji: top-1 74,41%, top-3 93,07%, MRR 0,8420 (`reports/triase.md`) | Partially proven |
 | Conversation (self-service) | Chat → laporan → tiket, riwayat & rating | Partially proven (ekstraktif, tanpa uji usability) |
-| Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci | Partially proven |
-| HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat | Proven |
-| Migrasi data (FR-10) | `reports/rekonsiliasi.md` | Partially proven (belum di-load ke GLPI) |
-| Performa (layanan AI) | Normal 10 VU 5 menit: 552 permintaan, galat 0%, `/chat` p95 140 ms, `/triage` p95 25 ms ([`reports/rencana_uji.md`](reports/rencana_uji.md) §7) | Partially proven (laptop; Peak/Stress & halaman GLPI belum) |
+| Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci; banding rata-rata vs DBSCAN pada 666 insiden history (`reports/banding_pola.md`); regresi demo Bonus pola (`reports/uji_regresi_demo.md`) | Partially proven (tanpa label pola manual) |
+| HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat; regresi skenario demo 17 langkah lolos (`reports/uji_regresi_demo.md`) | Proven |
+| Ketahanan triase saat AI mati (NFR-03) | Tugas `TriageRetry`: gagal → percobaan tercatat; pulih → saran dibuat; tanpa duplikat; batas 5 percobaan | Proven (uji skrip) |
+| Migrasi data (FR-10) | `reports/rekonsiliasi.md`; sampel 200 tiket ke entitas "Arsip ESTIM" lewat API (`ai/scripts/migrate_sample.py`): 199 berhasil + 1 gagal, idempoten, bisa dihapus | Proven (sampel); skala penuh belum |
+| Performa (AI & API GLPI) | AI: Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`reports/rencana_uji.md`](reports/rencana_uji.md) §7) | Partially proven (laptop; halaman GLPI belum) |
 | Backup & restore DB | `mysqldump` → DB terpisah: 455 tabel & jumlah baris sama, pulih 6 dtk ([`reports/keamanan_backup.md`](reports/keamanan_backup.md) §3) | Proven (DB saja; volume berkas belum) |
-| Ketersediaan, keamanan | Checklist keamanan [`reports/keamanan_backup.md`](reports/keamanan_backup.md); TLS belum | Rencana |
+| Keamanan | Checklist [`reports/keamanan_backup.md`](reports/keamanan_backup.md); HTTPS lokal profile `tls` (Caddy, HSTS, cookie `Secure`; login SSO lewat https diuji) | Partially proven (sertifikat internal; belum uji kerentanan) |
+| Monitoring | Profile `monitoring`: Prometheus (target AI & MySQL `up`) + Grafana dasbor terprovisi (`screenshot/15-grafana-monitoring.png`) | Partially proven (tanpa metrik GLPI & alert) |
+| Ketersediaan (HA) | — | Rencana |
 
 ## Mematikan / mengulang dari nol
 ```bash

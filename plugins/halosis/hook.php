@@ -11,6 +11,7 @@ use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\Profile;
+use GlpiPlugin\Halosis\TriageRetry;
 
 /**
  * Daftar tabel plugin beserta definisi kolomnya (tanpa kolom id).
@@ -123,6 +124,14 @@ function plugin_halosis_tables(): array
             KEY `knowbaseitems_id` (`knowbaseitems_id`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Percobaan ulang saran triase untuk tiket Baru tanpa saran (NFR-03, tugas TriageRetry)
+        'glpi_plugin_halosis_triage_retries' => "
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `attempts` int NOT NULL DEFAULT '0',
+            `last_error` varchar(255) NOT NULL DEFAULT '',
+            `date_mod` timestamp NULL DEFAULT NULL,
+            UNIQUE KEY `tickets_id` (`tickets_id`)
+        ",
         // Tanggal tinjau berikut per artikel KB (KR-03); tanpa baris = date_mod + kb_review_months.
         'glpi_plugin_halosis_kb_reviews' => "
             `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
@@ -205,6 +214,11 @@ function plugin_halosis_install(): bool
     // Deteksi pola insiden tiap 15 menit (tidak menimpa jadwal yang sudah diubah admin)
     CronTask::register(PatternDetector::class, PatternDetector::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
         'comment' => 'HaloSIS: deteksi pola insiden',
+        'mode'    => CronTask::MODE_EXTERNAL,
+    ]);
+    // NFR-03: saran triase yang terlewat karena AI sempat mati dicoba lagi tiap 15 menit
+    CronTask::register(TriageRetry::class, TriageRetry::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
+        'comment' => 'HaloSIS: coba ulang saran triase yang terlewat',
         'mode'    => CronTask::MODE_EXTERNAL,
     ]);
 

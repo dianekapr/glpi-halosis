@@ -13,12 +13,12 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 | Kelompok | Jumlah | ✅ | 🟡 | ❌ | ⚪ |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Business Requirements (BR-01..08) | 8 | 7 | 1 | 0 | 0 |
-| Functional Requirements (FR-01..10) | 10 | 9 | 1 | 0 | 0 |
-| Non-Functional Requirements (NFR-01..14) | 14 | 6 | 5 | 0 | 3 |
+| Functional Requirements (FR-01..10) | 10 | 10 | 0 | 0 | 0 |
+| Non-Functional Requirements (NFR-01..14) | 14 | 8 | 4 | 0 | 2 |
 | Use Case (UC-01..10, termasuk alur alternatif) | 10 | 9 | 1 | 0 | 0 |
-| Hasil & keputusan PoC (2.4.7) | 6 | 4 | 2 | 0 | 0 |
+| Hasil & keputusan PoC (2.4.7) | 6 | 5 | 1 | 0 | 0 |
 | Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 5 | 2 | 0 | 3 |
-| **Total** | **58** | **40** | **12** | **0** | **6** |
+| **Total** | **58** | **44** | **9** | **0** | **5** |
 
 **Pembaruan 29 Okt 2026:** semua P1 (#1–#6) selesai; status "Diperbaiki" di tabel menunjukkan butirnya.
 
@@ -37,10 +37,20 @@ MiniLM vs e5), MRR triase 0,8420, uji beban Normal layanan AI, uji backup–rest
 pulih 6 dtk), tanggal tinjau per artikel (KR-03), tren pola 12 minggu (BP-21). BR-05/FR-08: dampak/urgensi tetap
 aturan karena history tidak punya kolomnya. Ringkasan: **40 ✅ · 12 🟡 · 6 ⚪**.
 
+**Pembaruan 31 Okt 2026 (kesiapan demo):** regresi 17 langkah skenario demo lolos (`uji_regresi_demo.md`, 3 bug
+tampilan diperbaiki); NFR-03 → ✅ (`TriageRetry`), DBSCAN opsional + banding (`banding_pola.md`) → PoC pola ✅;
+NFR-01 ⚪ → 🟡 (Peak 50 VU & Stress sampai 200 VU tidak jenuh, API GLPI Normal); TLS (profile `tls`) & monitoring
+(profile `monitoring`) opsional; FR-10 & NFR-13 → ✅ (migrasi sampel 200 tiket + rekonsiliasi). Belum: LLM lokal
+(profile `llm`). Ringkasan: **44 ✅ · 9 🟡 · 5 ⚪**.
+
 Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
 berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
-AI. Sisa celah: teknologi yang berbeda dari PoC (embedding, tanpa LLM, indeks file, tanpa DBSCAN), SOP & service
-catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, observability terpusat).
+AI, katalog layanan & SOP di indeks chatbot, serta dashboard dengan filter, drift, dan tren pola. Bukti uji ada untuk
+retrieval (e5 mengungguli MiniLM PoC pada set uji yang sama), triase (MRR 0,8420), beban Normal layanan AI, dan
+backup–restore DB, regresi 17 langkah skenario demo, serta migrasi sampel. Sisa celah: teknologi yang berbeda dari PoC (indeks file), dampak/urgensi
+berbasis aturan (history tanpa kolomnya), LLM lokal belum dipasang, migrasi baru sampel 200 tiket, serta NFR
+produksi (uji di lingkungan BPS, ketersediaan/HA, uji kerentanan, metrik GLPI & alert). Uji beban Normal/Peak/Stress
+layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia sebagai profile opsional.
 
 ## 1. Business Requirements (Tabel 1.2, hal. 5–6)
 
@@ -52,7 +62,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §5 dan §8) |
 | BR-05 | Rekomendasi kategori, dampak, urgensi, prioritas, routing + validasi | 🟡 | Panel Saran AI (`src/TriagePanel.php`, `src/Triage.php::suggestService`), model `triase-tfidf-lr` (`reports/triase.md`) | Model memprediksi **tim**; kategori dipetakan dari tim, dampak/urgensi dari aturan kata kunci (`suggestDemo`), prioritas dari matriks GLPI. **Keputusan 31 Okt:** history (ekspor mentah 137 kolom & data bersih) **tidak punya kolom dampak/urgensi/prioritas**, jadi model tidak bisa dilatih; tetap aturan kata kunci + validasi Operator (keterbatasan) |
 | BR-06 | Percakapan self-service cek knowledge sebelum tiket, lanjut tiket bila belum selesai | ✅ | `/plugins/halosis/Chat` (`src/Chatbot.php`, `public/js/chat.js`); tawaran laporan + ringkasan percakapan (`Chatbot::summaryHtml`); uji skenario UC-01..03 | Jawaban ekstraktif (tanpa LLM) sesuai keputusan "tanpa API berbayar" |
-| BR-07 | Deteksi kemiripan/pengelompokan/lonjakan tiket → peringatan dini | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py` | Diperbaiki (P1 #1); belum analisis tren antar-periode |
+| BR-07 | Deteksi kemiripan/pengelompokan/lonjakan tiket → peringatan dini | ✅ | `ai/halosis_ai/patterns.py` + `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit), dipanggil `PatternDetector::groupSemantic` dengan fallback kata kunci; metode dicatat di Problem; uji: 10 tiket "lemot/lambat/lelet" → Problem #4; `ai/tests/test_patterns.py` | Diperbaiki (P1 #1); tren pola per minggu per topik 12 minggu di dashboard (BP-21, 31 Okt) |
 | BR-08 | Terima/ubah/tolak rekomendasi AI, penjelasan, audit trail | ✅ | `Triage::decide` (alasan wajib ≥ 5 karakter untuk Ubah/Tolak), tabel `glpi_plugin_halosis_decisions`, `Log::history` di tab Riwayat tiket, penjelasan + 3 tim teratas di panel | — |
 
 ## 2. Functional Requirements (§4.2.1, hal. 77–78)
@@ -68,25 +78,25 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | FR-07 | Mengarahkan, memantau, mengonfirmasi penyelesaian | ✅ | "Laporan saya", Approve/Refuse solusi (Refuse wajib alasan, ditegakkan GLPI); uji UC-07 | — |
 | FR-08 | Mencatat rekomendasi kategori & impact/urgency yang terpercaya | ✅ | Tabel `glpi_plugin_halosis_suggestions` (model, keyakinan, penjelasan); kalibrasi di `reports/triase.md` (keyakinan ≥ 70% → akurasi 87,03%) | Impact/urgency berbasis aturan (lihat BR-05) |
 | FR-09 | Hitung & pantau SLA sesuai policy; eskalasi saat melewati threshold | ✅ | Aturan SLA per prioritas + peringatan sebelum batas + level "Eskalasi SLA terlewati" (Ticket Recall ke ketua tim & Operator, prioritas → Sangat tinggi) di `setup_sla_alerts.py`; tiket uji #59: prioritas 3 → 5, penerima rina, andi, yoga, hendra | Diperbaiki (#4) |
-| FR-10 | Pelaporan operasional & SLA; loading & reconciliation data migrasi | 🟡 | Laporan: dashboard kinerja AI, Statistik GLPI; rekonsiliasi: `ai/scripts/reconcile.py` → `reports/rekonsiliasi.md` | Data history tidak di-*load* ke GLPI (hanya dibersihkan & direkonsiliasi); seed memakai data contoh |
+| FR-10 | Pelaporan operasional & SLA; loading & reconciliation data migrasi | ✅ | Laporan: dashboard kinerja AI, Statistik GLPI; rekonsiliasi: `ai/scripts/reconcile.py` → `reports/rekonsiliasi.md` | 31 Okt: **sampel 200 tiket history** di-*load* lewat API ke entitas terpisah "Arsip ESTIM" (`ai/scripts/migrate_sample.py`, idempoten, bisa dihapus): sumber 200 = berhasil 199 + gagal 1; migrasi penuh 6.682 tiket belum |
 
 ## 3. Non-Functional Requirements (§4.2.2, hal. 78–79)
 
 | Kode | Kebutuhan (ringkas) | Status | Bukti | Catatan / pengganti |
 | --- | --- | --- | --- | --- |
-| NFR-01 | Uji portal & API pada beban normal, peak, stress | ⚪ | `tests/load/halosis_ai.js`; Normal 10 VU 5 menit ke layanan AI: 552 permintaan, galat 0%, `/chat` p95 140 ms, `/triage` p95 25 ms ([`rencana_uji.md`](rencana_uji.md) §7) | Butuh lingkungan produksi. Peak/stress dan halaman GLPI/API tiket belum diuji beban |
+| NFR-01 | Uji portal & API pada beban normal, peak, stress | 🟡 | k6 (`tests/load/`): AI Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`rencana_uji.md`](rencana_uji.md) §7) | Laptop, bukan lingkungan produksi; halaman GLPI (HTML) belum diuji beban |
 | NFR-02 | Target ketersediaan core ITSM sesuai SLA internal | ⚪ | `restart: unless-stopped` di `docker-compose.yml` | Butuh HA/infra BPS. Pengganti: rancangan HA (replika DB, 2 node GLPI di balik load balancer) |
-| NFR-03 | Timeout, retry, error handling, idempotency | 🟡 | Timeout `service_timeout`/`ai_timeout` (`src/Ai/Service.php`, `src/Ai/Client.php`); AI gagal → tiket tetap tersimpan, mode demo; skrip setup & seed idempoten; `UNIQUE(source, source_ref)` kandidat | Sengaja tanpa retry (tiket menunggu); tidak ada antrean ulang triase otomatis |
+| NFR-03 | Timeout, retry, error handling, idempotency | ✅ | Timeout `service_timeout`/`ai_timeout` (`src/Ai/Service.php`, `src/Ai/Client.php`); AI gagal → tiket tetap tersimpan, mode demo; skrip setup & seed idempoten; `UNIQUE(source, source_ref)` kandidat | Tanpa retry saat tiket disimpan (tiket tidak menunggu); **tugas terjadwal `TriageRetry`** (tiap 15 menit, 31 Okt) membuat saran untuk tiket Baru tanpa saran, idempoten, maks. 5 percobaan per tiket, tercatat di log (`src/TriageRetry.php`) |
 | NFR-04 | Scale-out API, worker, AI | ⚪ | Layanan `halosis-ai` terpisah (`docker-compose.yml`) | Pengganti: AI sudah stateless & terpisah → bisa direplikasi; worker = cron GLPI dalam container |
-| NFR-05 | Autentikasi, otorisasi, enkripsi, API security, vulnerability testing | 🟡 | Login GLPI + RBAC per profil (`src/Roles.php`), re-auth area sensitif, CSRF/`X-Requested-With`, API key AI terenkripsi (`src/Config.php`), klien API dibatasi IP, port AI hanya `127.0.0.1` | Belum TLS, belum SSO BPS, password demo bawaan, belum uji kerentanan |
+| NFR-05 | Autentikasi, otorisasi, enkripsi, API security, vulnerability testing | 🟡 | Login GLPI + RBAC per profil (`src/Roles.php`), re-auth area sensitif, CSRF/`X-Requested-With`, API key AI terenkripsi (`src/Config.php`), klien API dibatasi IP, port AI hanya `127.0.0.1` | TLS opsional (profile `tls`, Caddy, sertifikat internal, HSTS, cookie `Secure`, 31 Okt); belum SSO BPS, password demo bawaan, belum uji kerentanan |
 | NFR-06 | Data ke AI mengikuti data minimization | ✅ | `ai/halosis_ai/privacy.py` (email, NIP, NIK, HP, rahasia, nama), pindai ulang sebelum simpan (`prepare_data.py::residual_pii`), `src/Privacy.php` sebelum kirim; `ai/tests/test_privacy.py`; `.gitignore` data | Batasan: nama tanpa sapaan & tidak ada di kolom pengguna tidak terdeteksi |
 | NFR-07 | Rekomendasi & keputusan dapat ditelusuri ke aktor & waktu | ✅ | `glpi_plugin_halosis_decisions` (users_id, date_creation), `reassignments`, keputusan kandidat (`users_id`, `date_decision`), tab Riwayat, Audit trail `/front/event.php` | — |
 | NFR-08 | Self-service tanpa pemahaman teknis ITSM | 🟡 | Menu Helpdesk ringkas (5 item), chat dengan saran pertanyaan, tampilan HP 390px (`screenshot/modernisasi/`) | Belum ada uji usability dengan pengguna |
-| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `GET /metrics` Prometheus layanan AI (jumlah permintaan, durasi per endpoint, ukuran indeks), `docker compose logs` | Metrik AI ditambahkan (P2 #13); belum ada Prometheus/Grafana terpusat untuk GLPI, DB & infra |
+| NFR-09 | Monitoring/logging aplikasi, API, AI, DB, infra | 🟡 | `files/_log/halosis.log`, log GLPI, `GET /health` layanan AI, log latensi AI (`ai/logs/latency.jsonl`), `GET /metrics` Prometheus layanan AI (jumlah permintaan, durasi per endpoint, ukuran indeks), `docker compose logs` | Metrik AI ditambahkan (P2 #13); 31 Okt: profile `monitoring` (Prometheus + mysqld-exporter + Grafana, dasbor terprovisi: status, permintaan & latensi p95 AI, galat 5xx, MySQL). Belum: metrik aplikasi GLPI & host, alert |
 | NFR-10 | Kustomisasi GLPI minimal | ✅ | Tidak ada perubahan kode inti; kustomisasi = plugin + palet `themes/halosis.scss` + konfigurasi | — |
 | NFR-11 | Integrasi via API; AI dapat diganti tanpa ganti core | ✅ | Plugin → HTTP `service_url` (`src/Ai/Service.php`) → FastAPI; penyedia Claude/OpenAI-kompatibel opsional (`src/Ai/Client.php`); fallback demo | — |
 | NFR-12 | Latensi AI: retrieval, generation, end-to-end terpisah | ✅ | `ai/service/app.py::record_latency` → `ai/logs/latency.jsonl` (angka saja); `ai/scripts/latency_report.py` → `reports/latensi.md` (chat retrieval p50 91 ms / p95 454 ms; triase p50 13 ms); `ai/tests/test_service.py::test_log_latensi_tanpa_teks` | Diperbaiki (#2); generation hanya bila Claude aktif |
-| NFR-13 | Referential integrity & audit trail pada migrasi/transaksi | 🟡 | Transaksi lewat API/ORM GLPI; rekonsiliasi `reconcile.py` (sumber = berhasil + gagal ✓) | Migrasi nyata ke GLPI belum dilakukan |
+| NFR-13 | Referential integrity & audit trail pada migrasi/transaksi | ✅ | Transaksi lewat API/ORM GLPI; rekonsiliasi `reconcile.py` (sumber = berhasil + gagal ✓) | Migrasi sampel lewat API GLPI (riwayat & entitas tercatat), `externalid` = nomor tiket sumber untuk penelusuran, rekonsiliasi sumber = berhasil + dilewati + gagal ✅ (`rekonsiliasi.md`); skala penuh belum |
 | NFR-14 | Kepemilikan AI release, threshold, knowledge source, override, audit | ✅ | Ambang & fitur di Pengaturan AI (hak `plugin_halosis_config`), versi model tercatat per saran, human override + audit; `reports/tata_kelola_ai.md`: RACI, siklus rilis model, pemilik sumber & **per domain** knowledge (31 Okt) | Proses umpan balik Ubah/Tolak ke data latih masih manual |
 
 ## 4. Use Case UC-01..UC-10 (Tabel 6.4–6.13, hal. 128–142)
@@ -111,7 +121,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Model embedding | `paraphrase-multilingual-MiniLM-L12-v2` (hal. 54, 56) | `intfloat/multilingual-e5-base` (`ai/halosis_ai/search.py`, `/health`) | ✅ | Dibandingkan pada set uji yang sama ([`banding_embedding.md`](banding_embedding.md)): e5 Top-1 72,74% / Top-3 89,62% / MRR 0,8144 vs MiniLM 67,99% / 83,55% / 0,7650 |
 | LLM | Qwen2.5 3B via Ollama; keputusan akhir: RAG grounded, bukan LLM bebas (hal. 54–55) | Default **ekstraktif** (kutipan artikel, tanpa LLM); Claude opsional via `ANTHROPIC_API_KEY` | 🟡 | Sejalan dengan prinsip "grounded"; tidak ada LLM lokal |
 | Metode triase + metrik | TF-IDF vs embedding, 39 grup: Top-1 68,33/70,43%, Top-3 90,89/90,29%, MRR 0,7989/0,8092; confidence-aware + HITL (hal. 54) | TF-IDF + regresi logistik terkalibrasi, 21 kelas: Top-1 74,41%, Top-3 93,07%, F1 makro 67,69%, ambang keyakinan 70% (`reports/triase.md`) | ✅ | MRR 0,8420 (31 Okt, set uji sama); jumlah kelas berbeda (tim < 30 tiket → "Lainnya") sehingga angka tidak sebanding langsung |
-| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5) → 14 klaster; sliding window 1 jam, similarity 0,70, min. 3 insiden (hal. 56) | Embedding e5 dipusatkan + pengelompokan rakus average-link, ambang 0,50, jendela 60 menit, **min. 3 tiket** (`pattern_min_tickets`, sesuai PoC) (`patterns.py`, `/pola`); fallback kata kunci | 🟡 | Semantik ✅ & minimum sesuai PoC; tanpa DBSCAN; ambang 0,50 karena skala kosinus e5 berbeda dari MiniLM (0,70) |
+| Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5) → 14 klaster; sliding window 1 jam, similarity 0,70, min. 3 insiden (hal. 56) | Embedding e5 dipusatkan + pengelompokan rakus average-link, ambang 0,50, jendela 60 menit, **min. 3 tiket** (`pattern_min_tickets`, sesuai PoC) (`patterns.py`, `/pola`); fallback kata kunci | ✅ | Metode bawaan rata-rata kemiripan + opsi **DBSCAN** (eps & min_samples di Pengaturan AI, 31 Okt); banding pada 666 insiden Jul–Ags: setara (7 vs 8 kelompok, kemurnian tim 0,905 vs 0,917; [`banding_pola.md`](banding_pola.md)) |
 | HITL | Approval native GLPI + audit (hal. 57) | Panel Saran AI Terima/Ubah/Tolak + alasan + audit; Approve/Refuse solusi | ✅ | Melebihi PoC (keputusan per rekomendasi) |
 | Evidence Maturity | Klasifikasi Proven PoC / Partially proven per area (hal. 59) | Tabel Evidence Maturity implementasi di README "Keputusan desain & keterbatasan" | ✅ | Diperbaiki (#6) |
 
@@ -123,7 +133,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Application / core ITSM | ✅ | GLPI 12.0.0 (`docker-compose.yml`, layanan `glpi`) | — |
 | Database | ✅ | MySQL 8.4 (layanan `db`), tabel plugin `glpi_plugin_halosis_*` (`hook.php`) | — |
 | Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern` | Tidak dipisah ke container sendiri |
-| AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/cari`, `/pola`, `/kandidat`, `/reindex/artikel`, `/health`, `/metrics`) | — |
+| AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/cari`, `/pola`, `/kandidat`, `/reindex/artikel`, `/reindex/layanan`, `/health`, `/metrics`) | — |
 | Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, kosinus di memori; pembaruan inkremental per artikel KB dengan lock + tulis atomik (`search.update_article`) | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
 | Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health`, log latensi AI, `GET /metrics` (Prometheus) layanan AI | Belum ada server Prometheus/Grafana yang mengumpulkan metrik |
 | Reverse proxy / load balancer | ⚪ | — | Infra produksi; lokal cukup port 8080 |
@@ -141,17 +151,17 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Manajemen / Pimpinan | sri · Manajemen (hanya-baca) | UC-08 | Dashboard kinerja, Kinerja AI, Monitoring SLA, Pola insiden, Laporan (Statistik) |
 | Knowledge Manager | lina · Knowledge Manager | UC-09 | Kandidat knowledge (Jadikan artikel / Abaikan), Daftar artikel, Tulis artikel |
 | Administrator Sistem | dimas · Administrator | UC-10 | Admin console, Service catalog, Kategori, SLA, Tim, Pengguna & role, Workflow & aturan, Pengaturan AI, Notifikasi, Audit trail |
-| AI Engine (aktor sistem) | layanan `halosis-ai` | UC-02, UC-04 (+UC-08, UC-09) | `/chat` (retrieval), `/triage`, `/pola` (deteksi pola semantik, UC-08), `/kandidat` & `/reindex/artikel` (UC-09) |
+| AI Engine (aktor sistem) | layanan `halosis-ai` | UC-02, UC-04 (+UC-08, UC-09) | `/chat` (retrieval), `/cari` (Cari knowledge, FR-03), `/triage`, `/pola` (deteksi pola semantik, UC-08), `/kandidat`, `/reindex/artikel` & `/reindex/layanan` (UC-09, BR-03) |
 | (di luar dokumen) | glpi · Super-Admin | — | Pengelola instalasi: plugin, profil, pengaturan umum |
 
 ## 8. Ketidaksesuaian dengan dokumen & dampaknya
 
 | Area | Dokumen | Sistem | Dampak |
 | --- | --- | --- | --- |
-| Embedding | MiniLM-L12-v2 | multilingual-e5-base | Hasil retrieval tidak bisa dibandingkan langsung dengan PoC; model ±2× lebih besar (unduhan ±1 GB, startup lebih lama). Perlu disebut sebagai keputusan desain |
+| Embedding | MiniLM-L12-v2 | multilingual-e5-base | **Sudah dibandingkan** pada set uji yang sama (`banding_embedding.md`): e5 Top-1 72,74% / MRR 0,8144 vs MiniLM 67,99% / 0,7650; biaya: model ±2× lebih besar, pengodean ±4× lebih lambat (8 ms/kueri) |
 | LLM | Qwen2.5 3B (Ollama) untuk RAG | Tanpa LLM (ekstraktif); Claude opsional | Jawaban berupa kutipan, bukan ringkasan natural; risiko halusinasi nol; BR-06 tetap terpenuhi |
 | Vector DB | Vector database (layanan) | File numpy di memori, update inkremental per artikel | Cukup untuk ±ribuan potongan; tanpa layanan terpisah, skala & konkurensi terbatas pada satu instans `halosis-ai` |
-| Deteksi pola | Embedding + DBSCAN, similarity 0,70, min. 3 | Embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, min. 3, jendela 60 menit; fallback kata kunci | Hasil tidak sebanding langsung dengan 14 klaster PoC; tanpa DBSCAN tiket "noise" tidak diberi label khusus |
+| Deteksi pola | Embedding + DBSCAN, similarity 0,70, min. 3 | Embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, min. 3, jendela 60 menit; fallback kata kunci | DBSCAN tersedia sebagai opsi dan dibandingkan (`banding_pola.md`); bawaan tetap rata-rata kemiripan karena setara, lebih cepat, dan tidak menarik tiket lain lewat efek rantai |
 | Triase | Routing ke 39 grup | 21 kelas (tim kecil → "Lainnya"); dampak/urgensi berbasis aturan | Tim kecil tidak pernah disarankan; BR-05 sebagian untuk dampak/urgensi |
 | SSO | Pre-kondisi UC-03: login SSO BPS | SSO **Keycloak lokal** (realm `halosis`, password grant dari form HaloSIS) | Belum diuji ke SSO BPS; cukup ganti URL/realm/client |
 | Frontend | Portal (prototipe Next.js) | UI GLPI + plugin bertema | Tampilan mengikuti prototipe, tetapi aplikasi Next.js tidak dipakai |
@@ -176,8 +186,8 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | 7 | ❌ Tidak layak — Model dampak/urgensi dari history: kolomnya tidak ada di data history (keputusan 31 Okt) | BR-05, FR-08 | sedang | `ai/halosis_ai/triage_model.py`, `ai/scripts/train_triage.py`, `src/Triage.php` |
 | 8 | ✅ Selesai — Pencarian semantik untuk agent (Operator/Tim Teknis) di halaman plugin | FR-03 | sedang | controller & template baru di plugin, `src/RoleMenu.php` |
 | 9 | ✅ Selesai — Uji email notifikasi dengan SMTP lokal (mis. container Mailpit) | BR-02, UC-03 | kecil | `docker-compose.yml`, README |
-| 10 | ✅ Selesai — Rencana uji performa & latensi (k6) + hasil kondisi Normal | NFR-01, NFR-12 | sedang | [`reports/rencana_uji.md`](rencana_uji.md) |
-| 11 | 🟡 Sebagian — Checklist keamanan & backup tersedia; **TLS belum**, password demo masih bawaan | NFR-05 | sedang | [`reports/keamanan_backup.md`](keamanan_backup.md) |
+| 10 | ✅ Selesai — Rencana uji performa & latensi (k6) + hasil Normal, Peak, Stress (AI) & Normal (API GLPI) | NFR-01, NFR-12 | sedang | [`reports/rencana_uji.md`](rencana_uji.md) |
+| 11 | 🟡 Sebagian — Checklist keamanan & backup; TLS lewat profile `tls` (Caddy, lokal); password demo masih bawaan | NFR-05 | sedang | [`reports/keamanan_backup.md`](keamanan_backup.md) |
 | 12 | 🟡 Sebagian — Template uji usability tersedia; **sesi dengan pegawai belum** dilakukan | NFR-08 | kecil | [`reports/usability.md`](usability.md) |
 | 13 | ✅ Selesai — Endpoint metrik (`/metrics`) layanan AI | NFR-09 | kecil | `ai/service/app.py`, `ai/requirements-service.txt` |
 

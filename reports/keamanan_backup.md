@@ -8,8 +8,8 @@ Kolom **Prototipe** = kondisi repo saat ini. Kolom **Produksi** = yang wajib seb
 | --- | --- | --- | --- | --- |
 | 1 | Password Super-Admin `glpi` bukan bawaan | ⬜ (bawaan `glpi`) | Wajib | Avatar › Preferensi › Password; `setup-roles` memperingatkan selama masih bawaan |
 | 2 | Password akun contoh (`halosis`) | Demo saja | Hapus akun contoh | Nonaktifkan/hapus budi…dimas; pakai akun dinas |
-| 3 | Login terpusat (SSO/LDAP BPS) | ⬜ login lokal | Wajib | Setup › Autentikasi › LDAP/SAML (fitur bawaan GLPI, tanpa ubah kode) |
-| 4 | HTTPS/TLS | ⬜ HTTP :8080 | Wajib | Reverse proxy (Nginx/Traefik) dengan sertifikat BPS; GLPI hanya di jaringan internal |
+| 3 | Login terpusat (SSO/LDAP BPS) | 🟡 SSO Keycloak lokal | Wajib | Setup › Autentikasi › LDAP/SAML (fitur bawaan GLPI, tanpa ubah kode) |
+| 4 | HTTPS/TLS | 🟡 Opsional: profile `tls` (Caddy, sertifikat internal) → https://localhost:8443, HSTS, cookie sesi `Secure`; :8080 masih terbuka | Wajib | `docker compose --profile tls up -d`; produksi: sertifikat BPS di `tls/Caddyfile` dan port 8080 hanya jaringan internal |
 | 5 | Port layanan AI tidak terbuka | ✅ `127.0.0.1:8001` | Tutup sama sekali | Hapus pemetaan port; GLPI tetap memanggil `halosis-ai:8000` di jaringan compose |
 | 6 | Port Mailpit tidak terbuka | ✅ `127.0.0.1:8025` | Hapus Mailpit | Ganti SMTP ke server email BPS |
 | 7 | RBAC per role | ✅ `setup-roles`, hak plugin | Tinjau tiap rilis | Uji: tiap akun hanya melihat menu perannya; akses langsung URL lain → 403 |
