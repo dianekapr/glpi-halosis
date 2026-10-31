@@ -165,7 +165,9 @@ final class Chatbot
             'message_count'  => count($messages),
             'answered_count' => (int) $chat->fields['answered_count'] + ($reply['found'] ? 1 : 0),
         ]);
-        self::recordUsage($chat, $reply['sources']);
+        if ($reply['found']) {
+            self::recordUsage($chat, $reply['sources']);
+        }
 
         return [
             'ok'      => true,
@@ -204,7 +206,7 @@ final class Chatbot
         }
         $data = Service::post('/chat', ['pertanyaan' => $question, 'riwayat' => $history]);
         if (empty($data['ditemukan'])) {
-            return self::notFound();
+            return self::choices((array) ($data['pilihan'] ?? [])) ?? self::notFound();
         }
 
         $sources = [];
@@ -325,6 +327,30 @@ final class Chatbot
             'found'   => true,
             'sources' => self::sources([$article]),
             'model'   => self::DEMO_MODEL,
+        ];
+    }
+
+    /**
+     * Keyakinan sedang (T3): tidak menjawab, hanya menawarkan 2–3 judul artikel KB yang terlihat oleh pengguna
+     * sebagai pilihan "Maksud Anda…?" + kartu Buat laporan (found = false). Null bila tidak ada pilihan.
+     */
+    private static function choices(array $choices): ?array
+    {
+        $sources = [];
+        foreach ($choices as $choice) {
+            $item = new \KnowbaseItem();
+            if (preg_match('/^KB-(\d+)$/', (string) ($choice['sumber'] ?? ''), $m) && $item->getFromDB((int) $m[1]) && $item->canViewItem()) {
+                $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+            }
+        }
+        if ($sources === []) {
+            return null;
+        }
+        return [
+            'answer'  => __('Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits.', 'halosis'),
+            'found'   => false,
+            'sources' => array_slice($sources, 0, 3),
+            'model'   => '',
         ];
     }
 

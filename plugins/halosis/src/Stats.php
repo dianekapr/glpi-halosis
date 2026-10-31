@@ -2,7 +2,14 @@
 
 namespace GlpiPlugin\Halosis;
 
+use CommonITILActor;
+use CommonITILObject;
 use DateTimeImmutable;
+use Glpi\DBAL\QuerySubQuery;
+use Group_Ticket;
+use ITILCategory;
+use Problem;
+use Ticket;
 
 /**
  * Angka dashboard kinerja AI, dihitung dari tabel log plugin saja:
@@ -13,25 +20,33 @@ final class Stats
     public const ALLOWED_WEEKS = [4, 8, 12];
     public const DEFAULT_WEEKS = 8;
 
+    /** Bulan terakhir pada tren drift (rasio Ubah+Tolak per bulan, BP-19) */
+    public const DRIFT_MONTHS = 6;
+
     /** Urutan seri tetap (warna mengikuti entitas, bukan peringkat) */
     public const ACTIONS = [Decision::ACTION_ACCEPT, Decision::ACTION_MODIFY, Decision::ACTION_REJECT];
 
     /**
      * @return array<string, mixed>
      */
-    public static function collect(int $weeks): array
+    public static function collect(int $weeks, int $groups_id = 0, int $categories_id = 0): array
     {
         $weeks = in_array($weeks, self::ALLOWED_WEEKS, true) ? $weeks : self::DEFAULT_WEEKS;
         $start = self::periodStart($weeks);
+        $filter = self::ticketFilter($groups_id, $categories_id);
 
-        $decisions = self::decisions($start);
+        $decisions = self::decisions($start, $filter);
         return [
             'weeks'        => $weeks,
             'since'        => $start->format('Y-m-d'),
+            'filter'       => ['groups_id' => $groups_id, 'categories_id' => $categories_id],
+            'drift'        => self::drift($filter),
+            'patterns'     => self::patterns($start),
+            'unhelpful'    => self::unhelpfulArticles($start),
             'decisions'    => self::decisionTotals($decisions),
             'weekly'       => self::weekly($decisions, $start, $weeks),
             'by_band'      => self::byConfidenceBand($decisions),
-            'reassigned'   => self::reassigned($decisions, $start),
+            'reassigned'   => self::reassigned($decisions),
             'chats'        => self::chats($start),
             'articles'     => self::articleUsage($start),
             'threshold'    => Config::getTriageThreshold(),
@@ -48,11 +63,56 @@ final class Stats
     }
 
     /**
+     * Filter dashboard per tim (grup yang ditugaskan) dan kategori layanan (termasuk subkategori), T18.
+     * Berlaku untuk angka triase (keputusan, salah tim, drift); angka chatbot & pola tidak terkait tiket.
+     *
+     * @return array<string, mixed> Kriteria WHERE atas d.tickets_id
+     */
+    private static function ticketFilter(int $groups_id, int $categories_id): array
+    {
+        $where = [];
+        if ($groups_id > 0) {
+            $where[] = ['d.tickets_id' => new QuerySubQuery([
+                'SELECT' => 'tickets_id',
+                'FROM'   => Group_Ticket::getTable(),
+                'WHERE'  => ['groups_id' => $groups_id, 'type' => CommonITILActor::ASSIGN],
+            ])];
+        }
+        if ($categories_id > 0) {
+            $where[] = ['d.tickets_id' => new QuerySubQuery([
+                'SELECT' => 'id',
+                'FROM'   => Ticket::getTable(),
+                'WHERE'  => ['itilcategories_id' => getSonsOf(ITILCategory::getTable(), $categories_id)],
+            ])];
+        }
+        return $where;
+    }
+
+    /**
+     * Pilihan filter: grup yang bisa ditugaskan & kategori layanan.
+     *
+     * @return array{groups: array<int, string>, categories: array<int, string>}
+     */
+    public static function filterOptions(): array
+    {
+        global $DB;
+
+        $options = ['groups' => [], 'categories' => []];
+        foreach ($DB->request(['SELECT' => ['id', 'name'], 'FROM' => \Group::getTable(), 'WHERE' => ['is_assign' => 1], 'ORDER' => 'name']) as $row) {
+            $options['groups'][(int) $row['id']] = (string) $row['name'];
+        }
+        foreach ($DB->request(['SELECT' => ['id', 'completename'], 'FROM' => ITILCategory::getTable(), 'ORDER' => 'completename']) as $row) {
+            $options['categories'][(int) $row['id']] = (string) $row['completename'];
+        }
+        return $options;
+    }
+
+    /**
      * Keputusan dalam periode, dengan keyakinan saran terkait.
      *
      * @return array<int, array{action: string, date: string, tickets_id: int, confidence: int}>
      */
-    private static function decisions(DateTimeImmutable $start): array
+    private static function decisions(DateTimeImmutable $start, array $filter = []): array
     {
         global $DB;
 
@@ -63,7 +123,7 @@ final class Stats
             'LEFT JOIN' => [
                 Suggestion::getTable() . ' AS s' => ['ON' => ['d' => 'suggestions_id', 's' => 'id']],
             ],
-            'WHERE'     => ['d.date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
+            'WHERE'     => ['d.date_creation' => ['>=', $start->format('Y-m-d H:i:s')]] + $filter,
             'ORDER'     => 'd.id',
         ]) as $row) {
             $rows[] = [
@@ -138,7 +198,7 @@ final class Stats
     /**
      * Tiket yang triasenya diterapkan (Terima/Ubah) lalu dipindah ke grup lain atau dikembalikan ke operator.
      */
-    private static function reassigned(array $decisions, DateTimeImmutable $start): array
+    private static function reassigned(array $decisions): array
     {
         global $DB;
 
@@ -165,6 +225,109 @@ final class Stats
             'returned' => $returned,
             'percent' => count($applied) > 0 ? round($moved * 100 / count($applied)) : 0,
         ];
+    }
+
+    /**
+     * Indikator drift (BP-19): rasio Ubah+Tolak per bulan kalender, DRIFT_MONTHS bulan terakhir.
+     *
+     * @return array<int, array{label: string, total: int, overridden: int, percent: ?int}>
+     */
+    private static function drift(array $filter): array
+    {
+        $now = new DateTimeImmutable($_SESSION['glpi_currenttime'] ?? 'now');
+        $first = $now->modify('first day of this month')->setTime(0, 0)->modify('-' . (self::DRIFT_MONTHS - 1) . ' months');
+        $months = [];
+        for ($i = 0; $i < self::DRIFT_MONTHS; $i++) {
+            $month = $first->modify("+{$i} months");
+            $months[$month->format('Y-m')] = ['label' => $month->format('m/Y'), 'total' => 0, 'overridden' => 0, 'percent' => null];
+        }
+        foreach (self::decisions($first, $filter) as $decision) {
+            $key = substr($decision['date'], 0, 7);
+            if (!isset($months[$key]) || !in_array($decision['action'], self::ACTIONS, true)) {
+                continue;
+            }
+            $months[$key]['total']++;
+            $months[$key]['overridden'] += (int) ($decision['action'] !== Decision::ACTION_ACCEPT);
+        }
+        foreach ($months as &$month) {
+            $month['percent'] = $month['total'] > 0 ? (int) round($month['overridden'] * 100 / $month['total']) : null;
+        }
+        return array_values($months);
+    }
+
+    /**
+     * Pola insiden dalam periode (BP-17): terdeteksi, dikonfirmasi (Problem sudah ditangani: status lepas dari
+     * Baru), ditutup (Selesai/Ditutup atau dihapus sebagai pola palsu).
+     *
+     * @return array{detected: int, confirmed: int, closed: int}
+     */
+    private static function patterns(DateTimeImmutable $start): array
+    {
+        global $DB;
+
+        $counts = ['detected' => 0, 'confirmed' => 0, 'closed' => 0];
+        foreach ($DB->request([
+            'SELECT'    => ['pr.status', 'pr.is_deleted'],
+            'FROM'      => PatternDetector::getTable() . ' AS p',
+            'LEFT JOIN' => [Problem::getTable() . ' AS pr' => ['ON' => ['p' => 'problems_id', 'pr' => 'id']]],
+            'WHERE'     => ['p.date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
+        ]) as $row) {
+            $counts['detected']++;
+            $status = (int) $row['status'];
+            if ($row['status'] === null || (int) $row['is_deleted'] === 1 || in_array($status, [CommonITILObject::SOLVED, CommonITILObject::CLOSED], true)) {
+                $counts['closed']++;
+            } elseif ($status !== CommonITILObject::INCOMING) {
+                $counts['confirmed']++;
+            }
+        }
+        return $counts;
+    }
+
+    /**
+     * Artikel dengan umpan balik "tidak membantu" terbanyak (BP-13): percakapan chatbot yang mengutip artikel
+     * lalu berakhir jadi laporan atau rating ≤ 2, ditambah penilaian "Tidak membantu" agent di Cari knowledge.
+     *
+     * @return array<int, array{name: string, url: string, chat: int, agent: int, total: int}>
+     */
+    private static function unhelpfulArticles(DateTimeImmutable $start, int $limit = 5): array
+    {
+        global $DB;
+
+        $since = $start->format('Y-m-d H:i:s');
+        $counts = [];
+        foreach ($DB->request([
+            'SELECT'     => ['au.knowbaseitems_id', 'COUNT DISTINCT' => 'au.chats_id AS cpt'],
+            'FROM'       => 'glpi_plugin_halosis_article_uses AS au',
+            'INNER JOIN' => [Chat::getTable() . ' AS c' => ['ON' => ['au' => 'chats_id', 'c' => 'id']]],
+            'WHERE'      => [
+                'au.date_creation' => ['>=', $since],
+                'OR'               => ['c.status' => Chat::STATUS_TICKET, 'c.rating' => ['<=', 2]],
+            ],
+            'GROUPBY'    => 'au.knowbaseitems_id',
+        ]) as $row) {
+            $counts[(int) $row['knowbaseitems_id']]['chat'] = (int) $row['cpt'];
+        }
+        foreach ($DB->request([
+            'SELECT'  => ['knowbaseitems_id', 'COUNT' => 'id AS cpt'],
+            'FROM'    => 'glpi_plugin_halosis_feedback',
+            'WHERE'   => ['is_helpful' => 0, 'knowbaseitems_id' => ['>', 0], 'date_creation' => ['>=', $since]],
+            'GROUPBY' => 'knowbaseitems_id',
+        ]) as $row) {
+            $counts[(int) $row['knowbaseitems_id']]['agent'] = (int) $row['cpt'];
+        }
+
+        $rows = [];
+        foreach ($counts as $kb_id => $c) {
+            $article = new \KnowbaseItem();
+            if (!$article->getFromDB($kb_id)) {
+                continue;
+            }
+            $chat = $c['chat'] ?? 0;
+            $agent = $c['agent'] ?? 0;
+            $rows[] = ['name' => (string) $article->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($kb_id), 'chat' => $chat, 'agent' => $agent, 'total' => $chat + $agent];
+        }
+        usort($rows, static fn ($a, $b) => $b['total'] <=> $a['total']);
+        return array_slice($rows, 0, $limit);
     }
 
     /**
@@ -312,5 +475,51 @@ final class Stats
             }
         }
         return (int) (ceil($raw / 1000) * 1000);
+    }
+
+    /**
+     * Keputusan Ubah/Tolak sebagai data koreksi untuk melatih ulang model (T10, tata_kelola_ai.md §2 langkah 1b).
+     * Judul, deskripsi, dan alasan disamarkan (Privacy); tim final = grup final keputusan, atau grup yang kini
+     * ditugaskan pada tiket (Tolak = triase manual).
+     *
+     * @return array<int, array<string, string|int>>
+     */
+    public static function corrections(): array
+    {
+        global $DB;
+
+        $rows = [];
+        foreach ($DB->request([
+            'SELECT'     => ['d.date_creation', 'd.tickets_id', 'd.action', 'd.final_values', 'd.reason', 's.groups_id', 's.itilcategories_id', 's.model', 't.name', 't.content', 't.type'],
+            'FROM'       => Decision::getTable() . ' AS d',
+            'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['d' => 'tickets_id', 't' => 'id']]],
+            'LEFT JOIN'  => [Suggestion::getTable() . ' AS s' => ['ON' => ['d' => 'suggestions_id', 's' => 'id']]],
+            'WHERE'      => ['d.action' => [Decision::ACTION_MODIFY, Decision::ACTION_REJECT]],
+            'ORDER'      => 'd.id',
+        ]) as $row) {
+            $final = json_decode((string) $row['final_values'], true) ?: [];
+            $group = (int) ($final['groups_id'] ?? 0) ?: (int) ($DB->request([
+                'SELECT' => 'groups_id',
+                'FROM'   => Group_Ticket::getTable(),
+                'WHERE'  => ['tickets_id' => $row['tickets_id'], 'type' => CommonITILActor::ASSIGN],
+                'ORDER'  => 'id DESC',
+                'LIMIT'  => 1,
+            ])->current()['groups_id'] ?? 0);
+            $rows[] = [
+                'tanggal'        => (string) $row['date_creation'],
+                'tiket'          => (int) $row['tickets_id'],
+                'jenis'          => (int) $row['type'] === Ticket::DEMAND_TYPE ? 'REQ' : 'INC',
+                'judul'          => Privacy::mask((string) $row['name'])['text'],
+                'deskripsi'      => mb_substr(Privacy::mask(KnowledgeSearch::plainText((string) $row['content']))['text'], 0, 2000),
+                'keputusan'      => (string) $row['action'],
+                'tim_saran'      => Suggestion::groupName((int) $row['groups_id']),
+                'tim_final'      => $group > 0 ? Suggestion::groupName($group) : '',
+                'kategori_saran' => Suggestion::categoryName((int) $row['itilcategories_id']),
+                'kategori_final' => isset($final['itilcategories_id']) ? Suggestion::categoryName((int) $final['itilcategories_id']) : '',
+                'alasan'         => Privacy::mask((string) $row['reason'])['text'],
+                'model'          => (string) $row['model'],
+            ];
+        }
+        return $rows;
     }
 }

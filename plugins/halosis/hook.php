@@ -31,6 +31,7 @@ function plugin_halosis_tables(): array
             `groups_id` int {$sign} NOT NULL DEFAULT '0',
             `confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan 0-100',
             `explanation` text,
+            `candidates` text COMMENT 'JSON 3 tim teratas: tim, keyakinan, groups_id',
             `model` varchar(255) NOT NULL DEFAULT '',
             `is_demo` tinyint NOT NULL DEFAULT '0',
             `status` varchar(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|accepted|modified|rejected',
@@ -108,6 +109,19 @@ function plugin_halosis_tables(): array
             KEY `chats_id` (`chats_id`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Umpan balik agent di Cari knowledge (KR-07): hasil membantu / tidak. Teks kueri tidak disimpan (NFR-06).
+        'glpi_plugin_halosis_feedback' => "
+            `users_id` int {$sign} NOT NULL DEFAULT '0',
+            `source_kind` varchar(20) NOT NULL DEFAULT '' COMMENT 'kb|tiket',
+            `source_ref` varchar(100) NOT NULL DEFAULT '' COMMENT 'KB-<id> atau nomor tiket historis',
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `score` float DEFAULT NULL COMMENT 'Skor relevansi hasil (0-1), kosong untuk kata kunci',
+            `is_helpful` tinyint NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            KEY `users_id` (`users_id`),
+            KEY `knowbaseitems_id` (`knowbaseitems_id`),
+            KEY `date_creation` (`date_creation`)
+        ",
         // Kandidat Knowledge (UC-09): solusi tiket selesai atau solusi berulang dari indeks AI, dikurasi
         // Knowledge Manager menjadi draf artikel KB atau diabaikan dengan alasan.
         'glpi_plugin_halosis_candidates' => "
@@ -157,6 +171,9 @@ function plugin_halosis_install(): bool
 
     // Kolom yang ditambahkan setelah versi awal (pemasangan lama tetap dimutakhirkan)
     $added = [
+        'glpi_plugin_halosis_suggestions' => [
+            'candidates' => 'text AFTER `explanation`',
+        ],
         'glpi_plugin_halosis_reassignments' => [
             'kind'   => "varchar(20) NOT NULL DEFAULT 'reassign' AFTER `to_groups_id`",
             'reason' => 'text AFTER `kind`',

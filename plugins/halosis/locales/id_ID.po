@@ -1032,3 +1032,79 @@ msgstr "Artikel yang paling sering dipakai chatbot"
 msgid "used %d time"
 msgid_plural "used %d times"
 msgstr[0] "dipakai %d kali"
+
+msgid "Active tickets per candidate team"
+msgstr "Tiket aktif per kandidat tim"
+
+msgid "%d active ticket"
+msgid_plural "%d active tickets"
+msgstr[0] "%d tiket aktif"
+
+msgid "not mapped to a GLPI group"
+msgstr "belum terpetakan ke grup GLPI"
+
+msgid "You are not allowed to search knowledge."
+msgstr "Anda tidak berhak mencari knowledge."
+
+msgid "Was this useful?"
+msgstr "Apakah ini membantu?"
+
+msgid "Helpful"
+msgstr "Membantu"
+
+msgid "Not helpful"
+msgstr "Tidak membantu"
+
+msgid "Thank you, feedback saved."
+msgstr "Terima kasih, umpan balik tersimpan."
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Team"
+msgstr "Tim"
+
+msgid "All teams"
+msgstr "Semua tim"
+
+msgid "Service category"
+msgstr "Kategori layanan"
+
+msgid "All categories"
+msgstr "Semua kategori"
+
+msgid "Apply"
+msgstr "Terapkan"
+
+msgid "Export corrections (CSV, masked)"
+msgstr "Ekspor koreksi (CSV, tersamar)"
+
+msgid "Articles most often marked not helpful"
+msgstr "Artikel paling sering dinilai tidak membantu"
+
+msgid "%d chats not resolved, %d agent votes"
+msgstr "%d chat tidak terselesaikan, %d penilaian agent"
+
+msgid "Detected"
+msgstr "Terdeteksi"
+
+msgid "Confirmed"
+msgstr "Dikonfirmasi"
+
+msgid "Closed"
+msgstr "Ditutup"
+
+msgid "Drift indicator: modified + rejected per month"
+msgstr "Indikator drift: diubah + ditolak per bulan"
+
+msgid "Month"
+msgstr "Bulan"
+
+msgid "Decisions"
+msgstr "Keputusan"
+
+msgid "Modified + rejected"
+msgstr "Diubah + ditolak"
+
+msgid "Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits."
+msgstr "Maksud Anda salah satu artikel berikut? Buka yang sesuai, atau klik “Buat laporan” bila tidak ada yang cocok."

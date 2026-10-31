@@ -338,12 +338,17 @@ docker compose exec glpi php bin/console config:set notifications_mailing 1 --al
 ```
 > ⚠️ **Mailpit hanya untuk uji lokal**: semua email ditahan di http://localhost:8025 dan tidak pernah terkirim
 > ke alamat sungguhan. Untuk produksi, ganti SMTP ke server email BPS.
+
 Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
-- **Aturan bisnis "SLA Kritis/Tinggi/Sedang/Rendah"** memasang SLA waktu penyelesaian menurut prioritas, saat tiket
-  dibuat maupun saat prioritas diubah (mis. operator menerima saran triase). Tanpa aturan ini, laporan baru tidak
+- **SLA respons (*time to own*, TTO)** per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam
+  (batas tiket diambil/ditugaskan), di samping SLA penyelesaian (*time to resolve*, TTR) dari `seed_halosis.py`.
+- **Aturan bisnis "SLA Kritis/Tinggi/Sedang/Rendah"** memasang **SLA respons (TTO) dan penyelesaian (TTR)** menurut
+  prioritas, saat tiket dibuat maupun saat prioritas diubah (mis. operator menerima saran triase). Tanpa aturan ini, laporan baru tidak
   punya SLA. Bisa diubah Administrator di menu **Workflow & aturan**.
-- **Level eskalasi "Peringatan risiko SLA"** di tiap SLA, berjalan **sebelum** batas waktu: 1 jam (Kritis),
-  1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah).
+- **Level eskalasi "Peringatan risiko SLA"** di tiap SLA penyelesaian, berjalan **sebelum** batas waktu: 1 jam
+  (Kritis), 1,5 jam (Tinggi), 4 jam (Sedang), 24 jam (Rendah). Dokumen memodelkan `ambangPeringatan` sebagai
+  persentase (hal. 162); GLPI hanya mendukung level eskalasi berupa waktu tetap sebelum batas, jadi persentase
+  diwujudkan sebagai jam tetap per prioritas (±25% dari target).
 - **Level eskalasi "Eskalasi SLA terlewati"** tepat saat batas waktu (FR-09): Ticket Recall dikirim lagi dan
   prioritas dinaikkan ke *Sangat tinggi* (SLA Kritis tidak diubah). Karena prioritas berubah, aturan SLA memasang
   SLA Kritis sehingga tiket mendapat jadwal peringatan berikutnya.
@@ -501,6 +506,10 @@ HaloSIS** dan memilih:
 Layanan `keycloak` di docker-compose mengimpor realm `halosis` dari `keycloak/halosis-realm.json` saat pertama kali
 jalan: semua akun langkah 6 (kecuali `glpi`) lengkap dengan role & timnya, password `halosis`, ditambah `ani`
 (Ani Lestari, Pegawai) yang **belum ada** di GLPI untuk menguji pembuatan akun otomatis.
+Setiap akun juga punya atribut kepegawaian contoh (fiktif) **NIP, unit kerja, jabatan** (profil pengguna realm,
+hanya admin yang bisa mengubah); saat login disalin ke GLPI: NIP → *Nomor registrasi*, jabatan → *Jabatan*,
+unit kerja → *Lokasi* (dropdown dibuat otomatis). Realm diimpor hanya sekali: untuk Keycloak yang sudah berjalan
+sebelum atribut ini ada, hapus volume `keycloak_data` lalu `docker compose up -d keycloak` agar realm diimpor ulang.
 Konsol admin: http://localhost:8180 (`admin`/`admin`, hanya lokal; pilih realm **halosis** di kiri atas).
 Pengaturan di `.env` (lihat `.env.example`): `HALOSIS_KEYCLOAK_URL`, `_REALM`, `_CLIENT_ID`, `_CLIENT_SECRET`.
 Setelah mengubahnya: `docker compose up -d glpi`.
@@ -643,6 +652,8 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
+| Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | **Tidak disarankan AI**: jenis ditentukan jalur masuk (form *Ajukan permintaan* = REQ, chatbot/laporan masalah = INC, Operator memilih untuk tiket telepon) dan dipakai sebagai **input** model tim | Klasifier jenis butuh model baru di `ai/models/` (artefak latih di luar repo) padahal jalur masuk sudah memisahkan jenis; Operator tetap bisa mengubah jenis di form tiket | Klasifier TF-IDF + LR REQ/INC dari kolom `ticket_type` history bila jalur masuk tidak lagi memisahkan jenis |
+| Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
 | Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | **Belum ada**; perubahan tercatat di log GLPI (**Setup › Log** / tab Riwayat) | GLPI tidak menyediakan pratinjau aturan; mengubahnya berarti mengubah kode inti | Prosedur manual: uji aturan di **Rules › Test** sebelum diaktifkan |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 87% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi < 50% (pita 30–50% = 47%) | Kalibrasi ulang setelah data keputusan Operator cukup |
 | SLA respons (T1) | `KebijakanSLA.targetRespons` (hal. 162) | SLA *time to own* GLPI per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam (`setup_sla_alerts.py`) | Dokumen tidak memberi angka; asumsi prototipe | Sesuaikan dengan SLA resmi BPS |
@@ -673,7 +684,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci | Partially proven |
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat | Proven |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md` | Partially proven (belum di-load ke GLPI) |
-| Performa, ketersediaan, keamanan | — | Rencana |
+| Performa, ketersediaan, keamanan | Rencana uji performa [`reports/rencana_uji.md`](reports/rencana_uji.md); checklist keamanan & backup [`reports/keamanan_backup.md`](reports/keamanan_backup.md) | Rencana (belum diuji di lingkungan produksi) |
 
 ## Mematikan / mengulang dari nol
 ```bash

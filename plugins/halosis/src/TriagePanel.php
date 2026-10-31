@@ -60,6 +60,7 @@ final class TriagePanel
             'values'      => $suggestion !== null ? self::describe($suggestion) : null,
             'needs_review' => $suggestion?->needsManualReview() ?? false,
             'level'       => $suggestion?->getConfidenceLevel(),
+            'workload'    => $suggestion !== null ? self::workload($suggestion) : [],
             'threshold'   => Config::getTriageThreshold(),
             'threshold_low' => Config::getLowThreshold(),
             'is_demo'     => Config::isDemoMode(),
@@ -78,6 +79,51 @@ final class TriagePanel
                 'priority_matrix'     => $CFG_GLPI['priority_matrix'] ?? [],
             ],
         ]);
+    }
+
+    /**
+     * Kandidat tim (3 teratas dari model, atau grup saran saja) dengan jumlah tiket aktif yang sedang ditangani
+     * grupnya (T5, `hitungBebanKerja()`). Hanya informasi: urutan kandidat tetap dari model.
+     *
+     * @return array<int, array{team: string, confidence: ?int, group: string, active: ?int}>
+     */
+    private static function workload(Suggestion $suggestion): array
+    {
+        $candidates = json_decode((string) ($suggestion->fields['candidates'] ?? ''), true);
+        if (!is_array($candidates) || $candidates === []) {
+            $candidates = [['team' => '', 'confidence' => null, 'groups_id' => (int) $suggestion->fields['groups_id']]];
+        }
+        $rows = [];
+        foreach ($candidates as $c) {
+            $group_id = (int) ($c['groups_id'] ?? 0);
+            $rows[] = [
+                'team'       => (string) ($c['team'] ?? ''),
+                'confidence' => isset($c['confidence']) ? (int) $c['confidence'] : null,
+                'group'      => $group_id > 0 ? Suggestion::groupName($group_id) : '',
+                'active'     => $group_id > 0 ? self::activeTickets($group_id) : null,
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Tiket belum selesai yang ditugaskan ke grup.
+     */
+    private static function activeTickets(int $group_id): int
+    {
+        global $DB;
+
+        return (int) $DB->request([
+            'COUNT'      => 'cpt',
+            'FROM'       => \Group_Ticket::getTable() . ' AS gt',
+            'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['gt' => 'tickets_id', 't' => 'id']]],
+            'WHERE'      => [
+                'gt.groups_id'  => $group_id,
+                'gt.type'       => \CommonITILActor::ASSIGN,
+                't.is_deleted'  => 0,
+                't.status'      => ['<', \CommonITILObject::SOLVED],
+            ],
+        ])->current()['cpt'];
     }
 
     /**

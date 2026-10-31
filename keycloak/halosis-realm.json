@@ -94,6 +94,45 @@
             "access.token.claim": "false",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "name": "nip",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "nip",
+            "claim.name": "nip",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "unit_kerja",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "unit_kerja",
+            "claim.name": "unit_kerja",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "jabatan",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "jabatan",
+            "claim.name": "jabatan",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
         }
       ]
     }
@@ -116,7 +155,18 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011001"
+        ],
+        "unit_kerja": [
+          "Direktorat Statistik Kependudukan"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "siti",
@@ -135,7 +185,18 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011002"
+        ],
+        "unit_kerja": [
+          "Direktorat Statistik Harga"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Muda"
+        ]
+      }
     },
     {
       "username": "maya",
@@ -154,7 +215,18 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011003"
+        ],
+        "unit_kerja": [
+          "BPS Provinsi Jawa Barat"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "rina",
@@ -175,7 +247,18 @@
       ],
       "groups": [
         "/Operator Service Desk"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011004"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Terampil"
+        ]
+      }
     },
     {
       "username": "andi",
@@ -196,7 +279,18 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011005"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "yoga",
@@ -217,7 +311,18 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011006"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "fajar",
@@ -238,7 +343,18 @@
       ],
       "groups": [
         "/Tim Identitas & Akses"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011007"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "dedi",
@@ -259,7 +375,18 @@
       ],
       "groups": [
         "/Tim Jaringan"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011008"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "sri",
@@ -278,7 +405,18 @@
       "realmRoles": [
         "manajemen"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011009"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Direktur Sistem Informasi Statistik"
+        ]
+      }
     },
     {
       "username": "lina",
@@ -297,7 +435,18 @@
       "realmRoles": [
         "knowledge-manager"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011010"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Madya"
+        ]
+      }
     },
     {
       "username": "dimas",
@@ -316,7 +465,18 @@
       "realmRoles": [
         "administrator"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011011"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Madya"
+        ]
+      }
     },
     {
       "username": "hendra",
@@ -338,7 +498,18 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011012"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "agus",
@@ -360,7 +531,18 @@
       ],
       "groups": [
         "/Tim Jaringan"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011013"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "rudi",
@@ -382,7 +564,18 @@
       ],
       "groups": [
         "/Tim Perangkat"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011014"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "wati",
@@ -404,7 +597,18 @@
       ],
       "groups": [
         "/Tim Identitas & Akses"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012015011015"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "ani",
@@ -423,7 +627,31 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012015011016"
+        ],
+        "unit_kerja": [
+          "BPS Kabupaten Bogor"
+        ],
+        "jabatan": [
+          "Statistisi Terampil"
+        ]
+      }
     }
-  ]
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\": [{\"name\": \"username\", \"displayName\": \"${username}\", \"validations\": {\"length\": {\"min\": 3, \"max\": 255}, \"username-prohibited-characters\": {}, \"up-username-not-idn-homograph\": {}}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"email\", \"displayName\": \"${email}\", \"validations\": {\"email\": {}, \"length\": {\"max\": 255}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"firstName\", \"displayName\": \"${firstName}\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"lastName\", \"displayName\": \"${lastName}\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"nip\", \"displayName\": \"NIP\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"unit_kerja\", \"displayName\": \"Unit kerja\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"jabatan\", \"displayName\": \"Jabatan\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}], \"groups\": [{\"name\": \"user-metadata\", \"displayHeader\": \"User metadata\", \"displayDescription\": \"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  }
 }

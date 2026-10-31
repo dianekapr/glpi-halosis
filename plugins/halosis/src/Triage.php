@@ -126,6 +126,7 @@ final class Triage
             'groups_id'         => $result['groups_id'],
             'confidence'        => $result['confidence'],
             'explanation'       => $result['explanation'],
+            'candidates'        => json_encode($result['candidates'] ?? [], JSON_UNESCAPED_UNICODE),
             'model'             => $result['model'],
             'is_demo'           => (int) ($result['model'] === self::DEMO_MODEL),
             'status'            => Suggestion::STATUS_PENDING,
@@ -275,6 +276,19 @@ final class Triage
             $group = $context['categories'][$category_id]['groups_id'];
             $result['groups_id'] = isset($context['groups'][$group]) ? $group : 0;
         }
+
+        // Kandidat tim beserta grup GLPI-nya, untuk info beban kerja di panel (T5)
+        $result['candidates'] = array_map(static function ($t) use ($context) {
+            [$category, $group] = self::mapServiceTeam((string) ($t['tim'] ?? ''), $context);
+            if ($group === 0 && $category > 0) {
+                $group = (int) $context['categories'][$category]['groups_id'];
+            }
+            return [
+                'team'       => mb_substr((string) ($t['tim'] ?? ''), 0, 120),
+                'confidence' => (int) round(100 * (float) ($t['keyakinan'] ?? 0)),
+                'groups_id'  => isset($context['groups'][$group]) ? $group : 0,
+            ];
+        }, array_slice((array) ($response['top3'] ?? []), 0, 3));
 
         $top3 = array_map(
             static fn ($t) => sprintf('%s (%d%%)', $t['tim'] ?? '?', round(100 * (float) ($t['keyakinan'] ?? 0))),

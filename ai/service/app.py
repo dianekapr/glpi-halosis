@@ -1,7 +1,7 @@
 """Layanan AI HaloSIS (FastAPI): saran triase + jawaban chatbot dari indeks pencarian.
 
 - POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
-- POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode}
+- POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode, pilihan?}
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
 - POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
 - POST /cari   {q, k}                    → artikel KB & tiket historis paling relevan (pencarian semantik agent, FR-03)
@@ -41,7 +41,12 @@ AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
 # Skor kosinus E5 di bawah ambang ini → "belum menemukan jawaban" (lihat ai/README.md, AI-4)
 CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))
+# Keyakinan sedang (TO-BE hal. 100): skor di antara ambang ini dan CHAT_MIN_SCORE → tidak menjawab, hanya
+# menawarkan judul artikel KB sebagai pilihan "Maksud Anda…?" (mode 'pilihan')
+CHAT_SUGGEST_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_SUGGEST_MIN_SCORE', '0.78'))
 CHAT_TOP_K = 3
+# Artikel KB pilihan dicari di sekian hasil teratas: tiket historis jauh lebih banyak dan sering memenuhi 3 teratas
+CHAT_CHOICE_POOL = 20
 CLAUDE_MODEL = os.environ.get('HALOSIS_CLAUDE_MODEL', 'claude-opus-5-5')
 NOT_FOUND = ('Maaf, saya belum menemukan jawaban untuk pertanyaan ini. Coba kata lain, atau buat laporan '
              'agar petugas membantu Anda.')
@@ -243,14 +248,17 @@ def chat(req: ChatRequest) -> dict:
         raise HTTPException(503, 'Indeks pencarian belum tersedia')
     start = time.perf_counter()
     question = str(privacy.mask_text(req.pertanyaan))
-    found = search.cari(question, k=CHAT_TOP_K)
+    found = search.cari(question, k=CHAT_CHOICE_POOL)
     retrieval_ms = ms_since(start)
     top_score = round(float(found[0]['skor']), 4) if found else None
-    hits = [h for h in found if h['skor'] >= CHAT_MIN_SCORE]
+    hits = [h for h in found[:CHAT_TOP_K] if h['skor'] >= CHAT_MIN_SCORE]
     if not hits:
+        choices = list({h['sumber']: {'sumber': h['sumber'], 'judul': h['judul'], 'skor': h['skor']}
+                        for h in found if h['jenis_sumber'] == 'kb' and h['skor'] >= CHAT_SUGGEST_MIN_SCORE}.values())
+        mode = 'pilihan' if choices else 'tidak-ditemukan'
         record_latency('chat', retrieval_ms=retrieval_ms, generation_ms=None, total_ms=ms_since(start),
-                       skor_teratas=top_score, mode='tidak-ditemukan')
-        return {'ditemukan': False, 'jawaban': NOT_FOUND, 'sumber': [], 'mode': 'tidak-ditemukan'}
+                       skor_teratas=top_score, mode=mode)
+        return {'ditemukan': False, 'jawaban': NOT_FOUND, 'sumber': [], 'mode': mode, 'pilihan': choices[:3]}
 
     generation_start = time.perf_counter()
     answer = generate_with_claude(question, req.riwayat, hits)
