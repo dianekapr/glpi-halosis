@@ -14,12 +14,14 @@ final class Chat extends CommonDBTM
     public const STATUS_OPEN     = 'open';
     public const STATUS_RESOLVED = 'resolved';
     public const STATUS_TICKET   = 'ticket';
+    /** Selesai otomatis setelah IDLE_MINUTES tanpa aktivitas (state machine SesiChat, hal. 192) */
+    public const STATUS_EXPIRED  = 'expired';
 
     /** Batas pesan pengguna per percakapan, mencegah transkrip tumbuh tanpa batas */
     public const MAX_USER_MESSAGES = 20;
 
-    /** Percakapan terbuka yang diubah dalam sekian jam terakhir dilanjutkan otomatis */
-    public const RESUME_HOURS = 2;
+    /** Percakapan terbuka tanpa aktivitas selama sekian menit berakhir (dan tidak dilanjutkan lagi) */
+    public const IDLE_MINUTES = 30;
 
     /** Jumlah percakapan di halaman Riwayat chat */
     public const HISTORY_LIMIT = 50;
@@ -38,11 +40,31 @@ final class Chat extends CommonDBTM
      */
     public static function getOwned(int $id): ?self
     {
+        self::expireIdle();
         $chat = new self();
         if ($id <= 0 || !$chat->getFromDB($id) || (int) $chat->fields['users_id'] !== Session::getLoginUserID()) {
             return null;
         }
         return $chat;
+    }
+
+    /**
+     * Akhiri percakapan terbuka yang menganggur > IDLE_MINUTES. Dijalankan saat percakapan/riwayat/statistik
+     * dibaca (tanpa tugas terjadwal); date_mod tidak diubah supaya tetap menunjukkan aktivitas terakhir.
+     */
+    public static function expireIdle(): void
+    {
+        global $DB;
+
+        $DB->update(self::getTable(), ['status' => self::STATUS_EXPIRED], [
+            'status'   => self::STATUS_OPEN,
+            'date_mod' => ['<', self::idleSince()],
+        ]);
+    }
+
+    private static function idleSince(): string
+    {
+        return date('Y-m-d H:i:s', strtotime($_SESSION['glpi_currenttime'] ?? 'now') - self::IDLE_MINUTES * 60);
     }
 
     /**
@@ -73,7 +95,7 @@ final class Chat extends CommonDBTM
     {
         global $DB;
 
-        $since = date('Y-m-d H:i:s', strtotime($_SESSION['glpi_currenttime'] ?? 'now') - self::RESUME_HOURS * 3600);
+        $since = self::idleSince();
         $row = $DB->request([
             'SELECT' => 'id',
             'FROM'   => self::getTable(),
@@ -97,6 +119,7 @@ final class Chat extends CommonDBTM
     {
         global $DB;
 
+        self::expireIdle();
         $rows = [];
         foreach ($DB->request([
             'FROM'  => self::getTable(),

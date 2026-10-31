@@ -159,6 +159,14 @@
                     <div class="hd-sub">{{ __('%d ratings', 'halosis')|format(stats.chats.rating_count) }}</div>
                 </div>
             </div>
+            {% if stats.articles %}
+                <div class="hd-label mt-3">{{ __('Articles most used by the chatbot', 'halosis') }}</div>
+                <ol class="mb-0">
+                    {% for a in stats.articles %}
+                        <li><a href="{{ a.url }}">{{ a.name }}</a> · {{ _n('used %d time', 'used %d times', a.uses, 'halosis')|format(a.uses) }}</li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
         </section>
     </div>
 

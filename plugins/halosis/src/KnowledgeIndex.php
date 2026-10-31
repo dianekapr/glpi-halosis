@@ -59,11 +59,13 @@ final class KnowledgeIndex
             self::send($kb_id, '', '', 'hapus');
             return;
         }
-        $published = !empty($article->fields['is_faq']) || self::hasTarget($kb_id);
-        if (!empty($article->fields['is_deleted'])) {
-            $published = false;
-        }
-        self::send($kb_id, (string) $article->fields['name'], (string) $article->fields['answer'], $published ? 'simpan' : 'hapus');
+        self::send($kb_id, (string) $article->fields['name'], (string) $article->fields['answer'], self::isPublished($article) ? 'simpan' : 'hapus');
+    }
+
+    public static function isPublished(KnowbaseItem $article): bool
+    {
+        return empty($article->fields['is_deleted'])
+            && (!empty($article->fields['is_faq']) || self::hasTarget($article->getID()));
     }
 
     private static function hasTarget(int $kb_id): bool
