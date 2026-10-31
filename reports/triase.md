@@ -124,7 +124,7 @@ Set uji sama untuk keduanya: 1.559 tiket Jul–Ags 2026 dari `tickets_clean.parq
 | --- | --- | --- |
 | Top-1 | 74,47% | 75,88% |
 | Top-3 | 93,01% | 94,87% |
-| MRR | 84,22% | 85,63% |
+| MRR | 0,8422 | 0,8563 |
 | F1 makro | 68,01% | 69,00% |
 | Akurasi keyakinan ≥ 70% | 87,16% | 88,35% |
 | Cakupan keyakinan ≥ 70% | 51,44% | 50,67% |
@@ -155,22 +155,22 @@ Panel Saran AI menampilkan "Jenis disarankan" hanya bila saran berbeda dari jeni
 <!-- urgensi:mulai -->
 ## Saran urgensi insiden (BR-05, 2.1.4 Urgency/Impact/Priority)
 
-Versi `urgensi-tfidf-tim-lr-20261031` · `ai/scripts/train_urgensi.py` · artefak `ai/models/urgensi.joblib` + `urgensi.metrics.json` (di-ignore git). Label = kolom `urgency` history versi baru (insiden Medium vs Low). Dampak = urgensi pada 99,74% insiden dan prioritas = matriks keduanya, jadi satu model; model prioritas lama (proksi tier SLA) dihapus.
+Versi `urgensi-tfidf-tim-lr-20261101` · `ai/scripts/train_urgensi.py` · artefak `ai/models/urgensi.joblib` + `urgensi.metrics.json` (di-ignore git). Label = kolom `urgency` history versi baru (insiden Medium vs Low). Dampak = urgensi pada 99,74% insiden dan prioritas = matriks keduanya, jadi satu model; model prioritas lama (proksi tier SLA) dihapus.
 
-| Indikator | Nilai |
-| --- | --- |
-| Insiden berlabel (Medium / Low) | 2.200 / 508 |
-| Evaluasi | validasi silang 5 lipatan bertingkat (seed 42) |
-| **F1 makro** | **57,97%** |
-| Akurasi | 74,30% |
-| Recall Low / Medium · presisi Low | 31,89% / 84,09% · 31,64% |
-| Pembanding: selalu Medium | akurasi 81,24% · F1 makro 44,82% |
-| Keyakinan ≥ 70% (saran ditampilkan) | akurasi 84,24% · cakupan 81,09% insiden · Low tertangkap 0,00% |
-| Gerbang kualitas (F1 makro > pembanding) | **lolos** |
+Insiden berlabel Medium / Low: 2.200 / 508; validasi silang 5 lipatan bertingkat (seed 42); LR berbobot kelas seimbang → P(Low). **Ambang per kelas** dipilih otomatis dari P(Low) validasi silang (bukan satu ambang keyakinan):
+
+| Kelas | Aturan | Hasil validasi silang | Pembanding | Gerbang |
+| --- | --- | --- | --- | --- |
+| Low (Rendah) | P(Low) ≥ 0,90 | presisi **78,79%** (Wilson 95% 62,25%–89,32%), recall 5,12%, 33 tiket | proporsi Low 18,76% | **lolos** |
+| Medium (Sedang) | P(Low) ≤ 0,45 | akurasi **84,30%**, cakupan 76,70% insiden (2.077) | proporsi Medium 81,24% | **lolos** |
+| Di antaranya | – | 22,08% insiden | – | aturan kata kunci |
+
+Syarat (quality.urgency_class_check): Low presisi ≥ 75,00%, batas bawah Wilson > pembanding, ≥ 30 tiket (ambang terendah yang lolos = recall terbesar); Medium akurasi > pembanding + 3 poin, ≥ 30 tiket (ambang tertinggi yang lolos = cakupan terbesar). Kisi ambang 0,05.
+
+**Keterbatasan cakupan Low:** hanya 5,12% insiden Low dikenali model; sisanya tetap dari aturan kata kunci. Tanpa ambang per kelas (argmax 0,5): akurasi 74,30%, F1 makro 57,97% vs pembanding selalu Medium 81,24%.
 
 Tidak dimodelkan (tetap aturan + sinyal): (kosong) 57, High 12 insiden; permintaan (REQ).
 Catatan label: 81,24% insiden berlabel Medium; sebagian besar kemungkinan nilai bawaan formulir, bukan penilaian petugas, sehingga batas atas akurasi model terbatas.
-Label = LR berbobot kelas seimbang (C = 3, sama dengan model jenis); keyakinan = probabilitas model terkalibrasi (sigmoid) untuk label itu. Argmax model terkalibrasi saja hampir selalu memilih Medium (F1 makro 45,44%).
 
-Panel Saran AI menampilkan "Urgensi disarankan" + keyakinan hanya bila gerbang lolos dan keyakinan ≥ ambang; selain itu urgensi dari aturan kata kunci. Dampak = urgensi, naik satu tingkat bila ≥ 3 tiket serupa dalam 60 menit atau layanan kritis (konfigurasi). Operator tetap memutuskan.
+Panel Saran AI menampilkan "Urgensi disarankan: Rendah/Sedang (keyakinan)" hanya bila kelas itu lolos gerbang dan P(Low) melewati ambangnya (keyakinan = P(Low) untuk Rendah, 1 − P(Low) untuk Sedang); selain itu urgensi dari aturan kata kunci. Dampak = urgensi, naik satu tingkat bila ≥ 3 tiket serupa dalam 60 menit atau layanan kritis (konfigurasi). Operator tetap memutuskan.
 <!-- urgensi:selesai -->

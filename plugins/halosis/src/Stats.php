@@ -233,8 +233,9 @@ final class Stats
     }
 
     /**
-     * Baseline pembanding dari history ESTIM versi baru (`ai/scripts/baseline.py` → baseline.json): kepatuhan SLA
-     * (overall_sla_result_extended MET ÷ MET + OVERDUE, termasuk jumlah hasil berimputasi) & kepuasan (% rating ≥ 4).
+     * Baseline pembanding (`ai/scripts/baseline.py` → baseline.json): angka dokumen (overall 27,59% / respons 42,62%)
+     * dan history ESTIM versi baru (overall_sla_result_extended & response_sla_final_result MET ÷ MET + OVERDUE,
+     * termasuk jumlah hasil berimputasi) & kepuasan (% rating ≥ 4, cakupan rating). Beda metode: `metode` di JSON.
      * Null bila berkas belum dibuat.
      *
      * @return array<string, mixed>|null

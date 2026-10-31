@@ -7,6 +7,7 @@ TIDAK lolos, kecuali syarat banding versi sebelumnya (hanya berlaku bila versi s
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
 
@@ -15,6 +16,40 @@ MIN_TOP1 = float(os.environ.get('HALOSIS_GATE_MIN_TOP1', '0.68'))               
 MIN_ACC_CONFIDENT = float(os.environ.get('HALOSIS_GATE_MIN_ACC_CONFIDENT', '0.85'))  # akurasi pada keyakinan ≥ ambang
 MIN_RECALL_BIG_TEAM = float(os.environ.get('HALOSIS_GATE_MIN_RECALL', '0.50'))     # tidak ada tim besar < 50%
 MAX_DROP = float(os.environ.get('HALOSIS_GATE_MAX_DROP', '0.02'))                  # Top-1/Top-3 turun ≤ 2 poin
+# Urgensi insiden, per kelas pada ambangnya (validasi silang): Low = presisi, Medium = akurasi di atas pembanding
+MIN_PRECISION_LOW = float(os.environ.get('HALOSIS_GATE_MIN_PRECISION_LOW', '0.75'))
+MIN_GAIN_MEDIUM = float(os.environ.get('HALOSIS_GATE_MIN_GAIN_MEDIUM', '0.03'))     # akurasi > pembanding + 3 poin
+MIN_SUPPORT = int(os.environ.get('HALOSIS_GATE_MIN_SUPPORT', '30'))                # tiket di atas ambang
+URGENCY_CLASSES = ('Low', 'Medium')
+
+
+def wilson(successes: int, n: int, z: float = 1.96) -> tuple[float, float] | None:
+    """Interval kepercayaan Wilson 95% untuk proporsi (mis. presisi Low); None bila n = 0."""
+    if n <= 0:
+        return None
+    p = successes / n
+    center = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return max(0.0, center - half), min(1.0, center + half)
+
+
+def urgency_class_check(kelas: str, m: dict) -> tuple[bool | None, str]:
+    """Syarat lulus satu kelas urgensi dari metriknya pada ambang terpilih (dipakai juga train_urgensi.py saat memilih
+    ambang). Low: presisi ≥ MIN_PRECISION_LOW, batas bawah Wilson > pembanding (proporsi Low), ≥ MIN_SUPPORT tiket.
+    Medium: akurasi > pembanding (proporsi Medium) + MIN_GAIN_MEDIUM, ≥ MIN_SUPPORT tiket. None = tidak tercatat."""
+    n, base = m.get('tiket'), m.get('pembanding')
+    if kelas == 'Low':
+        precision, ci = m.get('presisi'), m.get('wilson_95')
+        if None in (n, base, precision) or not ci:
+            return None, 'Low: metrik tidak tercatat'
+        ok = precision >= MIN_PRECISION_LOW and ci[0] > base and n >= MIN_SUPPORT
+        return ok, (f'Low: presisi {precision} (Wilson bawah {ci[0]}, {n} tiket) belum memenuhi ≥ {MIN_PRECISION_LOW}, '
+                    f'> pembanding {base}, ≥ {MIN_SUPPORT} tiket')
+    accuracy = m.get('akurasi')
+    if None in (n, base, accuracy):
+        return None, 'Medium: metrik tidak tercatat'
+    ok = accuracy > base + MIN_GAIN_MEDIUM and n >= MIN_SUPPORT
+    return ok, f'Medium: akurasi {accuracy} ({n} tiket) tidak > pembanding {base} + {MIN_GAIN_MEDIUM}'
 
 
 def load_metrics(model_path: Path, artifact) -> dict:
@@ -28,8 +63,9 @@ def load_metrics(model_path: Path, artifact) -> dict:
 
 
 def check(kind: str, metrics: dict) -> dict:
-    """Status lolos per model. kind: triase (syarat tata kelola penuh) | jenis | urgensi (harus unggul pembanding
-    kelas mayoritas dan, bila tercatat, F1 makro tidak turun > MAX_DROP dari versi aktif pada set uji yang sama)."""
+    """Status lolos per model. kind: triase (syarat tata kelola penuh) | jenis (F1 makro harus unggul pembanding
+    kelas mayoritas dan, bila tercatat, tidak turun > MAX_DROP dari versi aktif) | urgensi (per kelas Low/Medium,
+    urgency_class_check; model lolos bila ≥ 1 kelas lolos, hanya kelas di `kelas_lolos` yang boleh disarankan)."""
     reasons, checks = [], {}
 
     def need(name: str, ok, detail: str):
@@ -52,6 +88,18 @@ def check(kind: str, metrics: dict) -> dict:
             if previous.get(key) is not None and get(key) is not None:
                 need(f'{key}_vs_versi_sebelumnya', get(key) >= float(previous[key]) - MAX_DROP,
                      f'{key} turun > {MAX_DROP} dari versi sebelumnya')
+    elif kind == 'urgensi':
+        per_class = metrics.get('kelas') or {}
+        passed = []
+        for name in URGENCY_CLASSES:
+            ok, detail = urgency_class_check(name, per_class.get(name) or {})
+            checks[name] = 'tidak tercatat' if ok is None else ('lolos' if ok else 'gagal')
+            if ok:
+                passed.append(name)
+            else:
+                reasons.append(detail)
+        return {'lolos': bool(passed), 'kelas_lolos': passed, 'alasan': reasons, 'syarat': checks,
+                'versi': metrics.get('versi'), 'tanggal': metrics.get('tanggal')}
     else:
         f1, base = get('f1_makro'), get('f1_makro_pembanding')
         need('f1_makro_vs_pembanding', None if f1 is None or base is None else f1 > base,

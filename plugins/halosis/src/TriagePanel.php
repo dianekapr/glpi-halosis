@@ -129,16 +129,24 @@ final class TriagePanel
     }
 
     /**
-     * Urgensi dari model history (layanan hanya mengirimnya bila model lolos gerbang & yakin); null = dari aturan.
+     * Urgensi dari model history (layanan hanya mengirimnya bila kelasnya lolos gerbang & di atas ambangnya); null = aturan.
      *
      * @return array{urgency: string, confidence: int}|null
      */
     private static function urgencyHint(Suggestion $suggestion): ?array
     {
         $confidence = (int) ($suggestion->fields['urgency_confidence'] ?? 0);
-        return $confidence > 0
-            ? ['urgency' => Ticket::getUrgencyName((int) $suggestion->fields['urgency']), 'confidence' => $confidence]
-            : null;
+        if ($confidence <= 0) {
+            return null;
+        }
+        // Kelas model (Low/Medium) dengan nama Rendah/Sedang; GLPI id_ID menamai urgensi 3 "Pertengahan"
+        $urgency = (int) $suggestion->fields['urgency'];
+        $label = match ($urgency) {
+            2 => __('Low (model class)', 'halosis'),
+            3 => __('Medium (model class)', 'halosis'),
+            default => Ticket::getUrgencyName($urgency),
+        };
+        return ['urgency' => $label, 'confidence' => $confidence];
     }
 
     /**

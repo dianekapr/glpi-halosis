@@ -78,8 +78,16 @@ Banding ekspor lama vs baru (baris, tiket hilang, status berubah, hasil SLA beri
 .venv/bin/python ai/scripts/baseline.py         # → plugins/halosis/baseline.json + bagian "baseline" reports/eda.md
 ```
 
-Baseline dashboard (angka saja): kepatuhan SLA `overall_sla_result_extended` MET ÷ (MET + OVERDUE) beserta jumlah
-hasil berimputasi, dan kepuasan (rating 1–5, % ≥ 4). Dibaca `Stats.php` untuk kartu KPI.
+Baseline dashboard (angka saja), dua baris pembanding di kartu KPI (`Stats.php`):
+
+- **Dokumen** §5.2.1.5: overall 27,59% / respons 42,62% = `overall_sla_result` / `response_sla_result` PASS ÷
+  (PASS + BREACH) pada **ekspor lama** (1.621 ÷ 5.876 dan 2.549 ÷ 5.981; dicek ulang), tanpa imputasi.
+- **History versi baru**: `overall_sla_result_extended` MET ÷ (MET + OVERDUE) = 28,87% (1.819 hasil berimputasi;
+  34,35% bila hanya hasil asli) dan respons `response_sla_final_result` = 43,08% (605 berimputasi). Ekspor baru
+  mengestimasi komponen SLA yang tidak tercatat (jam kerja), sehingga lebih banyak tiket punya hasil: selisih dengan
+  angka dokumen karena **metode**, bukan perubahan kinerja. Penjelasan tersimpan di `metode` (baseline.json).
+- **Kepuasan**: rating 1–5, % ≥ 4 (95,76%) hanya dari 1.155 tiket dinilai = cakupan 17,3% dari 6.681; dokumen §5.2.1:
+  rating tidak wajib (± 15–16%), klaim kepuasan tinggi berisiko terlalu optimistis. Dashboard menampilkan keduanya.
 
 ## AI-2 — Analisis awal (angka AS-IS)
 
@@ -91,7 +99,9 @@ Hanya membaca `tickets_clean.parquet` (sudah disamarkan) dan hanya menulis angka
 laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
 
 - **Kepatuhan SLA** = PASS ÷ (PASS + BREACH); tiket IN PROGRESS & tanpa bukti SLA dikecualikan
-  (cocok dengan angka dokumen 27,59%). Versi dengan seluruh tiket sebagai penyebut ikut dicantumkan.
+  (cocok dengan angka dokumen 27,59%). Versi dengan seluruh tiket sebagai penyebut ikut dicantumkan. *Historis:*
+  bagian atas `reports/eda.md` dihitung dari **ekspor lama** (nilai PASS/BREACH); ekspor baru memakai MET/OVERDUE,
+  angkanya di bagian "Baseline dashboard" (`baseline.py`).
 - **Indikasi salah routing** = `potential_wrong_routing` ≠ NO (REVIEW + YES).
 - **Waktu selesai** = `resolved − opened`, waktu kalender (bukan jam kerja).
 - **20 masalah paling sering** = topik hasil TF-IDF judul+deskripsi → K-Means (40 kelompok, seed 42),
@@ -111,8 +121,13 @@ laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
   sama; artefak hanya diganti bila kandidat lolos `quality.check` (termasuk tidak turun > 2 poin dari versi aktif).
   Bila tidak lolos, artefak lama tetap dan laporan mencatat perbandingannya.
 - **Urgensi insiden** (Medium vs Low, label kolom `urgency`; dampak = urgensi pada 99,7% insiden, prioritas = matriks):
-  TF-IDF teks tersamar + one-hot nama tim, LR berbobot seimbang (label) + salinan terkalibrasi (keyakinan),
-  validasi silang 5 lipatan. Dipakai layanan hanya bila F1 makro > pembanding "selalu Medium" dan keyakinan ≥ 70%.
+  TF-IDF teks tersamar + one-hot nama tim, LR berbobot seimbang → P(Low), validasi silang 5 lipatan. **Ambang per
+  kelas** dipilih otomatis dari P(Low) validasi silang: Low bila P(Low) ≥ ambang Low (terendah dengan presisi ≥ 75%,
+  batas bawah Wilson > proporsi Low, ≥ 30 tiket), Medium bila P(Low) ≤ ambang Medium (tertinggi dengan akurasi >
+  proporsi Medium + 3 poin), di antaranya aturan kata kunci. Ambang & metrik per kelas (+ Wilson 95% presisi Low) di
+  `urgensi.metrics.json`; gerbang per kelas (`quality.check('urgensi')` → `kelas_lolos`), kelas tidak lolos tidak
+  disarankan. Hasil terakhir: Low P ≥ 0,90 presisi 78,79% (Wilson 62,25–89,32%), recall 5,12%, 33 tiket; Medium
+  P ≤ 0,45 akurasi 84,30% (pembanding 81,24%), cakupan 76,70%.
   High/Critical & REQ tetap aturan + sinyal dampak di plugin. Menggantikan model prioritas (proksi tier SLA).
 
 - **Input** hanya info saat tiket dibuat: judul + deskripsi + jenis (INC/REQ), disamarkan ulang lewat

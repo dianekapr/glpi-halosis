@@ -57,3 +57,18 @@ ulang, `plugin:install --force` (kolom `urgency_confidence`, `impact_reason`). D
 Bug yang ditemukan & diperbaiki: (1) "tidak **mendesak**" terbaca desakan → negasi diabaikan; (2) kata gangguan
 "mati" cocok di "oto**mati**s" → pencocokan per kata utuh; (3) model urgensi (hanya Medium/Low) menimpa urgensi
 Tinggi dari aturan → model hanya dipakai bila aturan ≤ Sedang.
+
+## Regresi 1 Nov 2026 — langkah 2 (urgensi ambang per kelas)
+
+`halosis-ai` di-build ulang (gerbang urgensi per kelas), model `urgensi-tfidf-tim-lr-20261101` (`/health`: kelas
+lolos Low & Medium). Tiket uji #1072–#1073 (insiden FASIH, pemohon `budi`, dibuat lewat API) beserta saran, keputusan,
+dan notifikasi antre **sudah dihapus** setelah uji.
+
+| Langkah | Cara uji | Hasil | Catatan |
+| --- | --- | --- | --- |
+| 2.2 Panel Saran AI (`rina`) | UI (Chromium headless) | ✅ | Kategori Aplikasi Statistik > FASIH, tingkat *Pilih dari 3 kandidat* (44%), "Urgensi disarankan: Sedang (75%) · dari model history tiket" |
+| 2.3 Terima | UI | ✅ | Status *Diterima*, urgensi tiket 3 |
+| 2.4 Riwayat | server (API) | ✅ | Log "Saran AI diterima" ada |
+
+Temuan & perbaikan: hint urgensi memakai nama urgensi GLPI id_ID ("Pertengahan"); kini label kelas model
+**Rendah/Sedang** (string plugin), baris *Urgensi* di bawahnya tetap nama GLPI.

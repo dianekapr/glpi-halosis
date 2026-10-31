@@ -24,6 +24,11 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   `urgency_confidence`, `impact_reason`: jalankan `plugin:install --force`); kata kunci urgensi per kata utuh +
   negasi; KPI kepuasan pemohon & baseline dari `baseline.json` (SLA 28,87%, 1.819 berimputasi; kepuasan 95,76%);
   NIP lama 9 digit disamarkan.
+- **Finalisasi konsistensi (1 Nov 2026, masih 1.0.0):** urgensi insiden dengan **ambang per kelas** dari validasi
+  silang (Rendah P(Low) ≥ 0,90 presisi 78,79%; Sedang P(Low) ≤ 0,45 akurasi 84,30%), gerbang per kelas
+  (`quality.check('urgensi')` → `kelas_lolos`), model terkalibrasi kedua dihapus; baseline dashboard dua baris
+  (dokumen 27,59% / 42,62%, history versi baru 28,87% + respons 43,08%) + cakupan rating 17,3% (`baseline.json`
+  `dokumen`, `sla_respons`, `metode`); angka triase/jenis/retrieval/DBSCAN disinkronkan di README & laporan.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

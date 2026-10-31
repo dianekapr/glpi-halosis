@@ -141,42 +141,56 @@ def test_gerbang_kualitas_model(monkeypatch):
     assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is False
 
 
-class FakeUrgencyLabel:
-    def __init__(self):
-        self.frames = []
-
-    def predict(self, frame):
-        self.frames.append(frame)
-        return ['Low']
-
-
-class FakeUrgencyCalibrated:
+class FakeUrgency:
     classes_ = ['Low', 'Medium']
 
     def __init__(self, p_low):
-        self.p_low = p_low
+        self.p_low, self.frames = p_low, []
 
     def predict_proba(self, frame):
+        self.frames.append(frame)
         return [[self.p_low, 1 - self.p_low]]
 
 
-def test_urgensi_hanya_bila_lolos_dan_yakin(monkeypatch):
-    """Saran urgensi insiden: tidak unggul pembanding → None; unggul & yakin → nilai GLPI; tidak yakin / REQ → None."""
+def urgency_metrics(low_ok=True, medium_ok=True):
+    """Metrik per kelas seperti train_urgensi.py; *_ok=False → kelas itu gagal syarat gerbang."""
+    return {'kelas': {
+        'Low': {'ambang': 0.8, 'tiket': 44, 'pembanding': 0.188, 'presisi': 0.795 if low_ok else 0.55,
+                'wilson_95': [0.65, 0.89] if low_ok else [0.40, 0.69], 'recall': 0.07},
+        'Medium': {'ambang': 0.3, 'tiket': 1000, 'pembanding': 0.812, 'akurasi': 0.861 if medium_ok else 0.83}}}
+
+
+def test_urgensi_ambang_per_kelas(monkeypatch):
+    """Low hanya bila P(Low) ≥ ambang Low, Medium hanya bila P(Low) ≤ ambang Medium, di antaranya / REQ → None;
+    kelas yang tidak lolos gerbang tidak pernah disarankan."""
     c = client(monkeypatch, [])
-    label = FakeUrgencyLabel()
-    artifact = {'pipeline': label, 'kalibrasi': FakeUrgencyCalibrated(0.8), 'version': 'urg-uji', 'threshold': 0.7,
-                'urgensi_glpi': {'Medium': 3, 'Low': 2}, 'metrics': {'f1_makro': 0.448, 'f1_makro_pembanding': 0.448}}
+    model = FakeUrgency(0.85)
+    artifact = {'pipeline': model, 'version': 'urg-uji', 'ambang': {'Low': 0.8, 'Medium': 0.3},
+                'urgensi_glpi': {'Medium': 3, 'Low': 2}, 'metrics': urgency_metrics()}
     service.state['urgensi'] = artifact
     body = {'judul': 'akun zoom', 'deskripsi': 'x', 'jenis': 'INC'}
-    assert c.post('/triage', json=body).json()['urgensi_saran'] is None
-    artifact['metrics'] = {'f1_makro': 0.58, 'f1_makro_pembanding': 0.448}
-    saran = c.post('/triage', json=body).json()['urgensi_saran']
-    assert saran == {'urgensi': 'Low', 'nilai_glpi': 2, 'keyakinan': 0.8, 'versi_model': 'urg-uji'}
+    saran = lambda **kw: c.post('/triage', json={**body, **kw}).json()['urgensi_saran']  # noqa: E731
+    assert saran() == {'urgensi': 'Low', 'nilai_glpi': 2, 'keyakinan': 0.85, 'versi_model': 'urg-uji'}
     # Tim: dari permintaan bila diisi, selain itu tim saran triase
-    c.post('/triage', json={**body, 'tim': 'Tim Email'})
-    assert label.frames[-1]['tim'].iloc[0] == 'Tim Email'
-    artifact['kalibrasi'] = FakeUrgencyCalibrated(0.6)  # keyakinan label "Low" 0,6 < ambang
-    assert c.post('/triage', json=body).json()['urgensi_saran'] is None
-    assert c.post('/triage', json={**body, 'jenis': 'REQ'}).json()['urgensi_saran'] is None
-    assert c.get('/health').json()['kualitas_model']['urgensi']['lolos'] is True
+    saran(tim='Tim Email')
+    assert model.frames[-1]['tim'].iloc[0] == 'Tim Email'
+    model.p_low = 0.5  # di antara ambang → aturan
+    assert saran() is None
+    model.p_low = 0.2
+    assert saran() == {'urgensi': 'Medium', 'nilai_glpi': 3, 'keyakinan': 0.8, 'versi_model': 'urg-uji'}
+    assert saran(jenis='REQ') is None
+    gate = c.get('/health').json()['kualitas_model']['urgensi']
+    assert gate['lolos'] is True and gate['kelas_lolos'] == ['Low', 'Medium']
+    # Medium tidak lolos (akurasi ≤ pembanding + 3 poin) → hanya Low yang boleh disarankan
+    artifact['metrics'] = urgency_metrics(medium_ok=False)
+    assert saran() is None
+    model.p_low = 0.9
+    assert saran()['urgensi'] == 'Low'
+    # Kedua kelas gagal → model tidak lolos, tidak ada saran
+    artifact['metrics'] = urgency_metrics(low_ok=False, medium_ok=False)
+    assert saran() is None
+    assert c.get('/health').json()['kualitas_model']['urgensi']['lolos'] is False
+    # Metrik versi lama (tanpa per kelas) → tidak tercatat → tidak lolos
+    artifact['metrics'] = {'f1_makro': 0.58, 'f1_makro_pembanding': 0.448}
+    assert saran() is None
 

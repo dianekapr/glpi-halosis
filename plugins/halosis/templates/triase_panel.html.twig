@@ -102,7 +102,7 @@
                     <dt>{{ __('Group') }}</dt><dd>{{ values.group }}</dd>
                 </dl>
 
-                {# BR-05: urgensi dari model history (hanya bila lolos gerbang & yakin) dan alasan dampak naik #}
+                {# BR-05: urgensi Rendah/Sedang dari model history (hanya bila kelasnya lolos gerbang & di atas ambangnya) dan alasan dampak naik #}
                 {% if urgency_hint or impact_reason %}
                     <ul class="list-unstyled small mb-2" data-halosis-urgensi>
                         {% if urgency_hint %}

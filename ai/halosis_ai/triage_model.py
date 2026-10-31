@@ -18,7 +18,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from . import privacy
+from . import privacy, quality
 
 OTHER = 'Lainnya'
 MIN_TEAM_TICKETS = 30
@@ -58,12 +58,11 @@ def urgency_frame(title: object, description: object, team: object) -> pd.DataFr
     return pd.DataFrame({'teks': [jenis_text(title, description)], 'tim': [str(team or '').strip() or OTHER]})
 
 
-def build_urgency_pipeline(c: float = 3.0, calibrate: bool = False) -> Pipeline:
+def build_urgency_pipeline(c: float = 3.0) -> Pipeline:
     """Urgensi insiden Medium/Low: TF-IDF teks tersamar + one-hot nama tim, LR berbobot kelas seimbang.
 
-    calibrate=False → model LABEL (keputusan seimbang); calibrate=True → model KEYAKINAN (probabilitas terkalibrasi
-    sigmoid). Kalibrasi mengembalikan probabilitas ke frekuensi asli (81% Medium), sehingga argmax-nya hampir
-    selalu Medium; karena itu label dan keyakinan dari dua model (urgency_confidence).
+    Keputusan dari P(Low) dengan ambang per kelas (pick_urgency_thresholds): Low bila P(Low) ≥ ambang Low, Medium bila
+    P(Low) ≤ ambang Medium, di antaranya tidak disarankan (aturan kata kunci).
     """
     features = ColumnTransformer([
         ('kata', TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.5, sublinear_tf=True,
@@ -72,16 +71,42 @@ def build_urgency_pipeline(c: float = 3.0, calibrate: bool = False) -> Pipeline:
                                      max_features=100_000), 'teks'),
         ('tim', OneHotEncoder(handle_unknown='ignore', min_frequency=5), ['tim']),
     ])
-    classifier = LogisticRegression(C=c, class_weight='balanced', max_iter=3000)
-    if calibrate:
-        classifier = CalibratedClassifierCV(classifier, method='sigmoid', cv=5)
-    return Pipeline([('fitur', features), ('model', classifier)])
+    return Pipeline([('fitur', features), ('model', LogisticRegression(C=c, class_weight='balanced', max_iter=3000))])
 
 
-def urgency_confidence(labels: np.ndarray, probs: np.ndarray, classes) -> np.ndarray:
-    """Probabilitas terkalibrasi untuk label yang dipilih model seimbang (per baris)."""
-    index = {c: i for i, c in enumerate(classes)}
-    return np.asarray(probs)[np.arange(len(labels)), [index[label] for label in labels]]
+URGENCY_GRID_LOW = tuple(round(0.50 + 0.05 * i, 2) for i in range(10))     # 0,50 … 0,95
+URGENCY_GRID_MEDIUM = tuple(round(0.50 - 0.05 * i, 2) for i in range(10))  # 0,50 … 0,05
+
+
+def urgency_class_metrics(kelas: str, p_low: np.ndarray, y: np.ndarray, threshold: float) -> dict:
+    """Metrik satu kelas pada ambangnya dari P(Low) validasi silang. Low: presisi (+ Wilson 95%), recall; Medium:
+    akurasi & cakupan. pembanding = proporsi kelas itu (tebakan tanpa model)."""
+    is_low = np.asarray(y) == 'Low'
+    chosen = p_low >= threshold if kelas == 'Low' else p_low <= threshold
+    target = is_low if kelas == 'Low' else ~is_low
+    hits, n = int((chosen & target).sum()), int(chosen.sum())
+    r = lambda v: round(float(v), 4)  # noqa: E731
+    m = {'ambang': threshold, 'tiket': n, 'cakupan': r(chosen.mean()), 'pembanding': r(target.mean())}
+    if kelas == 'Low':
+        ci = quality.wilson(hits, n)
+        m.update({'presisi': r(hits / n) if n else None, 'wilson_95': [r(ci[0]), r(ci[1])] if ci else None,
+                  'recall': r(hits / max(int(target.sum()), 1))})
+    else:
+        m['akurasi'] = r(hits / n) if n else None
+    return m
+
+
+def pick_urgency_thresholds(p_low: np.ndarray, y: np.ndarray) -> dict:
+    """Ambang per kelas otomatis: Low = ambang terendah yang lolos (recall maksimum); Medium = ambang tertinggi yang
+    lolos (cakupan maksimum); syarat = quality.urgency_class_check. Tidak ada yang lolos → ambang terketat dicatat
+    dengan `lolos` False (kelas itu tidak disarankan)."""
+    p_low = np.asarray(p_low, dtype=float)
+    out = {}
+    for kelas, grid in (('Low', URGENCY_GRID_LOW), ('Medium', URGENCY_GRID_MEDIUM)):
+        candidates = [urgency_class_metrics(kelas, p_low, y, t) for t in grid]
+        passing = [m for m in candidates if quality.urgency_class_check(kelas, m)[0]]
+        out[kelas] = {**(passing[0] if passing else candidates[-1]), 'lolos': bool(passing)}
+    return out
 
 
 @dataclass

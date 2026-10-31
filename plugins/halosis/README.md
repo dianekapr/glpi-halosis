@@ -237,13 +237,19 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
   kandidat*; di bawahnya *Perlu penilaian manual*. Panel menampilkan **tiket aktif per kandidat tim** (3 tim
   teratas model → grup GLPI, tiket belum selesai yang ditugaskan ke grup itu); hanya info, urutan tetap dari model.
 - **Gerbang kualitas model** (T32, pre-kondisi UC-04): `/health` & `/triage` melaporkan apakah model triase lolos
-  syarat (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85% bila tercatat; `HALOSIS_GATE_*`). Tidak lolos → panel menampilkan
+  syarat (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85%, **recall tim besar** (≥ 5% tiket uji) terendah ≥ 50%, Top-1/Top-3
+  tidak turun > 2 poin dari versi aktif; syarat yang tidak tercatat = tidak lolos; `HALOSIS_GATE_*`). Kelas gabungan
+  **"Lainnya"** (tim < 30 tiket latih) bukan tim: tidak ikut syarat tim besar (recall-nya dicatat terpisah) dan bila
+  menjadi tim teratas, tingkat selalu *Perlu penilaian manual*. Tidak lolos → panel menampilkan
   "Model belum lolos uji kualitas" dan tingkat selalu *Perlu penilaian manual*.
 - **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
   menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
-- **Urgensi disarankan + alasan dampak** (BR-05): untuk insiden, bila `ai/models/urgensi.joblib`
-  (`ai/scripts/train_urgensi.py`) lolos gerbang dan keyakinan ≥ 70%, urgensi diambil dari model dan panel
-  menampilkan "Urgensi disarankan: … (keyakinan)". Selain itu urgensi dari kata kunci (kata utuh; negasi "tidak
+- **Urgensi disarankan + alasan dampak** (BR-05): untuk insiden, `ai/models/urgensi.joblib`
+  (`ai/scripts/train_urgensi.py`) memakai **ambang per kelas** dari validasi silang: Rendah bila P(Low) ≥ ambang Low
+  (presisi ≥ 75%), Sedang bila P(Low) ≤ ambang Medium (akurasi > pembanding + 3 poin); gerbang dinilai per kelas
+  dan kelas yang tidak lolos tidak pernah disarankan. Bila kelasnya lolos & di atas ambang, panel menampilkan
+  "Urgensi disarankan: Rendah/Sedang (keyakinan)" (angka terakhir: `reports/triase.md` bagian urgensi; Rendah
+  hanya mengenali ± 5% insiden Low). Selain itu urgensi dari kata kunci (kata utuh; negasi "tidak
   mendesak" diabaikan; pertanyaan tanpa gangguan → Rendah). **Dampak = urgensi**, naik satu tingkat bila ≥ minimal
   tiket mirip (pola) dalam jendela waktu atau kategori saran termasuk *Layanan kritis*; panel menampilkan alasannya,
   mis. "Dampak Tinggi: 3 tiket serupa dalam 1 jam; layanan kritis (SSO)". Prioritas = matriks urgensi × dampak GLPI.
