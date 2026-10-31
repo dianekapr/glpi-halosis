@@ -1,6 +1,6 @@
 """Layanan AI HaloSIS (FastAPI): saran triase + jawaban chatbot dari indeks pencarian.
 
-- POST /triage {judul, deskripsi, jenis} → {tim, top3, keyakinan, penjelasan, versi_model}
+- POST /triage {judul, deskripsi, jenis, tim?} → {tim, top3, keyakinan, penjelasan, jenis_saran, urgensi_saran, versi_model}
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode, pilihan?}
 - POST /reindex/layanan {layanan: [{id, nama, deskripsi}]} → katalog layanan masuk indeks (jenis_sumber 'layanan')
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
@@ -45,8 +45,8 @@ AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
 # Opsional (T4): klasifier jenis REQ/INC (ai/scripts/train_jenis.py); tidak ada → /triage tanpa saran jenis
 JENIS_PATH = Path(os.environ.get('HALOSIS_JENIS_MODEL', AI_DIR / 'models/jenis.joblib'))
-# Opsional: prioritas insiden Medium/Low (ai/scripts/train_prioritas.py); dipakai hanya bila lolos gerbang kualitas
-PRIORITAS_PATH = Path(os.environ.get('HALOSIS_PRIORITAS_MODEL', AI_DIR / 'models/prioritas.joblib'))
+# Opsional: urgensi insiden Medium/Low (ai/scripts/train_urgensi.py); dipakai hanya bila lolos gerbang kualitas
+URGENSI_PATH = Path(os.environ.get('HALOSIS_URGENSI_MODEL', AI_DIR / 'models/urgensi.joblib'))
 # Skor kosinus E5 di bawah ambang ini → "belum menemukan jawaban" (lihat ai/README.md, AI-4)
 CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))
 # Keyakinan sedang (TO-BE hal. 100): skor di antara ambang ini dan CHAT_MIN_SCORE → tidak menjawab, hanya
@@ -87,7 +87,7 @@ async def lifespan(_: FastAPI):
         state['triage'] = joblib.load(MODEL_PATH)
     except Exception as e:  # noqa: BLE001
         log.error('Model triase gagal dimuat: %s', e)
-    for key, path in (('jenis', JENIS_PATH), ('prioritas', PRIORITAS_PATH)):
+    for key, path in (('jenis', JENIS_PATH), ('urgensi', URGENSI_PATH)):
         if path.exists():
             try:
                 state[key] = joblib.load(path)
@@ -95,7 +95,7 @@ async def lifespan(_: FastAPI):
                 log.error('Model %s gagal dimuat (saran dilewati): %s', key, e)
     # Metrik gerbang kualitas per model: berkas pendamping *.metrics.json atau metrik di artefak (T32)
     state['metrics'] = {key: quality.load_metrics(path, state[name]) for key, name, path in (
-        ('triase', 'triage', MODEL_PATH), ('jenis', 'jenis', JENIS_PATH), ('prioritas', 'prioritas', PRIORITAS_PATH),
+        ('triase', 'triage', MODEL_PATH), ('jenis', 'jenis', JENIS_PATH), ('urgensi', 'urgensi', URGENSI_PATH),
     ) if state.get(name) is not None}
     try:
         _, vectors = search.load_index()
@@ -173,6 +173,7 @@ class TriageRequest(BaseModel):
     judul: str = Field(max_length=500)
     deskripsi: str = Field(default='', max_length=20000)
     jenis: str = Field(default='INC', description='INC (insiden) atau REQ (permintaan)')
+    tim: str = Field(default='', max_length=255, description='Tim tiket bila sudah ada; kosong → tim saran triase')
 
 
 class ChatTurn(BaseModel):
@@ -244,7 +245,7 @@ def health() -> dict:
     return {
         'status': 'ok' if model and state.get('search') else 'sebagian',
         'triase': bool(model), 'versi_model': model.version if model else None,
-        'kualitas_model': {kind: quality_gate(kind) for kind in ('triase', 'jenis', 'prioritas')
+        'kualitas_model': {kind: quality_gate(kind) for kind in ('triase', 'jenis', 'urgensi')
                            if kind == 'triase' or state.get(kind) is not None},
         'pencarian': bool(state.get('search')), 'model_embedding': search.MODEL_NAME,
         'generasi': 'claude' if os.environ.get('ANTHROPIC_API_KEY') else 'ekstraktif',
@@ -262,17 +263,23 @@ def suggest_type(title: str, description: str) -> dict | None:
             'versi_model': artifact['version']}
 
 
-def suggest_priority(title: str, description: str, kind: str) -> dict | None:
-    """Saran prioritas insiden (Medium/Low → prioritas GLPI) hanya bila model lolos gerbang & keyakinan ≥ ambang."""
-    artifact = state.get('prioritas')
-    if kind != 'INC' or not artifact or not quality_gate('prioritas')['lolos']:
+def suggest_urgency(title: str, description: str, kind: str, team: str) -> dict | None:
+    """Saran urgensi insiden (Medium/Low → skala GLPI) hanya bila model lolos gerbang & keyakinan ≥ ambang.
+
+    Label dari model berbobot seimbang, keyakinan dari salinan terkalibrasinya (train_urgensi.py). team = tim tiket
+    atau saran triase. High/Critical & permintaan (REQ) tidak dimodelkan: None → aturan di plugin.
+    """
+    artifact = state.get('urgensi')
+    if kind != 'INC' or not artifact or not quality_gate('urgensi')['lolos']:
         return None
-    probs = artifact['pipeline'].predict_proba([triage_model.jenis_text(title, description)])[0]
-    best = int(np.argmax(probs))
-    if float(probs[best]) < float(artifact.get('threshold', 0.7)):
+    frame = triage_model.urgency_frame(title, description, team)
+    label = str(artifact['pipeline'].predict(frame)[0])
+    calibrated = artifact['kalibrasi']
+    confidence = float(triage_model.urgency_confidence(
+        np.array([label]), calibrated.predict_proba(frame), calibrated.classes_)[0])
+    if confidence < float(artifact.get('threshold', 0.7)):
         return None
-    tier = str(artifact['pipeline'].classes_[best])
-    return {'tier': tier, 'prioritas': artifact['prioritas_glpi'][tier], 'keyakinan': round(float(probs[best]), 4),
+    return {'urgensi': label, 'nilai_glpi': artifact['urgensi_glpi'][label], 'keyakinan': round(confidence, 4),
             'versi_model': artifact['version']}
 
 
@@ -291,7 +298,7 @@ def triage(req: TriageRequest) -> dict:
         'lolos_uji_kualitas': gate['lolos'],
         'alasan_kualitas': gate['alasan'],
         'jenis_saran': suggest_type(req.judul, req.deskripsi),
-        'prioritas_saran': suggest_priority(req.judul, req.deskripsi, normalize_type(req.jenis)),
+        'urgensi_saran': suggest_urgency(req.judul, req.deskripsi, normalize_type(req.jenis), req.tim or result['tim']),
         'tim': result['tim'],
         'top3': result['top3'],
         'keyakinan': result['keyakinan'],
@@ -331,7 +338,9 @@ def generate_with_claude(question: str, history: list[ChatTurn], hits: list[dict
 
 def extractive(hit: dict) -> str:
     text = hit['potongan']
-    if hit['jenis_sumber'] == 'tiket' and 'Solusi:' in text:
+    if hit['jenis_sumber'] == 'tiket' and hit.get('solusi'):
+        text = hit['solusi']  # solusi utuh, juga bila potongannya hasil pemecahan
+    elif hit['jenis_sumber'] == 'tiket' and 'Solusi:' in text:
         text = text.split('Solusi:', 1)[1].strip()
     # Judul tiket di indeks = awal teks "masalah" (bisa ikut deskripsi): ambil baris pertama saja
     title = hit['judul'].strip().split('\n', 1)[0][:80].rstrip()

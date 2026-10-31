@@ -9,11 +9,14 @@ import re
 from dataclasses import dataclass, field
 
 import numpy as np
+import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import OneHotEncoder
 
 from . import privacy
 
@@ -48,6 +51,37 @@ def build_pipeline(c: float = 10.0, class_weight: str | None = 'balanced', calib
     if calibrate:
         classifier = CalibratedClassifierCV(classifier, method='sigmoid', cv=5)
     return Pipeline([('fitur', features), ('model', classifier)])
+
+
+def urgency_frame(title: object, description: object, team: object) -> pd.DataFrame:
+    """Masukan model urgensi: teks fitur (sama dengan jenis_text) + nama tim (tim tiket atau saran triase)."""
+    return pd.DataFrame({'teks': [jenis_text(title, description)], 'tim': [str(team or '').strip() or OTHER]})
+
+
+def build_urgency_pipeline(c: float = 3.0, calibrate: bool = False) -> Pipeline:
+    """Urgensi insiden Medium/Low: TF-IDF teks tersamar + one-hot nama tim, LR berbobot kelas seimbang.
+
+    calibrate=False → model LABEL (keputusan seimbang); calibrate=True → model KEYAKINAN (probabilitas terkalibrasi
+    sigmoid). Kalibrasi mengembalikan probabilitas ke frekuensi asli (81% Medium), sehingga argmax-nya hampir
+    selalu Medium; karena itu label dan keyakinan dari dua model (urgency_confidence).
+    """
+    features = ColumnTransformer([
+        ('kata', TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.5, sublinear_tf=True,
+                                 token_pattern=r'(?u)\b\w\w+\b|\[[a-z]+\]'), 'teks'),
+        ('karakter', TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), min_df=3, sublinear_tf=True,
+                                     max_features=100_000), 'teks'),
+        ('tim', OneHotEncoder(handle_unknown='ignore', min_frequency=5), ['tim']),
+    ])
+    classifier = LogisticRegression(C=c, class_weight='balanced', max_iter=3000)
+    if calibrate:
+        classifier = CalibratedClassifierCV(classifier, method='sigmoid', cv=5)
+    return Pipeline([('fitur', features), ('model', classifier)])
+
+
+def urgency_confidence(labels: np.ndarray, probs: np.ndarray, classes) -> np.ndarray:
+    """Probabilitas terkalibrasi untuk label yang dipilih model seimbang (per baris)."""
+    index = {c: i for i, c in enumerate(classes)}
+    return np.asarray(probs)[np.arange(len(labels)), [index[label] for label in labels]]
 
 
 @dataclass

@@ -1298,5 +1298,29 @@ msgstr "triase manual; saran hanya sebagai rujukan"
 msgid "SLA compliance (passed)"
 msgstr "Kepatuhan SLA (lolos)"
 
-msgid "%d decided tickets · ESTIM baseline 27.59%%"
-msgstr "%d tiket sudah ditentukan · baseline ESTIM 27,59%%"
+msgid "%d decided tickets"
+msgstr "%d tiket sudah ditentukan"
+
+msgid "ESTIM baseline %s%% (%s with imputed SLA)"
+msgstr "baseline ESTIM %s%% (%s dengan SLA berimputasi)"
+
+msgid "Requester satisfaction (rating ≥ 4)"
+msgstr "Kepuasan pemohon (nilai ≥ 4)"
+
+msgid "%d answered surveys"
+msgstr "%d survei dijawab"
+
+msgid "ESTIM baseline %s%% of %s rated tickets"
+msgstr "baseline ESTIM %s%% dari %s tiket dinilai"
+
+msgid "Critical services"
+msgstr "Layanan kritis"
+
+msgid "Comma-separated words. When the suggested category name contains one of them, or this many similar tickets arrive within the time window, the suggested impact is raised one level."
+msgstr "Kata dipisah koma. Bila nama kategori saran memuat salah satunya, atau tiket serupa sebanyak minimum di atas masuk dalam jendela waktu, dampak yang disarankan naik satu tingkat."
+
+msgid "Suggested urgency"
+msgstr "Urgensi disarankan"
+
+msgid "from the ticket history model"
+msgstr "dari model history tiket"

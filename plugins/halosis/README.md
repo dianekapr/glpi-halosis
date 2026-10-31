@@ -90,6 +90,7 @@ password sebelum membukanya.
 | Jendela waktu | 60 menit | Deteksi pola insiden |
 | Metode semantik | Rata-rata kemiripan | Atau **DBSCAN** (seperti PoC); eps bawaan 0,50, min_samples 3 (`reports/banding_pola.md`) |
 | Grup Operator | bawaan "Operator Service Desk" | Penerima Problem pola insiden |
+| Layanan kritis | `SSO, Email, Jaringan` | Kata (pisah koma) di nama kategori saran → dampak saran naik 1 tingkat |
 | Tinjau artikel terbit setelah | 6 bulan | Artikel terbit yang tidak diubah selama ini muncul di tab "Perlu ditinjau" |
 | Fitur AI | semua aktif | Saran triase, chatbot, deteksi pola, dashboard |
 
@@ -240,6 +241,12 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
   "Model belum lolos uji kualitas" dan tingkat selalu *Perlu penilaian manual*.
 - **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
   menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
+- **Urgensi disarankan + alasan dampak** (BR-05): untuk insiden, bila `ai/models/urgensi.joblib`
+  (`ai/scripts/train_urgensi.py`) lolos gerbang dan keyakinan ≥ 70%, urgensi diambil dari model dan panel
+  menampilkan "Urgensi disarankan: … (keyakinan)". Selain itu urgensi dari kata kunci (kata utuh; negasi "tidak
+  mendesak" diabaikan; pertanyaan tanpa gangguan → Rendah). **Dampak = urgensi**, naik satu tingkat bila ≥ minimal
+  tiket mirip (pola) dalam jendela waktu atau kategori saran termasuk *Layanan kritis*; panel menampilkan alasannya,
+  mis. "Dampak Tinggi: 3 tiket serupa dalam 1 jam; layanan kritis (SSO)". Prioritas = matriks urgensi × dampak GLPI.
 - **Kembalikan ke operator (salah tim)**, UC-06 alur alternatif: tombol hanya tampil untuk teknisi/anggota tim
   yang ditugaskan, selama tiket Diproses/Direncanakan/Menunggu. Hak dicek ulang di server. Alasan wajib.
   Hasilnya: grup & teknisi penugasan dihapus, status Baru, tindak lanjut privat "Dikembalikan ke operator
@@ -488,7 +495,7 @@ UI, jalankan `python3 tools/locales.py`.
 
 | Tabel | Isi |
 | --- | --- |
-| `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, 3 kandidat tim, model, status) |
+| `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, 3 kandidat tim, keyakinan urgensi model, alasan dampak, model, status) |
 | `glpi_plugin_halosis_decisions` | Keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
 | `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain (`reassign`) atau dikembalikan ke operator dengan alasan (`return`) setelah triase AI diterapkan |
 | `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (`semantic` dari `/pola`; cadangan kata kunci `category` / `title`), Problem, jumlah tiket |

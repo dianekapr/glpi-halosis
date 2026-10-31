@@ -42,6 +42,8 @@ final class Config
         'pattern_method'      => 'average',
         'pattern_eps'         => '0.50',
         'pattern_min_samples' => 3,
+        // Sinyal dampak saran triase: kategori layanan yang namanya memuat salah satu kata ini → dampak naik 1 tingkat
+        'critical_services'   => 'SSO, Email, Jaringan',
         // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
         'kb_review_months'    => 6,
         // T21: tiket Selesai tanpa respons pemohon lebih dari N jam masuk daftar "Siap ditutup"
@@ -156,6 +158,27 @@ final class Config
         return array_map('intval', array_values(getSonsOf(\Entity::getTable(), $entity->getID())));
     }
 
+    /**
+     * Kata kunci kategori layanan kritis (sinyal dampak saran triase), mis. ["SSO", "Email", "Jaringan"].
+     *
+     * @return string[]
+     */
+    public static function getCriticalServices(): array
+    {
+        return self::parseList((string) self::get('critical_services'));
+    }
+
+    /**
+     * "a, b ,, c" → ["a", "b", "c"] (unik, maks. 20 butir, masing-masing maks. 60 karakter).
+     *
+     * @return string[]
+     */
+    private static function parseList(string $value): array
+    {
+        $items = array_filter(array_map(static fn ($v) => mb_substr(trim($v), 0, 60), explode(',', $value)), 'strlen');
+        return array_slice(array_values(array_unique($items)), 0, 20);
+    }
+
     public static function getLowThreshold(): int
     {
         return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
@@ -220,6 +243,7 @@ final class Config
         $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
         $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
         $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
+        $values['critical_services'] = implode(', ', self::parseList((string) ($input['critical_services'] ?? '')));
         $values['close_after_hours'] = max(1, min(720, (int) ($input['close_after_hours'] ?? self::DEFAULTS['close_after_hours'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 

@@ -22,9 +22,8 @@ MODEL = ROOT / 'ai/models/triage.joblib'
 BIG_TEAM_SHARE = 0.05  # "tim besar" = ≥ 5% tiket uji
 
 
-def main() -> None:
-    model = joblib.load(MODEL)
-    df = tt.load()
+def compute(model, df) -> dict:
+    """Metrik gerbang satu model triase pada set uji df (Jul–Ags), label tim dari data latih df."""
     train, test = df[df['opened'] < tt.TRAIN_END], df[df['opened'] >= tt.TRAIN_END]
     labels = tt.label_teams(test, train)
     s = tt.evaluate(model.pipeline, test['text'], labels)
@@ -35,8 +34,8 @@ def main() -> None:
     big = [t for t, share in big.items() if share >= BIG_TEAM_SHARE and t != tt.OTHER]
     recalls = recall_score(labels, s['predicted'], labels=big, average=None, zero_division=0)
     other = float(recall_score(labels, s['predicted'], labels=[tt.OTHER], average=None, zero_division=0)[0])
-    metrics = {
-        'versi': model.version, 'tanggal': date.today().isoformat(), 'dihitung_ulang_tanpa_latih': True,
+    return {
+        'versi': model.version, 'tanggal': date.today().isoformat(),
         'tiket_uji': int(len(test)), 'top1': round(float(s['top1']), 4), 'top3': round(float(s['top3']), 4),
         'mrr': round(float(s['mrr']), 4), 'f1_makro': round(float(f1_score(labels, s['predicted'], average='macro', zero_division=0)), 4),
         'ambang': float(model.threshold), 'akurasi_yakin': round(float(correct[confident].mean()), 4),
@@ -44,8 +43,15 @@ def main() -> None:
         'tim_besar': len(big), 'recall_tim_besar_min': round(float(recalls.min()), 4),
         'recall_lainnya': round(other, 4),
     }
-    out = MODEL.with_suffix('.metrics.json')
-    out.write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+
+def write(metrics: dict) -> None:
+    MODEL.with_suffix('.metrics.json').write_text(json.dumps(metrics, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+
+def main() -> None:
+    metrics = {**compute(joblib.load(MODEL), tt.load()), 'dihitung_ulang_tanpa_latih': True}
+    write(metrics)
     print(json.dumps(metrics, ensure_ascii=False))
 
 

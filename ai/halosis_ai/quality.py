@@ -18,7 +18,7 @@ MAX_DROP = float(os.environ.get('HALOSIS_GATE_MAX_DROP', '0.02'))               
 
 
 def load_metrics(model_path: Path, artifact) -> dict:
-    """Metrik dari berkas pendamping (prioritas) atau dari artefak (dict `metrics` / atribut `metadata`)."""
+    """Metrik dari berkas pendamping (triase, urgensi) atau dari artefak (dict `metrics` / atribut `metadata`)."""
     side = model_path.with_suffix('.metrics.json')
     if side.exists():
         return json.loads(side.read_text(encoding='utf-8'))
@@ -28,7 +28,8 @@ def load_metrics(model_path: Path, artifact) -> dict:
 
 
 def check(kind: str, metrics: dict) -> dict:
-    """Status lolos per model. kind: triase (syarat tata kelola penuh) | jenis | prioritas (harus unggul pembanding)."""
+    """Status lolos per model. kind: triase (syarat tata kelola penuh) | jenis | urgensi (harus unggul pembanding
+    kelas mayoritas dan, bila tercatat, F1 makro tidak turun > MAX_DROP dari versi aktif pada set uji yang sama)."""
     reasons, checks = [], {}
 
     def need(name: str, ok, detail: str):
@@ -55,5 +56,9 @@ def check(kind: str, metrics: dict) -> dict:
         f1, base = get('f1_makro'), get('f1_makro_pembanding')
         need('f1_makro_vs_pembanding', None if f1 is None or base is None else f1 > base,
              f'F1 makro {f1} tidak mengungguli pembanding {base}')
+        previous = metrics.get('versi_sebelumnya') or {}
+        if previous.get('f1_makro') is not None and f1 is not None:
+            need('f1_makro_vs_versi_sebelumnya', f1 >= float(previous['f1_makro']) - MAX_DROP,
+                 f'F1 makro turun > {MAX_DROP} dari versi sebelumnya')
     return {'lolos': not reasons, 'alasan': reasons, 'syarat': checks, 'versi': metrics.get('versi'),
             'tanggal': metrics.get('tanggal')}

@@ -2,7 +2,8 @@
 
 Solusi tiket (sudah tersamar, dari indeks pencarian AI-4) dikelompokkan dengan TF-IDF + kosinus secara
 greedy: tiket dengan tetangga mirip terbanyak menjadi pusat klaster, anggotanya tidak dipakai lagi.
-Klaster dengan anggota ≥ min_size dikembalikan, terbesar dulu.
+Klaster dengan anggota ≥ min_size dikembalikan, terbesar dulu. Indeks menggabungkan solusi identik menjadi satu
+potongan (kolom `jumlah_tiket`, `tiket`), jadi anggota dihitung per tiket, bukan per potongan.
 """
 from __future__ import annotations
 
@@ -25,15 +26,24 @@ def _split(text: str) -> tuple[str, str]:
 
 def recurring_solutions(chunks: pd.DataFrame, min_size: int = 5, limit: int = 20,
                         similarity: float = SIMILARITY) -> list[dict]:
-    tickets = chunks[chunks['jenis_sumber'] == 'tiket'].reset_index(drop=True)
+    # Potongan lanjutan (solusi > 220 kata dipecah) punya sumber sama: satu baris per tiket/solusi
+    tickets = chunks[chunks['jenis_sumber'] == 'tiket'].drop_duplicates('sumber').reset_index(drop=True)
     if tickets.empty:
         return []
-    parts = [_split(str(t)) for t in tickets['teks']]
+    if 'solusi' in tickets:
+        parts = [(str(m), str(v)) for m, v in zip(tickets['masalah'].fillna(''), tickets['solusi'].fillna(''))]
+    else:
+        parts = [_split(str(t)) for t in tickets['teks']]
     solutions = [s.lower() for _, s in parts]
+    weights = (tickets['jumlah_tiket'].fillna(1).astype(int) if 'jumlah_tiket' in tickets
+               else pd.Series(1, index=tickets.index)).to_numpy()
+    numbers = [str(t).split(',') if 'tiket' in tickets and isinstance(t, str) and t else [str(s)]
+               for t, s in zip(tickets['tiket'] if 'tiket' in tickets else tickets['sumber'], tickets['sumber'])]
 
-    matrix = TfidfVectorizer(ngram_range=(1, 2), min_df=2, sublinear_tf=True).fit_transform(solutions)
+    # min_df=1: solusi identik sudah digabung, jadi kata khas solusi itu muncul di satu baris saja
+    matrix = TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True).fit_transform(solutions)
     neighbors = (matrix @ matrix.T).toarray() >= similarity
-    order = np.argsort(-neighbors.sum(axis=1), kind='stable')
+    order = np.argsort(-(neighbors * weights).sum(axis=1), kind='stable')
 
     used = np.zeros(len(tickets), dtype=bool)
     clusters = []
@@ -41,7 +51,7 @@ def recurring_solutions(chunks: pd.DataFrame, min_size: int = 5, limit: int = 20
         if used[center] or len(parts[center][1].split()) < MIN_WORDS:
             continue
         members = np.flatnonzero(neighbors[center] & ~used)
-        if len(members) < min_size:
+        if weights[members].sum() < min_size:
             continue
         used[members] = True
         problem, solution = parts[center]
@@ -50,8 +60,8 @@ def recurring_solutions(chunks: pd.DataFrame, min_size: int = 5, limit: int = 20
             'judul': str(tickets.at[center, 'judul']).strip().split('\n', 1)[0][:120],
             'masalah': problem[:1000],
             'solusi': solution[:2000],
-            'jumlah': int(len(members)),
-            'contoh_tiket': [str(tickets.at[i, 'sumber']) for i in members[:5]],
+            'jumlah': int(weights[members].sum()),
+            'contoh_tiket': [n for i in members for n in numbers[i]][:5],
         })
         if len(clusters) >= limit:
             break

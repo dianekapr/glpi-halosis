@@ -21,7 +21,7 @@ docker compose ps                              # semua "running"
 | --- | --- | --- |
 | Layanan AI | `curl -s localhost:8001/health` | `"status":"ok"`, `"triase":true`, `"pencarian":true`, `"kualitas_model": {"lolos": true}` |
 | Model lengkap | `ls ai/models ai/index` | `triage.joblib`, `jenis.joblib`, `chunks.parquet`, `vectors.npy` (dari Drive, README C2; tidak dilatih ulang) |
-| Katalog layanan & FAQ terindeks | `curl -s localhost:8001/metrics \| grep index_chunks` | ±4.263 potongan (tiket + 9 KB + 16 layanan). Kurang → `seed_halosis.py` (FAQ Email/SSO/SiPecut), lalu `plugin:install --force` saat `halosis-ai` hidup |
+| Katalog layanan & FAQ terindeks | `curl -s localhost:8001/metrics \| grep index_chunks` | ±4.923 potongan (4.897 tiket + 9 KB + 17 layanan). Kurang → `seed_halosis.py` (FAQ Email/SSO/SiPecut), lalu `plugin:install --force` saat `halosis-ai` hidup |
 | Role Keycloak = JSON | konsol http://localhost:8180 (realm halosis) › Users › Role mapping | `budi`/`siti`/`maya`/`ani` = pegawai, `rina` = operator, dst. sesuai `keycloak/halosis-realm.json` |
 | Mailpit | http://localhost:8025 | Terbuka; hapus email lama (ikon tempat sampah) agar notifikasi demo mudah ditemukan |
 | Tugas terjadwal | GLPI › Setup › Tindakan otomatis | `IncidentPattern` & `TriageRetry` aktif (mode CLI) |

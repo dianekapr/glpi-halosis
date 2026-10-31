@@ -16,6 +16,14 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   Medium 8 / Low 15 hari; permintaan 7/14 hari; kalender jam kerja; peringatan ±20%) menggantikan angka asumsi; KPI
   kepatuhan SLA sebanding baseline 27,59%; gerbang kualitas memeriksa semua syarat tata kelola per model
   (`quality.py`, `triage.metrics.json`); model prioritas insiden (`train_prioritas.py`) hanya dipakai bila lolos.
+- **Data history versi baru (masih 1.0.0):** ekspor 220 kolom (tanggal serial Excel → `halosis_ai/dates.py`),
+  rekonsiliasi lama vs baru; solusi knowledge = pesan terakhir ≤ resolved + 5 menit bukan dari pemohon
+  (`reports/banding_solusi.md`; dedup ditolak gerbang), potongan > 220 kata dipecah; triase & jenis dilatih ulang
+  dengan gerbang "tidak turun"; **model urgensi insiden** (`train_urgensi.py`) menggantikan model prioritas; **sinyal
+  dampak** (≥ 3 tiket serupa / 60 menit, layanan kritis `critical_services`) + alasan di panel (kolom
+  `urgency_confidence`, `impact_reason`: jalankan `plugin:install --force`); kata kunci urgensi per kata utuh +
+  negasi; KPI kepuasan pemohon & baseline dari `baseline.json` (SLA 28,87%, 1.819 berimputasi; kepuasan 95,76%);
+  NIP lama 9 digit disamarkan.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.
