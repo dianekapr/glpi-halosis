@@ -138,3 +138,32 @@ Kolom nama pengguna (requester_name, assigned_to_name, resolved_by_name, closed_
 | Technical Layanan Aplikasi Jaringan - Shorten URL | 1 | 1 | 0 | 0 | 0 |
 | Technical Layanan Insan Statistik Teladan | 1 | 1 | 0 | 0 | 0 |
 | **Total** | **6.682** | **6.671** | **11** | **731** | **65** |
+
+<!-- migrasi-sampel:mulai -->
+## Migrasi sampel ke GLPI (FR-10/NFR-13)
+
+Dibuat `ai/scripts/migrate_sample.py` · 2026-10-31 09:20 · entitas GLPI terpisah **Arsip ESTIM** (bukan data demo) · 200 tiket pertama menurut nomor tiket.
+
+| Ukuran | Jumlah |
+| --- | ---: |
+| Sumber (sampel) | 200 |
+| Berhasil dibuat | 0 |
+| Dilewati (sudah ada, idempoten) | 199 |
+| Gagal | 1 |
+| **Cek: sumber = berhasil + dilewati + gagal** | ✅ |
+| Tiket di entitas Arsip ESTIM setelah migrasi | 199 |
+
+Berhasil per status asal: –.
+
+| Alasan gagal | Jumlah |
+| --- | ---: |
+| Tanpa nomor tiket | 1 |
+
+Hapus seluruh sampel: `.venv/bin/python ai/scripts/migrate_sample.py --hapus` (tiket di entitas arsip di-purge, lalu entitasnya).
+<!-- migrasi-sampel:selesai -->
+
+Uji 31 Okt 2026: jalan pertama **sumber 200 = berhasil 199 + gagal 1** (tanpa nomor tiket); per status asal Closed
+145, Resolved 23, Canceled 11, In Progress 10, Assigned 7, New 2 → di GLPI: Ditutup 157, Selesai 23, Diproses 17,
+Baru 2. Jalan ulang: 0 baru, 199 dilewati (idempoten). `--hapus` menghapus 199 tiket + entitas, lalu migrasi ulang
+memberi hasil sama. Hanya 19 tiket yang masih terbuka mendapat saran triase AI; tidak ada Problem pola yang terbentuk;
+228 notifikasi antre milik tiket arsip dihapus (REST API GLPI tidak menghormati `_disablenotif`).

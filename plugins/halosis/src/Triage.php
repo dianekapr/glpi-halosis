@@ -3,6 +3,7 @@
 namespace GlpiPlugin\Halosis;
 
 use CommonITILActor;
+use CommonITILObject;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Client;
 use GlpiPlugin\Halosis\Ai\Service;
@@ -77,6 +78,10 @@ final class Triage
      */
     public static function onTicketAdd(Ticket $ticket): void
     {
+        // Tiket yang dibuat sudah selesai (impor history, mis. migrasi FR-10) tidak perlu triase
+        if ((int) ($ticket->fields['status'] ?? 0) >= CommonITILObject::SOLVED) {
+            return;
+        }
         try {
             self::generate($ticket);
         } catch (Throwable $e) {

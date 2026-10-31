@@ -150,6 +150,9 @@ class PatternRequest(BaseModel):
     ambang: float = Field(default=patterns.DEFAULT_THRESHOLD, ge=0, le=1)
     min_anggota: int = Field(default=patterns.DEFAULT_MIN_MEMBERS, ge=2)
     jendela_menit: int = Field(default=patterns.DEFAULT_WINDOW_MINUTES, ge=1)
+    metode: Literal['rata', 'dbscan'] = Field(default='rata', description='rata = rakus rata-rata kemiripan (bawaan)')
+    eps: float = Field(default=patterns.DEFAULT_EPS, gt=0, le=2, description='DBSCAN: jarak kosinus maksimal')
+    min_sampel: int | None = Field(default=None, ge=2, description='DBSCAN: min_samples (bawaan = min_anggota)')
 
 
 class ServiceItem(BaseModel):
@@ -298,9 +301,13 @@ def pola(req: PatternRequest) -> dict:
     texts = [str(privacy.mask_text(f'{t.judul}. {t.deskripsi[:300]}')) for t in req.tiket]
     vectors = patterns.center(search.embed(texts, 'query'), state.get('corpus_mean'))
     tickets = [{'id': t.id, 'judul': str(privacy.mask_text(t.judul)), 'waktu': t.waktu} for t in req.tiket]
-    groups = patterns.group(tickets, vectors, req.ambang, req.min_anggota, req.jendela_menit)
-    record_latency('pola', total_ms=ms_since(start), tiket=len(tickets), kelompok=len(groups))
-    return {'kelompok': groups, 'metode': 'semantik'}
+    if req.metode == 'dbscan':
+        groups = patterns.group_dbscan(tickets, vectors, req.eps, req.min_sampel or req.min_anggota, req.min_anggota,
+                                       req.jendela_menit)
+    else:
+        groups = patterns.group(tickets, vectors, req.ambang, req.min_anggota, req.jendela_menit)
+    record_latency('pola', total_ms=ms_since(start), tiket=len(tickets), kelompok=len(groups), metode=req.metode)
+    return {'kelompok': groups, 'metode': 'semantik' if req.metode == 'rata' else 'dbscan'}
 
 
 @app.post('/reindex/artikel')

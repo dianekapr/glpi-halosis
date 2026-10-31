@@ -38,6 +38,10 @@ final class Config
         'pattern_min_tickets' => 3, // PoC hal. 56: minimum 3 incident
         'pattern_window'      => 60,
         'pattern_group_id'    => 0,
+        // Metode semantik di /pola: average (rakus rata-rata kemiripan, bawaan) atau dbscan (PoC hal. 56)
+        'pattern_method'      => 'average',
+        'pattern_eps'         => '0.50',
+        'pattern_min_samples' => 3,
         // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
         'kb_review_months'    => 6,
         'feature_triage'    => 1,
@@ -120,6 +124,19 @@ final class Config
         return (int) self::get('triage_threshold');
     }
 
+    /**
+     * Pilihan metode deteksi pola semantik untuk form.
+     *
+     * @return array<string, string>
+     */
+    public static function getPatternMethods(): array
+    {
+        return [
+            'average' => __('Average similarity (default)', 'halosis'),
+            'dbscan'  => __('DBSCAN (as in the PoC)', 'halosis'),
+        ];
+    }
+
     public static function getLowThreshold(): int
     {
         return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
@@ -181,6 +198,9 @@ final class Config
         $values['pattern_window']      = max(15, min(1440, (int) ($input['pattern_window'] ?? self::DEFAULTS['pattern_window'])));
         $group_id = (int) ($input['pattern_group_id'] ?? 0);
         $values['pattern_group_id'] = $group_id > 0 && (new \Group())->getFromDB($group_id) ? $group_id : 0;
+        $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
+        $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
+        $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 
         foreach (self::FEATURES as $feature) {

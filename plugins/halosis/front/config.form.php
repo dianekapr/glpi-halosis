@@ -33,6 +33,7 @@ Html::header(__('HaloSIS configuration', 'halosis'), '', 'config', ConfigMenu::c
 TemplateRenderer::getInstance()->display('@halosis/config.html.twig', [
     'config'         => Config::getFormValues(),
     'providers'      => Config::getProviders(),
+    'pattern_methods' => Config::getPatternMethods(),
     'features'       => Config::getFeatureLabels(),
     'is_demo'        => Config::isDemoMode(),
     'sdk_missing'    => !Client::isSdkInstalled(),

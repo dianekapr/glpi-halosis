@@ -107,7 +107,7 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 | BP-17 Reporting | Dashboard: volume, SLA, **response**, resolution, assignment, rekomendasi AI, acceptance, override, deteksi pola, governance | ✅ | SLA respons (T1) di daftar & Statistik GLPI; dashboard plugin: pola terdeteksi vs dikonfirmasi vs ditutup (`plugins/halosis/src/Stats.php:264`) |
 | BP-19 AI Model Mgmt | Evaluasi → approval → rilis → monitoring → **drift / hallucination monitoring** → revalidasi | ✅ | Proses di `tata_kelola_ai.md`; indikator drift = % Ubah+Tolak per bulan (6 bulan) di dashboard (`plugins/halosis/src/Stats.php:235`); halusinasi: jawaban ekstraktif (tanpa generasi bebas) |
 | BP-21 Incident Trend Analysis | Analisis semantik + temporal **kontinu** | ✅ | Jendela 60 menit (cron 15 menit) + **tren pola per minggu per topik, 12 minggu** di dashboard (`plugins/halosis/src/Stats.php:293`) |
-| BP-25 AI Infrastructure | GPU, model serving, vector DB, monitoring | ⚪ | `/metrics` ✅; GPU & vector DB layanan di luar prototipe |
+| BP-25 AI Infrastructure | GPU, model serving, vector DB, monitoring | ⚪ | `/metrics` + profile `monitoring` (Prometheus + Grafana, 31 Okt) ✅; uji beban Peak/Stress layanan AI ✅; GPU & vector DB layanan di luar prototipe |
 
 ## 5. Kepatuhan batas scope & arsitektur
 
@@ -136,4 +136,5 @@ Langkah 1–3 versi 30 Okt dan sisa versi 31 Okt sudah dikerjakan (lihat pembaru
 
 1. **T4:** klasifier REQ/INC bila jalur masuk tidak lagi memisahkan jenis.
 2. **T20:** pratinjau dampak & notifikasi perubahan konfigurasi (butuh halaman baru; kini prosedur manual).
-3. Uji beban Peak/Stress & halaman GLPI (`reports/rencana_uji.md` §7).
+3. Uji beban halaman GLPI (HTML) — Peak/Stress layanan AI & API GLPI sudah diuji (`reports/rencana_uji.md` §7).
+4. LLM lokal (profile `llm`, Ollama + Qwen2.5 3B) sebagai perangkum opsional — belum dikerjakan.

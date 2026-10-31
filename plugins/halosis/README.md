@@ -12,7 +12,7 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu, artikel paling sering dipakai / dinilai tidak membantu, pola terdeteksi vs dikonfirmasi vs ditutup, drift bulanan; filter periode, tim, kategori; ekspor koreksi CSV | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.8.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Versi 0.9.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
 Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
 semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
@@ -88,6 +88,7 @@ password sebelum membukanya.
 | Ambang keyakinan rendah | 40% | Antara kedua ambang → "Pilih dari 3 kandidat"; di bawahnya → "Perlu penilaian manual" |
 | Minimal tiket mirip | 3 | Deteksi pola insiden (PoC hal. 56: minimum 3 insiden) |
 | Jendela waktu | 60 menit | Deteksi pola insiden |
+| Metode semantik | Rata-rata kemiripan | Atau **DBSCAN** (seperti PoC); eps bawaan 0,50, min_samples 3 (`reports/banding_pola.md`) |
 | Grup Operator | bawaan "Operator Service Desk" | Penerima Problem pola insiden |
 | Tinjau artikel terbit setelah | 6 bulan | Artikel terbit yang tidak diubah selama ini muncul di tab "Perlu ditinjau" |
 | Fitur AI | semua aktif | Saran triase, chatbot, deteksi pola, dashboard |
@@ -217,8 +218,11 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
 - Dibuat saat tiket baru disimpan (hook `item_add` Ticket, dari antarmuka mana pun termasuk REST API),
   disimpan di tabel plugin, **bukan** di field tiket. Kategori & grup dibatasi ke daftar yang valid untuk
   entitas & tipe tiket dan divalidasi ulang di server; prioritas dari matriks urgensi × dampak GLPI.
-- AI gagal/timeout → tiket tetap tersimpan normal tanpa saran (tidak ada coba ulang, waktu tunggu maksimal =
-  batas waktu). Petugas bisa menekan **Buat saran AI** di panel.
+- AI gagal/timeout → tiket tetap tersimpan normal tanpa saran (tidak ada coba ulang saat menyimpan, waktu tunggu
+  maksimal = batas waktu). Petugas bisa menekan **Buat saran AI** di panel, dan tugas terjadwal **`TriageRetry`**
+  (tiap 15 menit) mencoba lagi tiket **Baru** ≤ 3 hari yang belum punya saran: idempoten (satu saran per tiket),
+  maks. 5 percobaan per tiket (`glpi_plugin_halosis_triage_retries`), tiap kegagalan tercatat di log tugas &
+  `halosis.log`. Manual: `docker compose exec glpi php front/cron.php --force TriageRetry`.
 - Keputusan butuh hak triase *putuskan* **dan** hak ubah tiket GLPI. Nilai diterapkan lewat update tiket
   biasa, jadi aturan bisnis, notifikasi, dan riwayat field GLPI tetap berjalan. Alasan Ubah/Tolak divalidasi
   di server (minimal 5 karakter). Tanpa hak GLPI "Ubah prioritas", prioritas mengikuti matriks.
@@ -325,7 +329,8 @@ Tugas terjadwal **`IncidentPattern`** (tiap 15 menit, mode CLI; penjadwal contai
 `front/cron.php` tiap menit). Manual: `docker compose exec glpi php front/cron.php --force IncidentPattern`.
 
 1. Tiket **Insiden** yang dibuat dalam jendela waktu, belum dihapus, belum selesai (permintaan tidak dihitung).
-2. **Semantik** lewat layanan AI (`POST /pola`: embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50).
+2. **Semantik** lewat layanan AI (`POST /pola`: embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50; atau DBSCAN
+   bila dipilih di Pengaturan AI).
    Layanan mati/gagal → **cadangan kata kunci**: per kategori (tiket tanpa kategori memakai kategori saran
    triase), sisanya per judul mirip (≥ 2 kata kunci sama dan overlap ≥ 0,5). Metode dicatat di Problem.
 3. Kelompok ≥ N tiket → Problem **"Pola insiden: …"** (daftar tiket & kriteria), ditautkan ke tiketnya,
@@ -435,7 +440,7 @@ src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  
 src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/Privacy.php  penyamaran data
 src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
 src/KeycloakAuth.php      login SSO Keycloak (password grant dari form login GLPI) + sinkron pengguna, profil, tim
-src/PatternDetector.php   tugas terjadwal pola insiden + banner
+src/PatternDetector.php   tugas terjadwal pola insiden + banner;  src/TriageRetry.php  tugas coba ulang saran triase
 src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
 src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan, Perlu ditinjau;  src/Candidate.php  model kandidat
 src/KnowledgeIndex.php    re-index artikel KB ke layanan AI saat terbit / ditarik / dihapus (hook KnowbaseItem)
@@ -468,6 +473,7 @@ UI, jalankan `python3 tools/locales.py`.
 | `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (`semantic` dari `/pola`; cadangan kata kunci `category` / `title`), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status (`open` / `resolved` / `ticket` / `expired` setelah 30 menit tanpa aktivitas), rating, tiket |
 | `glpi_plugin_halosis_feedback` | Penilaian agent di Cari knowledge (KR-07): pengguna, sumber (artikel KB / tiket historis), skor relevansi, membantu/tidak, waktu; teks kueri tidak disimpan |
+| `glpi_plugin_halosis_triage_retries` | Percobaan ulang saran triase per tiket (NFR-03): jumlah percobaan, galat terakhir |
 | `glpi_plugin_halosis_kb_reviews` | Tanggal tinjau berikut per artikel KB (KR-03): artikel, tanggal, pengatur |
 | `glpi_plugin_halosis_article_uses` | Artikel KB yang dikutip chatbot per jawaban (artikel, percakapan, waktu) |
 | `glpi_plugin_halosis_candidates` | Kandidat Knowledge (UC-09): sumber (tiket selesai / klaster AI), masalah & solusi (tersamarkan), jumlah kemunculan, status (`pending` / `article` / `ignored`), artikel KB yang dibuat, alasan diabaikan, Knowledge Manager & waktu keputusan |

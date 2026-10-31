@@ -160,7 +160,7 @@
                 <tbody>
                     {% for band, row in stats.by_band %}
                         <tr>
-                            <td>{{ band == 'above' ? __('≥ %d%% (threshold)', 'halosis')|format(stats.threshold) : __('< %d%% (needs manual review)', 'halosis')|format(stats.threshold) }}</td>
+                            <td>{{ band == 'above' ? __('≥ %d%% (threshold)', 'halosis')|format(stats.threshold) : __('< %d%% (below threshold)', 'halosis')|format(stats.threshold) }}</td>
                             <td>{{ row.total }}</td>
                             {% for a in ['accept','modify','reject'] %}<td>{{ row.total > 0 ? row.percent[a] ~ '%' : '–' }}</td>{% endfor %}
                         </tr>
@@ -213,24 +213,6 @@
                 <div><div class="hd-label">{{ __('Closed', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.closed }}</div></div>
             </div>
         </section>
-        {# BP-21: tren pola insiden per minggu per topik #}
-        <section class="hd-card">
-            <h2>{{ __('Incident pattern trend: tickets per week by topic (12 weeks)', 'halosis') }}</h2>
-            {% if stats.pattern_trend.topics %}
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead><tr><th>{{ __('Topic', 'halosis') }}</th>{% for w in stats.pattern_trend.weeks %}<th class="text-end">{{ w }}</th>{% endfor %}<th class="text-end">{{ __('Total', 'halosis') }}</th></tr></thead>
-                        <tbody>
-                            {% for topic in stats.pattern_trend.topics %}
-                                <tr><td>{{ topic.label }}</td>{% for c in topic.counts %}<td class="text-end">{{ c ?: '·' }}</td>{% endfor %}<td class="text-end"><strong>{{ topic.total }}</strong></td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-secondary mb-0">{{ __('No incident patterns in the last 12 weeks.', 'halosis') }}</p>
-            {% endif %}
-        </section>
         <section class="hd-card">
             <h2>{{ __('Drift indicator: modified + rejected per month', 'halosis') }}</h2>
             <table class="table table-sm mb-0">
@@ -241,6 +223,24 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </section>
+        {# BP-21: tren pola insiden per minggu per topik #}
+        <section class="hd-card hd-span-all">
+            <h2>{{ __('Incident pattern trend: tickets per week by topic (12 weeks)', 'halosis') }}</h2>
+            {% if stats.pattern_trend.topics %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>{{ __('Topic', 'halosis') }}</th>{% for w in stats.pattern_trend.weeks %}<th class="text-end">{{ w }}</th>{% endfor %}<th class="text-end">{{ __('Total', 'halosis') }}</th></tr></thead>
+                        <tbody>
+                            {% for topic in stats.pattern_trend.topics %}
+                                <tr><td class="hd-topic">{{ topic.label }}</td>{% for c in topic.counts %}<td class="text-end">{{ c ?: '·' }}</td>{% endfor %}<td class="text-end"><strong>{{ topic.total }}</strong></td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-secondary mb-0">{{ __('No incident patterns in the last 12 weeks.', 'halosis') }}</p>
+            {% endif %}
         </section>
     </div>
 
