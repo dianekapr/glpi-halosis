@@ -42,6 +42,7 @@ final class Stats
             'filter'       => ['groups_id' => $groups_id, 'categories_id' => $categories_id],
             'drift'        => self::drift($filter),
             'patterns'     => self::patterns($start),
+            'pattern_trend' => self::patternTrend(),
             'unhelpful'    => self::unhelpfulArticles($start),
             'decisions'    => self::decisionTotals($decisions),
             'weekly'       => self::weekly($decisions, $start, $weeks),
@@ -281,6 +282,44 @@ final class Stats
             }
         }
         return $counts;
+    }
+
+    /**
+     * Tren pola insiden (BP-21): jumlah tiket yang tertaut ke pola per minggu per topik, 12 minggu terakhir
+     * (tidak mengikuti filter periode). Topik = label pola (kategori atau judul wakil); 5 topik terbanyak.
+     *
+     * @return array{weeks: array<int, string>, topics: array<int, array{label: string, counts: array<int, int>, total: int}>}
+     */
+    private static function patternTrend(int $limit = 5): array
+    {
+        global $DB;
+
+        $weeks = 12;
+        $start = self::periodStart($weeks);
+        $keys = [];
+        for ($i = 0; $i < $weeks; $i++) {
+            $keys[$start->modify("+{$i} weeks")->format('Y-m-d')] = $i;
+        }
+        $topics = [];
+        foreach ($DB->request([
+            'SELECT' => ['label', 'ticket_count', 'date_creation'],
+            'FROM'   => PatternDetector::getTable(),
+            'WHERE'  => ['date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
+        ]) as $row) {
+            $week = (new DateTimeImmutable($row['date_creation']))->modify('monday this week')->format('Y-m-d');
+            if (!isset($keys[$week])) {
+                continue;
+            }
+            $label = mb_strimwidth((string) $row['label'], 0, 60, '…');
+            $topics[$label] ??= ['label' => $label, 'counts' => array_fill(0, $weeks, 0), 'total' => 0];
+            $topics[$label]['counts'][$keys[$week]] += max(1, (int) $row['ticket_count']);
+            $topics[$label]['total'] += max(1, (int) $row['ticket_count']);
+        }
+        usort($topics, static fn ($a, $b) => $b['total'] <=> $a['total']);
+        return [
+            'weeks'  => array_map(static fn ($k) => (new DateTimeImmutable($k))->format('d/m'), array_keys($keys)),
+            'topics' => array_slice($topics, 0, $limit),
+        ];
     }
 
     /**

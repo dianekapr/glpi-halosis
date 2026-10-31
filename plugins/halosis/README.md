@@ -12,7 +12,7 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu, artikel paling sering dipakai / dinilai tidak membantu, pola terdeteksi vs dikonfirmasi vs ditutup, drift bulanan; filter periode, tim, kategori; ekspor koreksi CSV | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.7.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Versi 0.8.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
 Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
 semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
@@ -102,7 +102,8 @@ yang sama:
   ada "semua", "rekan". Model tercatat `demo-rules-v1`.
 - **Chatbot**: kutipan langkah dari artikel Pusat Bantuan yang paling relevan, dengan label
   "Dari Pusat Bantuan" (label "Dijawab AI" hanya bila Claude yang merangkum).
-- **Deteksi pola & dashboard** tidak memakai AI, sehingga sama di kedua mode.
+- **Deteksi pola** memakai layanan AI (`POST /pola`, semantik) bila `halosis-ai` hidup, terlepas dari API key;
+  layanan mati → pengelompokan kata kunci (kategori / judul mirip). **Dashboard** tidak memakai AI.
 
 Dengan API key, Claude dipanggil di server (SDK resmi, *structured output*, effort `low`, dan
 *server-side fallback* untuk model yang mendukungnya). Bila AI gagal atau timeout, triase dilewati dan
@@ -189,8 +190,13 @@ Pegawai yang melapor tanpa portal (EI "Input tiket oleh operator", dokumen hal. 
 1. Login `sri` / `halosis`, buka **Bantuan › Kinerja AI**.
 2. Tunjukkan: % saran diterima apa adanya, batang komposisi Diterima/Diubah/Ditolak, **Dipindah ke tim lain
    setelah triase**, grafik keputusan per minggu (arahkan kursor ke kolom; **Tampilkan sebagai tabel**),
-   keyakinan AI vs keputusan petugas, dan kartu chatbot (terbantu tanpa tiket, rating).
-3. Ganti periode 4 / 8 / 12 minggu.
+   keyakinan AI vs keputusan petugas, kartu chatbot (terbantu tanpa tiket, rating, artikel paling sering dipakai /
+   dinilai tidak membantu), kartu **Pola insiden** (terdeteksi / dikonfirmasi / ditutup), dan tabel **Indikator
+   drift** (% Ubah+Tolak per bulan).
+3. Ganti periode 4 / 8 / 12 minggu, lalu pilih **Tim** dan/atau **Kategori layanan** → Terapkan (angka triase,
+   salah tim, dan drift ikut tersaring).
+4. (Login `dimas` / Administrator) tombol **Ekspor koreksi (CSV, tersamar)** mengunduh keputusan Ubah/Tolak untuk
+   data latih berikutnya.
 
 ### Bonus: pola insiden (`glpi` + `rina`)
 
@@ -270,8 +276,10 @@ baru disinkronkan dari dua sumber:
 
 Aksi: **Jadikan artikel** membuat *draf* artikel KB (masalah + solusi + sumber, tanpa target visibilitas =
 belum terbit) lalu membuka draf itu untuk disunting & diterbitkan; **Abaikan** wajib beralasan (≥ 5 karakter).
-Tab **Perlu ditinjau**: artikel terbit (FAQ/punya target) yang `date_mod`-nya lebih lama dari *Tinjau artikel
-terbit setelah* (bawaan 6 bulan); menyunting artikel di KB menandainya sudah ditinjau.
+Tab **Perlu ditinjau**: artikel terbit (FAQ/punya target) yang jatuh tempo: tanggal tinjau berikut yang diatur
+(KR-03, tabel `kb_reviews`) atau, bila belum diatur, `date_mod` + *Tinjau artikel terbit setelah* (bawaan 6 bulan).
+Setelah meninjau, isi **Sudah ditinjau; tinjau lagi pada** → Simpan tanggal. SOP ditulis sebagai artikel KB
+berkategori **SOP** (dibuat `seed_halosis.py`), jadi ikut terindeks saat terbit.
 Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates`). Teks kandidat disamarkan.
 
 ### Tanya HaloSIS (chatbot)
@@ -292,6 +300,9 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   maupun disimpan.
 - **Buat laporan** memakai sesi & hak GLPI pegawai; deskripsi = ringkasan percakapan; sumber permintaan
   (*Request source*) **"HaloSIS Chat"** (dibuat otomatis bila belum ada); tiket langsung mendapat saran triase.
+- **Katalog layanan**: kategori yang terlihat di Helpdesk & form katalog aktif diindeks ke layanan AI
+  (`POST /reindex/layanan`, saat install/update dan setiap kategori/form berubah); pertanyaan permintaan layanan
+  dijawab dengan arahan ke form / katalog layanan.
 - **Pemakaian artikel**: id artikel KB yang dikutip tiap jawaban dicatat (`article_uses`) untuk dashboard.
 - **Widget melayang** "Tanya asisten" muncul di halaman Helpdesk lain (detail tiket, FAQ) dan melanjutkan
   percakapan yang sama; tidak dimuat di halaman chat.
@@ -340,6 +351,7 @@ Semua angka dari tabel log plugin (`src/Stats.php`):
 | Artikel paling sering dinilai tidak membantu: chat yang mengutipnya lalu jadi laporan / rating ≤ 2, plus "Tidak membantu" di Cari knowledge | `article_uses` + `chats`, `feedback` |
 | Pola insiden terdeteksi / dikonfirmasi (Problem lepas dari Baru) / ditutup (Selesai, Ditutup, atau dihapus) | `patterns` + Problem |
 | Drift: % Ubah+Tolak per bulan, 6 bulan terakhir | `decisions` |
+| Tren pola insiden: tiket per minggu per topik (5 topik, 12 minggu) | `patterns` |
 
 Filter **tim** (grup yang ditugaskan) dan **kategori layanan** (termasuk subkategori) berlaku untuk angka
 triase, salah tim, dan drift. Pemegang hak Pengaturan AI melihat tombol **Ekspor koreksi (CSV, tersamar)**:
@@ -415,7 +427,8 @@ src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php 
 src/RoleMenu.php          menu ringkas per peran (hook redefine_menus)
 src/Console/              perintah plugins:halosis:setup-roles
 src/Ai/Client.php         pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
-src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /kandidat);  src/Ai/AiException.php
+src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /cari, /pola, /kandidat, /reindex/artikel);
+                          src/Ai/AiException.php
 src/Triage.php            saran triase (AI & demo) + keputusan;  src/TriagePanel.php  panel di form tiket
 src/Suggestion.php        model saran;  src/Decision.php  model keputusan
 src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  model percakapan
@@ -424,15 +437,18 @@ src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
 src/KeycloakAuth.php      login SSO Keycloak (password grant dari form login GLPI) + sinkron pengguna, profil, tim
 src/PatternDetector.php   tugas terjadwal pola insiden + banner
 src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
-src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan;  src/Candidate.php  model kandidat
+src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan, Perlu ditinjau;  src/Candidate.php  model kandidat
+src/KnowledgeIndex.php    re-index artikel KB ke layanan AI saat terbit / ditarik / dihapus (hook KnowbaseItem)
 src/Controller/           ChatController (/plugins/halosis/Chat, /plugins/halosis/ChatHistory),
-                          DashboardController (/plugins/halosis/Dashboard), KandidatController (/plugins/halosis/Kandidat)
+                          DashboardController (/plugins/halosis/Dashboard, /Dashboard/Koreksi CSV),
+                          KandidatController (/plugins/halosis/Kandidat), CariKnowledgeController (/plugins/halosis/CariKnowledge)
 src/ConfigMenu.php, src/DashboardMenu.php  entri menu
-ajax/triase.php, ajax/chat.php, ajax/kandidat.php  endpoint JSON panel triase, chatbot, kandidat knowledge
+ajax/triase.php, ajax/chat.php, ajax/kandidat.php, ajax/feedback.php  endpoint JSON panel triase, chatbot,
+                          kandidat knowledge, umpan balik Cari knowledge
 front/config.form.php     halaman konfigurasi
 templates/                template Twig (@halosis/...)
 public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
-                          menu, triase)
+                          feedback, menu, triase)
 public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
 public/logo               logo HaloSIS: file asli (*.webp) + versi transparan halosis-logo-light/dark.png untuk palet
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
@@ -449,8 +465,9 @@ UI, jalankan `python3 tools/locales.py`.
 | `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, 3 kandidat tim, model, status) |
 | `glpi_plugin_halosis_decisions` | Keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
 | `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain (`reassign`) atau dikembalikan ke operator dengan alasan (`return`) setelah triase AI diterapkan |
-| `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
+| `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (`semantic` dari `/pola`; cadangan kata kunci `category` / `title`), Problem, jumlah tiket |
 | `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status (`open` / `resolved` / `ticket` / `expired` setelah 30 menit tanpa aktivitas), rating, tiket |
 | `glpi_plugin_halosis_feedback` | Penilaian agent di Cari knowledge (KR-07): pengguna, sumber (artikel KB / tiket historis), skor relevansi, membantu/tidak, waktu; teks kueri tidak disimpan |
+| `glpi_plugin_halosis_kb_reviews` | Tanggal tinjau berikut per artikel KB (KR-03): artikel, tanggal, pengatur |
 | `glpi_plugin_halosis_article_uses` | Artikel KB yang dikutip chatbot per jawaban (artikel, percakapan, waktu) |
 | `glpi_plugin_halosis_candidates` | Kandidat Knowledge (UC-09): sumber (tiket selesai / klaster AI), masalah & solusi (tersamarkan), jumlah kemunculan, status (`pending` / `article` / `ignored`), artikel KB yang dibuat, alasan diabaikan, Knowledge Manager & waktu keputusan |

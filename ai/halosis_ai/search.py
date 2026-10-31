@@ -90,6 +90,28 @@ def update_article(kb_id: int, title: str, answer_html: str, remove: bool = Fals
     return 0 if new_vectors is None else len(new)
 
 
+def replace_services(items: list[dict], index_dir: Path | None = None) -> int:
+    """Ganti seluruh potongan katalog layanan (jenis_sumber 'layanan', sumber LAYANAN-<id>) dengan `items`
+    [{id, nama, deskripsi}]; artikel KB & tiket historis tidak disentuh. Kembalikan jumlah potongan layanan."""
+    index_dir = index_dir or INDEX_DIR
+    new = pd.DataFrame([{
+        'sumber': f'LAYANAN-{item["id"]}', 'jenis_sumber': 'layanan', 'judul': str(privacy.mask_text(item['nama'])),
+        'teks': f'Layanan {privacy.mask_text(item["nama"])}. {privacy.mask_text(strip_html(item.get("deskripsi") or ""))}'.strip(),
+    } for item in items], columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
+    new_vectors = embed(new['teks'].tolist(), 'passage') if len(new) else None
+    with _lock:
+        chunks, vectors = _indexes.get(index_dir) or (pd.read_parquet(index_dir / 'chunks.parquet'),
+                                                      np.load(index_dir / 'vectors.npy'))
+        keep = (chunks['jenis_sumber'] != 'layanan').to_numpy()
+        chunks, vectors = chunks[keep].reset_index(drop=True), vectors[keep]
+        if new_vectors is not None:
+            chunks = pd.concat([chunks, new], ignore_index=True)
+            vectors = np.vstack([vectors, new_vectors]).astype(np.float32)
+        _write_atomic(index_dir, chunks, vectors)
+        _indexes[index_dir] = (chunks, vectors)
+    return len(new)
+
+
 def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) -> None:
     tmp_chunks, tmp_vectors = index_dir / '.chunks.parquet.tmp', index_dir / '.vectors.npy.tmp'
     chunks.to_parquet(tmp_chunks, index=False)

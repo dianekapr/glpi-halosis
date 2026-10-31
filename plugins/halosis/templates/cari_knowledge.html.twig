@@ -32,6 +32,8 @@
                 <div class="hk-meta">
                     {% if r.kind == 'kb' %}
                         <span class="hc-badge hc-badge-ok"><i class="ti ti-book" aria-hidden="true"></i> {{ __('Article', 'halosis') }}</span>
+                    {% elseif r.kind == 'layanan' %}
+                        <span class="hc-badge hc-badge-open"><i class="ti ti-apps" aria-hidden="true"></i> {{ __('Service catalog', 'halosis') }}</span>
                     {% else %}
                         <span class="hc-badge hc-badge-ticket"><i class="ti ti-ticket" aria-hidden="true"></i> {{ __('Similar ticket %s', 'halosis')|format(r.ref) }}</span>
                     {% endif %}

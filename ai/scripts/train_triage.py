@@ -65,9 +65,13 @@ def evaluate(pipeline, texts: pd.Series, labels: pd.Series) -> dict:
     # Top-3: tim sebenarnya ada di 3 probabilitas teratas (label yang tak dikenal model otomatis salah)
     top3_classes = classes[np.argsort(probs, axis=1)[:, ::-1][:, :3]]
     top3 = float((top3_classes == np.asarray(labels)[:, None]).any(axis=1).mean())
+    # MRR (metrik PoC hal. 54): 1 / peringkat tim sebenarnya di urutan probabilitas; label tak dikenal → 0
+    ranking = classes[np.argsort(probs, axis=1)[:, ::-1]]
+    hit = ranking == np.asarray(labels)[:, None]
+    mrr = float(np.where(hit.any(axis=1), 1.0 / (hit.argmax(axis=1) + 1), 0.0).mean())
     return {
         'probs': probs, 'classes': classes, 'predicted': predicted, 'confidence': confidence,
-        'top1': accuracy_score(labels, predicted), 'top3': top3,
+        'top1': accuracy_score(labels, predicted), 'top3': top3, 'mrr': mrr,
         'f1_macro': f1_score(labels, predicted, average='macro', zero_division=0),
         'f1_weighted': f1_score(labels, predicted, average='weighted', zero_division=0),
     }
@@ -143,7 +147,7 @@ def main() -> None:
     metadata = {
         'versi_model': VERSION, 'dilatih': str(date.today()), 'data_latih': 'Jan–Jun 2026', 'data_uji': 'Jul–Ags 2026',
         'tiket_latih': int(len(train)), 'tiket_uji': int(len(test)), 'kelas': len(scores['classes']),
-        'pengaturan': settings, 'top1': round(float(scores['top1']), 4), 'top3': round(float(scores['top3']), 4),
+        'pengaturan': settings, 'top1': round(float(scores['top1']), 4), 'top3': round(float(scores['top3']), 4), 'mrr': round(float(scores['mrr']), 4),
         'f1_macro': round(float(scores['f1_macro']), 4), 'ambang': MANUAL_REVIEW_THRESHOLD,
     }
     model = TriageModel(pipeline=pipeline, similar=similar, version=VERSION, metadata=metadata)
@@ -163,6 +167,7 @@ def main() -> None:
             ['Kelas (tim)', f'{len(scores["classes"])} (tim < {MIN_TEAM_TICKETS} tiket di data latih → "{OTHER}")'],
             ['**Akurasi top-1**', f'**{f(scores["top1"])}**'],
             ['**Akurasi top-3**', f'**{f(scores["top3"])}**'],
+            ['MRR', num(scores['mrr'], 4)],
             ['F1 makro / tertimbang', f'{f(scores["f1_macro"])} / {f(scores["f1_weighted"])}'],
             ['Pembanding: selalu tim terbanyak', f'{f(baseline_top1)} ("{majority}")'],
             [f'Keyakinan ≥ {num(MANUAL_REVIEW_THRESHOLD * 100)}% (saran bisa langsung diterima)',

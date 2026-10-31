@@ -25,7 +25,7 @@ use GlpiPlugin\Halosis\RoleMenu;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.7.0');
+define('PLUGIN_HALOSIS_VERSION', '0.8.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -103,17 +103,19 @@ function plugin_init_halosis(): void
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
-    // Re-index knowledge (UC-09 langkah 7): artikel KB & target visibilitasnya → indeks pencarian layanan AI
+    // Re-index knowledge (UC-09 langkah 7): artikel KB & target visibilitasnya → indeks pencarian layanan AI.
+    // Katalog layanan (kategori Helpdesk & form, BR-03) ikut diindeks agar chatbot bisa mengarahkan ke layanan.
     $kb_visibility = [Entity_KnowbaseItem::class, KnowbaseItem_Profile::class, Group_KnowbaseItem::class, KnowbaseItem_User::class];
+    $catalog = array_fill_keys([\ITILCategory::class, \Glpi\Form\Form::class], [KnowledgeIndex::class, 'onCatalogChange']);
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
         Ticket::class       => [Triage::class, 'onTicketAdd'],
         Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave'],
-    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
-    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['halosis'] = [KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave']];
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']) + $catalog;
+    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['halosis'] = [KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave']] + $catalog;
     $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['halosis'] = [
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticlePurge'],
-    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']) + $catalog;
     $PLUGIN_HOOKS[Hooks::PRE_ITIL_INFO_SECTION]['halosis'] = [TriagePanel::class, 'display'];
 
     // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas
