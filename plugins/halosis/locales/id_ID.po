@@ -1213,3 +1213,84 @@ msgstr "Ambang baru"
 
 msgid "Preview impact"
 msgstr "Pratinjau dampak"
+
+msgid "Ready to close"
+msgstr "Siap ditutup"
+
+msgid "Closed by the Operator: no response from the requester within %d hours after the solution (HaloSIS closure recommendation)."
+msgstr "Ditutup Operator: tidak ada respons pemohon dalam %d jam setelah solusi (rekomendasi penutupan HaloSIS)."
+
+msgid "You are not allowed to close tickets."
+msgstr "Anda tidak berhak menutup tiket."
+
+msgid "%1$d ticket(s) closed, %2$d skipped."
+msgstr "%1$d tiket ditutup, %2$d dilewati."
+
+msgid "Solved tickets without a response from the requester for more than %d hours. Close them after checking; nothing is closed automatically."
+msgstr "Tiket Selesai tanpa respons pemohon lebih dari %d jam. Tutup setelah diperiksa; tidak ada yang ditutup otomatis."
+
+msgid "Select all"
+msgstr "Pilih semua"
+
+msgid "Ticket"
+msgstr "Tiket"
+
+msgid "Requester"
+msgstr "Pemohon"
+
+msgid "Hours without response"
+msgstr "Jam tanpa respons"
+
+msgid "Close selected"
+msgstr "Tutup yang dipilih"
+
+msgid "No tickets are waiting to be closed."
+msgstr "Tidak ada tiket yang menunggu ditutup."
+
+msgid "Ready to close after (hours without requester response)"
+msgstr "Siap ditutup setelah (jam tanpa respons pemohon)"
+
+msgid "Solved tickets without a requester response for this long appear in the Operator list “Ready to close”. Nothing is closed automatically."
+msgstr "Tiket Selesai tanpa respons pemohon selama ini muncul di daftar Operator “Siap ditutup”. Tidak ada yang ditutup otomatis."
+
+msgid "Service KPIs (document table 1.3)"
+msgstr "KPI layanan (tabel 1.3 dokumen)"
+
+msgid "Response SLA breached"
+msgstr "SLA respons terlampaui"
+
+msgid "%d tickets with a response SLA"
+msgstr "%d tiket dengan SLA respons"
+
+msgid "Resolution SLA breached"
+msgstr "SLA penyelesaian terlampaui"
+
+msgid "%d tickets with a resolution SLA"
+msgstr "%d tiket dengan SLA penyelesaian"
+
+msgid "Median time to take into account"
+msgstr "Median waktu sampai diambil/ditugaskan"
+
+msgid "min"
+msgstr "menit"
+
+msgid "Solved by the Operator without escalation"
+msgstr "Diselesaikan Operator tanpa eskalasi"
+
+msgid "%d solved tickets"
+msgstr "%d tiket selesai"
+
+msgid "Tickets per week"
+msgstr "Tiket per minggu"
+
+msgid "(uncategorised)"
+msgstr "(tanpa kategori)"
+
+msgid "This question is outside HaloSIS IT services. Please contact the %s unit; they handle this topic. For IT problems (applications, accounts, devices, network), ask me again."
+msgstr "Pertanyaan ini di luar layanan TI HaloSIS. Silakan hubungi unit %s yang menangani topik ini. Untuk masalah TI (aplikasi, akun, perangkat, jaringan), silakan bertanya lagi."
+
+msgid "The model has not passed the quality check"
+msgstr "Model belum lolos uji kualitas"
+
+msgid "triage manually; the suggestion is for reference only"
+msgstr "triase manual; saran hanya sebagai rujukan"

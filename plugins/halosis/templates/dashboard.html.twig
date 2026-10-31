@@ -204,6 +204,30 @@
             {% endif %}
         </section>
 
+        {# T24: KPI layanan tabel 1.3 (tiket dibuka dalam periode) #}
+        <section class="hd-card hd-span-all">
+            <h2>{{ __('Service KPIs (document table 1.3)', 'halosis') }}</h2>
+            <div class="hd-mini-grid">
+                <div><div class="hd-label">{{ __('Response SLA breached', 'halosis') }}</div><div class="hd-value">{{ stats.kpi.tto_breach is not null ? stats.kpi.tto_breach ~ '%' : '–' }}</div><div class="hd-sub">{{ __('%d tickets with a response SLA', 'halosis')|format(stats.kpi.tto_n) }}</div></div>
+                <div><div class="hd-label">{{ __('Resolution SLA breached', 'halosis') }}</div><div class="hd-value">{{ stats.kpi.ttr_breach is not null ? stats.kpi.ttr_breach ~ '%' : '–' }}</div><div class="hd-sub">{{ __('%d tickets with a resolution SLA', 'halosis')|format(stats.kpi.ttr_n) }}</div></div>
+                <div><div class="hd-label">{{ __('Median time to take into account', 'halosis') }}</div><div class="hd-value">{{ stats.kpi.assign_median_min is not null ? stats.kpi.assign_median_min ~ ' ' ~ __('min', 'halosis') : '–' }}</div></div>
+                <div><div class="hd-label">{{ __('Solved by the Operator without escalation', 'halosis') }}</div><div class="hd-value">{{ stats.kpi.l1_pct is not null ? stats.kpi.l1_pct ~ '%' : '–' }}</div><div class="hd-sub">{{ __('%d solved tickets', 'halosis')|format(stats.kpi.solved) }}</div></div>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>{{ __('Tickets per week', 'halosis') }}</th>{% for w in stats.volume.weeks %}<th class="text-end">{{ w }}</th>{% endfor %}</tr></thead>
+                    <tbody>
+                        {% for label, counts in stats.volume.types %}
+                            <tr><td><strong>{{ label }}</strong></td>{% for c in counts %}<td class="text-end">{{ c ?: '·' }}</td>{% endfor %}</tr>
+                        {% endfor %}
+                        {% for cat in stats.volume.categories %}
+                            <tr><td class="hd-topic">{{ cat.label }}</td>{% for c in cat.counts %}<td class="text-end">{{ c ?: '·' }}</td>{% endfor %}</tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
         {# BP-17: pola insiden; BP-19: drift = rasio Ubah+Tolak per bulan #}
         <section class="hd-card">
             <h2>{{ __('Incident patterns', 'halosis') }}</h2>

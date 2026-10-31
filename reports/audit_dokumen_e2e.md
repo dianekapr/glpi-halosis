@@ -7,6 +7,10 @@ CRC card & class diagram (§7), sequence & state machine (§8), dan batas scope 
 
 Status: ✅ sesuai · 🟡 sebagian · ❌ belum · 🔍 perlu dicek di kode (README tidak menyebut) · ⚪ di luar prototipe.
 
+**Pembaruan akhir 31 Okt 2026 (plugin 1.0.0):** §8 baru memetakan bab analisis & kelayakan: T21–T32 (11 ✅,
+2 ✅ dokumen), risiko R1–R4 & risiko organisasi → mitigasi, KPI tabel 1.3 → tempat ukur, syarat 2.1.2–2.1.6 &
+Skenario 2.
+
 **Pembaruan 31 Okt 2026:** semua 🔍 sudah dicek di kode (bukti `file:baris`). Diperbaiki: T1/T19, T2, T6, T8,
 T9, T12, T14, T15 (kode); T7, T16, T20, KR-01, DQR-05, §5, §6 (dokumentasi). Sisa: T3, T4, T5, T10 (otomatis),
 T11, T13 (uji demo), T18, KR-03, KR-07, DQR-02, DQR-04, BP-13/17/19/21.
@@ -134,3 +138,66 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 
 Semua butir T1–T20 sudah ✅ (31 Okt). Sisa opsional di luar audit ini: LLM lokal (profile `llm`, Ollama + Qwen2.5 3B)
 sebagai perangkum grounded, pratinjau dampak untuk aturan SLA/kategori, dan uji di lingkungan BPS.
+
+## 8. Bab analisis & kelayakan (§1.3–1.6, §2.1–2.4, §5.1–5.2)
+
+Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokumen yang belum bernomor.
+
+### 8.1 Temuan T21–T32
+
+| # | Dokumen menyebut | Hal./bagian | Implementasi | Status |
+| --- | --- | --- | --- | --- |
+| T21 | Rekomendasi penutupan; hilangkan tiket menggantung (Activity Elimination/Duration) | 5.1, 5.2.3.2, E18 | Menu Operator **Siap ditutup**: Selesai > 48 jam tanpa respons pemohon, tutup per tiket/massal, tanpa otomatis (`plugins/halosis/src/Closure.php`) | ✅ |
+| T22 | SLA per layanan (KebijakanSLA dari LayananTI) | E3, CRC, 5.2.1.5 | `config/sla_layanan.json` → 22 aturan kategori × jenis (respons + penyelesaian/pemenuhan), cadangan per prioritas (`setup_sla_alerts.py`) | ✅ |
+| T23 | Notifikasi tidak hanya sekali (balasan sampai ke petugas) | 5.1 akar masalah | "New followup" → teknisi & grup ditugaskan (uji Mailpit: andi + anggota tim) | ✅ |
+| T24 | KPI SLA breach, waktu sampai diterima tim, first-level resolution | Tabel 1.3 | Dashboard **KPI layanan** (`Stats::serviceKpi`) | ✅ |
+| T25 | Volume tiket per minggu/kategori | E8, Tabel 1.3 | Dashboard volume 12 minggu per jenis & 5 kategori (`Stats::ticketVolume`) | ✅ |
+| T26 | Pengamanan API layanan AI | 2.1.5 | Rate limit per klien `HALOSIS_RATE_LIMIT_PER_MIN` (429 + Retry-After), tes | ✅ |
+| T27 | Uji upgrade platform | 2.4.2 | GLPI 12.0.0 → 12.0.1 di lingkungan terpisah dari snapshot: migrasi otomatis, skema OK, plugin 1.0.0 Enabled, data utuh (`reports/uji_upgrade.md`) | ✅ |
+| T28 | Pemisahan dev/staging/produksi, pilot, parallel run, cutover, hypercare | 2.1.5, WBS 5–7 | `reports/rencana_implementasi.md` | ✅ (dok.) |
+| T29 | Pelatihan per peran | WBS 6.3, 7.3 | `reports/panduan_peran.md` | ✅ (dok.) |
+| T30 | Self-service dimulai dari Email, SSO, SiPecut (48,2% tiket) | 5.1 Outcome | FAQ ketiga layanan (9 artikel KB terindeks; SiPecut ditambah 2) | ✅ |
+| T31 | Pertanyaan di luar layanan TI | wawancara Operator | Chatbot mengarahkan ke Kepegawaian/Keuangan/Umum tanpa tawaran laporan | ✅ |
+| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang kualitas `/health` & `/triage` (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85%); panel "belum lolos uji kualitas" | ✅ |
+
+### 8.2 Risiko R1–R4 (Tabel 1.4) & risiko organisasi (Tabel 2.21) → mitigasi di sistem
+
+| Risiko | Mitigasi di HaloSIS | Bukti |
+| --- | --- | --- |
+| R1 AI memberi rekomendasi salah | HITL Terima/Ubah/Tolak + alasan, 3 tingkat keyakinan, Top-3 kandidat, gerbang kualitas model, audit trail | `uji_regresi_demo.md`, `triase.md` |
+| R2 Data historis tidak rapi | `prepare_data.py` (penyamaran, flag `tidak_lengkap`), `reconcile.py` (duplikat, tanggal), migrasi idempoten | `rekonsiliasi.md` |
+| R3 Kemampuan tim internal | Plugin tanpa ubah inti GLPI, README langkah demi langkah, panduan per peran, CHANGELOG | `panduan_peran.md`, README C3 |
+| R4 Integrasi sulit | REST API GLPI, SSO Keycloak (OIDC), layanan AI terpisah ber-API, uji beban & integrasi | `rencana_uji.md` §7 |
+| Pengguna tidak terbiasa | Chatbot sebagai pintu masuk, pilot bertahap | `rencana_implementasi.md` |
+| Operator tidak percaya AI | Penjelasan, beban tim, kalibrasi keyakinan di dashboard | Dashboard Kinerja AI |
+| Ownership knowledge tidak jelas | RACI & pemilik domain, tab Perlu ditinjau + tanggal tinjau | `tata_kelola_ai.md` §4b |
+| Kompetensi baru | Panduan peran, dokumentasi | `panduan_peran.md` |
+| Perubahan terlalu besar | Fitur AI bisa dimatikan per fitur; pilot 3 layanan | Pengaturan AI |
+| Routing dinilai tidak sesuai | Kembalikan ke operator, ekspor koreksi → latih ulang | `tata_kelola_ai.md` §2 |
+
+### 8.3 KPI Tabel 1.3 → tempat diukur
+
+| KPI | Diukur di |
+| --- | --- |
+| Waktu perubahan; % perubahan oleh tim internal | Log konfigurasi (`ConfigAudit`, Administrasi › Log); konfigurasi tanpa kode |
+| % tiket SLA breach; waktu monitoring | Dashboard **KPI layanan** (respons & penyelesaian); Monitoring SLA + peringatan otomatis |
+| Waktu pencarian solusi; % selesai tanpa eskalasi | Cari knowledge (latensi `latensi.md`); KPI "% diselesaikan Operator tanpa eskalasi" |
+| % tiket tidak dibuat lewat self-service | Kartu Chatbot: "Terbantu tanpa tiket" |
+| % tiket dipindah ke tim lain; waktu sampai diterima tim | "Dipindah ke tim lain setelah triase"; KPI "median waktu sampai diambil/ditugaskan" |
+| Waktu mengetahui masalah; jumlah terdampak | Pola insiden (cron 15 menit, jendela 60 menit), jumlah tiket per pola, tren 12 minggu |
+| Waktu pembuatan laporan; jumlah indikator; pembaruan data | Dashboard Kinerja AI langsung dari DB (tanpa ekspor), Grafana (profile `monitoring`) |
+
+### 8.4 Syarat kelayakan teknis & integrasi (2.1.2–2.1.6) dan Skenario 2 (2.4.2)
+
+| Syarat | Status | Bukti / catatan |
+| --- | --- | --- |
+| 2.1.2 Arsitektur: ITSM + layanan AI terpisah ber-API | ✅ | GLPI + plugin + `halosis-ai` (FastAPI) |
+| 2.1.3 Data: profiling, cleansing, masking | ✅ | `prepare_data.py`, `reconcile.py`, `eda.md` |
+| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 | Model tim lolos gerbang; prioritas/urgensi tetap aturan (history tanpa kolom, README Keputusan desain) |
+| 2.1.5 Integrasi: SSO, data historis, notifikasi, monitoring, pemisahan lingkungan, uji beban | 🟡 | SSO Keycloak lokal ✅, migrasi sampel ✅, notifikasi ✅, monitoring profile ✅, uji beban ✅ (laptop); SSO BPS & lingkungan staging/produksi = rencana (`rencana_implementasi.md`) |
+| 2.1.6 Infrastruktur: VM/OpenShift, sizing | ⚪ | Docker lokal; sizing dari uji beban (AI ±8,7 core pada 200 VU) |
+| Skenario 2: kandidat platform & fit-gap BR-01..08 | ✅ | GLPI 12 + plugin; audit BR/FR/UC (`audit_kelengkapan.md`) |
+| Skenario 2: uji API & SSO | ✅ | `tests/load/glpi_api.js`, login SSO di regresi demo |
+| Skenario 2: deployment VM/OpenShift | ⚪ | Di luar prototipe |
+| Skenario 2: PoC integrasi AI | ✅ | `/triage`, `/chat`, `/pola`, `/cari` |
+| Skenario 2: uji upgrade | ✅ | `uji_upgrade.md` (12.0.0 → 12.0.1) |

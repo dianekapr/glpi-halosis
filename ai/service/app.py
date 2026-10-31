@@ -24,7 +24,9 @@ import json
 import logging
 import os
 import sys
+import threading
 import time
+from collections import defaultdict, deque
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -42,6 +44,10 @@ from halosis_ai import candidates, patterns, privacy, search, triage_model  # no
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
 # Opsional (T4): klasifier jenis REQ/INC (ai/scripts/train_jenis.py); tidak ada → /triage tanpa saran jenis
+# T32 gerbang kualitas (pre-kondisi UC-04, 2.1.4; syarat lulus reports/tata_kelola_ai.md §2): Top-1 minimal (bawaan
+# 0,68 = baseline TF-IDF PoC) dan akurasi pada keyakinan ≥ ambang minimal 85% bila artefak mencatatnya
+GATE_MIN_TOP1 = float(os.environ.get('HALOSIS_GATE_MIN_TOP1', '0.68'))
+GATE_MIN_ACC_CONFIDENT = float(os.environ.get('HALOSIS_GATE_MIN_ACC_CONFIDENT', '0.85'))
 JENIS_PATH = Path(os.environ.get('HALOSIS_JENIS_MODEL', AI_DIR / 'models/jenis.joblib'))
 # Skor kosinus E5 di bawah ambang ini → "belum menemukan jawaban" (lihat ai/README.md, AI-4)
 CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))
@@ -107,12 +113,37 @@ DURATION = Histogram('halosis_ai_request_duration_seconds', 'Durasi permintaan p
 INDEX_CHUNKS = Gauge('halosis_ai_index_chunks', 'Jumlah potongan di indeks pencarian')
 TIMED = {'/chat', '/triage', '/pola', '/reindex/artikel', '/cari'}
 
+# T26 (2.1.5): batas permintaan sederhana per klien (IP) per menit, jendela geser di memori satu proses.
+# 0 = mati. Bawaan 1200/menit (20/dtk) di atas puncak uji Stress (±12/dtk dari satu klien GLPI).
+RATE_LIMIT = int(os.environ.get('HALOSIS_RATE_LIMIT_PER_MIN', '1200'))
+RATE_EXEMPT = {'/health', '/metrics'}
+_hits: dict[str, deque] = defaultdict(deque)
+_hits_lock = threading.Lock()
+
+
+def rate_limited(client: str, now: float) -> int:
+    """Detik tunggu bila klien melewati batas dalam 60 detik terakhir; 0 bila boleh lanjut."""
+    with _hits_lock:
+        hits = _hits[client]
+        while hits and now - hits[0] >= 60:
+            hits.popleft()
+        if len(hits) >= RATE_LIMIT:
+            return max(1, int(60 - (now - hits[0])) + 1)
+        hits.append(now)
+        return 0
+
 
 @app.middleware('http')
 async def metrics_middleware(request: Request, call_next):
     start = time.perf_counter()
     status = 500
     try:
+        if RATE_LIMIT > 0 and request.url.path not in RATE_EXEMPT:
+            wait = rate_limited(request.client.host if request.client else '-', time.monotonic())
+            if wait:
+                status = 429
+                return Response('{"detail":"Terlalu banyak permintaan"}', status_code=429,
+                                media_type='application/json', headers={'Retry-After': str(wait)})
         response = await call_next(request)
         status = response.status_code
         return response
@@ -195,12 +226,28 @@ def normalize_type(jenis: str) -> str:
     return 'REQ' if value.startswith(('req', 'perm', 'dem')) or value == '2' else 'INC'
 
 
+def quality_gate(model) -> dict:
+    """Lolos/tidak model triase menurut metrik uji yang tersimpan di artefak (tanpa menghitung ulang)."""
+    if model is None:
+        return {'lolos': False, 'alasan': ['model triase tidak tersedia']}
+    meta = getattr(model, 'metadata', {}) or {}
+    top1, acc = meta.get('top1'), meta.get('akurasi_yakin')
+    reasons = []
+    if top1 is None or float(top1) < GATE_MIN_TOP1:
+        reasons.append(f'Top-1 {top1} < {GATE_MIN_TOP1}')
+    if acc is not None and float(acc) < GATE_MIN_ACC_CONFIDENT:
+        reasons.append(f'akurasi pada ambang {acc} < {GATE_MIN_ACC_CONFIDENT}')
+    return {'lolos': not reasons, 'alasan': reasons, 'top1': top1, 'akurasi_yakin': acc,
+            'syarat': {'top1_min': GATE_MIN_TOP1, 'akurasi_yakin_min': GATE_MIN_ACC_CONFIDENT}}
+
+
 @app.get('/health')
 def health() -> dict:
     model = state.get('triage')
     return {
         'status': 'ok' if model and state.get('search') else 'sebagian',
         'triase': bool(model), 'versi_model': model.version if model else None,
+        'kualitas_model': quality_gate(model),
         'pencarian': bool(state.get('search')), 'model_embedding': search.MODEL_NAME,
         'generasi': 'claude' if os.environ.get('ANTHROPIC_API_KEY') else 'ekstraktif',
     }
@@ -227,7 +274,10 @@ def triage(req: TriageRequest) -> dict:
     # Inferensi model + pencarian tiket mirip (satu langkah di TriageModel.predict); tanpa generation
     record_latency('triage', inferensi_ms=ms_since(start), generation_ms=None, total_ms=ms_since(start),
                    skor_teratas=round(float(result['keyakinan']), 4), versi_model=result['versi_model'])
+    gate = quality_gate(model)
     return {
+        'lolos_uji_kualitas': gate['lolos'],
+        'alasan_kualitas': gate['alasan'],
         'jenis_saran': suggest_type(req.judul, req.deskripsi),
         'tim': result['tim'],
         'top3': result['top3'],

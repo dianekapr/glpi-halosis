@@ -1,0 +1,14 @@
+{
+  "_keterangan": "SLA per layanan (E3, CRC LayananTI → KebijakanSLA, 5.2.1.5), dipasang setup_sla_alerts.py sebagai aturan bisnis per kategori & jenis. Insiden = respons (TTO) + penyelesaian (TTR); Permintaan = respons + pemenuhan (fulfillment, TTR GLPI). Angka ASUMSI prototipe (dokumen tidak memberi target per layanan; history ESTIM memuat target per tiket tetapi bukan per layanan): layanan kritis survei/akses 30 menit respons, perangkat fisik lebih longgar. Satuan: m = menit, h = jam, d = hari. Kategori tanpa entri memakai SLA per prioritas (cadangan).",
+  "Akun & Akses > SSO / Login":            {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
+  "Akun & Akses > TTE":                    {"insiden": {"respons": "1h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}},
+  "Akun & Akses > Hak akses folder":       {"insiden": {"respons": "2h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "2d"}},
+  "Aplikasi Statistik > FASIH":            {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "2d"}},
+  "Aplikasi Statistik > SiPecut":          {"insiden": {"respons": "30m", "selesai": "6h"}, "permintaan": {"respons": "2h", "selesai": "2d"}},
+  "Aplikasi Statistik > SIMDASI":          {"insiden": {"respons": "1h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}},
+  "Aplikasi Statistik > Email Dinas":      {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
+  "Aplikasi Statistik > Zoom / Konferensi": {"insiden": {"respons": "1h", "selesai": "4h"}, "permintaan": {"respons": "2h", "selesai": "1d"}},
+  "Jaringan & Perangkat > Jaringan & VPN":   {"insiden": {"respons": "30m", "selesai": "4h"}, "permintaan": {"respons": "4h", "selesai": "2d"}},
+  "Jaringan & Perangkat > Laptop / Perangkat": {"insiden": {"respons": "2h", "selesai": "2d"}, "permintaan": {"respons": "4h", "selesai": "5d"}},
+  "Jaringan & Perangkat > Printer":        {"insiden": {"respons": "2h",  "selesai": "1d"}, "permintaan": {"respons": "4h", "selesai": "3d"}}
+}

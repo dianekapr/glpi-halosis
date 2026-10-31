@@ -41,6 +41,8 @@ final class Stats
             'since'        => $start->format('Y-m-d'),
             'filter'       => ['groups_id' => $groups_id, 'categories_id' => $categories_id],
             'drift'        => self::drift($filter),
+            'kpi'          => self::serviceKpi($start, $categories_id),
+            'volume'       => self::ticketVolume(),
             'patterns'     => self::patterns($start),
             'pattern_trend' => self::patternTrend(),
             'unhelpful'    => self::unhelpfulArticles($start),
@@ -225,6 +227,102 @@ final class Stats
             'moved'    => $moved,
             'returned' => $returned,
             'percent' => count($applied) > 0 ? round($moved * 100 / count($applied)) : 0,
+        ];
+    }
+
+    /**
+     * KPI layanan tabel 1.3 (T24) untuk tiket yang dibuka dalam periode: % pelanggaran SLA respons (TTO) &
+     * penyelesaian (TTR), median waktu sampai diambil/ditugaskan, % diselesaikan Operator tanpa eskalasi ke tim.
+     *
+     * @return array{tickets: int, tto_breach: ?float, tto_n: int, ttr_breach: ?float, ttr_n: int, assign_median_min: ?int, l1_pct: ?float, solved: int}
+     */
+    private static function serviceKpi(DateTimeImmutable $start, int $categories_id = 0): array
+    {
+        global $DB;
+
+        $now = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        $where = ['is_deleted' => 0, 'date' => ['>=', $start->format('Y-m-d H:i:s')]];
+        if ($categories_id > 0) {
+            $where['itilcategories_id'] = getSonsOf(ITILCategory::getTable(), $categories_id);
+        }
+        if (($archive = Config::getArchiveEntityIds()) !== []) {
+            $where[] = ['NOT' => ['entities_id' => $archive]];
+        }
+        $operator = PatternDetector::getOperatorGroupId();
+        $k = ['tickets' => 0, 'tto_n' => 0, 'tto_b' => 0, 'ttr_n' => 0, 'ttr_b' => 0, 'solved' => 0, 'l1' => 0, 'delays' => []];
+        foreach ($DB->request([
+            'SELECT' => ['id', 'date', 'status', 'time_to_own', 'time_to_resolve', 'takeintoaccountdate', 'solvedate'],
+            'FROM'   => Ticket::getTable(),
+            'WHERE'  => $where,
+        ]) as $t) {
+            $k['tickets']++;
+            if ($t['time_to_own']) {
+                $k['tto_n']++;
+                $k['tto_b'] += (int) (($t['takeintoaccountdate'] ?: $now) > $t['time_to_own']);
+            }
+            if ($t['time_to_resolve']) {
+                $k['ttr_n']++;
+                $k['ttr_b'] += (int) (($t['solvedate'] ?: $now) > $t['time_to_resolve']);
+            }
+            if ($t['takeintoaccountdate']) {
+                $k['delays'][] = (strtotime($t['takeintoaccountdate']) - strtotime($t['date'])) / 60;
+            }
+            if ((int) $t['status'] >= CommonITILObject::SOLVED) {
+                $k['solved']++;
+                $groups = array_column(iterator_to_array($DB->request([
+                    'SELECT' => 'groups_id', 'FROM' => Group_Ticket::getTable(),
+                    'WHERE'  => ['tickets_id' => $t['id'], 'type' => CommonITILActor::ASSIGN],
+                ])), 'groups_id');
+                // L1: diselesaikan tanpa ditugaskan ke tim selain grup Operator (KPI first-line, UC-03 alur L1)
+                $k['l1'] += (int) (array_diff(array_map('intval', $groups), [$operator]) === []);
+            }
+        }
+        sort($k['delays']);
+        $median = $k['delays'] === [] ? null : (int) round($k['delays'][intdiv(count($k['delays']), 2)]);
+        $pct = static fn (int $a, int $b) => $b > 0 ? round($a * 100 / $b, 1) : null;
+        return [
+            'tickets' => $k['tickets'], 'tto_n' => $k['tto_n'], 'tto_breach' => $pct($k['tto_b'], $k['tto_n']),
+            'ttr_n' => $k['ttr_n'], 'ttr_breach' => $pct($k['ttr_b'], $k['ttr_n']),
+            'assign_median_min' => $median, 'solved' => $k['solved'], 'l1_pct' => $pct($k['l1'], $k['solved']),
+        ];
+    }
+
+    /**
+     * Volume tiket per minggu, 12 minggu (T25): per jenis (Insiden/Permintaan) dan 5 kategori teratas.
+     *
+     * @return array{weeks: array<int, string>, types: array<string, array<int, int>>, categories: array<int, array{label: string, counts: array<int, int>, total: int}>}
+     */
+    private static function ticketVolume(): array
+    {
+        global $DB;
+
+        $start = self::periodStart(12);
+        $keys = [];
+        for ($i = 0; $i < 12; $i++) {
+            $keys[$start->modify("+{$i} weeks")->format('Y-m-d')] = $i;
+        }
+        $where = ['is_deleted' => 0, 'date' => ['>=', $start->format('Y-m-d H:i:s')]];
+        if (($archive = Config::getArchiveEntityIds()) !== []) {
+            $where[] = ['NOT' => ['entities_id' => $archive]];
+        }
+        $types = [__('Incident') => array_fill(0, 12, 0), __('Request') => array_fill(0, 12, 0)];
+        $cats = [];
+        foreach ($DB->request(['SELECT' => ['date', 'type', 'itilcategories_id'], 'FROM' => Ticket::getTable(), 'WHERE' => $where]) as $t) {
+            $w = $keys[(new DateTimeImmutable($t['date']))->modify('monday this week')->format('Y-m-d')] ?? null;
+            if ($w === null) {
+                continue;
+            }
+            $types[(int) $t['type'] === Ticket::DEMAND_TYPE ? __('Request') : __('Incident')][$w]++;
+            $label = (int) $t['itilcategories_id'] > 0 ? Suggestion::categoryName((int) $t['itilcategories_id']) : __('(uncategorised)', 'halosis');
+            $cats[$label] ??= ['label' => $label, 'counts' => array_fill(0, 12, 0), 'total' => 0];
+            $cats[$label]['counts'][$w]++;
+            $cats[$label]['total']++;
+        }
+        usort($cats, static fn ($a, $b) => $b['total'] <=> $a['total']);
+        return [
+            'weeks'      => array_map(static fn ($k) => (new DateTimeImmutable($k))->format('d/m'), array_keys($keys)),
+            'types'      => $types,
+            'categories' => array_slice($cats, 0, 5),
         ];
     }
 

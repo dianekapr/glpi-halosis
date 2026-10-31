@@ -3,6 +3,17 @@
 Versi = `PLUGIN_HALOSIS_VERSION` (`plugins/halosis/setup.php`). Setiap kenaikan versi menambah tabel/kolom/config:
 jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian audit: `reports/audit_dokumen_e2e.md`.
 
+## 1.0.0 — 31 Okt 2026
+- **Siap ditutup (T21):** daftar Operator untuk tiket Selesai tanpa respons pemohon > `close_after_hours` (48), tutup
+  per tiket/massal, tanpa tutup otomatis.
+- **SLA per layanan (T22):** `config/sla_layanan.json` → aturan per kategori & jenis (respons + penyelesaian/pemenuhan),
+  cadangan SLA per prioritas (`setup_sla_alerts.py`); notifikasi "New followup" ke teknisi & grup (T23).
+- **Dashboard KPI tabel 1.3 (T24/T25):** % SLA terlampaui, median waktu sampai diambil, % L1, volume per minggu.
+- **Layanan AI:** rate limit per klien (T26, `HALOSIS_RATE_LIMIT_PER_MIN`), gerbang kualitas model (T32, kolom
+  `quality_ok`), FAQ Email/SSO/SiPecut (T30), chatbot mengarahkan pertanyaan non-TI (T31).
+- Snapshot demo ikut menyimpan & memulihkan indeks AI.
+- Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.
+
 ## 0.10.0 — 31 Okt 2026
 - **Jenis disarankan (T4):** `/triage` mengembalikan saran REQ/INC bila `ai/models/jenis.joblib` ada; panel
   menampilkannya hanya bila berbeda dari jenis tiket & keyakinan ≥ ambang (kolom `type_suggested`, `type_confidence`).

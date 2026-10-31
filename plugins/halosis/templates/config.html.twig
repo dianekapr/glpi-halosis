@@ -141,6 +141,10 @@
 
                 {{ fields.largeTitle(__('Knowledge base', 'halosis'), 'ti ti-books') }}
                 <div class="row">
+                    {{ fields.numberField('close_after_hours', config.close_after_hours, __('Ready to close after (hours without requester response)', 'halosis'), field_opts|merge({
+                        'min': 1, 'max': 720,
+                        'add_field_html': self.hint(__('Solved tickets without a requester response for this long appear in the Operator list “Ready to close”. Nothing is closed automatically.', 'halosis')),
+                    })) }}
                     {{ fields.numberField('kb_review_months', config.kb_review_months, __('Review published articles after (months)', 'halosis'), field_opts|merge({
                         'min': 1, 'max': 36,
                         'add_field_html': self.hint(__('Published articles not updated for this long appear in the “Needs review” tab of Knowledge candidates.', 'halosis')),

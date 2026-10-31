@@ -26,6 +26,18 @@ final class Chatbot
 {
     public const MAX_MESSAGE_LENGTH = 1000;
     public const DEMO_MODEL = 'demo-extractive-v1';
+    /**
+     * T31 (wawancara Operator): topik non-TI → unit yang menangani. Hanya berlaku bila pertanyaan tidak memuat kata
+     * kunci TI (OUT_OF_SCOPE_IT), mis. "aplikasi SIMPEG error" tetap dijawab sebagai masalah TI.
+     */
+    private const OUT_OF_SCOPE = [
+        'Kepegawaian/SDM'       => ['cuti', 'kenaikan pangkat', 'pangkat', 'mutasi', 'pensiun', 'skp', 'jabatan fungsional', 'angka kredit', 'kepegawaian', 'diklat'],
+        'Keuangan'              => ['gaji', 'tunjangan', 'tukin', 'honor', 'sppd', 'perjalanan dinas', 'reimburse', 'uang makan', 'lembur'],
+        'Umum/Rumah Tangga'     => ['atk', 'ruang rapat', 'kendaraan dinas', 'konsumsi rapat', 'kebersihan', 'ac ruangan'],
+    ];
+    private const OUT_OF_SCOPE_IT = ['aplikasi', 'login', 'akun', 'sso', 'error', 'email', 'laptop', 'komputer', 'printer',
+        'vpn', 'jaringan', 'internet', 'wifi', 'sistem', 'password', 'kata sandi', 'website', 'server', 'simpeg', 'sinkron'];
+
     /** Nama sumber permintaan (Request source) GLPI untuk tiket yang dibuat dari chatbot */
     public const REQUEST_TYPE = 'HaloSIS Chat';
 
@@ -124,9 +136,20 @@ final class Chatbot
         $question = $privacy['text'];
         $messages = $chat->getMessages();
 
+        // Di luar layanan TI: arahkan ke unit terkait, tanpa mencari artikel & tanpa tawaran laporan TI
+        if (($unit = self::outOfScopeUnit($question)) !== null) {
+            $reply = [
+                'answer'       => sprintf(__('This question is outside HaloSIS IT services. Please contact the %s unit; they handle this topic. For IT problems (applications, accounts, devices, network), ask me again.', 'halosis'), $unit),
+                'found'        => false,
+                'sources'      => [],
+                'model'        => '',
+                'out_of_scope' => true,
+            ];
+        }
+
         // Layanan AI HaloSIS lebih dulu (KB + solusi tiket lama); mati/gagal → pencarian KB lokal di bawah
-        $reply = null;
-        if (Service::isConfigured()) {
+        $reply ??= null;
+        if (!isset($reply) && Service::isConfigured()) {
             try {
                 $reply = self::askService($question, $messages);
             } catch (AiException $e) {
@@ -156,6 +179,7 @@ final class Chatbot
             'found'   => $reply['found'],
             'sources' => $reply['sources'],
             'model'   => $reply['model'],
+            'out_of_scope' => !empty($reply['out_of_scope']),
             'at'      => $now,
         ];
 
@@ -175,6 +199,7 @@ final class Chatbot
             'answer'  => $reply['answer'],
             'found'   => $reply['found'],
             'ai'      => self::isAiModel($reply['model']),
+            'out_of_scope' => !empty($reply['out_of_scope']),
             'sources' => $reply['sources'],
             'masked'  => $privacy['masked'],
         ];
@@ -331,6 +356,27 @@ final class Chatbot
             'sources' => self::sources([$article]),
             'model'   => self::DEMO_MODEL,
         ];
+    }
+
+    /**
+     * Unit penanganan bila pertanyaan jelas di luar layanan TI; null bila bukan (atau ada kata kunci TI).
+     */
+    public static function outOfScopeUnit(string $question): ?string
+    {
+        $text = ' ' . mb_strtolower($question) . ' ';
+        foreach (self::OUT_OF_SCOPE_IT as $word) {
+            if (preg_match('/\b' . preg_quote($word, '/') . '\b/u', $text)) {
+                return null;
+            }
+        }
+        foreach (self::OUT_OF_SCOPE as $unit => $words) {
+            foreach ($words as $word) {
+                if (preg_match('/\b' . preg_quote($word, '/') . '\b/u', $text)) {
+                    return $unit;
+                }
+            }
+        }
+        return null;
     }
 
     /**

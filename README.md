@@ -94,8 +94,11 @@ Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
 Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
 
 **1. [Unduh folder `models` dan `index` dari sini](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link)**
-(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya: `models/triage.joblib` (±40 MB) dan
-`index/chunks.parquet` + `index/vectors.npy`.
+(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya **4 file**: `models/triage.joblib` (±40 MB,
+saran tim), `models/jenis.joblib` (saran jenis REQ/INC, T4), dan `index/chunks.parquet` + `index/vectors.npy`.
+**Anggota tim tidak melatih ulang model**: cukup pakai file ini (melatih ulang butuh data history mentah yang hanya
+dipegang Pengelola AI; lihat `reports/tata_kelola_ai.md`). Tanpa `jenis.joblib`, panel hanya tidak menampilkan
+saran jenis.
 
 Di Drive: pilih kedua folder (atau folder induknya) → klik kanan → **Download**. Drive mengemasnya jadi file
 `.zip` (namanya bisa seperti `drive-download-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip;
@@ -110,7 +113,8 @@ Windows → klik kanan → **Extract All**.
 glpi-halosis/
 └── ai/
     ├── models/
-    │   └── triage.joblib
+    │   ├── triage.joblib
+    │   └── jenis.joblib
     └── index/
         ├── chunks.parquet
         └── vectors.npy
@@ -121,7 +125,7 @@ naik satu tingkat. Cek dari folder proyek:
 ls ai/models ai/index          # Mac/Linux
 dir ai\models ai\index         # Windows (cmd)
 ```
-Harus terlihat tepat tiga file di atas.
+Harus terlihat tepat empat file di atas.
 
 **3. Nyalakan ulang layanan AI**
 ```bash
@@ -697,6 +701,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
+| Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | Dampak/urgensi dari **aturan kata kunci**, prioritas dari matriks GLPI, selalu divalidasi Operator | Ekspor history ESTIM (137 kolom) **tidak punya** kolom dampak/urgensi/prioritas (hanya 58 kolom SLA, mis. respons 99,6% terisi); dokumen sendiri menempatkan prioritas P1 dan urgensi P2 dengan validasi manusia, dan E9 menyebut AI kategorisasi masih dikembangkan bertahap | Tahap 2: rekam dampak/urgensi final Operator di GLPI (sudah terjadi lewat Terima/Ubah) → latih model setelah ±3 bulan data, lalu uji dengan syarat lulus `tata_kelola_ai.md` |
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`): akurasi 68,25%, ≥ 70% yakin → 84,17%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
 | HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
@@ -731,6 +736,9 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat; regresi skenario demo 17 langkah lolos (`reports/uji_regresi_demo.md`) | Proven |
 | Login SSO bersamaan (beban halaman) | k6 10 akun petugas, 5 menit: 0% galat, login p95 60 ms, daftar tiket p95 56 ms; bug duplikat Jabatan ditemukan & ditutup (`reports/rencana_uji.md` §7) | Proven (laptop) |
 | Kesiapan demo | Snapshot simpan/pulihkan (tiket uji hilang setelah pulihkan, 11 dtk), `reports/checklist_demo.md` | Proven |
+| Upgrade platform (Skenario 2) | GLPI 12.0.0 → 12.0.1 dari snapshot di lingkungan terpisah: skema OK, plugin Enabled, data utuh (`reports/uji_upgrade.md`) | Proven (patch) |
+| SLA per layanan & KPI tabel 1.3 | 22 aturan kategori × jenis (uji: insiden SSO 30 mnt/4 jam, permintaan Zoom 2 jam/1 hari, cadangan prioritas); dashboard KPI layanan | Proven (data contoh) |
+| Gerbang kualitas model (UC-04) | `/health` & panel "belum lolos uji kualitas" saat syarat dinaikkan (tes + uji container) | Proven |
 | Ketahanan triase saat AI mati (NFR-03) | Tugas `TriageRetry`: gagal → percobaan tercatat; pulih → saran dibuat; tanpa duplikat; batas 5 percobaan | Proven (uji skrip) |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md`; sampel 200 tiket ke entitas "Arsip ESTIM" lewat API (`ai/scripts/migrate_sample.py`): 199 berhasil + 1 gagal, idempoten, bisa dihapus | Proven (sampel); skala penuh belum |
 | Performa (AI & API GLPI) | AI: Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`reports/rencana_uji.md`](reports/rencana_uji.md) §7) | Partially proven (laptop; halaman GLPI belum) |
