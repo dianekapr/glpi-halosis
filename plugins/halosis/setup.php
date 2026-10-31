@@ -26,7 +26,7 @@ use GlpiPlugin\Halosis\RoleMenu;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.10.0');
+define('PLUGIN_HALOSIS_VERSION', '1.0.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -84,6 +84,10 @@ function plugin_init_halosis(): void
     // Cari knowledge (Operator & Tim Teknis): tombol Membantu / Tidak membantu (KR-07)
     if (Session::haveRight(Profile::RIGHT_TRIASE, READ)) {
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/feedback.js');
+    }
+    // Siap ditutup (T21): Operator yang boleh memutuskan triase & mengubah tiket
+    if (Session::haveRight(Profile::RIGHT_TRIASE, UPDATE)) {
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/closure.js');
     }
     // Kandidat Knowledge (UC-09): Knowledge Manager & Administrator
     if (Session::haveRight(Profile::RIGHT_KANDIDAT, READ)) {

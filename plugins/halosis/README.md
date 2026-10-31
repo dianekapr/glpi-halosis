@@ -12,7 +12,7 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu, artikel paling sering dipakai / dinilai tidak membantu, pola terdeteksi vs dikonfirmasi vs ditutup, drift bulanan; filter periode, tim, kategori; ekspor koreksi CSV | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.10.0 ([CHANGELOG](../../CHANGELOG.md)) · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Versi 1.0.0 ([CHANGELOG](../../CHANGELOG.md)) · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
 Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
 semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
@@ -169,6 +169,12 @@ Pegawai yang melapor tanpa portal (EI "Input tiket oleh operator", dokumen hal. 
 3. Tiket tercatat atas nama pegawai (pemohon), dengan `rina` sebagai pencatat; saran triase AI langsung muncul
    dan divalidasi seperti langkah 2. Pegawai melihatnya di **Laporan saya**.
 
+### 2c. Operator menutup tiket menggantung (`rina`)
+
+Menu **Siap ditutup** (T21): tiket *Selesai* yang tidak direspons pemohon lebih dari 48 jam (Pengaturan AI). Periksa,
+lalu **Tutup** per tiket atau centang beberapa → **Tutup yang dipilih**. Tidak ada penutupan otomatis; alasan tercatat
+sebagai tindak lanjut privat dan perubahan status di Riwayat. Tiket yang sudah dibalas pemohon tidak muncul.
+
 ### 3. Tim Teknis menyelesaikan (`andi`)
 
 1. Login `andi` / `halosis`. Tiket muncul di **Beranda › Tampilan Group** dan **Bantuan › Tiket**.
@@ -229,6 +235,9 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
 - **Tingkat keyakinan**: ≥ ambang (70%) *Disarankan*; antara ambang rendah (40%) dan ambang *Pilih dari 3
   kandidat*; di bawahnya *Perlu penilaian manual*. Panel menampilkan **tiket aktif per kandidat tim** (3 tim
   teratas model → grup GLPI, tiket belum selesai yang ditugaskan ke grup itu); hanya info, urutan tetap dari model.
+- **Gerbang kualitas model** (T32, pre-kondisi UC-04): `/health` & `/triage` melaporkan apakah model triase lolos
+  syarat (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85% bila tercatat; `HALOSIS_GATE_*`). Tidak lolos → panel menampilkan
+  "Model belum lolos uji kualitas" dan tingkat selalu *Perlu penilaian manual*.
 - **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
   menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
 - **Kembalikan ke operator (salah tim)**, UC-06 alur alternatif: tombol hanya tampil untuk teknisi/anggota tim
@@ -321,6 +330,8 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   (`Chat::IDLE_MINUTES`) dimuat ulang. Percakapan terbuka yang menganggur lebih lama berstatus `expired`
   ("Berakhir (tidak aktif)", state machine SesiChat hal. 192); diperiksa saat chat/riwayat/dashboard dibuka. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
   (diingat di `localStorage` browser) dan tetap bisa dibuka dari Riwayat chat.
+- **Di luar layanan TI** (T31): pertanyaan kepegawaian/keuangan/umum tanpa kata kunci TI (mis. cuti, tunjangan) dijawab
+  "di luar layanan TI" + unit yang menangani, tanpa tawaran laporan TI (`Chatbot::OUT_OF_SCOPE`).
 - **Keyakinan sedang** (skor layanan AI 0,78–0,83): asisten tidak menjawab, hanya menawarkan ≤ 3 judul artikel KB
   "Maksud Anda…?" plus kartu Buat laporan.
 - Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
@@ -359,6 +370,7 @@ Semua angka dari tabel log plugin (`src/Stats.php`):
 | Pola insiden terdeteksi / dikonfirmasi (Problem lepas dari Baru) / ditutup (Selesai, Ditutup, atau dihapus) | `patterns` + Problem |
 | Drift: % Ubah+Tolak per bulan, 6 bulan terakhir | `decisions` |
 | Tren pola insiden: tiket per minggu per topik (5 topik, 12 minggu) | `patterns` |
+| KPI tabel 1.3: % SLA respons & penyelesaian terlampaui, median waktu sampai diambil, % diselesaikan Operator tanpa eskalasi; volume tiket per minggu per jenis & 5 kategori teratas (12 minggu) | tiket GLPI (tanpa entitas arsip) |
 
 Filter **tim** (grup yang ditugaskan) dan **kategori layanan** (termasuk subkategori) berlaku untuk angka
 triase, salah tim, dan drift. Pemegang hak Pengaturan AI melihat tombol **Ekspor koreksi (CSV, tersamar)**:
@@ -448,19 +460,21 @@ src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/P
 src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
 src/KeycloakAuth.php      login SSO Keycloak (password grant dari form login GLPI) + sinkron pengguna, profil, tim
 src/PatternDetector.php   tugas terjadwal pola insiden + banner;  src/TriageRetry.php  tugas coba ulang saran triase
+src/Closure.php           daftar "Siap ditutup" (T21);  src/ConfigAudit.php  pratinjau dampak & jejak konfigurasi (T20)
 src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
 src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan, Perlu ditinjau;  src/Candidate.php  model kandidat
 src/KnowledgeIndex.php    re-index artikel KB ke layanan AI saat terbit / ditarik / dihapus (hook KnowbaseItem)
 src/Controller/           ChatController (/plugins/halosis/Chat, /plugins/halosis/ChatHistory),
                           DashboardController (/plugins/halosis/Dashboard, /Dashboard/Koreksi CSV),
-                          KandidatController (/plugins/halosis/Kandidat), CariKnowledgeController (/plugins/halosis/CariKnowledge)
+                          KandidatController (/plugins/halosis/Kandidat), CariKnowledgeController (/plugins/halosis/CariKnowledge),
+                          SiapDitutupController (/plugins/halosis/SiapDitutup)
 src/ConfigMenu.php, src/DashboardMenu.php  entri menu
-ajax/triase.php, ajax/chat.php, ajax/kandidat.php, ajax/feedback.php  endpoint JSON panel triase, chatbot,
-                          kandidat knowledge, umpan balik Cari knowledge
+ajax/triase.php, ajax/chat.php, ajax/kandidat.php, ajax/feedback.php, ajax/siap_ditutup.php  endpoint JSON panel
+                          triase, chatbot, kandidat knowledge, umpan balik Cari knowledge, tutup tiket
 front/config.form.php     halaman konfigurasi
 templates/                template Twig (@halosis/...)
 public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
-                          feedback, menu, triase)
+                          closure, feedback, menu, triase)
 public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
 public/logo               logo HaloSIS: file asli (*.webp) + versi transparan halosis-logo-light/dark.png untuk palet
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo

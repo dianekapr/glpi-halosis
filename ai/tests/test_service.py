@@ -112,3 +112,30 @@ def test_triage_saran_jenis_opsional(monkeypatch):
     r = c.post('/triage', json={'judul': 'Minta akun zoom', 'deskripsi': 'rapat', 'jenis': 'INC'}).json()
     assert r['jenis_saran'] == {'jenis': 'REQ', 'keyakinan': 0.8, 'versi_model': 'jenis-uji'}
 
+
+def test_rate_limit_per_klien(monkeypatch):
+    """T26: klien melewati batas → 429 + Retry-After; /health tetap; klien lain tidak terpengaruh."""
+    c = client(monkeypatch, [])
+    monkeypatch.setattr(service, 'RATE_LIMIT', 3)
+    service._hits.clear()
+    codes = [c.post('/triage', json={'judul': 'x'}).status_code for _ in range(4)]
+    assert codes == [200, 200, 200, 429]
+    r = c.post('/triage', json={'judul': 'x'})
+    assert r.status_code == 429 and int(r.headers['Retry-After']) >= 1
+    assert c.get('/health').status_code == 200
+    assert service.rate_limited('klien-lain', 0.0) == 0
+    service._hits.clear()
+
+
+def test_gerbang_kualitas_model(monkeypatch):
+    """T32: metrik artefak di bawah syarat → /health & /triage menyatakan tidak lolos."""
+    c = client(monkeypatch, [])
+    model = service.state['triage']
+    monkeypatch.setattr(model, 'metadata', {'top1': 0.74, 'akurasi_yakin': 0.87}, raising=False)
+    assert c.get('/health').json()['kualitas_model']['lolos'] is True
+    assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is True
+    monkeypatch.setattr(model, 'metadata', {'top1': 0.55, 'akurasi_yakin': 0.80}, raising=False)
+    gate = c.get('/health').json()['kualitas_model']
+    assert gate['lolos'] is False and len(gate['alasan']) == 2
+    assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is False
+

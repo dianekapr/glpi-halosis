@@ -134,6 +134,7 @@ final class Triage
             'candidates'        => json_encode($result['candidates'] ?? [], JSON_UNESCAPED_UNICODE),
             'type_suggested'    => (int) ($result['type_suggested'] ?? 0),
             'type_confidence'   => (int) ($result['type_confidence'] ?? 0),
+            'quality_ok'        => (int) ($result['quality_ok'] ?? 1),
             'model'             => $result['model'],
             'is_demo'           => (int) ($result['model'] === self::DEMO_MODEL),
             'status'            => Suggestion::STATUS_PENDING,
@@ -282,6 +283,11 @@ final class Triage
         } elseif ($category_id > 0) {
             $group = $context['categories'][$category_id]['groups_id'];
             $result['groups_id'] = isset($context['groups'][$group]) ? $group : 0;
+        }
+
+        // T32: model belum lolos gerbang kualitas → saran tetap ditampilkan sebagai info, tetapi triase manual
+        if (($response['lolos_uji_kualitas'] ?? true) === false) {
+            $result['quality_ok'] = 0;
         }
 
         // Saran jenis REQ/INC (T4), hanya bila layanan punya model jenis

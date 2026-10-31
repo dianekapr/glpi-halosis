@@ -9,6 +9,7 @@ use Entity;
 use Glpi\Event;
 use Glpi\Form\Form;
 use GlpiPlugin\Halosis\Controller\CariKnowledgeController;
+use GlpiPlugin\Halosis\Controller\SiapDitutupController;
 use GlpiPlugin\Halosis\Controller\KandidatController;
 use Group;
 use ITILCategory;
@@ -107,6 +108,7 @@ final class RoleMenu
             ['dashboard', __('Dashboard', 'halosis'), '/front/central.php', 'ti ti-layout-dashboard', true],
             ['queue', __('Validation queue', 'halosis'), self::ticketSearch([self::status('1')], self::BY_DEADLINE), 'ti ti-sparkles', Ticket::canView()],
             ['tickets', __('All tickets', 'halosis'), '/front/ticket.php?reset=reset', 'ti ti-ticket', Ticket::canView()],
+            ['closure', __('Ready to close', 'halosis'), SiapDitutupController::PAGE, 'ti ti-lock-check', Closure::canClose()],
             ...self::monitoring(),
             ['knowledge', __('Search knowledge', 'halosis'), CariKnowledgeController::PAGE, 'ti ti-search', Session::haveRight(Profile::RIGHT_TRIASE, READ)],
         ]);

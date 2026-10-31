@@ -44,6 +44,8 @@ final class Config
         'pattern_min_samples' => 3,
         // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
         'kb_review_months'    => 6,
+        // T21: tiket Selesai tanpa respons pemohon lebih dari N jam masuk daftar "Siap ditutup"
+        'close_after_hours'   => 48,
         'feature_triage'    => 1,
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
@@ -218,6 +220,7 @@ final class Config
         $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
         $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
         $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
+        $values['close_after_hours'] = max(1, min(720, (int) ($input['close_after_hours'] ?? self::DEFAULTS['close_after_hours'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 
         foreach (self::FEATURES as $feature) {

@@ -68,6 +68,14 @@
                     </div>
                 </div>
 
+                {# T32: model belum lolos gerbang kualitas (pre-kondisi UC-04) #}
+                {% if suggestion.quality_ok is defined and suggestion.quality_ok == 0 %}
+                    <div class="halosis-review mb-2" role="alert">
+                        <i class="ti ti-shield-x" aria-hidden="true"></i>
+                        <span><strong>{{ __('The model has not passed the quality check', 'halosis') }}</strong> · {{ __('triage manually; the suggestion is for reference only', 'halosis') }}</span>
+                    </div>
+                {% endif %}
+
                 {# Tiga tingkat keyakinan (TO-BE hal. 100) #}
                 {% if level == 'high' %}
                     <div class="halosis-review halosis-review-high mb-2" role="status">

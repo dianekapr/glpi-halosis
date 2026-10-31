@@ -48,6 +48,13 @@ NFR-01 ⚪ → 🟡 (Peak 50 VU & Stress sampai 200 VU tidak jenuh, API GLPI Nor
 REQ/INC ✅; uji beban halaman GLPI menemukan & menutup bug login bersamaan; snapshot demo (`scripts/demo_snapshot.sh`)
 & `checklist_demo.md`. Ringkasan: **46 ✅ · 8 🟡 · 4 ⚪**.
 
+**Pembaruan 31 Okt 2026 (selaras bab analisis, plugin 1.0.0):** Siap ditutup (T21), SLA per layanan dari
+`config/sla_layanan.json` (T22, BR-02 diperkuat), notifikasi balasan ke teknisi & grup (T23), KPI tabel 1.3 & volume
+per minggu (T24/T25), rate limit AI (T26), uji upgrade 12.0.0 → 12.0.1 (T27), FAQ Email/SSO/SiPecut (T30), chatbot
+non-TI (T31), gerbang kualitas model (T32); `rencana_implementasi.md`, `panduan_peran.md`; regresi demo 17 langkah
+lolos. Status tabel tidak berubah (butir baru berasal dari bab analisis, dicatat di `audit_dokumen_e2e.md` §8).
+Ringkasan tetap **46 ✅ · 8 🟡 · 4 ⚪**.
+
 Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
 berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
 AI, katalog layanan & SOP di indeks chatbot, serta dashboard dengan filter, drift, dan tren pola. Bukti uji ada untuk
@@ -188,7 +195,7 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 
 | # | Perbaikan | Menutup | Usaha | File |
 | --- | --- | --- | --- | --- |
-| 7 | ❌ Tidak layak — Model dampak/urgensi dari history: kolomnya tidak ada di data history (keputusan 31 Okt) | BR-05, FR-08 | sedang | `ai/halosis_ai/triage_model.py`, `ai/scripts/train_triage.py`, `src/Triage.php` |
+| 7 | ⚪ Keputusan — Model dampak/urgensi ditunda: ekspor history tidak punya kolom dampak/urgensi/prioritas (cek 31 Okt: 58 kolom SLA, 0 kolom prioritas); bertahap sesuai 2.1.4 (prioritas P1, urgensi P2) & E9, lihat README Keputusan desain | BR-05, FR-08 | sedang | `ai/halosis_ai/triage_model.py`, `ai/scripts/train_triage.py`, `src/Triage.php` |
 | 8 | ✅ Selesai — Pencarian semantik untuk agent (Operator/Tim Teknis) di halaman plugin | FR-03 | sedang | controller & template baru di plugin, `src/RoleMenu.php` |
 | 9 | ✅ Selesai — Uji email notifikasi dengan SMTP lokal (mis. container Mailpit) | BR-02, UC-03 | kecil | `docker-compose.yml`, README |
 | 10 | ✅ Selesai — Rencana uji performa & latensi (k6) + hasil Normal, Peak, Stress (AI) & Normal (API GLPI) | NFR-01, NFR-12 | sedang | [`reports/rencana_uji.md`](rencana_uji.md) |
@@ -202,6 +209,6 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 | --- | --- | --- | --- | --- |
 | 14 | Vector DB sungguhan (pgvector/Qdrant) | Arsitektur | sedang | `docker-compose.yml`, `ai/halosis_ai/search.py`, `build_index.py` |
 | 15 | LLM lokal Qwen2.5 3B via Ollama sebagai perangkum RAG (tanpa biaya API) | PoC LLM | sedang | `docker-compose.yml`, `ai/service/app.py` |
-| 16 | ✅ Sebagian — Pratinjau dampak ambang AI + jejak & pemberitahuan perubahan konfigurasi (31 Okt) | UC-10 | besar | `src/ConfigAudit.php` |
+| 16 | 🟡 Sebagian — Pratinjau dampak **ambang AI** ✅; jejak & pemberitahuan perubahan Pengaturan AI/aturan SLA/SLA/kategori ✅; pratinjau dampak **aturan SLA/kategori** belum (pakai Rules › Test) | UC-10 | besar | `src/ConfigAudit.php` |
 | 17 | Memisahkan worker/cron ke container sendiri, CI, backup terjadwal | Arsitektur | sedang | `docker-compose.yml`, `.github/workflows/` |
 | 18 | Menghubungkan prototipe Next.js ke API GLPI | Frontend | besar | `halosis-web 2/` |

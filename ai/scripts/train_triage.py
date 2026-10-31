@@ -147,7 +147,7 @@ def main() -> None:
     metadata = {
         'versi_model': VERSION, 'dilatih': str(date.today()), 'data_latih': 'Jan–Jun 2026', 'data_uji': 'Jul–Ags 2026',
         'tiket_latih': int(len(train)), 'tiket_uji': int(len(test)), 'kelas': len(scores['classes']),
-        'pengaturan': settings, 'top1': round(float(scores['top1']), 4), 'top3': round(float(scores['top3']), 4), 'mrr': round(float(scores['mrr']), 4),
+        'pengaturan': settings, 'akurasi_yakin': round(float(acc_hi), 4), 'top1': round(float(scores['top1']), 4), 'top3': round(float(scores['top3']), 4), 'mrr': round(float(scores['mrr']), 4),
         'f1_macro': round(float(scores['f1_macro']), 4), 'ambang': MANUAL_REVIEW_THRESHOLD,
     }
     model = TriageModel(pipeline=pipeline, similar=similar, version=VERSION, metadata=metadata)

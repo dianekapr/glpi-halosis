@@ -17,7 +17,7 @@ Aman dijalankan berulang. Pakai (setelah seed_halosis.py):
     python setup_sla_alerts.py                      # default http://localhost:8080
 Lalu aktifkan notifikasi (lihat README langkah 5b).
 """
-import json, sys
+import json, os, sys
 import requests
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8080').rstrip('/')
@@ -128,6 +128,55 @@ for prio, values in PRIORITY_SLA.items():
         add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': field, 'value': sla['id']})
         print(f'Aturan "{name}": {field} → SLA "{sla["name"]}"')
 
+# T22: SLA per layanan (config/sla_layanan.json): aturan per kategori & jenis, dipasang SETELAH aturan per prioritas
+# (ranking lebih besar), jadi menimpa SLA prioritas untuk kategori yang dipetakan; kategori lain tetap pakai cadangan.
+SERVICE_SLA = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config/sla_layanan.json'), encoding='utf-8'))
+UNITS = {'m': ('minute', 'menit'), 'h': ('hour', 'jam'), 'd': ('day', 'hari')}
+TICKET_TYPE = {'insiden': 1, 'permintaan': 2}       # Ticket::INCIDENT_TYPE, Ticket::DEMAND_TYPE
+
+
+def service_sla(kind, target):
+    """SLA bersama per target (mis. "Layanan · respons 30 menit"), dibuat sekali; kind: respons | selesai | pemenuhan."""
+    n, unit = int(target[:-1]), UNITS[target[-1]]
+    name = f'Layanan · {kind} {n} {unit[1]}'
+    found = next((x for x in get('SLA') if x['name'] == name), None)
+    if found:
+        return found['id'], False
+    sla_type = SLA_TTO if kind == 'respons' else SLA_TTR
+    sla_id = add('SLA', {'name': name, 'slms_id': slm['id'], 'type': sla_type, 'number_time': n,
+                         'definition_time': unit[0], 'calendars_id': slm.get('calendars_id', 1)})
+    if sla_type == SLA_TTR:  # peringatan risiko ±25% sebelum batas, sama seperti SLA prioritas
+        seconds = n * {'minute': 60, 'hour': HOUR, 'day': 8 * HOUR}[unit[0]]
+        level = add('SlaLevel', {'name': LEVEL_NAME, 'slas_id': sla_id, 'execution_time': -max(900, seconds // 4),
+                                 'is_active': 1, 'match': 'AND', 'entities_id': 0, 'is_recursive': 1})
+        add('SlaLevelAction', {'slalevels_id': level, 'action_type': 'send', 'field': 'recall', 'value': 1})
+    return sla_id, True
+
+
+categories = {c['completename']: c['id'] for c in get('ITILCategory')}
+rules = {r['name']: r['id'] for r in get('RuleTicket')}
+for category, kinds in SERVICE_SLA.items():
+    if category.startswith('_'):
+        continue
+    if category not in categories:
+        print(f'PERINGATAN: kategori "{category}" tidak ada di GLPI, SLA layanan dilewati')
+        continue
+    for kind, target in kinds.items():
+        name = f'SLA layanan: {category} · {kind}'
+        if name in rules:
+            continue
+        tto, _ = service_sla('respons', target['respons'])
+        ttr, _ = service_sla('selesai' if kind == 'insiden' else 'pemenuhan', target['selesai'])
+        rule = add('RuleTicket', {'name': name, 'sub_type': 'RuleTicket', 'match': 'AND', 'is_active': 1,
+                                  'condition': RULE_ON_ADD_AND_UPDATE, 'entities_id': 0, 'is_recursive': 1,
+                                  'description': 'HaloSIS: SLA per layanan (config/sla_layanan.json, T22)'})
+        add('RuleCriteria', {'rules_id': rule, 'criteria': 'itilcategories_id', 'condition': PATTERN_IS,
+                             'pattern': categories[category]})
+        add('RuleCriteria', {'rules_id': rule, 'criteria': 'type', 'condition': PATTERN_IS, 'pattern': TICKET_TYPE[kind]})
+        add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_tto', 'value': tto})
+        add('RuleAction', {'rules_id': rule, 'action_type': 'assign', 'field': 'slas_id_ttr', 'value': ttr})
+        print(f'Aturan "{name}": respons {target["respons"]}, {"penyelesaian" if kind == "insiden" else "pemenuhan"} {target["selesai"]}')
+
 for team in TEAMS:
     group = next((g for g in get('Group') if g['name'] == team), None)
     links = s.get(f'{B}/Group/{group["id"]}/Group_User').json() if group else []
@@ -158,6 +207,11 @@ operator_target = [(GROUP_TYPE, operator['id'])] if operator else []
 ensure_notification('Ticket', 'recall', [(USER_TYPE, ASSIGN_TECH), (USER_TYPE, ASSIGN_GROUP),
                                          (USER_TYPE, SUPERVISOR_ASSIGN_GROUP)] + operator_target)
 print(f'Notifikasi "Ticket Recall": teknisi, grup, supervisor grup (ketua tim), grup {OPERATOR_GROUP}; email + browser')
+
+# T23 (5.1, akar masalah "notifikasi hanya sekali"): balasan/tindak lanjut pemohon sampai ke teknisi & grup yang
+# ditugaskan (bawaan GLPI "New followup"), email + browser
+ensure_notification('Ticket', 'add_followup', [(USER_TYPE, ASSIGN_TECH), (USER_TYPE, ASSIGN_GROUP)])
+print('Notifikasi "New followup": + teknisi & grup yang ditugaskan; email + browser')
 
 # T9: pola insiden baru = Problem baru yang ditugaskan ke grup Operator (plugin PatternDetector) → peringatan dini
 ensure_notification('Problem', 'new', [(USER_TYPE, ASSIGN_GROUP)] + operator_target)
