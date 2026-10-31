@@ -17,6 +17,15 @@ def test_nip_rapat_dan_berkelompok():
     assert mask_text('nip: 19870101 201001 1 001.') == f'nip: {NIP}.'
 
 
+def test_nip_lama_sembilan_digit_setelah_kata_nip():
+    assert mask_text('NIP 340012345') == f'NIP {NIP}'
+    assert mask_text('nip lama: 340012345, mohon dicek') == f'nip lama: {NIP}, mohon dicek'
+    assert mask_text('NIP.340012345') == f'NIP.{NIP}'
+    # Tanpa kata NIP, 9 digit (mis. nomor aset) tidak diubah; 10 digit juga bukan NIP lama
+    assert mask_text('aset 310010200 rusak') == 'aset 310010200 rusak'
+    assert mask_text('NIP 3400123456') == 'NIP 3400123456'
+
+
 def test_nik():
     assert mask_text('NIK 3374012345678901') == f'NIK {NIK}'
 

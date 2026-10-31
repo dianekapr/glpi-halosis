@@ -102,6 +102,18 @@
                     <dt>{{ __('Group') }}</dt><dd>{{ values.group }}</dd>
                 </dl>
 
+                {# BR-05: urgensi dari model history (hanya bila lolos gerbang & yakin) dan alasan dampak naik #}
+                {% if urgency_hint or impact_reason %}
+                    <ul class="list-unstyled small mb-2" data-halosis-urgensi>
+                        {% if urgency_hint %}
+                            <li><i class="ti ti-chart-dots" aria-hidden="true"></i> <strong>{{ __('Suggested urgency', 'halosis') }}: {{ urgency_hint.urgency }}</strong> ({{ urgency_hint.confidence }}%) · {{ __('from the ticket history model', 'halosis') }}</li>
+                        {% endif %}
+                        {% if impact_reason %}
+                            <li><i class="ti ti-users-group" aria-hidden="true"></i> {{ impact_reason }}</li>
+                        {% endif %}
+                    </ul>
+                {% endif %}
+
                 {# T4: saran jenis hanya bila berbeda dari jenis tiket & yakin; Operator mengubah jenis di form tiket #}
                 {% if type_hint %}
                     <div class="halosis-review halosis-review-medium mb-2" role="status">

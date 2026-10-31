@@ -141,16 +141,42 @@ def test_gerbang_kualitas_model(monkeypatch):
     assert c.post('/triage', json={'judul': 'x'}).json()['lolos_uji_kualitas'] is False
 
 
-def test_prioritas_hanya_bila_lolos_dan_yakin(monkeypatch):
-    """Saran prioritas insiden: model tidak unggul pembanding → None; unggul & yakin → prioritas GLPI; REQ → None."""
+class FakeUrgencyLabel:
+    def __init__(self):
+        self.frames = []
+
+    def predict(self, frame):
+        self.frames.append(frame)
+        return ['Low']
+
+
+class FakeUrgencyCalibrated:
+    classes_ = ['Low', 'Medium']
+
+    def __init__(self, p_low):
+        self.p_low = p_low
+
+    def predict_proba(self, frame):
+        return [[self.p_low, 1 - self.p_low]]
+
+
+def test_urgensi_hanya_bila_lolos_dan_yakin(monkeypatch):
+    """Saran urgensi insiden: tidak unggul pembanding → None; unggul & yakin → nilai GLPI; tidak yakin / REQ → None."""
     c = client(monkeypatch, [])
-    artifact = {'pipeline': FakeJenis(), 'version': 'prio-uji', 'threshold': 0.7, 'prioritas_glpi': {'INC': 3, 'REQ': 2},
-                'metrics': {'f1_makro': 0.448, 'f1_makro_pembanding': 0.448}}
-    service.state['prioritas'] = artifact
+    label = FakeUrgencyLabel()
+    artifact = {'pipeline': label, 'kalibrasi': FakeUrgencyCalibrated(0.8), 'version': 'urg-uji', 'threshold': 0.7,
+                'urgensi_glpi': {'Medium': 3, 'Low': 2}, 'metrics': {'f1_makro': 0.448, 'f1_makro_pembanding': 0.448}}
+    service.state['urgensi'] = artifact
     body = {'judul': 'akun zoom', 'deskripsi': 'x', 'jenis': 'INC'}
-    assert c.post('/triage', json=body).json()['prioritas_saran'] is None
-    artifact['metrics'] = {'f1_makro': 0.6, 'f1_makro_pembanding': 0.448}
-    assert c.post('/triage', json=body).json()['prioritas_saran']['prioritas'] == 2
-    assert c.post('/triage', json={**body, 'jenis': 'REQ'}).json()['prioritas_saran'] is None
-    assert c.get('/health').json()['kualitas_model']['prioritas']['lolos'] is True
+    assert c.post('/triage', json=body).json()['urgensi_saran'] is None
+    artifact['metrics'] = {'f1_makro': 0.58, 'f1_makro_pembanding': 0.448}
+    saran = c.post('/triage', json=body).json()['urgensi_saran']
+    assert saran == {'urgensi': 'Low', 'nilai_glpi': 2, 'keyakinan': 0.8, 'versi_model': 'urg-uji'}
+    # Tim: dari permintaan bila diisi, selain itu tim saran triase
+    c.post('/triage', json={**body, 'tim': 'Tim Email'})
+    assert label.frames[-1]['tim'].iloc[0] == 'Tim Email'
+    artifact['kalibrasi'] = FakeUrgencyCalibrated(0.6)  # keyakinan label "Low" 0,6 < ambang
+    assert c.post('/triage', json=body).json()['urgensi_saran'] is None
+    assert c.post('/triage', json={**body, 'jenis': 'REQ'}).json()['urgensi_saran'] is None
+    assert c.get('/health').json()['kualitas_model']['urgensi']['lolos'] is True
 

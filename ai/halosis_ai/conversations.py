@@ -1,14 +1,16 @@
 """Pecah kolom all_conversations dan ambil pesan solusi substantif.
 
-Format: "YYYY-MM-DD HH:MM:SS | teks || YYYY-MM-DD HH:MM:SS | teks || ...". Tidak ada kolom pengirim,
-jadi asal pesan disimpulkan dari isinya: template operator & salam dibuang per kalimat, permintaan
-informasi dan ucapan singkat pegawai tidak dianggap solusi, pesan bercirikan petugas diutamakan.
-Fungsi di sini bekerja pada teks yang SUDAH disamarkan.
+Format: "YYYY-MM-DD HH:MM:SS | teks || YYYY-MM-DD HH:MM:SS | teks || ...". Tidak ada penanda pengirim di
+teks; yang pasti hanya pengirim pesan terakhir (kolom last_conversation_user_id). Solusi = pesan terakhir yang
+dikirim paling lambat 5 menit setelah tiket diselesaikan (resolved), bukan dari pemohon, dan setelah kalimat
+template & salam dibuang masih ≥ 5 kata. Permintaan informasi dan keluhan pegawai ("saya masih …") tidak dianggap
+solusi. Fungsi di sini bekerja pada teks yang SUDAH disamarkan.
 """
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 _MESSAGE = re.compile(r'^\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s*\|\s*(.*)$', re.DOTALL)
 
@@ -99,18 +101,28 @@ def _is_solution_candidate(text: str) -> tuple[bool, bool]:
     return True, staff
 
 
-def extract_solution(messages: list[Message]) -> str | None:
-    """Pesan solusi substantif terakhir; pesan bercirikan petugas diutamakan."""
-    candidates = []
-    for message in messages:
-        ok, staff = _is_solution_candidate(message.text)
-        if ok:
-            candidates.append((staff, message))
-    if not candidates:
-        return None
-    staff_candidates = [m for staff, m in candidates if staff]
-    chosen = (staff_candidates or [m for _, m in candidates])[-1]
-    return substantive_text(chosen.text)
+# Petugas sering menekan "selesai" lalu menulis solusinya 1–3 menit kemudian (history: median 1,6 menit, 91% ≤ 5
+# menit); toleransi 1 menit membuang 209 solusi asli, jadi batasnya 5 menit
+RESOLVED_GRACE = timedelta(minutes=5)
+
+
+def extract_solution(messages: list[Message], resolved: datetime | None = None,
+                     last_by_requester: bool = False) -> str | None:
+    """Pesan solusi substantif terakhir sebelum tiket diselesaikan.
+
+    resolved: waktu selesai; pesan sesudah resolved + 5 menit (ucapan terima kasih, survei, tiket dibuka lagi)
+    dibuang. last_by_requester: pesan terakhir dikirim pemohon (last_conversation_user_id = requester_id).
+    """
+    cutoff = None if resolved is None or resolved != resolved else resolved + RESOLVED_GRACE  # NaT ≠ NaT
+    for i in range(len(messages) - 1, -1, -1):
+        message = messages[i]
+        if cutoff is not None and datetime.fromisoformat(message.time) > cutoff:
+            continue
+        if last_by_requester and i == len(messages) - 1:
+            continue
+        if _is_solution_candidate(message.text)[0]:
+            return substantive_text(message.text)
+    return None
 
 
 def meaningful_note(note: object) -> str | None:

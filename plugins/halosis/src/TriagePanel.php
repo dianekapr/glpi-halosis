@@ -62,6 +62,8 @@ final class TriagePanel
             'level'       => $suggestion?->getConfidenceLevel(),
             'workload'    => $suggestion !== null ? self::workload($suggestion) : [],
             'type_hint'   => $suggestion !== null ? self::typeHint($suggestion, $ticket) : null,
+            'urgency_hint' => $suggestion !== null ? self::urgencyHint($suggestion) : null,
+            'impact_reason' => $suggestion !== null ? (string) ($suggestion->fields['impact_reason'] ?? '') : '',
             'threshold'   => Config::getTriageThreshold(),
             'threshold_low' => Config::getLowThreshold(),
             'is_demo'     => Config::isDemoMode(),
@@ -124,6 +126,19 @@ final class TriagePanel
             'current'    => Ticket::getTicketTypeName((int) $ticket->fields['type']),
             'confidence' => $confidence,
         ];
+    }
+
+    /**
+     * Urgensi dari model history (layanan hanya mengirimnya bila model lolos gerbang & yakin); null = dari aturan.
+     *
+     * @return array{urgency: string, confidence: int}|null
+     */
+    private static function urgencyHint(Suggestion $suggestion): ?array
+    {
+        $confidence = (int) ($suggestion->fields['urgency_confidence'] ?? 0);
+        return $confidence > 0
+            ? ['urgency' => Ticket::getUrgencyName((int) $suggestion->fields['urgency']), 'confidence' => $confidence]
+            : null;
     }
 
     /**

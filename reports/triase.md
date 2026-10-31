@@ -1,6 +1,6 @@
 # Model saran triase HaloSIS (routing ke tim)
 
-Versi `triase-tfidf-lr-20261028` · dibuat oleh `ai/scripts/train_triage.py`. Hanya angka; model disimpan di `ai/models/triage.joblib` (di-ignore git).
+Versi `triase-tfidf-lr-20261031` · dibuat oleh `ai/scripts/train_triage.py`. Hanya angka; model disimpan di `ai/models/triage.joblib` (di-ignore git).
 
 ## Ringkasan
 
@@ -8,14 +8,14 @@ Versi `triase-tfidf-lr-20261028` · dibuat oleh `ai/scripts/train_triage.py`. Ha
 | --- | --- |
 | Data latih / uji | 5.109 tiket Jan–Jun / 1.559 tiket Jul–Ags 2026 |
 | Kelas (tim) | 21 (tim < 30 tiket di data latih → "Lainnya") |
-| **Akurasi top-1** | **74,41%** |
-| **Akurasi top-3** | **93,07%** |
-| MRR | 0,8420 (PoC hal. 54: 0,7989 TF-IDF / 0,8092 embedding, 39 grup) |
-| F1 makro / tertimbang | 67,69% / 73,68% |
+| **Akurasi top-1** | **75,88%** |
+| **Akurasi top-3** | **94,87%** |
+| MRR | 0,8563 |
+| F1 makro / tertimbang | 69,00% / 75,25% |
 | Pembanding: selalu tim terbanyak | 10,97% ("Technical Layanan SiPecut") |
-| Keyakinan ≥ 70% (saran bisa langsung diterima) | akurasi 87,03% · cakupan 51,44% tiket |
-| Keyakinan < 70% ("Perlu penilaian manual") | akurasi 61,03% · cakupan 48,56% tiket |
-| Galat kalibrasi (ECE) | 7,76% |
+| Keyakinan ≥ 70% (saran bisa langsung diterima) | akurasi 88,35% · cakupan 50,67% tiket |
+| Keyakinan < 70% ("Perlu penilaian manual") | akurasi 63,07% · cakupan 49,33% tiket |
+| Galat kalibrasi (ECE) | 9,37% |
 
 ## Input & metode
 
@@ -33,12 +33,12 @@ Versi `triase-tfidf-lr-20261028` · dibuat oleh `ai/scripts/train_triage.py`. Ha
 
 | C | Bobot kelas | Validasi Juni: top-1 | F1 makro |
 | --- | --- | --- | --- |
-| 3 | tidak | 79,60% | 73,28% |
-| 3 | balanced | 79,44% | 76,44% |
-| 10 | tidak | 78,82% | 72,91% |
-| 10 | balanced | 79,28% | 76,03% |
-| 30 | tidak | 78,04% | 72,98% |
-| 30 | balanced | 78,50% | 75,64% |
+| 3 | tidak | 79,44% | 73,07% |
+| 3 | balanced | 79,28% | 76,23% |
+| 10 | tidak | 78,97% | 72,73% |
+| 10 | balanced | 78,82% | 75,90% |
+| 30 | tidak | 78,66% | 73,09% |
+| 30 | balanced | 78,97% | 75,63% |
 
 Terpilih: C = 3, bobot kelas = tidak.
 
@@ -48,51 +48,51 @@ Bila terkalibrasi baik, "rata-rata keyakinan" ≈ "akurasi" di setiap pita.
 
 | Pita keyakinan | Tiket | Rata-rata keyakinan | Akurasi |
 | --- | --- | --- | --- |
-| 0–30% | 76 | 24,9% | 25,0% |
-| 30–50% | 215 | 42,4% | 47,4% |
-| 50–70% | 466 | 60,2% | 73,2% |
-| 70–90% | 802 | 80,9% | 87,0% |
+| 0–30% | 76 | 25,3% | 35,5% |
+| 30–50% | 224 | 42,9% | 50,0% |
+| 50–70% | 469 | 60,3% | 73,8% |
+| 70–90% | 790 | 80,9% | 88,4% |
 
 ## Per tim (data uji)
 
 | Tim | Tiket uji | Presisi | Recall | F1 |
 | --- | --- | --- | --- | --- |
 | Technical Layanan Aplikasi Jaringan - Email | 288 | 82,3% | 83,7% | 83,0% |
-| Technical Layanan Aplikasi Jaringan - Single Sign On (SSO) | 229 | 77,3% | 78,6% | 77,9% |
-| Lainnya | 209 | 58,8% | 33,5% | 42,7% |
+| Technical Layanan Aplikasi Jaringan - Single Sign On (SSO) | 230 | 78,0% | 78,7% | 78,4% |
+| Lainnya | 213 | 64,8% | 43,2% | 51,8% |
 | Technical Layanan SiPecut | 171 | 92,3% | 97,7% | 94,9% |
 | Technical Layanan Perangkat TI End User | 97 | 89,7% | 99,0% | 94,1% |
 | Technical Layanan Presensi | 96 | 85,3% | 90,6% | 87,9% |
 | Technical Layanan Back Office Selindo (BOS) | 74 | 80,0% | 64,9% | 71,6% |
-| Operator Pusat | 68 | 6,7% | 2,9% | 4,1% |
+| Operator Pusat | 67 | 8,3% | 3,0% | 4,4% |
 | Technical Layanan Meeting Online | 56 | 93,2% | 98,2% | 95,7% |
 | Technical Layanan Pengelolaan E-Sign | 47 | 95,9% | 100,0% | 97,9% |
 | Technical Layanan Perangkat Lunak COTS | 38 | 97,0% | 84,2% | 90,1% |
 | Technical Layanan SOBAT | 37 | 69,0% | 78,4% | 73,4% |
-| Technical Layanan FASIH Moda CAWI CAPI | 33 | 18,8% | 78,8% | 30,4% |
+| Technical Layanan FASIH Moda CAWI CAPI | 33 | 21,0% | 78,8% | 33,1% |
 | Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting | 25 | 71,9% | 92,0% | 80,7% |
 | Technical Layanan Koneksi Jaringan -  SSLVPN | 25 | 60,0% | 60,0% | 60,0% |
 | Technical Layanan Aplikasi KipApp | 22 | 78,6% | 100,0% | 88,0% |
 | Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting | 10 | 50,0% | 30,0% | 37,5% |
 | Technical Layanan Pengujian Aplikasi | 10 | 100,0% | 80,0% | 88,9% |
-| Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei | 10 | 33,3% | 10,0% | 15,4% |
-| Technical Layanan Koneksi Jaringan - LAN BPS Pusat | 9 | 87,5% | 77,8% | 82,4% |
+| Technical Layanan Koneksi Jaringan - LAN BPS Pusat | 9 | 100,0% | 77,8% | 87,5% |
+| Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei | 6 | 50,0% | 16,7% | 25,0% |
 | Technical Layanan Aplikasi Jaringan - Community | 5 | 33,3% | 20,0% | 25,0% |
 
 ## Tim yang paling sering tertukar (data uji)
 
 | Tim sebenarnya | Disarankan model | Tiket |
 | --- | --- | --- |
-| Lainnya | Technical Layanan FASIH Moda CAWI CAPI | 101 |
+| Lainnya | Technical Layanan FASIH Moda CAWI CAPI | 90 |
 | Technical Layanan Aplikasi Jaringan - Single Sign On (SSO) | Technical Layanan Aplikasi Jaringan - Email | 37 |
 | Technical Layanan Aplikasi Jaringan - Email | Technical Layanan Aplikasi Jaringan - Single Sign On (SSO) | 37 |
 | Operator Pusat | Lainnya | 11 |
-| Lainnya | Operator Pusat | 11 |
 | Operator Pusat | Technical Layanan SiPecut | 11 |
 | Technical Layanan Back Office Selindo (BOS) | Technical Layanan SOBAT | 9 |
 | Technical Layanan Koneksi Jaringan -  SSLVPN | Lainnya | 8 |
 | Operator Pusat | Technical Layanan Perangkat TI End User | 8 |
-| Lainnya | Technical Layanan Aplikasi Jaringan - Single Sign On (SSO) | 8 |
+| Operator Pusat | Technical Layanan Presensi | 7 |
+| Operator Pusat | Technical Layanan Aplikasi Jaringan - Email | 7 |
 
 ## Pergeseran data: tim di balik "Lainnya" (data uji)
 
@@ -101,7 +101,7 @@ atau ke tim lama yang mirip. Latih ulang berkala (mis. bulanan) mengatasi ini.
 
 | Tim asli | Tiket latih (Jan–Jun) | Tiket uji (Jul–Ags) |
 | --- | --- | --- |
-| Technical Layanan Insiden Keamanan Informasi | 16 | 129 |
+| Technical Layanan Insiden Keamanan Informasi | 17 | 133 |
 | Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI) | 0 | 21 |
 | Technical Layanan Aplikasi Simpeg Online | 22 | 9 |
 | Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting | 16 | 8 |
@@ -115,36 +115,62 @@ atau ke tim lama yang mirip. Latih ulang berkala (mis. bulanan) mengatasi ini.
 - Pembanding retrieval + LLM (opsional) tidak dijalankan: proyek berjalan tanpa API key LLM, sehingga tidak
   ada data yang dikirim ke API eksternal. Triase sepenuhnya memakai model lokal ini.
 
+<!-- latih-ulang:mulai -->
+## Latih ulang 31-10-2026 (data history versi baru)
+
+Set uji sama untuk keduanya: 1.559 tiket Jul–Ags 2026 dari `tickets_clean.parquet` terbaru.
+
+| Indikator | Model aktif `triase-tfidf-lr-20261028` | Kandidat `triase-tfidf-lr-20261031` |
+| --- | --- | --- |
+| Top-1 | 74,47% | 75,88% |
+| Top-3 | 93,01% | 94,87% |
+| MRR | 84,22% | 85,63% |
+| F1 makro | 68,01% | 69,00% |
+| Akurasi keyakinan ≥ 70% | 87,16% | 88,35% |
+| Cakupan keyakinan ≥ 70% | 51,44% | 50,67% |
+| Recall tim besar terendah | 78,70% | 78,70% |
+
+Gerbang (tata_kelola_ai.md §2): **lolos — kandidat dipakai**.
+<!-- latih-ulang:selesai -->
+
 <!-- jenis:mulai -->
 ## Saran jenis tiket REQ/INC (T4)
 
-Versi `jenis-tfidf-lr-20261031` · `ai/scripts/train_jenis.py` · artefak `ai/models/jenis.joblib` (di-ignore git). Input judul + deskripsi (tersamar), tanpa token jenis; pembagian waktu sama dengan model tim.
+Versi aktif `jenis-tfidf-lr-20261031` · `ai/scripts/train_jenis.py` · artefak `ai/models/jenis.joblib` (di-ignore git). Input judul + deskripsi (tersamar), tanpa token jenis; pembagian waktu sama dengan model tim.
 
 | Indikator | Nilai |
 | --- | --- |
-| Data latih / uji | 5.123 / 1.559 tiket |
+| Data latih / uji | 5.122 / 1.559 tiket |
 | **Akurasi** | **68,25%** |
 | F1 makro | 67,52% |
 | Pembanding: selalu jenis terbanyak | 57,28% |
-| Keyakinan ≥ 70% (saran ditampilkan) | akurasi 84,17% · cakupan 40,92% tiket |
-| Tiket uji yang yakin tetapi berbeda dari jenis asli | 101 |
+| Keyakinan ≥ 70% (saran ditampilkan) | akurasi 83,96% · cakupan 40,80% tiket |
+| Tiket uji yang yakin tetapi berbeda dari jenis asli | 102 |
+
+Latih ulang 31-10-2026 pada set uji yang sama: model aktif `jenis-tfidf-lr-20261031` akurasi 68,25% · F1 makro 67,50%; kandidat `jenis-tfidf-lr-20261031` akurasi 68,25% · F1 makro 67,52% → gerbang **lolos, kandidat dipakai**.
 
 Panel Saran AI menampilkan "Jenis disarankan" hanya bila saran berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator tetap memutuskan (ubah jenis di form tiket).
 <!-- jenis:selesai -->
 
-<!-- prioritas:mulai -->
-## Saran prioritas insiden (BR-05, 2.1.4 Priority P1)
+<!-- urgensi:mulai -->
+## Saran urgensi insiden (BR-05, 2.1.4 Urgency/Impact/Priority)
 
-Versi `prioritas-tfidf-lr-20261031` · `ai/scripts/train_prioritas.py` · artefak `ai/models/prioritas.joblib` (di-ignore git). Label = tier `resolution_sla_name` history (Medium 8 hari / Low 15 hari) sebagai proksi prioritas; Crit (9 tiket) & urgensi/dampak tetap aturan.
+Versi `urgensi-tfidf-tim-lr-20261031` · `ai/scripts/train_urgensi.py` · artefak `ai/models/urgensi.joblib` + `urgensi.metrics.json` (di-ignore git). Label = kolom `urgency` history versi baru (insiden Medium vs Low). Dampak = urgensi pada 99,74% insiden dan prioritas = matriks keduanya, jadi satu model; model prioritas lama (proksi tier SLA) dihapus.
 
 | Indikator | Nilai |
 | --- | --- |
-| Data latih / uji (insiden) | 2054 / 647 tiket |
-| **F1 makro** | **44,80%** |
-| Akurasi | 81,14% |
-| Pembanding: selalu Medium | akurasi 81,14% · F1 makro 44,80% |
-| Keyakinan ≥ 70% | akurasi 82,39% · cakupan 98,30% tiket |
-| Gerbang kualitas (F1 makro > pembanding) | tidak lolos |
+| Insiden berlabel (Medium / Low) | 2.200 / 508 |
+| Evaluasi | validasi silang 5 lipatan bertingkat (seed 42) |
+| **F1 makro** | **57,97%** |
+| Akurasi | 74,30% |
+| Recall Low / Medium · presisi Low | 31,89% / 84,09% · 31,64% |
+| Pembanding: selalu Medium | akurasi 81,24% · F1 makro 44,82% |
+| Keyakinan ≥ 70% (saran ditampilkan) | akurasi 84,24% · cakupan 81,09% insiden · Low tertangkap 0,00% |
+| Gerbang kualitas (F1 makro > pembanding) | **lolos** |
 
-Dipakai di saran prioritas insiden hanya bila gerbang lolos dan keyakinan ≥ ambang; selain itu prioritas dari matriks urgensi × dampak GLPI (aturan). Operator tetap memutuskan.
-<!-- prioritas:selesai -->
+Tidak dimodelkan (tetap aturan + sinyal): (kosong) 57, High 12 insiden; permintaan (REQ).
+Catatan label: 81,24% insiden berlabel Medium; sebagian besar kemungkinan nilai bawaan formulir, bukan penilaian petugas, sehingga batas atas akurasi model terbatas.
+Label = LR berbobot kelas seimbang (C = 3, sama dengan model jenis); keyakinan = probabilitas model terkalibrasi (sigmoid) untuk label itu. Argmax model terkalibrasi saja hampir selalu memilih Medium (F1 makro 45,44%).
+
+Panel Saran AI menampilkan "Urgensi disarankan" + keyakinan hanya bila gerbang lolos dan keyakinan ≥ ambang; selain itu urgensi dari aturan kata kunci. Dampak = urgensi, naik satu tingkat bila ≥ 3 tiket serupa dalam 60 menit atau layanan kritis (konfigurasi). Operator tetap memutuskan.
+<!-- urgensi:selesai -->

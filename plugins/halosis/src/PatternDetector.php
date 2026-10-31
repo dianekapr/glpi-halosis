@@ -119,6 +119,36 @@ final class PatternDetector extends CommonDBTM
     }
 
     /**
+     * Sinyal dampak saran triase: banyaknya insiden belum selesai dalam jendela pola (menit `pattern_window`),
+     * termasuk tiket ini, yang mirip tiket ini — kategori sama (kategori saran bila belum berkategori) atau judul
+     * mirip (aturan sama dengan metode kata kunci). Bila tiket sudah tertaut ke Problem pola yang masih terbuka,
+     * jumlah tiket pola itu dipakai bila lebih besar.
+     */
+    public static function countSimilarRecent(int $tickets_id, string $name, int $category_id): int
+    {
+        $tokens = KnowledgeSearch::tokens($name);
+        $count  = 1; // tiket ini
+        foreach (self::getRecentTickets(max(15, (int) Config::get('pattern_window'))) as $other) {
+            if ($other['id'] === $tickets_id) {
+                continue;
+            }
+            $other_tokens = $tokens === [] ? [] : KnowledgeSearch::tokens($other['name']);
+            if (($category_id > 0 && $other['category'] === $category_id)
+                || ($other_tokens !== [] && self::isSimilarTitle($tokens, $other_tokens))) {
+                $count++;
+            }
+        }
+        $pattern = self::getPatternForTicket($tickets_id);
+        if ($pattern !== null) {
+            $problem = new Problem();
+            if ($problem->getFromDB($pattern['problems_id']) && (int) $problem->fields['status'] < CommonITILObject::SOLVED) {
+                $count = max($count, $pattern['ticket_count']);
+            }
+        }
+        return $count;
+    }
+
+    /**
      * Tiket Insiden yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
      *
      * @return array<int, array{id: int, name: string, entities_id: int, urgency: int, category: int}>

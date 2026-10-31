@@ -1,0 +1,26 @@
+{
+  "sumber": "data/raw/data ticketing (202601_202608).xlsx",
+  "dibuat": "2026-10-31",
+  "tiket": 6681,
+  "sla": {
+    "met": 1859,
+    "overdue": 4580,
+    "persen": 28.87,
+    "dikecualikan": 242,
+    "imputasi": 1819,
+    "persen_tanpa_imputasi": 34.35,
+    "tanpa_imputasi": 4620
+  },
+  "kepuasan": {
+    "dinilai": 1155,
+    "rata_rata": 4.82,
+    "persen_puas": 95.76,
+    "distribusi": {
+      "1": 13,
+      "2": 5,
+      "3": 31,
+      "4": 79,
+      "5": 1027
+    }
+  }
+}

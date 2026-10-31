@@ -47,8 +47,21 @@ final class Triage
         'Printer'            => ['printer', 'cetak', 'print'],
     ];
     private const DEMO_FAILURE_WORDS = ['tidak bisa', 'gagal', 'error', 'mati', 'down', 'putus', 'tidak merespons'];
-    private const DEMO_URGENT_WORDS  = ['segera', 'hari ini', 'darurat', 'kritis', 'deadline', 'harus terkirim'];
-    private const DEMO_WIDE_WORDS    = ['semua', 'seluruh', 'rekan', 'satu tim', 'satker', 'banyak pengguna', 'kantor'];
+    /*
+     * Urgensi (skala GLPI 1–5). History versi baru: insiden 81% Medium (3), 19% Low (2), High hanya 12 tiket — jadi
+     * "layanan gagal" saja tetap Sedang; naik hanya bila ada desakan waktu/kerja terhenti, turun bila sekadar bertanya.
+     */
+    private const DEMO_CRITICAL_WORDS = ['darurat', 'kritis', 'lumpuh', 'tidak ada yang bisa', 'semua pengguna tidak bisa'];
+    private const DEMO_URGENT_WORDS   = [
+        'segera', 'hari ini', 'deadline', 'harus terkirim', 'mendesak', 'urgent', 'secepatnya', 'tenggat',
+        'batas waktu', 'pagi ini', 'siang ini', 'sore ini', 'tidak bisa bekerja', 'pekerjaan terhenti', 'terhambat',
+    ];
+    private const DEMO_NEGATED_URGENT = ['tidak mendesak', 'tidak urgent', 'tidak perlu segera', 'tidak harus hari ini'];
+    private const DEMO_LOW_WORDS      = [
+        'mohon info', 'bertanya', 'pertanyaan', 'menanyakan', 'cara', 'bagaimana', 'tidak mendesak', 'jika sempat',
+        'kapan saja', 'saran',
+    ];
+    private const DEMO_WIDE_WORDS     = ['semua', 'seluruh', 'rekan', 'satu tim', 'satker', 'banyak pengguna', 'kantor'];
 
     /**
      * Pemetaan tim history (keluaran layanan AI) → kategori daun & grup di GLPI ini.
@@ -121,6 +134,10 @@ final class Triage
             return null;
         }
 
+        if (!empty($result['impact_rule'])) {
+            $result = self::applyImpactSignals($ticket, $result);
+        }
+
         $suggestion = new Suggestion();
         $id = $suggestion->add([
             'tickets_id'        => $ticket->getID(),
@@ -134,6 +151,8 @@ final class Triage
             'candidates'        => json_encode($result['candidates'] ?? [], JSON_UNESCAPED_UNICODE),
             'type_suggested'    => (int) ($result['type_suggested'] ?? 0),
             'type_confidence'   => (int) ($result['type_confidence'] ?? 0),
+            'urgency_confidence' => (int) ($result['urgency_confidence'] ?? 0),
+            'impact_reason'     => mb_substr((string) ($result['impact_reason'] ?? ''), 0, 255),
             'quality_ok'        => (int) ($result['quality_ok'] ?? 1),
             'model'             => $result['model'],
             'is_demo'           => (int) ($result['model'] === self::DEMO_MODEL),
@@ -141,6 +160,69 @@ final class Triage
         ]);
 
         return $id ? $suggestion : null;
+    }
+
+    /**
+     * Sinyal dampak (BR-05): dampak = urgensi, naik satu tingkat (maks. 5) bila ≥ `pattern_min_tickets` insiden
+     * serupa dalam jendela pola (`pattern_window`, termasuk Problem pola yang masih terbuka) atau kategori saran
+     * termasuk layanan kritis (`critical_services`). Alasan disimpan untuk panel, mis. "Dampak Tinggi: 7 tiket
+     * serupa dalam 1 jam". Prioritas lalu mengikuti matriks urgensi × dampak GLPI.
+     *
+     * @param array<string, mixed> $result
+     *
+     * @return array<string, mixed>
+     */
+    public static function applyImpactSignals(Ticket $ticket, array $result): array
+    {
+        $category = (int) ($result['itilcategories_id'] ?? 0);
+        $window   = max(15, (int) Config::get('pattern_window'));
+        $similar  = PatternDetector::countSimilarRecent($ticket->getID(), (string) $ticket->fields['name'], $category);
+        $critical = self::criticalService($category);
+
+        $result['impact']        = (int) $result['urgency'];
+        $result['impact_reason'] = '';
+        $reasons = self::impactReasons($similar, max(2, (int) Config::get('pattern_min_tickets')), $window, $critical);
+        if ($reasons !== []) {
+            $result['impact'] = min(5, $result['impact'] + 1);
+            $result['impact_reason'] = sprintf('Dampak %s: %s', Ticket::getImpactName($result['impact']), implode('; ', $reasons));
+        }
+        unset($result['impact_rule']);
+        return $result;
+    }
+
+    /**
+     * Alasan kenaikan dampak (kosong = dampak tetap sama dengan urgensi).
+     *
+     * @return string[]
+     */
+    public static function impactReasons(int $similar, int $min, int $window_minutes, ?string $critical): array
+    {
+        $reasons = [];
+        if ($similar >= $min) {
+            $window = $window_minutes % 60 === 0 ? sprintf('%d jam', $window_minutes / 60) : sprintf('%d menit', $window_minutes);
+            $reasons[] = sprintf('%d tiket serupa dalam %s', $similar, $window);
+        }
+        if ($critical !== null) {
+            $reasons[] = sprintf('layanan kritis (%s)', $critical);
+        }
+        return $reasons;
+    }
+
+    /**
+     * Kata kunci layanan kritis yang cocok dengan nama lengkap kategori (utuh per kata, tanpa beda huruf besar).
+     */
+    public static function criticalService(int $category_id, ?string $category_name = null): ?string
+    {
+        $name = $category_name ?? ($category_id > 0 ? Suggestion::categoryName($category_id) : '');
+        if ($name === '') {
+            return null;
+        }
+        foreach (Config::getCriticalServices() as $keyword) {
+            if (preg_match('/(?<![\pL\pN])' . preg_quote($keyword, '/') . '(?![\pL\pN])/iu', $name) === 1) {
+                return $keyword;
+            }
+        }
+        return null;
     }
 
     /**
@@ -290,12 +372,14 @@ final class Triage
             $result['quality_ok'] = 0;
         }
 
-        // Prioritas insiden dari model (BR-05, P1) hanya bila layanan menyatakan model lolos gerbang & yakin;
-        // selain itu matriks urgensi × dampak GLPI (aturan)
-        $priority = (array) ($response['prioritas_saran'] ?? []);
-        if ((int) $ticket->fields['type'] === Ticket::INCIDENT_TYPE && in_array((int) ($priority['prioritas'] ?? 0), range(1, 6), true)) {
-            $result['priority'] = (int) $priority['prioritas'];
-            $result['explanation_priority'] = sprintf(' Prioritas dari model history (tier %s, keyakinan %d%%).', $priority['tier'] ?? '?', (int) round(100 * (float) ($priority['keyakinan'] ?? 0)));
+        // Urgensi insiden dari model history (BR-05) hanya bila layanan menyatakan model lolos gerbang & yakin, dan
+        // aturan tidak menemukan desakan Tinggi/Sangat tinggi (model hanya mengenal Medium/Low; High/Critical tetap
+        // aturan). Dampak & prioritas diturunkan setelahnya (applyImpactSignals, matriks GLPI).
+        $urgency = (array) ($response['urgensi_saran'] ?? []);
+        if ((int) $ticket->fields['type'] === Ticket::INCIDENT_TYPE && $result['urgency'] <= 3
+            && in_array((int) ($urgency['nilai_glpi'] ?? 0), range(1, 5), true)) {
+            $result['urgency'] = $result['impact'] = (int) $urgency['nilai_glpi'];
+            $result['urgency_confidence'] = max(1, min(100, (int) round(100 * (float) ($urgency['keyakinan'] ?? 0))));
         }
 
         // Saran jenis REQ/INC (T4), hanya bila layanan punya model jenis
@@ -341,7 +425,7 @@ final class Triage
             $result['confidence'] = min($result['confidence'], max(0, Config::getLowThreshold() - 1));
             $explanation .= ' Kelas gabungan "Lainnya" (tim kecil): tentukan tim secara manual.';
         }
-        $result['explanation'] = mb_substr($explanation . ($result['explanation_priority'] ?? ''), 0, 1000);
+        $result['explanation'] = mb_substr($explanation, 0, 1000);
         $result['model']       = mb_substr((string) ($response['versi_model'] ?? 'halosis-ai'), 0, 100);
         return $result;
     }
@@ -396,13 +480,24 @@ final class Triage
             }
         }
 
-        $has = static fn (array $words): array => array_values(array_filter($words, static fn ($w) => str_contains($text, $w)));
-        $failure = $has(self::DEMO_FAILURE_WORDS);
-        $urgent  = $has(self::DEMO_URGENT_WORDS);
-        $wide    = $has(self::DEMO_WIDE_WORDS);
+        // Kata utuh: "mati" tidak boleh cocok dengan "otomatis", "down" dengan "download"
+        $matches = static fn (string $haystack, string $word): bool
+            => preg_match('/(?<![\pL\pN])' . preg_quote($word, '/') . '(?![\pL\pN])/u', $haystack) === 1;
+        $has = static fn (array $words): array => array_values(array_filter($words, static fn ($w) => $matches($text, $w)));
+        $failure  = $has(self::DEMO_FAILURE_WORDS);
+        $critical = $has(self::DEMO_CRITICAL_WORDS);
+        // Negasi ("tidak mendesak", "tidak perlu segera") bukan desakan
+        $plain    = str_replace(self::DEMO_NEGATED_URGENT, ' ', $text);
+        $urgent   = array_values(array_filter(self::DEMO_URGENT_WORDS, static fn ($w) => $matches($plain, $w)));
+        $low      = $has(self::DEMO_LOW_WORDS);
+        $wide     = $has(self::DEMO_WIDE_WORDS);
 
-        $urgency = $urgent !== [] ? 5 : ($failure !== [] ? 4 : 3);
-        $impact  = $wide !== [] ? 4 : 3;
+        $urgency = match (true) {
+            $critical !== [] => 5,
+            $urgent !== [] => 4,
+            $low !== [] && $failure === [] => 2,
+            default => 3,
+        };
         $confidence = match (true) {
             count($best_hits) >= 2 => 88,
             count($best_hits) === 1 => 74,
@@ -418,18 +513,23 @@ final class Triage
         if ($failure !== []) {
             $parts[] = sprintf('ada indikasi layanan gagal ("%s")', $failure[0]);
         }
-        if ($urgent !== []) {
+        if ($critical !== []) {
+            $parts[] = sprintf('layanan lumpuh/darurat ("%s")', $critical[0]);
+        } elseif ($urgent !== []) {
             $parts[] = sprintf('ada tenggat/desakan ("%s")', $urgent[0]);
+        } elseif ($urgency === 2) {
+            $parts[] = sprintf('permintaan informasi tanpa gangguan ("%s")', $low[0]);
         }
         if ($wide !== []) {
-            $parts[] = sprintf('berdampak ke lebih dari satu orang ("%s")', $wide[0]);
+            $parts[] = sprintf('menyebut lebih dari satu orang ("%s")', $wide[0]);
         }
 
         $group_id = $best_id > 0 ? $context['categories'][$best_id]['groups_id'] : 0;
         return [
             'itilcategories_id' => $best_id,
-            'impact'            => $impact,
+            'impact'            => $urgency, // dampak = urgensi, lalu sinyal dampak (applyImpactSignals)
             'urgency'           => $urgency,
+            'impact_rule'       => true, // dampak dari aturan: sinyal dampak diterapkan di generate()
             'groups_id'         => isset($context['groups'][$group_id]) ? $group_id : 0,
             'confidence'        => $confidence,
             'explanation'       => 'Mode demo (aturan kata kunci): ' . implode('; ', $parts) . '.',

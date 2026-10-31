@@ -188,3 +188,17 @@ Setelah huruf kecil, angka → `#`, dan penanda samaran dihapus.
 | tidak bisa mengajukan cuti di sipecut | 11 |
 | t # # perbaikan laptop | 11 |
 
+<!-- baseline:mulai -->
+## Baseline dashboard (history versi baru)
+
+`ai/scripts/baseline.py` · 2026-10-31 · sumber `data/raw/data ticketing (202601_202608).xlsx` · dibaca dashboard dari `plugins/halosis/baseline.json`.
+
+| Indikator | Nilai | Rincian |
+| --- | ---: | --- |
+| Kepatuhan SLA (`overall_sla_result_extended`) | **28,87%** | MET 1.859 ÷ (MET + OVERDUE 4.580); UNKNOWN / tanpa bukti SLA 242 dikecualikan |
+| … hasil berimputasi (DQR-04) | 1.819 | komponen SLA diestimasi (jam kerja); ditandai `sla_imputasi` |
+| … hanya hasil asli (tanpa imputasi) | 34,35% | 4.620 tiket |
+| Kepuasan (rating 1–5) | **95,76% ≥ 4** | 1.155 tiket dinilai (17,29% dari 6.681), rata-rata 4,82; 1★ 13, 2★ 5, 3★ 31, 4★ 79, 5★ 1.027 |
+
+Baseline lama 27,59% (`overall_sla_result` PASS ÷ PASS + BREACH, ekspor lama) diganti angka di atas. Kepuasan hanya dari tiket yang dinilai pemohon (bias responden: sebagian besar 5★).
+<!-- baseline:selesai -->

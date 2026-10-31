@@ -13,6 +13,7 @@ Pakai (dari folder induk proyek):  .venv/bin/python ai/scripts/train_triage.py
 """
 from __future__ import annotations
 
+import re
 import sys
 from collections import Counter
 from datetime import date
@@ -24,7 +25,7 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_recall_fscore_support
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import privacy  # noqa: E402
+from halosis_ai import privacy, quality  # noqa: E402
 from halosis_ai.triage_model import (  # noqa: E402
     MANUAL_REVIEW_THRESHOLD, MIN_TEAM_TICKETS, OTHER, SimilarIndex, TriageModel, build_pipeline, model_text,
 )
@@ -40,6 +41,7 @@ TRAIN_END = pd.Timestamp('2026-07-01')   # latih: < 1 Jul (Jan–Jun), uji: ≥ 
 VALID_START = pd.Timestamp('2026-06-01')  # pemilihan pengaturan: latih Jan–Mei, validasi Jun
 GRID = [{'c': c, 'class_weight': w} for c in (3.0, 10.0, 30.0) for w in (None, 'balanced')]
 VERSION = f'triase-tfidf-lr-{date.today():%Y%m%d}'
+RETRAIN_MARKS = ('<!-- latih-ulang:mulai -->', '<!-- latih-ulang:selesai -->')
 
 
 def load() -> pd.DataFrame:
@@ -88,6 +90,34 @@ def select_settings(train: pd.DataFrame) -> tuple[dict, list[dict]]:
         results.append({**settings, 'top1': scores['top1'], 'f1_macro': scores['f1_macro']})
     best = max(results, key=lambda r: (round(r['top1'], 3), r['f1_macro']))
     return {'c': best['c'], 'class_weight': best['class_weight']}, results
+
+
+def replace_section(path: Path, marks: tuple[str, str], section: str) -> None:
+    """Ganti (atau tambahkan) bagian bertanda di laporan markdown."""
+    start, end = marks
+    text = path.read_text(encoding='utf-8') if path.exists() else ''
+    block = f'{start}\n{section}\n{end}'
+    if start in text:
+        text = re.sub(re.escape(start) + '.*?' + re.escape(end), lambda _: block, text, flags=re.S)
+    else:
+        text = text.rstrip('\n') + '\n\n' + block + '\n'
+    path.write_text(text, encoding='utf-8')
+
+
+def retrain_section(old: dict | None, new: dict, gate: dict) -> str:
+    """Banding model aktif vs kandidat latih ulang pada set uji yang sama + keputusan gerbang."""
+    keys = [('top1', 'Top-1'), ('top3', 'Top-3'), ('mrr', 'MRR'), ('f1_makro', 'F1 makro'),
+            ('akurasi_yakin', 'Akurasi keyakinan ≥ 70%'), ('cakupan_yakin', 'Cakupan keyakinan ≥ 70%'),
+            ('recall_tim_besar_min', 'Recall tim besar terendah')]
+    fmt = lambda v: '–' if v is None else (num(v, 4) if v > 1 else f(v))  # noqa: E731
+    rows = [[label, fmt(old.get(k)) if old else '–', fmt(new.get(k))] for k, label in keys]
+    return '\n'.join([
+        f'## Latih ulang {date.today():%d-%m-%Y} (data history versi baru)', '',
+        f'Set uji sama untuk keduanya: {num(new["tiket_uji"])} tiket Jul–Ags 2026 dari `tickets_clean.parquet` terbaru.', '',
+        table(['Indikator', f'Model aktif `{old["versi"]}`' if old else 'Model aktif', f'Kandidat `{new["versi"]}`'], rows), '',
+        f'Gerbang (tata_kelola_ai.md §2): **{"lolos — kandidat dipakai" if gate["lolos"] else "tidak lolos — model aktif tetap"}**'
+        + (f' ({"; ".join(gate["alasan"])})' if gate['alasan'] else '') + '.',
+    ])
 
 
 def table(headers, rows) -> str:
@@ -151,11 +181,22 @@ def main() -> None:
         'f1_macro': round(float(scores['f1_macro']), 4), 'ambang': MANUAL_REVIEW_THRESHOLD,
     }
     model = TriageModel(pipeline=pipeline, similar=similar, version=VERSION, metadata=metadata)
-    MODEL_OUT.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_OUT, compress=3)
-    # Metrik gerbang kualitas (T32) → ai/models/triage.metrics.json, dibaca halosis-ai
+    # Gerbang (tata_kelola_ai.md §2): kandidat & model aktif dinilai pada set uji yang sama; artefak hanya diganti
+    # bila kandidat lolos semua syarat, termasuk Top-1/Top-3 tidak turun > 2 poin dari model aktif
     import model_metrics  # noqa: PLC0415  (impor di sini: model_metrics mengimpor modul ini)
-    model_metrics.main()
+    previous = joblib.load(MODEL_OUT) if MODEL_OUT.exists() else None
+    old = model_metrics.compute(previous, df) if previous is not None else None
+    candidate = model_metrics.compute(model, df)
+    if old:
+        candidate['versi_sebelumnya'] = {k: old[k] for k in ('versi', 'top1', 'top3', 'akurasi_yakin', 'recall_tim_besar_min')}
+    gate = quality.check('triase', candidate)
+    MODEL_OUT.parent.mkdir(parents=True, exist_ok=True)
+    if gate['lolos']:
+        joblib.dump(model, MODEL_OUT, compress=3)
+        model_metrics.write(candidate)  # → ai/models/triage.metrics.json, dibaca halosis-ai (T32)
+    else:
+        model_metrics.write({**old, 'dihitung_ulang_tanpa_latih': True})
+    retrain = retrain_section(old, candidate, gate)
 
     report = '\n'.join([
         '# Model saran triase HaloSIS (routing ke tim)',
@@ -236,7 +277,9 @@ def main() -> None:
     if any(leaks.values()):
         raise SystemExit(f'Laporan memuat pola data pribadi, tidak ditulis: {leaks}')
     REPORT_OUT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_OUT.write_text(report + '\n', encoding='utf-8')
+    if gate['lolos']:
+        REPORT_OUT.write_text(report + '\n', encoding='utf-8')
+    replace_section(REPORT_OUT, RETRAIN_MARKS, retrain)
 
     print(f'Data latih/uji     : {len(train)} / {len(test)} | kelas {len(scores["classes"])}')
     print(f'Pengaturan terpilih: {settings}')
@@ -245,7 +288,10 @@ def main() -> None:
     print(f'Keyakinan ≥70%     : akurasi {f(acc_hi)} pada {f(confident.mean())} tiket')
     print(f'Keyakinan <70%     : akurasi {f(acc_lo)} pada {f((~confident).mean())} tiket')
     print(f'ECE                : {f(ece)}')
-    print(f'Disimpan           : {MODEL_OUT.relative_to(ROOT)}, {REPORT_OUT.relative_to(ROOT)}')
+    print(f'Gerbang            : {"lolos → artefak baru dipakai" if gate["lolos"] else "tidak lolos → artefak lama tetap"} {gate["alasan"]}')
+    if old:
+        print(f'Model aktif (uji sama): top-1 {f(old["top1"])} / top-3 {f(old["top3"])} | yakin {f(old["akurasi_yakin"])}')
+    print(f'Disimpan           : {MODEL_OUT.relative_to(ROOT) if gate["lolos"] else "(tidak)"}, {REPORT_OUT.relative_to(ROOT)}')
 
 
 if __name__ == '__main__':

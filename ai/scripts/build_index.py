@@ -2,7 +2,11 @@
 
 - KB  : diambil dari database GLPI (container `db`) — artikel yang punya target visibilitas
         (entitas/profil/grup/pengguna) dianggap terbit. Jika container mati, KB dilewati dengan peringatan.
-- QA  : data/processed/qa_pairs.parquet (sudah disamarkan): "masalah" + "solusi" per tiket selesai.
+- QA  : data/processed/qa_pairs.parquet (sudah disamarkan): "masalah" + "solusi" per tiket selesai; solusi > 220 kata
+        dipecah, masalah diulang di tiap potongan (search.ticket_chunks). Penggabungan solusi identik (DEDUP) tersedia
+        tetapi mati: Top-1 turun 1,6–2 poin di set uji reports/banding_solusi.md.
+- Layanan: potongan katalog layanan (POST /reindex/layanan) di indeks lama dibawa ulang, agar tidak hilang sampai
+        GLPI mengirim ulang katalog.
 Semua teks disamarkan ulang sebelum di-embed. Hanya angka yang dicetak.
 
 Pakai (dari folder induk proyek):  .venv/bin/python ai/scripts/build_index.py
@@ -19,10 +23,11 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from halosis_ai import privacy  # noqa: E402
-from halosis_ai.search import INDEX_DIR, MODEL_NAME, chunk, embed, strip_html  # noqa: E402
+from halosis_ai.search import INDEX_DIR, MODEL_NAME, chunk, embed, strip_html, ticket_chunks  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 QA = ROOT / 'data/processed/qa_pairs.parquet'
+DEDUP = False  # gerbang reports/banding_solusi.md: dedup lebih buruk dari satu potongan per tiket
 
 KB_SQL = """
 SELECT k.id, k.name, REPLACE(REPLACE(k.answer, '\\t', ' '), '\\n', ' ') AS answer
@@ -54,22 +59,23 @@ def load_kb() -> pd.DataFrame:
 
 
 def load_qa() -> pd.DataFrame:
-    qa = pd.read_parquet(QA)
-    qa = qa[qa['solusi'].fillna('').str.len() > 0]
-    return pd.DataFrame({
-        'sumber': qa['ticket_number'].astype(str),
-        'jenis_sumber': 'tiket',
-        'judul': [str(privacy.mask_text(str(m)))[:120] for m in qa['masalah']],
-        'teks': [f'Masalah: {privacy.mask_text(str(m))} Solusi: {privacy.mask_text(str(s))}'
-                 for m, s in zip(qa['masalah'], qa['solusi'])],
-    })
+    return ticket_chunks(pd.read_parquet(QA), dedup=DEDUP)
+
+
+def load_services() -> pd.DataFrame:
+    """Potongan katalog layanan dari indeks yang sedang dipakai (jenis_sumber 'layanan'), bila ada."""
+    try:
+        old = pd.read_parquet(INDEX_DIR / 'chunks.parquet')
+    except (OSError, ValueError):
+        return pd.DataFrame(columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
+    return old.loc[old['jenis_sumber'] == 'layanan', ['sumber', 'jenis_sumber', 'judul', 'teks']].reset_index(drop=True)
 
 
 def main() -> None:
-    kb, qa = load_kb(), load_qa()
-    chunks = pd.concat([kb, qa], ignore_index=True)
+    kb, qa, services = load_kb(), load_qa(), load_services()
+    chunks = pd.concat([kb, qa, services], ignore_index=True)
     leaks = sum(len(p.findall(' '.join(chunks['teks']))) for p in
-                (privacy._EMAIL, privacy._NIP, privacy._NIK, privacy._PHONE))
+                (privacy._EMAIL, privacy._NIP, privacy._NIP_OLD, privacy._NIK, privacy._PHONE))
     if leaks:
         raise SystemExit(f'Potongan memuat {leaks} pola data pribadi, indeks tidak ditulis.')
 
@@ -79,7 +85,9 @@ def main() -> None:
     np.save(INDEX_DIR / 'vectors.npy', vectors)
     print(f'Model embedding : {MODEL_NAME} (dimensi {vectors.shape[1]})')
     print(f'Potongan KB     : {len(kb)} dari {kb["sumber"].nunique()} artikel')
-    print(f'Potongan tiket  : {len(qa)}')
+    print(f'Potongan tiket  : {len(qa)} dari {int(qa.drop_duplicates("sumber")["jumlah_tiket"].sum())} tiket '
+          f'({qa["sumber"].nunique()} sumber, {int((qa.groupby("sumber").size() > 1).sum())} dipecah > 220 kata)')
+    print(f'Potongan layanan: {len(services)} (dibawa dari indeks sebelumnya)')
     print(f'Disimpan        : {INDEX_DIR.relative_to(ROOT)}/chunks.parquet, vectors.npy')
 
 

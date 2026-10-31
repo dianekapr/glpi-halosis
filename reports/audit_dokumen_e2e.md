@@ -88,7 +88,7 @@ AuditLog menyimpan nilai sebelum/sesudah (Riwayat GLPI).
 | DQR-01 | Data konsisten: bebas duplikat, field wajib terisi | ✅ | `prepare_data.py`, `reconcile.py` (duplikat & tidak lengkap dilaporkan) |
 | DQR-02 | Timestamp valid & konsisten | ✅ | Tanggal dibuka tidak valid → gagal (`ai/scripts/reconcile.py:92`); **urutan selesai/ditutup < dibuka** ditandai `bad_order` (`ai/scripts/prepare_data.py:146`, dipakai `reconcile.py:95`); data nyata: 0 baris |
 | DQR-03 | Penanganan data yang melanggar DQR-01 | ✅ | Baris gagal dicatat di rekonsiliasi |
-| DQR-04 | Data historis kurang lengkap diberi flag | ✅ | Kolom `tidak_lengkap` + `alasan_tidak_lengkap` di `tickets_clean.parquet` (`ai/scripts/prepare_data.py:126`); data nyata: 742 dari 6.682 tiket ditandai |
+| DQR-04 | Data historis kurang lengkap diberi flag | ✅ | Kolom `tidak_lengkap` + `alasan_tidak_lengkap` di `tickets_clean.parquet` (`ai/scripts/prepare_data.py`); history versi baru: 790 dari 6.681 tiket ditandai (`reports/rekonsiliasi.md`); **hasil SLA berimputasi ditandai** kolom `sla_imputasi` (1.819 tiket, `overall_sla_result_basis` = IMPUTED) dan dicatat di baseline dashboard |
 | DQR-05 | Definisi populasi data latih/evaluasi eksplisit | ✅ | **Diperbaiki:** definisi populasi (sumber, status, jenis, filter tim, periode) di `reports/triase.md` › Input & metode (juga di generator `train_triage.py`) |
 | AIR-01..04 | Retrieval, triage, conversational, pattern | ✅ | `/chat`, `/triage`, chatbot, `/pola` |
 | KR-01 | Pemilik per **domain** knowledge | ✅ | **Diperbaiki:** tabel domain → pemilik di `reports/tata_kelola_ai.md` §4b |
@@ -158,7 +158,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | T29 | Pelatihan per peran | WBS 6.3, 7.3 | `reports/panduan_peran.md` | ✅ (dok.) |
 | T30 | Self-service dimulai dari Email, SSO, SiPecut (48,2% tiket) | 5.1 Outcome | FAQ ketiga layanan (9 artikel KB terindeks; SiPecut ditambah 2) | ✅ |
 | T31 | Pertanyaan di luar layanan TI | wawancara Operator | Chatbot mengarahkan ke Kepegawaian/Keuangan/Umum tanpa tawaran laporan | ✅ |
-| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang memeriksa **semua** syarat `tata_kelola_ai.md` dari metrik tersimpan (`ai/halosis_ai/quality.py`): triase Top-1 0,7441 ≥ 0,68, akurasi pada ambang 0,8703 ≥ 0,85, recall tim besar terendah 0,786 ≥ 0,50 (`ai/models/triage.metrics.json`, dihitung tanpa latih ulang); jenis F1 makro > pembanding; prioritas tidak lolos → tidak dipakai. `/health` → status per model; panel "belum lolos uji kualitas" | ✅ |
+| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang memeriksa **semua** syarat `tata_kelola_ai.md` dari metrik tersimpan (`ai/halosis_ai/quality.py`): triase (dilatih ulang dari history versi baru) Top-1 0,7588 ≥ 0,68, akurasi pada ambang 0,8835 ≥ 0,85, tidak turun dari model aktif pada set uji sama (0,7447) → dipakai; jenis & urgensi F1 makro > pembanding dan tidak turun > 2 poin dari versi aktif; urgensi F1 0,5797 > 0,4482 → lolos. Latih ulang hanya mengganti artefak bila lolos. `/health` → status per model; panel "belum lolos uji kualitas" | ✅ |
 
 ### 8.2 Risiko R1–R4 (Tabel 1.4) & risiko organisasi (Tabel 2.21) → mitigasi di sistem
 
@@ -193,7 +193,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | --- | --- | --- |
 | 2.1.2 Arsitektur: ITSM + layanan AI terpisah ber-API | ✅ | GLPI + plugin + `halosis-ai` (FastAPI) |
 | 2.1.3 Data: profiling, cleansing, masking | ✅ | `prepare_data.py`, `reconcile.py`, `eda.md` |
-| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 | Model tim & jenis lolos gerbang (`/health`); **model prioritas insiden diuji** (proksi `resolution_sla_name`, F1 makro 44,80% = pembanding "selalu Medium") → ditolak gerbang, prioritas dari matriks; urgensi/dampak aturan (history tanpa kolom) |
+| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 | Model tim, jenis, dan **urgensi insiden** lolos gerbang (`/health`). **History versi baru memuat urgensi/dampak/prioritas**; dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya, jadi satu model urgensi (Medium vs Low): F1 makro 57,97% vs pembanding 44,82%, akurasi 74,30%. **81% Medium kemungkinan nilai bawaan** formulir, sehingga pada keyakinan ≥ 70% semua saran = Medium. Dampak = urgensi + sinyal (tiket serupa / layanan kritis), prioritas = matriks GLPI; Operator memvalidasi (Terima/Ubah) |
 | 2.1.5 Integrasi: SSO, data historis, notifikasi, monitoring, pemisahan lingkungan, uji beban | 🟡 | SSO Keycloak lokal ✅, migrasi sampel ✅, notifikasi ✅, monitoring profile ✅, uji beban ✅ (laptop); SSO BPS & lingkungan staging/produksi = rencana (`rencana_implementasi.md`) |
 | 2.1.6 Infrastruktur: VM/OpenShift, sizing | ⚪ | Docker lokal; sizing dari uji beban (AI ±8,7 core pada 200 VU) |
 | Skenario 2: kandidat platform & fit-gap BR-01..08 | ✅ | GLPI 12 + plugin; audit BR/FR/UC (`audit_kelengkapan.md`) |

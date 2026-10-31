@@ -10,6 +10,7 @@ use Group_Ticket;
 use ITILCategory;
 use Problem;
 use Ticket;
+use TicketSatisfaction;
 
 /**
  * Angka dashboard kinerja AI, dihitung dari tabel log plugin saja:
@@ -42,6 +43,7 @@ final class Stats
             'filter'       => ['groups_id' => $groups_id, 'categories_id' => $categories_id],
             'drift'        => self::drift($filter),
             'kpi'          => self::serviceKpi($start, $categories_id),
+            'baseline'     => self::baseline(),
             'volume'       => self::ticketVolume(),
             'patterns'     => self::patterns($start),
             'pattern_trend' => self::patternTrend(),
@@ -231,6 +233,50 @@ final class Stats
     }
 
     /**
+     * Baseline pembanding dari history ESTIM versi baru (`ai/scripts/baseline.py` → baseline.json): kepatuhan SLA
+     * (overall_sla_result_extended MET ÷ MET + OVERDUE, termasuk jumlah hasil berimputasi) & kepuasan (% rating ≥ 4).
+     * Null bila berkas belum dibuat.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function baseline(): ?array
+    {
+        $path = dirname(__DIR__) . '/baseline.json';
+        $data = is_readable($path) ? json_decode((string) file_get_contents($path), true) : null;
+        return is_array($data) && isset($data['sla'], $data['kepuasan']) ? $data : null;
+    }
+
+    /**
+     * Kepuasan pemohon dari survei GLPI (tiket dibuka dalam periode, survei sudah dijawab): % skor ≥ 4 dari 5,
+     * sebanding baseline rating ESTIM.
+     *
+     * @return array{answered: int, satisfied_pct: ?float}
+     */
+    private static function satisfaction(DateTimeImmutable $start, int $categories_id = 0): array
+    {
+        global $DB;
+
+        $where = ['t.is_deleted' => 0, 't.date' => ['>=', $start->format('Y-m-d H:i:s')], 'NOT' => ['s.date_answered' => null]];
+        if ($categories_id > 0) {
+            $where['t.itilcategories_id'] = getSonsOf(ITILCategory::getTable(), $categories_id);
+        }
+        $answered = $satisfied = 0;
+        foreach ($DB->request([
+            'SELECT'     => ['s.satisfaction', 's.satisfaction_scaled_to_5'],
+            'FROM'       => TicketSatisfaction::getTable() . ' AS s',
+            'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['s' => 'tickets_id', 't' => 'id']]],
+            'WHERE'      => $where,
+        ]) as $row) {
+            $score = $row['satisfaction_scaled_to_5'] !== null ? (float) $row['satisfaction_scaled_to_5'] : (float) $row['satisfaction'];
+            if ($score > 0) {
+                $answered++;
+                $satisfied += (int) ($score >= 4);
+            }
+        }
+        return ['answered' => $answered, 'satisfied_pct' => $answered > 0 ? round($satisfied * 100 / $answered, 1) : null];
+    }
+
+    /**
      * KPI layanan tabel 1.3 (T24) untuk tiket yang dibuka dalam periode: % pelanggaran SLA respons (TTO) &
      * penyelesaian (TTR), median waktu sampai diambil/ditugaskan, % diselesaikan Operator tanpa eskalasi ke tim.
      *
@@ -265,7 +311,7 @@ final class Stats
                 $k['ttr_n']++;
                 $k['ttr_b'] += (int) (($t['solvedate'] ?: $now) > $t['time_to_resolve']);
             }
-            // Kepatuhan keseluruhan, sebanding baseline ESTIM overall_sla_result (PASS ÷ (PASS + BREACH)):
+            // Kepatuhan keseluruhan, sebanding baseline ESTIM overall_sla_result_extended (MET ÷ (MET + OVERDUE)):
             // BREACH bila respons atau penyelesaian terlampaui; PASS bila selesai tanpa terlampaui; sisanya berjalan
             $breached = ($t['time_to_own'] && ($t['takeintoaccountdate'] ?: $now) > $t['time_to_own'])
                 || ($t['time_to_resolve'] && ($t['solvedate'] ?: $now) > $t['time_to_resolve']);
@@ -297,6 +343,7 @@ final class Stats
             'ttr_n' => $k['ttr_n'], 'ttr_breach' => $pct($k['ttr_b'], $k['ttr_n']),
             'assign_median_min' => $median, 'solved' => $k['solved'], 'l1_pct' => $pct($k['l1'], $k['solved']),
             'pass_pct' => $pct($k['pass'], $k['pass'] + $k['breach']), 'decided' => $k['pass'] + $k['breach'],
+            'satisfaction' => self::satisfaction($start, $categories_id),
         ];
     }
 

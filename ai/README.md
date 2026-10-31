@@ -1,6 +1,10 @@
 # AI HaloSIS — pipeline data & layanan
 
-Dibangun dari history tiket `data/raw/ticketing_history_202601_202608.xlsx` (6.682 tiket Jan–Ags 2026).
+Dibangun dari history tiket versi baru `data/raw/data_ticketing_202601_202608.xlsx` (6.681 tiket Jan–Ags 2026,
+220 kolom termasuk `impact`/`urgency`/`priority`, rating, SLA diperluas; nama unduhan asli
+`data ticketing (202601_202608).xlsx` juga dikenali). Tanggal di ekspor ini berupa angka serial Excel → datetime
+lewat satu fungsi bersama `halosis_ai/dates.py`. Ekspor lama `ticketing_history_202601_202608.xlsx` hanya dipakai
+`reconcile.py` untuk banding lama vs baru.
 
 ## Aturan data (wajib)
 
@@ -23,6 +27,7 @@ Penyamaran (`ai/halosis_ai/privacy.py`), di semua kolom teks:
 | --- | --- |
 | Email | `[EMAIL]` |
 | NIP 18 digit (rapat / berkelompok) | `[NIP]` |
+| NIP lama 9 digit, hanya setelah kata "NIP" ("NIP 340012345", "nip lama: …") | `[NIP]` |
 | NIK 16 digit | `[NIK]` |
 | Nomor HP (08…, +62…, 62…) | `[TELEPON]` |
 | Nilai setelah password/pasw/pwd/sandi/PIN/OTP (termasuk "password sementara :") | `[RAHASIA]` |
@@ -32,9 +37,14 @@ Penyamaran (`ai/halosis_ai/privacy.py`), di semua kolom teks:
 Kolom nama pengguna dihapus dan diganti ID samaran (`*_pid`, mis. `U00042`; pemetaan tidak disimpan).
 Skrip **memindai ulang** keluaran dan menolak menyimpan bila masih ada pola data pribadi.
 
-Solusi (`ai/halosis_ai/conversations.py`): `all_conversations` dipecah per pesan; kalimat template operator &
-salam dibuang; pesan permintaan informasi dan pesan pegawai bukan solusi; pesan bercirikan petugas yang terakhir
-dipilih. Bila tidak ada, dipakai `resolution` lalu `close_notes` yang bukan template ("solved", "done", ".").
+Solusi (`ai/halosis_ai/conversations.py`): `all_conversations` dipecah per pesan (`waktu | teks || …`; tidak ada
+penanda pengirim di teks). Solusi = **pesan terakhir yang dikirim ≤ `resolved` + 5 menit**, bukan dari pemohon
+(pesan terakhir dilewati bila `last_conversation_user_id` = `requester_id`; pesan lain: pesan keluhan pegawai "saya
+masih …" ditolak), setelah kalimat template & salam dibuang masih ≥ 5 kata, dan bukan sekadar permintaan informasi.
+Bila tidak ada, dipakai `close_notes` lalu `resolution` yang bukan template ("solved", "done", "."). Pesan sesudah
+tiket diselesaikan (terima kasih, survei, tiket dibuka lagi) dibuang; toleransi 5 menit karena petugas sering menulis
+solusinya 1–3 menit sesudah menekan "selesai" (median 1,6 menit). Hasil uji retrieval: `reports/banding_solusi.md`.
+Kolom `sla_imputasi` menandai hasil SLA yang memakai komponen imputasi (DQR-04).
 
 **Batasan:** nama orang yang tidak ada di kolom pengguna dan ditulis tanpa sapaan tidak terdeteksi; bagian
 nama yang juga kata umum (sering muncul berhuruf kecil) sengaja tidak disamarkan.
@@ -61,6 +71,16 @@ dan nilai yang disamarkan tidak pernah ditulis atau dicetak.
 Hasil terakhir: 6.682 sumber → 6.671 berhasil, 11 gagal, 731 tidak lengkap, 65 duplikat isi; 16.518 nilai
 disamarkan. Tes: `ai/tests/test_reconcile.py` (data rekaan).
 
+Banding ekspor lama vs baru (baris, tiket hilang, status berubah, hasil SLA berimputasi) ditulis di bagian
+"Banding ekspor lama vs baru" laporan yang sama.
+
+```bash
+.venv/bin/python ai/scripts/baseline.py         # → plugins/halosis/baseline.json + bagian "baseline" reports/eda.md
+```
+
+Baseline dashboard (angka saja): kepatuhan SLA `overall_sla_result_extended` MET ÷ (MET + OVERDUE) beserta jumlah
+hasil berimputasi, dan kepuasan (rating 1–5, % ≥ 4). Dibaca `Stats.php` untuk kartu KPI.
+
 ## AI-2 — Analisis awal (angka AS-IS)
 
 ```bash
@@ -78,12 +98,22 @@ laporan dipindai pola data pribadi sebelum ditulis. Definisi yang dipakai:
   topik kembar digabung, kelompok campuran (tim terbanyak < 25%) tidak diperingkat. Judul ditulis bebas,
   jadi judul identik hanya dicantumkan sebagai pembanding.
 
-## AI-3 — Model saran triase (routing ke tim)
+## AI-3 — Model saran triase (routing ke tim), jenis, urgensi
 
 ```bash
 .venv/bin/python ai/scripts/train_triage.py     # → ai/models/triage.joblib + reports/triase.md (±1 menit)
+.venv/bin/python ai/scripts/train_jenis.py      # → ai/models/jenis.joblib (bagian "jenis" di triase.md)
+.venv/bin/python ai/scripts/train_urgensi.py    # → ai/models/urgensi.joblib + urgensi.metrics.json
 .venv/bin/python -m pytest -q ai/tests          # tes dengan data rekaan
 ```
+
+- **Gerbang latih ulang**: `train_triage.py` & `train_jenis.py` menilai model aktif dan kandidat pada set uji yang
+  sama; artefak hanya diganti bila kandidat lolos `quality.check` (termasuk tidak turun > 2 poin dari versi aktif).
+  Bila tidak lolos, artefak lama tetap dan laporan mencatat perbandingannya.
+- **Urgensi insiden** (Medium vs Low, label kolom `urgency`; dampak = urgensi pada 99,7% insiden, prioritas = matriks):
+  TF-IDF teks tersamar + one-hot nama tim, LR berbobot seimbang (label) + salinan terkalibrasi (keyakinan),
+  validasi silang 5 lipatan. Dipakai layanan hanya bila F1 makro > pembanding "selalu Medium" dan keyakinan ≥ 70%.
+  High/Critical & REQ tetap aturan + sinyal dampak di plugin. Menggantikan model prioritas (proksi tier SLA).
 
 - **Input** hanya info saat tiket dibuat: judul + deskripsi + jenis (INC/REQ), disamarkan ulang lewat
   `privacy.mask_text` (juga saat dipakai layanan). Kolom routing/reassignment/SLA/resolusi tidak dipakai.
@@ -104,10 +134,16 @@ docker compose up -d                            # agar artikel KB GLPI ikut teri
 .venv/bin/python ai/scripts/build_index.py      # → ai/index/chunks.parquet + vectors.npy
 ```
 
-- Sumber: artikel KB GLPI yang terbit (punya target visibilitas) + `qa_pairs` (masalah + solusi tiket).
+- Sumber: artikel KB GLPI yang terbit (punya target visibilitas) + `qa_pairs` (masalah + solusi tiket) + potongan
+  katalog layanan dari indeks sebelumnya (agar tidak hilang sampai GLPI mengirim ulang katalog).
   Semua teks disamarkan ulang dan dipindai pola data pribadi sebelum di-embed.
+- Potongan tiket (`search.ticket_chunks`): solusi > 220 kata dipecah, teks masalah diulang di tiap potongan; kolom
+  `masalah`/`solusi` menyimpan teks utuh (jawaban ekstraktif & `/kandidat`). Penggabungan solusi identik tersedia
+  (`DEDUP` di `build_index.py`, `jumlah_tiket`) tetapi **mati**: Top-1 turun 1,96 poin
+  (`.venv/bin/python ai/scripts/banding_solusi.py --qa-lama <qa_pairs lama>` → `reports/banding_solusi.md`).
+- `cari` mengembalikan satu hasil per sumber (potongan terbaik).
 - Embedding lokal `intfloat/multilingual-e5-base` (gratis, offline setelah unduhan pertama ±1 GB).
-- `halosis_ai.search.cari(query, k)` → `[{potongan, skor, sumber (KB-<id> / no. tiket), jenis_sumber, judul}]`.
+- `halosis_ai.search.cari(query, k)` → `[{potongan, skor, sumber (KB-<id> / no. tiket), jenis_sumber, judul, solusi?}]`.
 - Skor kosinus E5 cenderung tinggi (≈0,8–0,9 untuk teks terkait), jadi ambang "belum menemukan jawaban"
   di AI-5 perlu sekitar 0,85, bukan 0,5.
 
