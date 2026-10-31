@@ -109,8 +109,8 @@ def retrain_section(old: dict | None, new: dict, gate: dict) -> str:
     keys = [('top1', 'Top-1'), ('top3', 'Top-3'), ('mrr', 'MRR'), ('f1_makro', 'F1 makro'),
             ('akurasi_yakin', 'Akurasi keyakinan ≥ 70%'), ('cakupan_yakin', 'Cakupan keyakinan ≥ 70%'),
             ('recall_tim_besar_min', 'Recall tim besar terendah')]
-    fmt = lambda v: '–' if v is None else (num(v, 4) if v > 1 else f(v))  # noqa: E731
-    rows = [[label, fmt(old.get(k)) if old else '–', fmt(new.get(k))] for k, label in keys]
+    fmt = lambda k, v: '–' if v is None else (num(v, 4) if k == 'mrr' or v > 1 else f(v))  # noqa: E731
+    rows = [[label, fmt(k, old.get(k)) if old else '–', fmt(k, new.get(k))] for k, label in keys]
     return '\n'.join([
         f'## Latih ulang {date.today():%d-%m-%Y} (data history versi baru)', '',
         f'Set uji sama untuk keduanya: {num(new["tiket_uji"])} tiket Jul–Ags 2026 dari `tickets_clean.parquet` terbaru.', '',

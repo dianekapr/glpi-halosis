@@ -27,5 +27,7 @@ Tanggal: 31 Okt 2026. Hanya angka; teks tiket tidak ditampilkan.
   printer (`ai/tests/test_patterns.py`), sedangkan DBSCAN eps 0,50 ikut menariknya ke kelompok yang sama (efek rantai
   DBSCAN pada kelompok kecil). Ini alasan tambahan metode bawaan tidak diganti.
 - eps PoC 0,25 berlaku untuk MiniLM tanpa pemusatan; untuk e5 dipusatkan setara ±0,50 (jarak tiket bertopik sama ±0,4).
+- min_samples 3 (PoC 5): mengikuti aturan PoC "minimal 3 insiden" dalam jendela 1 jam (hal. 56) dan `pattern_min_tickets`;
+  dengan rata-rata 3,8 insiden per blok berisi, min 5 hampir tidak pernah membentuk kelompok di jendela 60 menit.
 - Keterbatasan: kemurnian tim adalah proksi, bukan penilaian manusia; data history jarang memiliki lonjakan nyata
   (rata-rata 3,8 insiden per blok berisi), sehingga jumlah kelompok kecil di kedua metode.

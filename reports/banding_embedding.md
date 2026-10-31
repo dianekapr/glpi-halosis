@@ -22,6 +22,11 @@ dihapus setelah uji.
 
 Lingkungan: MacBook (Apple Silicon, CPU), sentence-transformers 6.2.0, torch 2.14.1.
 
+**Catatan data (1 Nov 2026):** banding ini memakai **ekspor lama** (korpus 3.332, 906 kueri). Indeks aktif dibangun
+dari ekspor versi baru dengan aturan solusi baru dan diuji di [`banding_solusi.md`](banding_solusi.md) pada 1.069
+kueri: Top-1 72,50% / Top-3 89,06% / MRR 0,8115 (aturan lama pada ekspor baru 73,15%). Korpus & kueri berbeda, jadi
+72,74% vs 73,15% bukan selisih model; keputusan e5 vs MiniLM tetap dari tabel di atas (set uji yang sama).
+
 ## Kesimpulan
 
 - e5-base lebih baik di ketiga metrik (+4,8 poin Top-1, +6,1 poin Top-3, +0,049 MRR) pada set uji yang sama, jadi

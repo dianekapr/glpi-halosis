@@ -1,6 +1,6 @@
 {
   "sumber": "data/raw/data ticketing (202601_202608).xlsx",
-  "dibuat": "2026-10-31",
+  "dibuat": "2026-11-01",
   "tiket": 6681,
   "sla": {
     "met": 1859,
@@ -11,8 +11,27 @@
     "persen_tanpa_imputasi": 34.35,
     "tanpa_imputasi": 4620
   },
+  "sla_respons": {
+    "met": 2806,
+    "overdue": 3707,
+    "persen": 43.08,
+    "dikecualikan": 168,
+    "imputasi": 605
+  },
+  "dokumen": {
+    "overall": 27.59,
+    "respons": 42.62,
+    "sumber": "dokumen §5.2.1.5 (validasi Jan–Ags 2026)"
+  },
+  "metode": {
+    "dokumen": "overall_sla_result / response_sla_result PASS ÷ (PASS + BREACH) pada ekspor lama (137 kolom; 1.621 ÷ 5.876 dan 2.549 ÷ 5.981), tanpa imputasi; IN PROGRESS dikecualikan",
+    "history_versi_baru": "overall_sla_result_extended MET ÷ (MET + OVERDUE) pada ekspor 220 kolom; komponen SLA yang tidak tercatat diestimasi (jam kerja, overall_sla_result_basis = IMPUTED) sehingga lebih banyak tiket punya hasil; UNKNOWN / tanpa bukti SLA dikecualikan",
+    "respons": "response_sla_final_result MET ÷ (MET + OVERDUE), termasuk hasil berimputasi; UNKNOWN / NA dikecualikan",
+    "kepuasan": "rating_value 1–5, hanya tiket yang dinilai; rating tidak wajib (dokumen §5.2.1: cakupan ± 15–16%), klaim kepuasan tinggi berisiko terlalu optimistis"
+  },
   "kepuasan": {
     "dinilai": 1155,
+    "cakupan_persen": 17.29,
     "rata_rata": 4.82,
     "persen_puas": 95.76,
     "distribusi": {

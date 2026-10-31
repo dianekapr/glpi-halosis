@@ -264,20 +264,23 @@ def suggest_type(title: str, description: str) -> dict | None:
 
 
 def suggest_urgency(title: str, description: str, kind: str, team: str) -> dict | None:
-    """Saran urgensi insiden (Medium/Low → skala GLPI) hanya bila model lolos gerbang & keyakinan ≥ ambang.
+    """Saran urgensi insiden (Medium/Low → skala GLPI) dengan ambang per kelas dari P(Low) (train_urgensi.py).
 
-    Label dari model berbobot seimbang, keyakinan dari salinan terkalibrasinya (train_urgensi.py). team = tim tiket
-    atau saran triase. High/Critical & permintaan (REQ) tidak dimodelkan: None → aturan di plugin.
+    Low bila kelas Low lolos gerbang & P(Low) ≥ ambang Low; Medium bila kelas Medium lolos & P(Low) ≤ ambang Medium;
+    selain itu None → aturan di plugin. team = tim tiket atau saran triase. High/Critical & REQ tidak dimodelkan.
     """
     artifact = state.get('urgensi')
-    if kind != 'INC' or not artifact or not quality_gate('urgensi')['lolos']:
+    if kind != 'INC' or not artifact:
         return None
-    frame = triage_model.urgency_frame(title, description, team)
-    label = str(artifact['pipeline'].predict(frame)[0])
-    calibrated = artifact['kalibrasi']
-    confidence = float(triage_model.urgency_confidence(
-        np.array([label]), calibrated.predict_proba(frame), calibrated.classes_)[0])
-    if confidence < float(artifact.get('threshold', 0.7)):
+    passed = quality_gate('urgensi').get('kelas_lolos') or []
+    pipeline, thresholds = artifact['pipeline'], artifact.get('ambang') or {}
+    probs = pipeline.predict_proba(triage_model.urgency_frame(title, description, team))[0]
+    p_low = float(probs[list(pipeline.classes_).index('Low')])
+    if 'Low' in passed and p_low >= float(thresholds.get('Low', 2)):
+        label, confidence = 'Low', p_low
+    elif 'Medium' in passed and p_low <= float(thresholds.get('Medium', -1)):
+        label, confidence = 'Medium', 1 - p_low
+    else:
         return None
     return {'urgensi': label, 'nilai_glpi': artifact['urgensi_glpi'][label], 'keyakinan': round(confidence, 4),
             'versi_model': artifact['version']}

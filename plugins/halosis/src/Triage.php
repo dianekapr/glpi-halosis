@@ -372,9 +372,10 @@ final class Triage
             $result['quality_ok'] = 0;
         }
 
-        // Urgensi insiden dari model history (BR-05) hanya bila layanan menyatakan model lolos gerbang & yakin, dan
-        // aturan tidak menemukan desakan Tinggi/Sangat tinggi (model hanya mengenal Medium/Low; High/Critical tetap
-        // aturan). Dampak & prioritas diturunkan setelahnya (applyImpactSignals, matriks GLPI).
+        // Urgensi insiden dari model history (BR-05) hanya bila layanan mengirimnya (kelas Rendah/Sedang lolos gerbang
+        // per kelas & P(Low) melewati ambang kelas itu), dan aturan tidak menemukan desakan Tinggi/Sangat tinggi
+        // (model hanya mengenal Medium/Low; High/Critical tetap aturan). Dampak & prioritas diturunkan setelahnya
+        // (applyImpactSignals, matriks GLPI).
         $urgency = (array) ($response['urgensi_saran'] ?? []);
         if ((int) $ticket->fields['type'] === Ticket::INCIDENT_TYPE && $result['urgency'] <= 3
             && in_array((int) ($urgency['nilai_glpi'] ?? 0), range(1, 5), true)) {

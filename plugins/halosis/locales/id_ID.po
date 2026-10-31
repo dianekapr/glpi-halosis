@@ -1301,8 +1301,20 @@ msgstr "Kepatuhan SLA (lolos)"
 msgid "%d decided tickets"
 msgstr "%d tiket sudah ditentukan"
 
-msgid "ESTIM baseline %s%% (%s with imputed SLA)"
-msgstr "baseline ESTIM %s%% (%s dengan SLA berimputasi)"
+msgid "Document baseline %s%% (overall) / %s%% (response)"
+msgstr "Baseline dokumen %s%% (overall) / %s%% (respons)"
+
+msgid "New-history baseline %s%% (extended, %s imputed)"
+msgstr "History versi baru %s%% (extended, %s imputasi)"
+
+msgid "response %s%%"
+msgstr "respons %s%%"
+
+msgid "rating coverage %s/%s = %s%%"
+msgstr "cakupan rating %s/%s = %s%%"
+
+msgid "Rating is optional (document §5.2.1): a high satisfaction claim risks being optimistic."
+msgstr "Rating tidak wajib (dokumen §5.2.1): klaim kepuasan tinggi berisiko optimistis."
 
 msgid "Requester satisfaction (rating ≥ 4)"
 msgstr "Kepuasan pemohon (nilai ≥ 4)"
@@ -1321,6 +1333,12 @@ msgstr "Kata dipisah koma. Bila nama kategori saran memuat salah satunya, atau t
 
 msgid "Suggested urgency"
 msgstr "Urgensi disarankan"
+
+msgid "Low (model class)"
+msgstr "Rendah"
+
+msgid "Medium (model class)"
+msgstr "Sedang"
 
 msgid "from the ticket history model"
 msgstr "dari model history tiket"

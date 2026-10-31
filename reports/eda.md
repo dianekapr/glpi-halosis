@@ -2,6 +2,10 @@
 
 Sumber: 6.682 tiket dibuka 1 Jan 2026 – 31 Agu 2026 (`data/processed/tickets_clean.parquet`, sudah disamarkan). Dibuat oleh `ai/scripts/eda.py`; hanya angka agregat dan label topik, tanpa isi tiket.
 
+*Historis:* bagian atas laporan ini (sampai sebelum "Baseline dashboard") dihitung dari **ekspor lama** (137 kolom,
+nilai PASS/BREACH) dan sama dengan angka dokumen (27,59% / 42,62%). Angka history versi baru (MET/OVERDUE, termasuk
+imputasi) ada di bagian "Baseline dashboard" di akhir laporan.
+
 ## Ringkasan
 
 | Indikator | Nilai | Keterangan |
@@ -191,14 +195,18 @@ Setelah huruf kecil, angka → `#`, dan penanda samaran dihapus.
 <!-- baseline:mulai -->
 ## Baseline dashboard (history versi baru)
 
-`ai/scripts/baseline.py` · 2026-10-31 · sumber `data/raw/data ticketing (202601_202608).xlsx` · dibaca dashboard dari `plugins/halosis/baseline.json`.
+`ai/scripts/baseline.py` · 2026-11-01 · sumber `data/raw/data ticketing (202601_202608).xlsx` · dibaca dashboard dari `plugins/halosis/baseline.json`.
 
 | Indikator | Nilai | Rincian |
 | --- | ---: | --- |
+| Baseline dokumen: kepatuhan SLA overall / respons | **27,59% / 42,62%** | dokumen §5.2.1.5 (validasi Jan–Ags 2026); overall_sla_result / response_sla_result PASS ÷ (PASS + BREACH) pada ekspor lama (137 kolom; 1.621 ÷ 5.876 dan 2.549 ÷ 5.981), tanpa imputasi; IN PROGRESS dikecualikan |
 | Kepatuhan SLA (`overall_sla_result_extended`) | **28,87%** | MET 1.859 ÷ (MET + OVERDUE 4.580); UNKNOWN / tanpa bukti SLA 242 dikecualikan |
 | … hasil berimputasi (DQR-04) | 1.819 | komponen SLA diestimasi (jam kerja); ditandai `sla_imputasi` |
 | … hanya hasil asli (tanpa imputasi) | 34,35% | 4.620 tiket |
-| Kepuasan (rating 1–5) | **95,76% ≥ 4** | 1.155 tiket dinilai (17,29% dari 6.681), rata-rata 4,82; 1★ 13, 2★ 5, 3★ 31, 4★ 79, 5★ 1.027 |
+| Kepatuhan SLA respons (`response_sla_final_result`) | **43,08%** | MET 2.806 ÷ (MET + OVERDUE 3.707); 605 berimputasi; UNKNOWN / NA 168 dikecualikan |
+| Kepuasan (rating 1–5) | **95,76% ≥ 4** | 1.155 tiket dinilai (cakupan 17,29% dari 6.681), rata-rata 4,82; 1★ 13, 2★ 5, 3★ 31, 4★ 79, 5★ 1.027 |
 
-Baseline lama 27,59% (`overall_sla_result` PASS ÷ PASS + BREACH, ekspor lama) diganti angka di atas. Kepuasan hanya dari tiket yang dinilai pemohon (bias responden: sebagian besar 5★).
+Dashboard menampilkan dua baris pembanding: **dokumen** (resmi, dipakai di bab analisis) dan **history versi baru** (metode extended). Selisih overall 27,59% vs 28,87% berasal dari metode, bukan perubahan kinerja: ekspor baru mengestimasi komponen SLA yang tidak tercatat (1.819 hasil berimputasi) sehingga penyebutnya lebih besar. Respons 43,08% vs dokumen 42,62% juga berbeda karena hasil akhir memuat imputasi.
+
+Kepuasan hanya dari tiket yang dinilai pemohon (17,29% tiket; dokumen §5.2.1: rating tidak wajib, cakupan ± 15–16%) dan bias responden (sebagian besar 5★): klaim kepuasan tinggi berisiko terlalu optimistis.
 <!-- baseline:selesai -->
