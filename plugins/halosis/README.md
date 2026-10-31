@@ -18,7 +18,10 @@ semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tan
 
 ## Akun demo
 
-Password semua akun contoh: `halosis` (kecuali `glpi`). Akun dibuat oleh `seed_halosis.py` di folder induk.
+Password semua akun contoh: `halosis` (kecuali `glpi`). Akun dibuat oleh `seed_halosis.py` di folder induk dan
+login lewat **SSO Keycloak** (realm `halosis`): password, role, dan tim diatur di Keycloak, lalu disamakan ke GLPI
+setiap login (README induk langkah 6b). `glpi` akun lokal GLPI. `ani` (Pegawai) hanya ada di Keycloak dan
+dibuat otomatis di GLPI saat pertama login.
 
 | Login | Role HaloSIS | Antarmuka | Dipakai untuk |
 | --- | --- | --- | --- |
@@ -122,8 +125,11 @@ per akun.
 
 ### 1. Pegawai bertanya ke asisten (`budi`)
 
-1. Buka http://localhost:8080 dan login `budi` / `halosis`. Anda langsung masuk ke **Tanya HaloSIS**
-   (bukan beranda GLPI biasa); menu Helpdesk: Tanya HaloSIS · Laporan saya · Buat laporan · Pusat bantuan.
+1. Buka http://localhost:8080 dan login `budi` / `halosis` (dicek ke Keycloak, tanpa halaman login kedua).
+   Anda langsung masuk ke **Tanya HaloSIS** (bukan beranda GLPI biasa); menu Helpdesk: Tanya HaloSIS ·
+   Buat laporan · Laporan saya · Pusat bantuan · Riwayat chat. Sapaan asisten menampilkan dua pilihan:
+   **Ajukan permintaan** (langsung ke form *Request a service*, tiket bertipe Permintaan) dan
+   **Laporkan masalah** (asisten mencari solusi dulu). Klik **Laporkan masalah**.
 2. Klik chip **FASIH gagal sinkron**. Asisten menjawab dengan langkah-langkah dari artikel
    "FASIH: sinkronisasi gagal" dan chip sumber yang bisa diklik.
 3. Tunjukkan peringatan privasi: kirim "password saya: abc123". Asisten memberi tahu bahwa data pribadi
@@ -180,7 +186,7 @@ Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan a
 
 1. Login `glpi`, **Setup › AI HaloSIS** → **Minimal tiket mirip** = 3 → Simpan.
 2. Sebagai `budi`/`siti`/`maya`, buat 3 laporan cepat dengan judul mirip (mis. "Tidak bisa login SSO",
-   "Login SSO gagal", "SSO error tidak bisa masuk") lewat **Langsung buat laporan**.
+   "Login SSO gagal", "SSO error tidak bisa masuk") lewat menu **Buat laporan** › *Report an issue*.
 3. Sebagai `glpi`, buka **Setup › Tindakan otomatis › IncidentPattern** → **Jalankan** (atau tunggu
    jadwal 15 menit). Log tugas menampilkan "Pola baru: …".
 4. Login `rina`, buka **Beranda**: banner **Pola insiden terdeteksi** dengan tautan ke Problem
@@ -252,6 +258,10 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   yang berhak chatbot. Operator & profil standar tidak terpengaruh; tidak ada loop. (GLPI 12 belum punya
   hook server-side untuk ini: `RedirectException` dari `plugin_init` maupun `redefine_menus` berakhir HTTP 500.)
 - **Menu Helpdesk** diatur lewat hook `redefine_menus`.
+- **Dua pilihan awal** di sapaan halaman penuh: *Ajukan permintaan* → form katalog aktif pertama yang tujuan
+  tiketnya bertipe Permintaan (`Chatbot::getRequestFormUrl()`; tidak ada → katalog layanan); *Laporkan masalah*
+  → fokus ke kotak chat. Kartu disembunyikan setelah percakapan dimulai. Tombol header "Langsung buat laporan"
+  dihapus agar masalah lewat chatbot dulu; menu **Buat laporan** tetap ada.
 - **Sumber jawaban hanya artikel KB yang terlihat oleh pengguna**: kriteria visibilitas GLPI
   (`KnowbaseItem::getVisibilityCriteria()`; di Helpdesk = FAQ yang boleh dilihat), tiap artikel dicek ulang
   dengan `canViewItem()`. Artikel internal tidak pernah dipakai. Tautan sumber dibuat server, bukan dari teks model.
@@ -265,8 +275,9 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   sendiri dengan status *Bisa dilanjutkan* / *Terselesaikan · rating* / *Laporan #id* (tertaut ke tiket).
   Item dibuka di halaman chat lewat `?chat=<id>`; id milik orang lain diabaikan (`Chat::getOwned`).
   Percakapan selesai hanya bisa dibaca.
-- **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 2 jam
-  (`Chat::RESUME_HOURS`) dimuat ulang. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
+- **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 30 menit
+  (`Chat::IDLE_MINUTES`) dimuat ulang. Percakapan terbuka yang menganggur lebih lama berstatus `expired`
+  ("Berakhir (tidak aktif)", state machine SesiChat hal. 192); diperiksa saat chat/riwayat/dashboard dibuka. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
   (diingat di `localStorage` browser) dan tetap bisa dibuka dari Riwayat chat.
 - Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
 
@@ -340,6 +351,7 @@ mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
 | "An unexpected error occurred" setelah login | Bug GLPI 12.0.0 pada "Remember me" (token ganda). "Remember me" sudah dimatikan (`login_remember_time = 0`); lihat README induk. |
 | `ERROR_NOT_ALLOWED_IP` saat menjalankan seed | Klien API untuk IP gateway Docker belum ada; lihat README induk langkah 3. |
 | Tiket baru tidak mendapat saran AI | Cek fitur triase aktif dan `/var/glpi/logs/halosis.log` (AI gagal/timeout, SDK belum terpasang). Klik **Buat saran AI** di panel. |
+| Login SSO gagal / role tidak sesuai | Lihat tabel "Kalau login gagal" di README induk langkah 6b. |
 | Pegawai tidak diarahkan ke Tanya HaloSIS | Pastikan profil Helpdesk punya hak chatbot (tab HaloSIS) dan fitur chat aktif; login ulang. |
 | Pola insiden tidak terbentuk | Butuh ≥ N tiket mirip dalam jendela waktu; lihat log tugas di Setup › Tindakan otomatis › IncidentPattern. |
 
@@ -372,6 +384,7 @@ src/Suggestion.php        model saran;  src/Decision.php  model keputusan
 src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  model percakapan
 src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/Privacy.php  penyamaran data
 src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
+src/KeycloakAuth.php      login SSO Keycloak (password grant dari form login GLPI) + sinkron pengguna, profil, tim
 src/PatternDetector.php   tugas terjadwal pola insiden + banner
 src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
 src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan;  src/Candidate.php  model kandidat

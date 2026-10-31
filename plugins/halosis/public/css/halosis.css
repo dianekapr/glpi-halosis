@@ -100,6 +100,17 @@
     font-size: 0.85rem;
 }
 
+/* Keyakinan tinggi ("Disarankan") & sedang ("Pilih dari 3 kandidat") */
+.halosis-triase .halosis-review-high {
+    background: transparent;
+    border: 1px solid var(--halosis-primary);
+}
+
+.halosis-triase .halosis-review-medium {
+    background: transparent;
+    border: 1px dashed var(--halosis-accent);
+}
+
 .halosis-triase .halosis-values {
     display: grid;
     grid-template-columns: max-content 1fr;
@@ -630,6 +641,77 @@
     display: none;
 }
 
+/* ---- Pilihan awal halaman chat: permintaan (langsung tiket) / masalah (chatbot dulu) ---- */
+.hc-intent {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.hc-intent-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--halosis-border);
+    border-radius: var(--halosis-radius-control);
+    background: #fff;
+    color: var(--halosis-text);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: var(--halosis-shadow-card);
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.hc-intent-card:hover,
+.hc-intent-card:focus-visible {
+    border-color: var(--halosis-secondary);
+    background: var(--halosis-bg);
+    color: var(--halosis-text);
+}
+
+.hc-intent-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--halosis-secondary-light);
+    color: var(--halosis-primary);
+    font-size: 1.15rem;
+}
+
+.hc-intent-icon-issue {
+    background: var(--halosis-accent-light);
+    color: #b4531c;
+}
+
+.hc-intent-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.hc-intent-text strong {
+    font-size: 0.92rem;
+}
+
+.hc-intent-text span {
+    color: var(--halosis-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+/* Setelah pegawai mulai bercerita, pilihan tidak dibutuhkan lagi */
+.hc-started .hc-intent {
+    display: none;
+}
+
 .hc-form {
     display: flex;
     align-items: flex-end;
@@ -882,10 +964,8 @@
         display: none;
     }
 
-    /* Tombol "Langsung buat laporan" jadi ringkas di HP */
-    .hc-head-actions .hc-btn:not(.hc-btn-icon) {
-        padding: 0.45rem 0.7rem;
-        font-size: 0.78rem;
+    .hc-intent {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .hc-thread {

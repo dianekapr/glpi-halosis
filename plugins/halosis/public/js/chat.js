@@ -362,11 +362,14 @@
         }
 
         root.addEventListener('click', (event) => {
-            const b = event.target.closest('[data-chat-toggle], [data-chat-new], [data-chat-suggest]');
+            const b = event.target.closest('[data-chat-toggle], [data-chat-new], [data-chat-suggest], [data-chat-focus]');
             if (!b || !root.contains(b)) {
                 return;
             }
-            if (b.matches('[data-chat-toggle]')) {
+            if (b.matches('[data-chat-focus]')) {
+                // Pilihan "Laporkan masalah": ceritakan masalahnya ke asisten dulu
+                input.focus();
+            } else if (b.matches('[data-chat-toggle]')) {
                 toggle($('.hc-panel').hidden);
             } else if (b.matches('[data-chat-new]')) {
                 reset();

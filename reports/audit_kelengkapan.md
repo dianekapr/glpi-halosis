@@ -14,13 +14,17 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Business Requirements (BR-01..08) | 8 | 6 | 2 | 0 | 0 |
 | Functional Requirements (FR-01..10) | 10 | 9 | 1 | 0 | 0 |
-| Non-Functional Requirements (NFR-01..14) | 14 | 5 | 6 | 0 | 3 |
+| Non-Functional Requirements (NFR-01..14) | 14 | 6 | 5 | 0 | 3 |
 | Use Case (UC-01..10, termasuk alur alternatif) | 10 | 9 | 1 | 0 | 0 |
 | Hasil & keputusan PoC (2.4.7) | 6 | 3 | 3 | 0 | 0 |
 | Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 5 | 2 | 0 | 3 |
-| **Total** | **58** | **37** | **15** | **0** | **6** |
+| **Total** | **58** | **38** | **14** | **0** | **6** |
 
 **Pembaruan 29 Okt 2026:** semua P1 (#1–#6) selesai; status "Diperbaiki" di tabel menunjukkan butirnya.
+
+**Pembaruan 31 Okt 2026:** revisi dari [`audit_dokumen_e2e.md`](audit_dokumen_e2e.md): SLA respons, keyakinan
+3 tingkat, pola hanya INC + tambah ke Problem terbuka + notifikasi, artikel "Perlu ditinjau", sesi chat 30 menit,
+sumber tiket "HaloSIS Chat", hitungan pemakaian artikel, hak hapus tiket dicabut; NFR-14 → ✅.
 
 Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
 berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
@@ -32,7 +36,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | Kode | Kebutuhan (ringkas) | Status | Bukti | Catatan |
 | --- | --- | --- | --- | --- |
 | BR-01 | Konfigurasi service catalog, workflow, role, tim, SLA, notifikasi, rule tanpa ubah source core | ✅ | Menu Administrator `dimas` (`src/RoleMenu.php::admin`): Service catalog, Kategori, SLA, Tim, Pengguna & role, Workflow & aturan, Notifikasi; `setup-roles`, `setup_sla_alerts.py`, `setup_list_columns.py` hanya memakai API/konfigurasi GLPI | Template notifikasi butuh hak `config` (Super-Admin); dijelaskan di README UC-10 |
-| BR-02 | SLA otomatis, status & risiko keterlambatan, peringatan ke operator/tim | ✅ | `setup_sla_alerts.py`: aturan "SLA <prioritas>" + level "Peringatan risiko SLA" (−1 jam s.d. −24 jam) + notifikasi *Ticket Recall* ke teknisi, grup, supervisor; uji tiket #58 → penerima andi, yoga, hendra; menu Monitoring SLA | Notifikasi browser & email terbukti (email lewat Mailpit lokal, P2 #9) |
+| BR-02 | SLA otomatis, status & risiko keterlambatan, peringatan ke operator/tim | ✅ | `setup_sla_alerts.py`: aturan "SLA <prioritas>" + level "Peringatan risiko SLA" (−1 jam s.d. −24 jam) + notifikasi *Ticket Recall* ke teknisi, grup, supervisor; uji tiket #58 → penerima andi, yoga, hendra; menu Monitoring SLA | Notifikasi browser & email terbukti (email lewat Mailpit lokal, P2 #9). 31 Okt: + SLA respons (*time to own*) per prioritas & kolom "Waktu untuk mengambil alih" di daftar Operator |
 | BR-03 | Knowledge management: KB, SOP, service catalog, solusi historis, hasil tiket; dapat dikurasi | 🟡 | KB GLPI + Kandidat Knowledge (`src/KnowledgeCandidates.php`) → draf artikel; artikel terbit/dihapus langsung memperbarui indeks (`src/KnowledgeIndex.php` → `POST /reindex/artikel`) | Re-index otomatis diperbaiki (P1 #5); SOP & service catalog belum masuk indeks |
 | BR-04 | Semantic retrieval knowledge/tiket historis | ✅ | `ai/halosis_ai/search.py::cari` (embedding `intfloat/multilingual-e5-base`); `/chat` mengembalikan sumber artikel & "Tiket serupa …"; `ai/tests/test_search.py` | Model berbeda dari PoC (lihat §5 dan §8) |
 | BR-05 | Rekomendasi kategori, dampak, urgensi, prioritas, routing + validasi | 🟡 | Panel Saran AI (`src/TriagePanel.php`, `src/Triage.php::suggestService`), model `triase-tfidf-lr` (`reports/triase.md`) | Model memprediksi **tim**; kategori dipetakan dari tim, dampak/urgensi dari aturan kata kunci (`suggestDemo`), prioritas dari matriks GLPI |
@@ -72,7 +76,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | NFR-11 | Integrasi via API; AI dapat diganti tanpa ganti core | ✅ | Plugin → HTTP `service_url` (`src/Ai/Service.php`) → FastAPI; penyedia Claude/OpenAI-kompatibel opsional (`src/Ai/Client.php`); fallback demo | — |
 | NFR-12 | Latensi AI: retrieval, generation, end-to-end terpisah | ✅ | `ai/service/app.py::record_latency` → `ai/logs/latency.jsonl` (angka saja); `ai/scripts/latency_report.py` → `reports/latensi.md` (chat retrieval p50 91 ms / p95 454 ms; triase p50 13 ms); `ai/tests/test_service.py::test_log_latensi_tanpa_teks` | Diperbaiki (#2); generation hanya bila Claude aktif |
 | NFR-13 | Referential integrity & audit trail pada migrasi/transaksi | 🟡 | Transaksi lewat API/ORM GLPI; rekonsiliasi `reconcile.py` (sumber = berhasil + gagal ✓) | Migrasi nyata ke GLPI belum dilakukan |
-| NFR-14 | Kepemilikan AI release, threshold, knowledge source, override, audit | 🟡 | Ambang & fitur di Pengaturan AI (hak `plugin_halosis_config`), versi model tercatat per saran, human override + audit | Belum ada dokumen/proses rilis model & pemilik sumber knowledge |
+| NFR-14 | Kepemilikan AI release, threshold, knowledge source, override, audit | ✅ | Ambang & fitur di Pengaturan AI (hak `plugin_halosis_config`), versi model tercatat per saran, human override + audit; `reports/tata_kelola_ai.md`: RACI, siklus rilis model, pemilik sumber & **per domain** knowledge (31 Okt) | Proses umpan balik Ubah/Tolak ke data latih masih manual |
 
 ## 4. Use Case UC-01..UC-10 (Tabel 6.4–6.13, hal. 128–142)
 
@@ -81,7 +85,7 @@ catalog belum diindeks, serta NFR produksi (performa, ketersediaan, keamanan, ob
 | UC-01 | Berkonsultasi melalui AI Chatbot | ✅ | `/plugins/halosis/Chat`: catat percakapan, jawaban + sumber, rating (`glpi_plugin_halosis_chats.rating`) | 4a tidak ditemukan → tawaran laporan ✅; 6a belum selesai → laporan + ringkasan ✅; 6b tidak lapor → riwayat tersimpan ✅; 3a AI tidak tersedia → pemberitahuan + arah ke portal (`.hc-unavailable`) ✅ | — |
 | UC-02 | Mencari Knowledge Relevan | ✅ | Masking → embedding → cari KB & tiket historis → skor `CHAT_MIN_SCORE` 0,83 → sumber (`ai/service/app.py`, `search.py`) | 7a skor di bawah ambang → "belum menemukan" ✅; **4a vector DB tidak merespons** → `AiException` → kutipan KB mode demo (`Chatbot.php`) ✅ | Langkah 8 diperbaiki (#2): log retrieval per permintaan (skor teratas, mode, durasi) di `latency.jsonl` |
 | UC-03 | Membuat Tiket | ✅ | "Buat laporan" (`/ServiceCatalog`) atau dari chat; status Baru; SLA mulai (aturan SLA); triase AI; antrean validasi | 1a dari chat → S-1 ringkasan otomatis ✅; 4a data belum lengkap → validasi (judul min. 5 karakter / form GLPI) ✅; AI tidak tersedia → tiket tersimpan, triase manual ✅ | Notifikasi konfirmasi email terbukti di Mailpit lokal (tiket uji #70, P2 #9) |
-| UC-04 | Rekomendasi Triase & Routing | ✅ | `Triage::generate` saat `item_add`; keyakinan, penjelasan, tiket mirip; disimpan di `suggestions` | AI tidak tersedia → tanpa saran, tombol "Buat saran AI" ✅; keyakinan < ambang → "Perlu penilaian manual" ✅ | Dampak/urgensi berbasis aturan |
+| UC-04 | Rekomendasi Triase & Routing | ✅ | `Triage::generate` saat `item_add`; keyakinan, penjelasan, tiket mirip; disimpan di `suggestions` | AI tidak tersedia → tanpa saran, tombol "Buat saran AI" ✅; keyakinan 3 tingkat (31 Okt): ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" ✅ | Dampak/urgensi berbasis aturan |
 | UC-05 | Validasi Rekomendasi & Meneruskan | ✅ | Menu Antrean validasi (urut waktu penyelesaian), Terima → tiket ditugaskan, keputusan tercatat | S-1 Ubah + alasan ✅; S-2 Tolak + alasan ✅; operator menyelesaikan langsung (solusi GLPI) ✅ | — |
 | UC-06 | Menangani & Menyelesaikan Tiket | ✅ | Menu Tiket saya & tim; panel Saran AI (tiket mirip); solusi → Selesai; solusi masuk Kandidat knowledge | Penugasan tidak sesuai → **Kembalikan ke operator** + alasan, `reassignments.kind=return` ✅; S-1 Pending (status Menunggu GLPI) ✅ | — |
 | UC-07 | Memantau Status & Konfirmasi | ✅ | "Laporan saya" dengan kolom Waktu untuk menyelesaikan, Approve → Ditutup, survei kepuasan GLPI 100% tiket ditutup (`setup_list_columns.py`) | 3a follow-up ✅; 5a Refuse wajib alasan → diproses lagi ✅ | Diperbaiki (#3) |
