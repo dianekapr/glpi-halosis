@@ -114,3 +114,20 @@ atau ke tim lama yang mirip. Latih ulang berkala (mis. bulanan) mengatasi ini.
 - Tiket "Operator Pusat" (ditangani langsung operator) ikut menjadi kelas sendiri.
 - Pembanding retrieval + LLM (opsional) tidak dijalankan: proyek berjalan tanpa API key LLM, sehingga tidak
   ada data yang dikirim ke API eksternal. Triase sepenuhnya memakai model lokal ini.
+
+<!-- jenis:mulai -->
+## Saran jenis tiket REQ/INC (T4)
+
+Versi `jenis-tfidf-lr-20261031` · `ai/scripts/train_jenis.py` · artefak `ai/models/jenis.joblib` (di-ignore git). Input judul + deskripsi (tersamar), tanpa token jenis; pembagian waktu sama dengan model tim.
+
+| Indikator | Nilai |
+| --- | --- |
+| Data latih / uji | 5.123 / 1.559 tiket |
+| **Akurasi** | **68,25%** |
+| F1 makro | 67,52% |
+| Pembanding: selalu jenis terbanyak | 57,28% |
+| Keyakinan ≥ 70% (saran ditampilkan) | akurasi 84,17% · cakupan 40,92% tiket |
+| Tiket uji yang yakin tetapi berbeda dari jenis asli | 101 |
+
+Panel Saran AI menampilkan "Jenis disarankan" hanya bila saran berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator tetap memutuskan (ubah jenis di form tiket).
+<!-- jenis:selesai -->

@@ -32,6 +32,11 @@ def model_text(title: object, description: object, ticket_type: object) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def jenis_text(title: object, description: object) -> str:
+    """Teks fitur klasifier jenis REQ/INC (T4): sama dengan model_text tetapi tanpa token jenis yang diprediksi."""
+    return model_text(title, description, None).removeprefix('jenis_x ')
+
+
 def build_pipeline(c: float = 10.0, class_weight: str | None = 'balanced', calibrate: bool = True) -> Pipeline:
     features = FeatureUnion([
         ('kata', TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.5, sublinear_tf=True,

@@ -34,6 +34,8 @@ function plugin_halosis_tables(): array
             `confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan 0-100',
             `explanation` text,
             `candidates` text COMMENT 'JSON 3 tim teratas: tim, keyakinan, groups_id',
+            `type_suggested` tinyint NOT NULL DEFAULT '0' COMMENT 'Saran jenis (T4): 1 insiden, 2 permintaan, 0 tidak ada',
+            `type_confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan saran jenis 0-100',
             `model` varchar(255) NOT NULL DEFAULT '',
             `is_demo` tinyint NOT NULL DEFAULT '0',
             `status` varchar(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|accepted|modified|rejected',
@@ -192,6 +194,8 @@ function plugin_halosis_install(): bool
     $added = [
         'glpi_plugin_halosis_suggestions' => [
             'candidates' => 'text AFTER `explanation`',
+            'type_suggested'  => "tinyint NOT NULL DEFAULT '0' AFTER `candidates`",
+            'type_confidence' => "tinyint unsigned NOT NULL DEFAULT '0' AFTER `type_suggested`",
         ],
         'glpi_plugin_halosis_reassignments' => [
             'kind'   => "varchar(20) NOT NULL DEFAULT 'reassign' AFTER `to_groups_id`",

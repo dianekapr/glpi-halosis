@@ -106,9 +106,15 @@ final class KeycloakAuth
         }
         $handled = true;
 
-        $claims = self::verifyPassword($settings, trim((string) $_POST['login_name']), (string) $_POST['login_password']);
-        if ($claims !== null) {
-            self::prepareExternalLogin($claims);
+        // Berjalan di plugin_init: galat yang lolos membuat GLPI menonaktifkan SELURUH plugin (semua login SSO
+        // berhenti). Karena itu semua galat ditangkap, dicatat, dan login diteruskan ke GLPI apa adanya.
+        try {
+            $claims = self::verifyPassword($settings, trim((string) $_POST['login_name']), (string) $_POST['login_password']);
+            if ($claims !== null) {
+                self::prepareExternalLogin($claims);
+            }
+        } catch (\Throwable $e) {
+            Toolbox::logInFile('halosis', 'Login SSO gagal diproses: ' . $e->getMessage() . "\n", true);
         }
         // Ditolak/gagal: biarkan GLPI melanjutkan; hanya akun lokal (authtype GLPI) yang masih bisa lolos
     }
@@ -283,7 +289,12 @@ final class KeycloakAuth
         if ($user !== null) {
             self::syncProfiles($user, self::getClaimList($claims, self::ROLES_CLAIM));
             self::syncTeams($user, self::getClaimList($claims, self::GROUPS_CLAIM), in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
-            self::syncAttributes($user, $claims);
+            try {
+                self::syncAttributes($user, $claims);
+            } catch (\Throwable $e) {
+                // Atribut kepegawaian pelengkap: gagal disalin tidak boleh menggagalkan login
+                Toolbox::logInFile('halosis', "Sinkron atribut Keycloak gagal untuk {$user->fields['name']}: {$e->getMessage()}\n", true);
+            }
         }
     }
 
@@ -314,8 +325,19 @@ final class KeycloakAuth
 
     private static function dropdownId(CommonDropdown $dropdown, string $name): int
     {
-        if ($dropdown->getFromDBByCrit(['name' => $name])) {
-            return $dropdown->getID();
+        global $DB;
+
+        // Bukan getFromDBByCrit: login bersamaan bisa membuat dua baris bernama sama (balapan cari-atau-buat),
+        // dan getFromDBByCrit melempar galat bila hasilnya > 1 sehingga login gagal. Pakai baris tertua.
+        $row = $DB->request([
+            'SELECT' => 'id',
+            'FROM'   => $dropdown::getTable(),
+            'WHERE'  => ['name' => $name],
+            'ORDER'  => 'id',
+            'LIMIT'  => 1,
+        ])->current();
+        if ($row !== null) {
+            return (int) $row['id'];
         }
         $input = ['name' => $name];
         if ($dropdown->isEntityAssign()) {

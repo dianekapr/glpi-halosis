@@ -155,7 +155,27 @@
                 </div>
             </div>
 
+            {% if preview %}
+                {# T20: dampak ambang baru pada saran 30 hari terakhir (belum disimpan) #}
+                {% set lv = {'high': __('Recommended', 'halosis'), 'medium': __('Choose from 3 candidates', 'halosis'), 'low': __('Needs manual review', 'halosis')} %}
+                <div class="alert alert-info mx-3 mb-0" role="status">
+                    <strong>{{ __('Impact preview (not saved yet)', 'halosis') }}:</strong>
+                    {{ __('%1$d of %2$d suggestions in the last 30 days would change level.', 'halosis')|format(preview.moved, preview.total) }}
+                    <table class="table table-sm mt-2 mb-0 w-auto">
+                        <thead><tr><th></th>{% for k, label in lv %}<th class="text-end">{{ label }}</th>{% endfor %}</tr></thead>
+                        <tbody>
+                            <tr><td>{{ __('Current thresholds', 'halosis') }}</td>{% for k, label in lv %}<td class="text-end">{{ preview.current[k] }}</td>{% endfor %}</tr>
+                            <tr><td>{{ __('New thresholds', 'halosis') }}</td>{% for k, label in lv %}<td class="text-end">{{ preview.new[k] }}</td>{% endfor %}</tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+
             <div class="card-footer text-end">
+                <button type="submit" name="preview" value="1" class="btn btn-outline-secondary" formnovalidate>
+                    <i class="ti ti-eye" aria-hidden="true"></i>
+                    <span>{{ __('Preview impact', 'halosis') }}</span>
+                </button>
                 <button type="submit" name="update" value="1" class="btn btn-primary">
                     <i class="ti ti-device-floppy" aria-hidden="true"></i>
                     <span>{{ _x('button', 'Save') }}</span>

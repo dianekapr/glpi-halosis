@@ -31,15 +31,18 @@ from pathlib import Path
 from typing import Literal
 
 import joblib
+import numpy as np
 from fastapi import FastAPI, HTTPException, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import candidates, patterns, privacy, search  # noqa: E402
+from halosis_ai import candidates, patterns, privacy, search, triage_model  # noqa: E402
 
 AI_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = Path(os.environ.get('HALOSIS_TRIAGE_MODEL', AI_DIR / 'models/triage.joblib'))
+# Opsional (T4): klasifier jenis REQ/INC (ai/scripts/train_jenis.py); tidak ada → /triage tanpa saran jenis
+JENIS_PATH = Path(os.environ.get('HALOSIS_JENIS_MODEL', AI_DIR / 'models/jenis.joblib'))
 # Skor kosinus E5 di bawah ambang ini → "belum menemukan jawaban" (lihat ai/README.md, AI-4)
 CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))
 # Keyakinan sedang (TO-BE hal. 100): skor di antara ambang ini dan CHAT_MIN_SCORE → tidak menjawab, hanya
@@ -80,6 +83,11 @@ async def lifespan(_: FastAPI):
         state['triage'] = joblib.load(MODEL_PATH)
     except Exception as e:  # noqa: BLE001
         log.error('Model triase gagal dimuat: %s', e)
+    if JENIS_PATH.exists():
+        try:
+            state['jenis'] = joblib.load(JENIS_PATH)
+        except Exception as e:  # noqa: BLE001
+            log.error('Model jenis gagal dimuat (saran jenis dilewati): %s', e)
     try:
         _, vectors = search.load_index()
         search.encoder()
@@ -198,6 +206,17 @@ def health() -> dict:
     }
 
 
+def suggest_type(title: str, description: str) -> dict | None:
+    """Saran jenis REQ/INC + keyakinan (T4); None bila model jenis tidak tersedia."""
+    artifact = state.get('jenis')
+    if not artifact:
+        return None
+    probs = artifact['pipeline'].predict_proba([triage_model.jenis_text(title, description)])[0]
+    best = int(np.argmax(probs))
+    return {'jenis': str(artifact['pipeline'].classes_[best]), 'keyakinan': round(float(probs[best]), 4),
+            'versi_model': artifact['version']}
+
+
 @app.post('/triage')
 def triage(req: TriageRequest) -> dict:
     model = state.get('triage')
@@ -209,6 +228,7 @@ def triage(req: TriageRequest) -> dict:
     record_latency('triage', inferensi_ms=ms_since(start), generation_ms=None, total_ms=ms_since(start),
                    skor_teratas=round(float(result['keyakinan']), 4), versi_model=result['versi_model'])
     return {
+        'jenis_saran': suggest_type(req.judul, req.deskripsi),
         'tim': result['tim'],
         'top3': result['top3'],
         'keyakinan': result['keyakinan'],

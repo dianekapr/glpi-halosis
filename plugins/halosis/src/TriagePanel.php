@@ -61,6 +61,7 @@ final class TriagePanel
             'needs_review' => $suggestion?->needsManualReview() ?? false,
             'level'       => $suggestion?->getConfidenceLevel(),
             'workload'    => $suggestion !== null ? self::workload($suggestion) : [],
+            'type_hint'   => $suggestion !== null ? self::typeHint($suggestion, $ticket) : null,
             'threshold'   => Config::getTriageThreshold(),
             'threshold_low' => Config::getLowThreshold(),
             'is_demo'     => Config::isDemoMode(),
@@ -104,6 +105,25 @@ final class TriagePanel
             ];
         }
         return $rows;
+    }
+
+    /**
+     * Saran jenis (T4) hanya bila berbeda dari jenis tiket dan keyakinannya ≥ ambang triase; selain itu null (diam).
+     *
+     * @return array{suggested: string, current: string, confidence: int}|null
+     */
+    private static function typeHint(Suggestion $suggestion, Ticket $ticket): ?array
+    {
+        $suggested  = (int) ($suggestion->fields['type_suggested'] ?? 0);
+        $confidence = (int) ($suggestion->fields['type_confidence'] ?? 0);
+        if ($suggested === 0 || $suggested === (int) $ticket->fields['type'] || $confidence < Config::getTriageThreshold()) {
+            return null;
+        }
+        return [
+            'suggested'  => Ticket::getTicketTypeName($suggested),
+            'current'    => Ticket::getTicketTypeName((int) $ticket->fields['type']),
+            'confidence' => $confidence,
+        ];
     }
 
     /**

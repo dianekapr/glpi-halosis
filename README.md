@@ -163,6 +163,31 @@ Lalu jalankan skenario lengkap di
   jangan commit; kabari pemilik repo.
 - Bila tidak dipakai lagi, hapus kedua folder dan file zip unduhannya.
 
+### C3. Update untuk anggota tim (setiap kali `git pull` membawa perubahan plugin/AI)
+
+Jalankan berurutan dari folder repo (aman diulang). Urutan penting: `halosis-ai` harus hidup **sebelum** install
+plugin, karena install juga mengisi katalog layanan ke indeks chatbot.
+
+```bash
+git pull
+docker compose up -d --build halosis-ai                          # kode layanan AI terbaru (tunggu /health "ok")
+curl -s localhost:8001/health
+docker compose exec glpi php bin/console plugin:install halosis -u glpi --force --allow-superuser   # tabel/config baru + katalog layanan → indeks
+docker compose exec glpi php bin/console plugin:activate halosis --allow-superuser
+docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser             # role & hak (mis. hapus tiket hanya Super-Admin)
+.venv/bin/python setup_sla_alerts.py http://localhost:8080        # SLA respons & penyelesaian, notifikasi
+.venv/bin/python setup_list_columns.py http://localhost:8080      # kolom daftar (mis. Waktu untuk mengambil alih)
+docker compose exec glpi php bin/console cache:clear --allow-superuser                             # template/CSS plugin terbaru
+```
+
+- **Impor ulang realm Keycloak** hanya bila `keycloak/halosis-realm.json` berubah (mis. atribut NIP/unit/jabatan).
+  Ini menghapus **data Keycloak saja** (akun & role dibuat ulang dari JSON; data GLPI tidak tersentuh):
+  `docker compose stop keycloak && docker compose rm -f keycloak && docker volume rm glpi-halosis_keycloak_data && docker compose up -d keycloak`
+- **Katalog layanan belum masuk indeks** (cek: `curl -s localhost:8001/metrics | grep index_chunks`): ulangi
+  `plugin:install` saat `halosis-ai` hidup, atau simpan ulang salah satu kategori di Setup › Dropdowns › ITIL categories.
+- Sebelum demo: `scripts/demo_snapshot.sh simpan`; kembali ke kondisi itu: `scripts/demo_snapshot.sh pulihkan`
+  (lihat `reports/checklist_demo.md`).
+
 ### D. Alur kerja harian (biar tidak bentrok)
 
 Branch di repo ini:
@@ -672,10 +697,10 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong), teks disamarkan sebelum dikirim | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
-| Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | **Tidak disarankan AI**: jenis ditentukan jalur masuk (form *Ajukan permintaan* = REQ, chatbot/laporan masalah = INC, Operator memilih untuk tiket telepon) dan dipakai sebagai **input** model tim | Klasifier jenis butuh model baru di `ai/models/` (artefak latih di luar repo) padahal jalur masuk sudah memisahkan jenis; Operator tetap bisa mengubah jenis di form tiket | Klasifier TF-IDF + LR REQ/INC dari kolom `ticket_type` history bila jalur masuk tidak lagi memisahkan jenis |
+| Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`): akurasi 68,25%, ≥ 70% yakin → 84,17%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
 | HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
-| Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | **Belum ada**; perubahan tercatat di log GLPI (**Setup › Log** / tab Riwayat) | GLPI tidak menyediakan pratinjau aturan; mengubahnya berarti mengubah kode inti | Prosedur manual: uji aturan di **Rules › Test** sebelum diaktifkan |
+| Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | Pratinjau dampak ambang AI (tanpa menyimpan); perubahan Pengaturan AI, aturan SLA, SLA, kategori → log sistem GLPI + Catatan untuk Administrator | Tanpa ubah kode inti: memakai Event log & Reminder GLPI | Pratinjau aturan SLA/kategori |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 87% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi < 50% (pita 30–50% = 47%) | Kalibrasi ulang setelah data keputusan Operator cukup |
 | SLA respons (T1) | `KebijakanSLA.targetRespons` (hal. 162) | SLA *time to own* GLPI per prioritas: Kritis 15 menit, Tinggi 30 menit, Sedang 2 jam, Rendah 4 jam (`setup_sla_alerts.py`) | Dokumen tidak memberi angka; asumsi prototipe | Sesuaikan dengan SLA resmi BPS |
 
@@ -704,6 +729,8 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Conversation (self-service) | Chat → laporan → tiket, riwayat & rating | Partially proven (ekstraktif, tanpa uji usability) |
 | Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci; banding rata-rata vs DBSCAN pada 666 insiden history (`reports/banding_pola.md`); regresi demo Bonus pola (`reports/uji_regresi_demo.md`) | Partially proven (tanpa label pola manual) |
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat; regresi skenario demo 17 langkah lolos (`reports/uji_regresi_demo.md`) | Proven |
+| Login SSO bersamaan (beban halaman) | k6 10 akun petugas, 5 menit: 0% galat, login p95 60 ms, daftar tiket p95 56 ms; bug duplikat Jabatan ditemukan & ditutup (`reports/rencana_uji.md` §7) | Proven (laptop) |
+| Kesiapan demo | Snapshot simpan/pulihkan (tiket uji hilang setelah pulihkan, 11 dtk), `reports/checklist_demo.md` | Proven |
 | Ketahanan triase saat AI mati (NFR-03) | Tugas `TriageRetry`: gagal → percobaan tercatat; pulih → saran dibuat; tanpa duplikat; batas 5 percobaan | Proven (uji skrip) |
 | Migrasi data (FR-10) | `reports/rekonsiliasi.md`; sampel 200 tiket ke entitas "Arsip ESTIM" lewat API (`ai/scripts/migrate_sample.py`): 199 berhasil + 1 gagal, idempoten, bisa dihapus | Proven (sampel); skala penuh belum |
 | Performa (AI & API GLPI) | AI: Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`reports/rencana_uji.md`](reports/rencana_uji.md) §7) | Partially proven (laptop; halaman GLPI belum) |

@@ -15,10 +15,10 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 | Business Requirements (BR-01..08) | 8 | 7 | 1 | 0 | 0 |
 | Functional Requirements (FR-01..10) | 10 | 10 | 0 | 0 | 0 |
 | Non-Functional Requirements (NFR-01..14) | 14 | 8 | 4 | 0 | 2 |
-| Use Case (UC-01..10, termasuk alur alternatif) | 10 | 9 | 1 | 0 | 0 |
+| Use Case (UC-01..10, termasuk alur alternatif) | 10 | 10 | 0 | 0 | 0 |
 | Hasil & keputusan PoC (2.4.7) | 6 | 5 | 1 | 0 | 0 |
-| Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 5 | 2 | 0 | 3 |
-| **Total** | **58** | **44** | **9** | **0** | **5** |
+| Komponen arsitektur TO-BE (Tabel 2.10) | 10 | 6 | 2 | 0 | 2 |
+| **Total** | **58** | **46** | **8** | **0** | **4** |
 
 **Pembaruan 29 Okt 2026:** semua P1 (#1–#6) selesai; status "Diperbaiki" di tabel menunjukkan butirnya.
 
@@ -42,6 +42,11 @@ tampilan diperbaiki); NFR-03 → ✅ (`TriageRetry`), DBSCAN opsional + banding 
 NFR-01 ⚪ → 🟡 (Peak 50 VU & Stress sampai 200 VU tidak jenuh, API GLPI Normal); TLS (profile `tls`) & monitoring
 (profile `monitoring`) opsional; FR-10 & NFR-13 → ✅ (migrasi sampel 200 tiket + rekonsiliasi). Belum: LLM lokal
 (profile `llm`). Ringkasan: **44 ✅ · 9 🟡 · 5 ⚪**.
+
+**Pembaruan 31 Okt 2026 (hari demo):** arsip migrasi dikecualikan dari tugas plugin & sampel dihapus; arsitektur
+§6: monitoring ✅, reverse proxy 🟡; UC-10 → ✅ (pratinjau dampak + jejak & pemberitahuan konfigurasi); T4 jenis
+REQ/INC ✅; uji beban halaman GLPI menemukan & menutup bug login bersamaan; snapshot demo (`scripts/demo_snapshot.sh`)
+& `checklist_demo.md`. Ringkasan: **46 ✅ · 8 🟡 · 4 ⚪**.
 
 Kesimpulan: alur inti dokumen (chat → tiket → triase AI + HITL → penanganan → konfirmasi → SLA → knowledge)
 berjalan end-to-end, termasuk deteksi pola semantik, re-index knowledge otomatis, eskalasi SLA, dan log latensi
@@ -84,7 +89,7 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 
 | Kode | Kebutuhan (ringkas) | Status | Bukti | Catatan / pengganti |
 | --- | --- | --- | --- | --- |
-| NFR-01 | Uji portal & API pada beban normal, peak, stress | 🟡 | k6 (`tests/load/`): AI Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`rencana_uji.md`](rencana_uji.md) §7) | Laptop, bukan lingkungan produksi; halaman GLPI (HTML) belum diuji beban |
+| NFR-01 | Uji portal & API pada beban normal, peak, stress | 🟡 | k6 (`tests/load/`): AI Normal 10 VU (galat 0%, `/chat` p95 140 ms), Peak 50 VU (0,03%, 223 ms), Stress 25→200 VU tidak jenuh (0,04%, 846 ms); API GLPI Normal 10 VU (0%, buat tiket p95 71 ms) ([`rencana_uji.md`](rencana_uji.md) §7) | Laptop, bukan lingkungan produksi. 31 Okt: + halaman GLPI Normal 10 VU (login SSO → daftar tiket: 0% galat, p95 56–60 ms); uji ini menemukan & menutup bug login bersamaan (plugin sempat dinonaktifkan GLPI) |
 | NFR-02 | Target ketersediaan core ITSM sesuai SLA internal | ⚪ | `restart: unless-stopped` di `docker-compose.yml` | Butuh HA/infra BPS. Pengganti: rancangan HA (replika DB, 2 node GLPI di balik load balancer) |
 | NFR-03 | Timeout, retry, error handling, idempotency | ✅ | Timeout `service_timeout`/`ai_timeout` (`src/Ai/Service.php`, `src/Ai/Client.php`); AI gagal → tiket tetap tersimpan, mode demo; skrip setup & seed idempoten; `UNIQUE(source, source_ref)` kandidat | Tanpa retry saat tiket disimpan (tiket tidak menunggu); **tugas terjadwal `TriageRetry`** (tiap 15 menit, 31 Okt) membuat saran untuk tiket Baru tanpa saran, idempoten, maks. 5 percobaan per tiket, tercatat di log (`src/TriageRetry.php`) |
 | NFR-04 | Scale-out API, worker, AI | ⚪ | Layanan `halosis-ai` terpisah (`docker-compose.yml`) | Pengganti: AI sudah stateless & terpisah → bisa direplikasi; worker = cron GLPI dalam container |
@@ -112,7 +117,7 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 | UC-07 | Memantau Status & Konfirmasi | ✅ | "Laporan saya" dengan kolom Waktu untuk menyelesaikan, Approve → Ditutup, survei kepuasan GLPI 100% tiket ditutup (`setup_list_columns.py`) | 3a follow-up ✅; 5a Refuse wajib alasan → diproses lagi ✅ | Diperbaiki (#3) |
 | UC-08 | Memantau SLA & Pola Insiden | ✅ | Cron `slaticket` + peringatan & eskalasi ke petugas, ketua tim, operator; cron `IncidentPattern` → `/pola` semantik (fallback kata kunci) → Problem + banner; dashboard (filter periode, tim, kategori); tautkan tiket ke Masalah | 3a/4a/7a ✅ | Diperbaiki (P1 #1) |
 | UC-09 | Mengelola Knowledge Base | ✅ | Kandidat dari tiket Selesai + klaster AI, sunting & terbitkan artikel KB, revisi artikel bawaan GLPI (`KnowbaseItem_Revision`); langkah 7: hook `item_add/item_update/item_purge` KnowbaseItem & target visibilitas → `/reindex/artikel` (uji: artikel FAQ baru langsung ditemukan chat, setelah dihapus hilang; `ai/tests/test_reindex.py`) | 3a/3b perbarui/buat baru ✅; 5a draf ✅; gagal re-index → artikel tetap tersimpan, pesan "memakai indeks lama" | Diperbaiki (P1 #5) |
-| UC-10 | Mengonfigurasi Platform ITSM | 🟡 | Admin console `dimas`, RBAC, simpan tanpa kode, audit trail (`system_logs`) | 2a tanpa hak → 403 / menu tidak tampil ✅ (pencatatan percobaan akses mengikuti log GLPI); 5a validasi (mis. URL layanan AI, rentang ambang di `Config.php`) ✅ | Langkah 6 **pratinjau dampak** & notifikasi perubahan ke pihak terkait belum ada; template notifikasi butuh `config` |
+| UC-10 | Mengonfigurasi Platform ITSM | ✅ | Admin console `dimas`, RBAC, simpan tanpa kode, audit trail (`system_logs`) | 2a tanpa hak → 403 / menu tidak tampil ✅ (pencatatan percobaan akses mengikuti log GLPI); 5a validasi (mis. URL layanan AI, rentang ambang di `Config.php`) ✅ | 31 Okt: langkah 6 **pratinjau dampak** ambang AI (saran 30 hari yang berpindah tingkat) + log sebelum/sesudah & Catatan untuk Administrator saat Pengaturan AI, aturan SLA, SLA, atau kategori berubah (`src/ConfigAudit.php`); pratinjau aturan SLA/kategori belum |
 
 ## 5. Hasil & keputusan PoC (§2.4.7, hal. 48–60)
 
@@ -132,11 +137,11 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 | Frontend / web | ✅ | UI GLPI + halaman plugin (Chat, Riwayat, Dashboard, Kandidat) + palet HaloSIS | Prototipe Next.js `halosis-web 2` terpisah, tidak terhubung ke GLPI |
 | Application / core ITSM | ✅ | GLPI 12.0.0 (`docker-compose.yml`, layanan `glpi`) | — |
 | Database | ✅ | MySQL 8.4 (layanan `db`), tabel plugin `glpi_plugin_halosis_*` (`hook.php`) | — |
-| Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern` | Tidak dipisah ke container sendiri |
+| Worker / scheduler | ✅ | Cron GLPI dalam container tiap 60 detik (mode CLI): `slaticket`, `queuednotification`, `IncidentPattern`, `TriageRetry` (NFR-03) | Tidak dipisah ke container sendiri; tugas plugin mengecualikan entitas arsip |
 | AI integration | ✅ | `src/Ai/Service.php` → FastAPI `halosis-ai` (`/triage`, `/chat`, `/cari`, `/pola`, `/kandidat`, `/reindex/artikel`, `/reindex/layanan`, `/health`, `/metrics`) | — |
 | Vector database | 🟡 | Indeks file `ai/index/chunks.parquet` + `vectors.npy`, kosinus di memori; pembaruan inkremental per artikel KB dengan lock + tulis atomik (`search.update_article`) | Bukan layanan vector DB (dokumen: "dapat memakai servis BPS") |
-| Logging / monitoring | 🟡 | `halosis.log`, log GLPI, Audit trail, `/health`, log latensi AI, `GET /metrics` (Prometheus) layanan AI | Belum ada server Prometheus/Grafana yang mengumpulkan metrik |
-| Reverse proxy / load balancer | ⚪ | — | Infra produksi; lokal cukup port 8080 |
+| Logging / monitoring | ✅ | `halosis.log`, log GLPI, Audit trail, `/health`, log latensi AI, `GET /metrics`; profile `monitoring`: Prometheus (target AI & MySQL) + Grafana dasbor terprovisi | Opsional (profile); belum metrik aplikasi GLPI & alert |
+| Reverse proxy / load balancer | 🟡 | Profile `tls`: Caddy reverse proxy HTTPS https://localhost:8443 (HSTS, cookie `Secure`) | Belum load balancer/replika; sertifikat internal |
 | CI / CD / registry | ⚪ | — | Pengganti: alur git `dev`/`master` di README |
 | Backup / DR | ⚪ | Volume Docker `db_data`, `glpi_data`; prosedur & uji restore di [`keamanan_backup.md`](keamanan_backup.md) | Backup terjadwal & DR lintas lokasi di luar prototipe |
 
@@ -197,6 +202,6 @@ layanan AI dan Normal API GLPI lolos di laptop; TLS dan monitoring tersedia seba
 | --- | --- | --- | --- | --- |
 | 14 | Vector DB sungguhan (pgvector/Qdrant) | Arsitektur | sedang | `docker-compose.yml`, `ai/halosis_ai/search.py`, `build_index.py` |
 | 15 | LLM lokal Qwen2.5 3B via Ollama sebagai perangkum RAG (tanpa biaya API) | PoC LLM | sedang | `docker-compose.yml`, `ai/service/app.py` |
-| 16 | Pratinjau dampak perubahan konfigurasi (UC-10 langkah 6) | UC-10 | besar | plugin (halaman baru) |
+| 16 | ✅ Sebagian — Pratinjau dampak ambang AI + jejak & pemberitahuan perubahan konfigurasi (31 Okt) | UC-10 | besar | `src/ConfigAudit.php` |
 | 17 | Memisahkan worker/cron ke container sendiri, CI, backup terjadwal | Arsitektur | sedang | `docker-compose.yml`, `.github/workflows/` |
 | 18 | Menghubungkan prototipe Next.js ke API GLPI | Frontend | besar | `halosis-web 2/` |

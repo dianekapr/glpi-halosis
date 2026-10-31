@@ -96,3 +96,19 @@ def test_chat_keyakinan_sedang_menawarkan_pilihan(monkeypatch):
     assert [p['sumber'] for p in body['pilihan']] == ['KB-2', 'KB-6']  # hanya KB, tanpa duplikat, ≥ 0,78
     assert body['sumber'] == []  # tidak mengarang jawaban
 
+
+class FakeJenis:
+    classes_ = ['INC', 'REQ']
+
+    def predict_proba(self, texts):
+        return [[0.2, 0.8]] if 'akun zoom' in texts[0] else [[0.9, 0.1]]
+
+
+def test_triage_saran_jenis_opsional(monkeypatch):
+    """T4: tanpa model jenis → jenis_saran None (tidak error); dengan model → jenis + keyakinan."""
+    c = client(monkeypatch, [])
+    assert c.post('/triage', json={'judul': 'Minta akun zoom', 'deskripsi': 'rapat'}).json()['jenis_saran'] is None
+    service.state['jenis'] = {'pipeline': FakeJenis(), 'version': 'jenis-uji'}
+    r = c.post('/triage', json={'judul': 'Minta akun zoom', 'deskripsi': 'rapat', 'jenis': 'INC'}).json()
+    assert r['jenis_saran'] == {'jenis': 'REQ', 'keyakinan': 0.8, 'versi_model': 'jenis-uji'}
+
