@@ -137,6 +137,23 @@ final class Config
         ];
     }
 
+    /** Entitas arsip migrasi history (ai/scripts/migrate_sample.py): bukan tiket operasional */
+    public const ARCHIVE_ENTITY = 'Arsip ESTIM';
+
+    /**
+     * ID entitas arsip beserta sub-entitasnya; tugas terjadwal plugin tidak menyentuh tiket di sini.
+     *
+     * @return int[]
+     */
+    public static function getArchiveEntityIds(): array
+    {
+        $entity = new \Entity();
+        if (!$entity->getFromDBByCrit(['name' => self::ARCHIVE_ENTITY])) {
+            return [];
+        }
+        return array_map('intval', array_values(getSonsOf(\Entity::getTable(), $entity->getID())));
+    }
+
     public static function getLowThreshold(): int
     {
         return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
@@ -215,8 +232,10 @@ final class Config
             $values[self::API_KEY] = $api_key; // dienkripsi oleh CoreConfig karena terdaftar di secured_configs
         }
 
+        $before = CoreConfig::getConfigurationValues(self::CONTEXT, array_keys($values));
         CoreConfig::setConfigurationValues(self::CONTEXT, $values);
         self::$values = null;
+        ConfigAudit::onConfigSaved($before, $values);
 
         return $errors;
     }

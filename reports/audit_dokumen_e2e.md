@@ -12,7 +12,7 @@ T9, T12, T14, T15 (kode); T7, T16, T20, KR-01, DQR-05, §5, §6 (dokumentasi). S
 T11, T13 (uji demo), T18, KR-03, KR-07, DQR-02, DQR-04, BP-13/17/19/21.
 
 **Pembaruan 31 Okt 2026:** diperbaiki T3, T5, T10, T11, T13 (uji), T18, KR-07, DQR-02, DQR-04, BP-13/17/19;
-T4 diputuskan sebagai keterbatasan terdokumentasi. Sisa: T4 (klasifier, opsional), BP-25 ⚪.
+T4 diputuskan sebagai keterbatasan terdokumentasi. Sisa: BP-25 ⚪.
 
 **Pembaruan 31 Okt 2026 (lanjutan):** KR-03 (tanggal tinjau per artikel) dan BP-21 (tren pola 12 minggu) ✅;
 katalog layanan & SOP masuk indeks chatbot (BR-03). Bukti uji baru: MRR triase, banding embedding, uji beban
@@ -47,7 +47,7 @@ CRC card, dan state machine, bukan fitur besar yang hilang.
 | T1 | **SLA respons (TTO)** selain penyelesaian: `KebijakanSLA.targetRespons`; baseline Response 42,62% dipakai sebagai KPI | 114, 162 | **Diperbaiki:** SLA *time to own* per prioritas (Kritis 15 mnt … Rendah 4 jam) + aksi `slas_id_tto` di aturan "SLA <prioritas>" (`setup_sla_alerts.py:41`, `:125`); kolom "Waktu untuk mengambil alih" di daftar Operator (`setup_list_columns.py:34`). Uji: tiket prioritas 5 → TTO 15 menit jam kerja | ✅ | Target menit masih asumsi; samakan dengan SLA resmi | — |
 | T2 | **Kebijakan confidence 3 tingkat** (tinggi/sedang/rendah): tinggi = Top-1 default; sedang = Top-3 + review; rendah = manual | 100 | **Diperbaiki:** ambang kedua `ai_threshold_low` 40% (`plugins/halosis/src/Config.php:36`, Pengaturan AI); `Suggestion::getConfidenceLevel()` (`plugins/halosis/src/Suggestion.php:74`) → panel "Disarankan" / "Pilih dari 3 kandidat" / "Perlu penilaian manual" (`plugins/halosis/templates/triase_panel.html.twig`) | ✅ | — | — |
 | T3 | **Chatbot confidence sedang** → jawaban terbatas / pertanyaan klarifikasi / opsi lanjutan | 100 | **Diperbaiki (31 Okt):** skor 0,78–0,83 (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`, `ai/service/app.py:46`, `:258`) → tidak menjawab, ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`plugins/halosis/src/Chatbot.php:337`); tes `test_chat_keyakinan_sedang_menawarkan_pilihan` | ✅ | Jarang muncul selama KB sedikit (± 6 artikel vs ribuan potongan tiket) | — |
-| T4 | **Triase merekomendasikan jenis REQ/INC** | 97, 100, 104 | **Keputusan (31 Okt): keterbatasan terdokumentasi** (README › Keputusan desain). Jenis ditentukan jalur masuk (form permintaan = REQ, chatbot = INC, Operator memilih untuk telepon) dan menjadi input model tim | 🟡 | Paling ringan: klasifier baru butuh artefak di `ai/models/` (di luar repo) padahal jalur masuk sudah memisahkan jenis | — |
+| T4 | **Triase merekomendasikan jenis REQ/INC** | 97, 100, 104 | **Diperbaiki (31 Okt):** klasifier ringan TF-IDF + LR dari kolom `ticket_type` history (`ai/scripts/train_jenis.py`, artefak `ai/models/jenis.joblib`): akurasi 68,25% (pembanding 57,28%), keyakinan ≥ 70% → akurasi 84,17% pada 40,92% tiket; panel menampilkan "Jenis disarankan" hanya bila berbeda dari jenis tiket & yakin (`plugins/halosis/src/TriagePanel.php` `typeHint`); tanpa artefak → diam | ✅ | Operator tetap memutuskan (ubah jenis di form tiket) | — |
 | T5 | **Rekomendasi tim memperhitungkan beban kerja tim** (`hitungBebanKerja()`) | 133, 179 | **Diperbaiki (31 Okt):** 3 kandidat tim disimpan per saran (`suggestions.candidates`, `plugins/halosis/src/Triage.php:281`); panel menampilkan tiket aktif per kandidat → grup GLPI (`plugins/halosis/src/TriagePanel.php:90`, `:112`); ranking tetap dari model | ✅ | — | — |
 | T6 | **Peninjauan berkala artikel** (`tanggalTinjauBerikut`, "artikel yang jatuh tempo ditinjau" muncul di daftar KM) | 139–140, 167, 192 | **Diperbaiki:** tab "Perlu ditinjau" di Kandidat knowledge = artikel terbit dengan `date_mod` > `kb_review_months` (bawaan 6) (`plugins/halosis/src/KnowledgeCandidates.php:161`, `plugins/halosis/src/Config.php:42`) | ✅ | — | — |
 | T7 | **Arsip artikel** (soft delete, hapus dari indeks) + **kata kunci/tag** artikel | 140, 167, 192 | Hapus/tidak terbit → hapus dari indeks ✅; **didokumentasikan**: "tidak terbit = arsip, kategori KB = tag" (README › Keputusan desain) | ✅ | — | dok. |
@@ -70,7 +70,7 @@ Detail di bawah hanya muncul di gambar atau tabel CRUDE, tidak di teks deskripsi
 | T17 | Pencarian tiket historis hanya pada tiket **Closed & tervalidasi** | 177 | Indeks dari history yang sudah selesai; tiket GLPI baru masuk lewat Kandidat → artikel | ✅ | Cukup sebutkan di README AI | — |
 | T18 | Dashboard UC-08 bisa **difilter per layanan, tim, dan periode** | 151 | **Diperbaiki (31 Okt):** filter tim (grup ditugaskan) & kategori layanan (termasuk subkategori) selain periode (`plugins/halosis/src/Stats.php:71`); berlaku untuk angka triase, salah tim, drift | ✅ | Angka chatbot tidak terkait tim/kategori | — |
 | T19 | UC-03 SLA dimulai untuk **response & resolution time** | 146 | **Diperbaiki** bersama T1: aturan SLA memasang TTO & TTR | ✅ | — | — |
-| T20 | UC-10: **pratinjau dampak**, **notifikasi perubahan konfigurasi**, dan **catat percobaan akses yang ditolak** | 153, 185 | Pratinjau & notifikasi belum ada; **didokumentasikan** sebagai keterbatasan + alternatif (Rules › Test, Setup › Log) di README | 🟡 | — | dok. |
+| T20 | UC-10: **pratinjau dampak**, **notifikasi perubahan konfigurasi**, dan **catat percobaan akses yang ditolak** | 153, 185 | **Minimal (31 Okt):** tombol *Pratinjau dampak* di Pengaturan AI (saran 30 hari yang berpindah tingkat, tanpa menyimpan); perubahan Pengaturan AI, aturan tiket/SLA, SLA, kategori → log sistem GLPI (sebelum → sesudah, aktor, waktu) + Catatan untuk profil Administrator (`plugins/halosis/src/ConfigAudit.php`); akses ditolak → log GLPI | ✅ | Pratinjau untuk aturan SLA/kategori belum (gunakan Rules › Test) | — |
 
 Konsisten dengan implementasi (tidak perlu tindakan): use case diagram (6 aktor + AI Engine, include/extend),
 class diagram (20 kelas, 4 enumerasi), UC-04 tim default dari layanan (`getTimDefault()` = grup di kategori
@@ -132,9 +132,5 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 
 ## 7. Rekomendasi urutan kerja
 
-Langkah 1–3 versi 30 Okt dan sisa versi 31 Okt sudah dikerjakan (lihat pembaruan di atas). Sisa opsional:
-
-1. **T4:** klasifier REQ/INC bila jalur masuk tidak lagi memisahkan jenis.
-2. **T20:** pratinjau dampak & notifikasi perubahan konfigurasi (butuh halaman baru; kini prosedur manual).
-3. Uji beban halaman GLPI (HTML) — Peak/Stress layanan AI & API GLPI sudah diuji (`reports/rencana_uji.md` §7).
-4. LLM lokal (profile `llm`, Ollama + Qwen2.5 3B) sebagai perangkum opsional — belum dikerjakan.
+Semua butir T1–T20 sudah ✅ (31 Okt). Sisa opsional di luar audit ini: LLM lokal (profile `llm`, Ollama + Qwen2.5 3B)
+sebagai perangkum grounded, pratinjau dampak untuk aturan SLA/kategori, dan uji di lingkungan BPS.

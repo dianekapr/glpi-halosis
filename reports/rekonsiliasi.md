@@ -167,3 +167,11 @@ Uji 31 Okt 2026: jalan pertama **sumber 200 = berhasil 199 + gagal 1** (tanpa no
 Baru 2. Jalan ulang: 0 baru, 199 dilewati (idempoten). `--hapus` menghapus 199 tiket + entitas, lalu migrasi ulang
 memberi hasil sama. Hanya 19 tiket yang masih terbuka mendapat saran triase AI; tidak ada Problem pola yang terbentuk;
 228 notifikasi antre milik tiket arsip dihapus (REST API GLPI tidak menghormati `_disablenotif`).
+
+**Visibilitas (cek 31 Okt):** entitas "Arsip ESTIM" adalah anak entitas root, sehingga `rina`, `andi`, dan `sri`
+(profil di root, rekursif) **melihat** tiket arsip di Semua tiket, Monitoring SLA, dan Statistik GLPI. Dashboard
+plugin tidak terpengaruh (hanya menghitung keputusan AI). Tugas terjadwal plugin (`TriageRetry`, `IncidentPattern`)
+kini **mengecualikan** entitas arsip beserta sub-entitasnya (`Config::getArchiveEntityIds()`), diuji dengan 3 tiket
+arsip Baru hari ini: 0 saran, 0 pola. Untuk migrasi sungguhan: beri profil operasional di entitas operasional
+(bukan root rekursif) atau buat arsip sebagai entitas terpisah yang hanya dibuka Manajemen/Administrator.
+Untuk demo, sampel sudah dihapus (`--hapus`, 199 tiket + entitas) dan bisa dimuat ulang kapan saja.

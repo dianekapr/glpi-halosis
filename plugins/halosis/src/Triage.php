@@ -132,6 +132,8 @@ final class Triage
             'confidence'        => $result['confidence'],
             'explanation'       => $result['explanation'],
             'candidates'        => json_encode($result['candidates'] ?? [], JSON_UNESCAPED_UNICODE),
+            'type_suggested'    => (int) ($result['type_suggested'] ?? 0),
+            'type_confidence'   => (int) ($result['type_confidence'] ?? 0),
             'model'             => $result['model'],
             'is_demo'           => (int) ($result['model'] === self::DEMO_MODEL),
             'status'            => Suggestion::STATUS_PENDING,
@@ -280,6 +282,13 @@ final class Triage
         } elseif ($category_id > 0) {
             $group = $context['categories'][$category_id]['groups_id'];
             $result['groups_id'] = isset($context['groups'][$group]) ? $group : 0;
+        }
+
+        // Saran jenis REQ/INC (T4), hanya bila layanan punya model jenis
+        $kind = (array) ($response['jenis_saran'] ?? []);
+        if (in_array($kind['jenis'] ?? '', ['REQ', 'INC'], true)) {
+            $result['type_suggested']  = $kind['jenis'] === 'REQ' ? Ticket::DEMAND_TYPE : Ticket::INCIDENT_TYPE;
+            $result['type_confidence'] = max(0, min(100, (int) round(100 * (float) ($kind['keyakinan'] ?? 0))));
         }
 
         // Kandidat tim beserta grup GLPI-nya, untuk info beban kerja di panel (T5)

@@ -136,6 +136,7 @@ final class PatternDetector extends CommonDBTM
             'WHERE'  => [
                 'is_deleted' => 0,
                 'type'       => Ticket::INCIDENT_TYPE,
+                'NOT'        => ['entities_id' => Config::getArchiveEntityIds() ?: [-1]],
                 'date'       => ['>=', $since],
                 'status'     => ['<', CommonITILObject::SOLVED],
             ],

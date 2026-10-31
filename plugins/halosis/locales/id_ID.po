@@ -1177,3 +1177,39 @@ msgstr "Bawaan 0,50 untuk vektor e5 yang dipusatkan (PoC memakai 0,25 dengan Min
 
 msgid "DBSCAN min_samples"
 msgstr "min_samples DBSCAN"
+
+msgid "Suggested type"
+msgstr "Jenis disarankan"
+
+msgid "the ticket is currently %s; change it in the ticket form if appropriate"
+msgstr "tiket saat ini %s; ubah di form tiket bila sesuai"
+
+msgid "deleted"
+msgstr "dihapus"
+
+msgid "updated"
+msgstr "diubah"
+
+msgid "created"
+msgstr "dibuat"
+
+msgid "HaloSIS AI settings updated"
+msgstr "Pengaturan AI HaloSIS diubah"
+
+msgid "By %1$s at %2$s"
+msgstr "Oleh %1$s pada %2$s"
+
+msgid "Impact preview (not saved yet)"
+msgstr "Pratinjau dampak (belum disimpan)"
+
+msgid "%1$d of %2$d suggestions in the last 30 days would change level."
+msgstr "%1$d dari %2$d saran 30 hari terakhir akan berpindah tingkat."
+
+msgid "Current thresholds"
+msgstr "Ambang sekarang"
+
+msgid "New thresholds"
+msgstr "Ambang baru"
+
+msgid "Preview impact"
+msgstr "Pratinjau dampak"

@@ -70,7 +70,9 @@ final class TriageRetry extends CommonDBTM
                 't.is_deleted' => 0,
                 't.status'     => CommonITILObject::INCOMING,
                 't.date'       => ['>=', $since],
-                'NOT'          => ['t.id' => new QuerySubQuery(['SELECT' => 'tickets_id', 'FROM' => Suggestion::getTable()])],
+                // Belum punya saran & bukan entitas arsip (dua NOT terpisah; satu NOT berisi dua kunci = NOT(a DAN b))
+                ['NOT' => ['t.id' => new QuerySubQuery(['SELECT' => 'tickets_id', 'FROM' => Suggestion::getTable()])]],
+                ['NOT' => ['t.entities_id' => Config::getArchiveEntityIds() ?: [-1]]],
                 'OR'           => [['r.attempts' => null], ['r.attempts' => ['<', self::MAX_ATTEMPTS]]],
             ],
             'ORDER'     => 't.id',

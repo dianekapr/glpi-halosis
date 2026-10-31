@@ -12,7 +12,7 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu, artikel paling sering dipakai / dinilai tidak membantu, pola terdeteksi vs dikonfirmasi vs ditutup, drift bulanan; filter periode, tim, kategori; ekspor koreksi CSV | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.9.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Versi 0.10.0 ([CHANGELOG](../../CHANGELOG.md)) · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
 Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
 semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
@@ -229,6 +229,8 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
 - **Tingkat keyakinan**: ≥ ambang (70%) *Disarankan*; antara ambang rendah (40%) dan ambang *Pilih dari 3
   kandidat*; di bawahnya *Perlu penilaian manual*. Panel menampilkan **tiket aktif per kandidat tim** (3 tim
   teratas model → grup GLPI, tiket belum selesai yang ditugaskan ke grup itu); hanya info, urutan tetap dari model.
+- **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
+  menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
 - **Kembalikan ke operator (salah tim)**, UC-06 alur alternatif: tombol hanya tampil untuk teknisi/anggota tim
   yang ditugaskan, selama tiket Diproses/Direncanakan/Menunggu. Hak dicek ulang di server. Alasan wajib.
   Hasilnya: grup & teknisi penugasan dihapus, status Baru, tindak lanjut privat "Dikembalikan ke operator
@@ -416,6 +418,10 @@ mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
   terbukti (request sampai ke API dan ditolak karena key uji palsu), tapi isi request belum divalidasi oleh
   API dengan key sungguhan. Uji sekali dengan key asli sebelum dipakai.
 - AI dipanggil saat tiket disimpan, jadi pegawai menunggu sampai saran jadi (maksimal = batas waktu).
+- **Pengaturan AI**: tombol *Pratinjau dampak* menghitung saran 30 hari terakhir yang berpindah tingkat dengan ambang
+  baru (tanpa menyimpan). Perubahan Pengaturan AI, aturan tiket/SLA, SLA, dan kategori dicatat di log sistem GLPI
+  (Administrasi › Log, sebelum → sesudah, aktor) dan diumumkan lewat Catatan di beranda profil Administrator (7 hari).
+- Tugas terjadwal plugin tidak menyentuh tiket di entitas arsip migrasi "Arsip ESTIM".
 - **Mode demo saja** (layanan `halosis-ai` mati): pencarian artikel memakai pencocokan kata kunci, jadi sinonim
   (mis. "lemot" vs "lambat") belum dikenali; cukup untuk KB kecil. Dengan `halosis-ai`, pencarian chatbot
   memakai embedding (`intfloat/multilingual-e5-base`) sehingga makna serupa tetap ditemukan.
@@ -432,7 +438,8 @@ src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php 
 src/RoleMenu.php          menu ringkas per peran (hook redefine_menus)
 src/Console/              perintah plugins:halosis:setup-roles
 src/Ai/Client.php         pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
-src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /cari, /pola, /kandidat, /reindex/artikel);
+src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /cari, /pola, /kandidat, /reindex/artikel,
+                          /reindex/layanan);
                           src/Ai/AiException.php
 src/Triage.php            saran triase (AI & demo) + keputusan;  src/TriagePanel.php  panel di form tiket
 src/Suggestion.php        model saran;  src/Decision.php  model keputusan
