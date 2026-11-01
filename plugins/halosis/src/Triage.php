@@ -25,6 +25,9 @@ use Toolbox;
  */
 final class Triage
 {
+    /** UC-04: selisih keyakinan (poin persen) di bawah ini dianggap seri → beban kerja tim menentukan */
+    public const TIEBREAK_POINTS = 5;
+
     public const DEMO_MODEL = 'demo-rules-v1';
 
     /** Alasan Ubah/Tolak minimal sekian karakter */
@@ -456,9 +459,62 @@ final class Triage
             $result['confidence'] = min($result['confidence'], max(0, Config::getLowThreshold() - 1));
             $explanation .= ' Kelas gabungan "Lainnya" (tim kecil): tentukan tim secara manual.';
         }
+        // UC-04 langkah 5: keyakinan dua kandidat teratas hampir sama → beban kerja tim sebagai pemecah seri
+        $active = array_map(
+            static fn ($c) => (int) $c['groups_id'] > 0 ? TriagePanel::activeTickets((int) $c['groups_id']) : 0,
+            $result['candidates'],
+        );
+        $tie = (int) ($result['candidates'][0]['groups_id'] ?? 0) === (int) $result['groups_id']
+            ? self::workloadTiebreak($result['candidates'], $active)
+            : null;
+        if ($tie !== null) {
+            $chosen = $result['candidates'][1];
+            [$chosen_category] = self::mapServiceTeam($chosen['team'], $context);
+            $result['groups_id'] = (int) $chosen['groups_id'];
+            if ($chosen_category > 0) {
+                $result['itilcategories_id'] = $chosen_category;
+            }
+            $result['confidence'] = min($result['confidence'], (int) $chosen['confidence']);
+            $result['candidates'][1]['tiebreak'] = $tie;
+            $explanation .= ' ' . $tie;
+        }
+
         $result['explanation'] = mb_substr($explanation, 0, 1000);
         $result['model']       = mb_substr((string) ($response['versi_model'] ?? 'halosis-ai'), 0, 100);
         return $result;
+    }
+
+    /**
+     * Pemecah seri beban kerja (UC-04 langkah 5): bila selisih keyakinan kandidat 1 dan 2 < TIEBREAK_POINTS poin,
+     * keduanya terpetakan ke grup berbeda, dan kandidat 2 punya tiket aktif lebih sedikit, kandidat 2 yang
+     * disarankan. Mengembalikan alasan (tampil di panel) atau null bila urutan model tetap.
+     *
+     * @param array<int, array{team: string, confidence: int, groups_id: int}> $candidates
+     * @param array<int, int> $active tiket aktif per kandidat (indeks sama)
+     */
+    public static function workloadTiebreak(array $candidates, array $active): ?string
+    {
+        if (count($candidates) < 2) {
+            return null;
+        }
+        [$first, $second] = $candidates;
+        if ((int) $first['groups_id'] <= 0 || (int) $second['groups_id'] <= 0 || (int) $first['groups_id'] === (int) $second['groups_id']) {
+            return null;
+        }
+        $gap = (int) $first['confidence'] - (int) $second['confidence'];
+        if ($gap >= self::TIEBREAK_POINTS || (int) ($active[1] ?? 0) >= (int) ($active[0] ?? 0)) {
+            return null;
+        }
+        return sprintf(
+            __('Workload tie-break: %1$s (%2$d%%) and %3$s (%4$d%%) differ by less than %5$d points; %3$s has fewer active tickets (%6$d vs %7$d), so it is suggested.', 'halosis'),
+            $first['team'],
+            (int) $first['confidence'],
+            $second['team'],
+            (int) $second['confidence'],
+            self::TIEBREAK_POINTS,
+            (int) ($active[1] ?? 0),
+            (int) ($active[0] ?? 0),
+        );
     }
 
     /**

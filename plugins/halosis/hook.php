@@ -10,6 +10,7 @@
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
+use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\TriageRetry;
 
@@ -137,6 +138,14 @@ function plugin_halosis_tables(): array
             `date_mod` timestamp NULL DEFAULT NULL,
             UNIQUE KEY `tickets_id` (`tickets_id`)
         ",
+        // E19: pengingat progres terakhir per tiket (sekali per periode tanpa tindak lanjut).
+        'glpi_plugin_halosis_progress_reminders' => "
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `last_activity` timestamp NULL DEFAULT NULL COMMENT 'Aktivitas terakhir saat diingatkan',
+            `date_reminder` timestamp NULL DEFAULT NULL,
+            `idle_days` int NOT NULL DEFAULT '0' COMMENT 'Hari kerja tanpa tindak lanjut saat diingatkan',
+            UNIQUE KEY `tickets_id` (`tickets_id`)
+        ",
         // Tanggal tinjau berikut per artikel KB (KR-03); tanpa baris = date_mod + kb_review_months.
         'glpi_plugin_halosis_kb_reviews' => "
             `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
@@ -231,6 +240,14 @@ function plugin_halosis_install(): bool
         'comment' => 'HaloSIS: coba ulang saran triase yang terlewat',
         'mode'    => CronTask::MODE_EXTERNAL,
     ]);
+    // E19: pengingat progres harian untuk tiket tanpa tindak lanjut + notifikasi bawaannya
+    CronTask::register(ProgressReminder::class, ProgressReminder::CRON_NAME, DAY_TIMESTAMP, [
+        'comment' => 'HaloSIS: pengingat progres tiket tanpa tindak lanjut',
+        'mode'    => CronTask::MODE_EXTERNAL,
+        'hourmin' => 7,
+        'hourmax' => 17,
+    ]);
+    ProgressReminder::installNotification();
 
     return true;
 }
@@ -245,6 +262,7 @@ function plugin_halosis_uninstall(): bool
 
     Config::uninstall();
     Profile::uninstall();
+    ProgressReminder::uninstallNotification();
     CronTask::unregister('halosis');
 
     return true;

@@ -39,6 +39,12 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   (`Stats::humanTouchedProblems`); layanan AI gagal → tiket tanpa saran (bukan aturan demo, UC-04 1a); login SSO
   mengganti email utama (`KeycloakAuth::syncPrimaryEmail`) + pembersihan email demo lama di seed; uji alur alternatif
   bertambah UC-03 4a, UC-04 1a, UC-06 S-1, UC-09 5a.
+- **Penutupan 🟡 kelompok fitur (1 Nov 2026, masih 1.0.0):** pratinjau dampak perubahan SLA / aturan SLA pada tiket
+  aktif tanpa menyimpan (UC-10); opsi *Sertakan permintaan dalam deteksi pola* (FR-04, bawaan mati) → "Pola
+  permintaan"; pemecah seri beban kerja bila selisih keyakinan 2 kandidat < 5 poin, alasan di panel (UC-04); tugas
+  terjadwal `ProgressReminder` + notifikasi "HaloSIS: Pengingat progres" (E19, > N hari kerja, bawaan 5; tabel
+  `glpi_plugin_halosis_progress_reminders`: jalankan `plugin:install --force`); ringkasan ekstraktif deskripsi
+  > 150 kata di panel (E15); uji `tools/test_fitur.php`, `tests/e2e/fitur_penutup.js`.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

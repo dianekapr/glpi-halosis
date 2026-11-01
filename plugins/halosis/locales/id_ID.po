@@ -1366,3 +1366,93 @@ msgstr "Pemohon terdampak"
 
 msgid "median %s per pattern"
 msgstr "median %s per pola"
+
+msgid "Request pattern: %s"
+msgstr "Pola permintaan: %s"
+
+msgid "Workload tie-break: %1$s (%2$d%%) and %3$s (%4$d%%) differ by less than %5$d points; %3$s has fewer active tickets (%6$d vs %7$d), so it is suggested."
+msgstr "Pemecah seri beban kerja: %1$s (%2$d%%) dan %3$s (%4$d%%) berselisih kurang dari %5$d poin; %3$s punya tiket aktif lebih sedikit (%6$d vs %7$d), jadi %3$s yang disarankan."
+
+msgid "Description summary (%d words, key sentences)"
+msgstr "Ringkasan deskripsi (%d kata, kalimat kunci)"
+
+msgid "HaloSIS: remind assigned technicians of tickets without progress"
+msgstr "HaloSIS: ingatkan teknisi atas tiket tanpa progres"
+
+msgid "Ticket #%1$d: progress reminder sent (%2$d working days without follow-up)"
+msgstr "Tiket #%1$d: pengingat progres dikirim (%2$d hari kerja tanpa tindak lanjut)"
+
+msgid "HaloSIS: progress reminder"
+msgstr "HaloSIS: Pengingat progres"
+
+msgid "response"
+msgstr "respons"
+
+msgid "resolution"
+msgstr "penyelesaian"
+
+msgid "SLA \"%1$s\": %2$s → %3$d %4$s"
+msgstr "SLA \"%1$s\": %2$s → %3$d %4$s"
+
+msgid "The replacement SLA must be of the same kind (response or resolution) as the rule action."
+msgstr "SLA pengganti harus sejenis (respons atau penyelesaian) dengan aksi aturan."
+
+msgid "Rule \"%1$s\": SLA %2$s → %3$s"
+msgstr "Aturan \"%1$s\": SLA %2$s → %3$s"
+
+msgid "Choose an SLA or SLA rule and the new target."
+msgstr "Pilih SLA atau aturan SLA dan target barunya."
+
+msgid "SLA change impact preview"
+msgstr "Pratinjau dampak perubahan SLA"
+
+msgid "Shows how many active tickets would be affected and change SLA status (on track / at risk / overdue) if a new target were applied. Nothing is saved; change the SLA or rule itself in Setup › Service levels or Business rules for tickets."
+msgstr "Menampilkan berapa tiket aktif yang terdampak dan berubah status SLA (aman / berisiko / terlewati) bila target baru diterapkan. Tidak ada yang disimpan; ubah SLA atau aturannya sendiri di Pengaturan › Tingkat layanan atau Aturan bisnis tiket."
+
+msgid "SLA or SLA rule"
+msgstr "SLA atau aturan SLA"
+
+msgid "SLA (change target)"
+msgstr "SLA (ubah target)"
+
+msgid "SLA rule (replace SLA)"
+msgstr "Aturan SLA (ganti SLA)"
+
+msgid "New target (SLA)"
+msgstr "Target baru (SLA)"
+
+msgid "Unit"
+msgstr "Satuan"
+
+msgid "Replacement SLA (rule)"
+msgstr "SLA pengganti (aturan)"
+
+msgid "On track"
+msgstr "Aman"
+
+msgid "At risk"
+msgstr "Berisiko"
+
+msgid "Overdue"
+msgstr "Terlewati"
+
+msgid "%1$d active tickets affected; %2$d would change SLA status (%3$d worse, %4$d better)."
+msgstr "%1$d tiket aktif terdampak; %2$d berubah status SLA (%3$d memburuk, %4$d membaik)."
+
+msgid "Current target"
+msgstr "Target sekarang"
+
+msgid "New target"
+msgstr "Target baru"
+
+msgid "Include service requests in pattern detection"
+msgstr "Sertakan permintaan dalam deteksi pola"
+
+msgid "Off by default (the PoC detects patterns from incidents only). When on, service requests are grouped too, separately from incidents, as “Request pattern” problems."
+msgstr "Bawaan mati (PoC mendeteksi pola dari insiden saja). Bila aktif, permintaan layanan ikut dikelompokkan, terpisah dari insiden, sebagai Problem “Pola permintaan”."
+
+msgid "Progress reminder after (working days without follow-up)"
+msgstr "Pengingat progres setelah (hari kerja tanpa tindak lanjut)"
+
+msgid "Tickets in progress or pending without a follow-up or task for more than this many working days notify the assigned technician and group (scheduled task ProgressReminder, once per period)."
+msgstr "Tiket Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja memberi tahu teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
