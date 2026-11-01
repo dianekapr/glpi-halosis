@@ -60,4 +60,14 @@
             send({ action: 'ignore', id: form.dataset.id, reason: reason.value }, submit);
         });
     });
+
+    // KR-03: tanggal tinjau berikut artikel di tab "Perlu ditinjau"
+    root.addEventListener('submit', (event) => {
+        const form = event.target.closest('[data-hk-review]');
+        if (!form) {
+            return;
+        }
+        event.preventDefault();
+        send({ action: 'review_date', kb_id: form.dataset.id, date: form.querySelector('input').value }, form.querySelector('button'));
+    });
 })();

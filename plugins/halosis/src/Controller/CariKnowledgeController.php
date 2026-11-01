@@ -7,6 +7,7 @@ use Glpi\Http\Firewall;
 use Glpi\Security\Attribute\SecurityStrategy;
 use GlpiPlugin\Halosis\Ai\AiException;
 use GlpiPlugin\Halosis\Ai\Service;
+use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\KnowledgeSearch;
 use GlpiPlugin\Halosis\Profile;
 use KnowbaseItem;
@@ -30,6 +31,8 @@ final class CariKnowledgeController extends AbstractController
     #[Route('/CariKnowledge', name: 'cari_knowledge', methods: 'GET')]
     public function __invoke(Request $request): Response
     {
+        global $CFG_GLPI;
+
         if (!Session::haveRight(Profile::RIGHT_TRIASE, READ)) {
             throw new AccessDeniedHttpException();
         }
@@ -55,6 +58,7 @@ final class CariKnowledgeController extends AbstractController
             'mode'    => $mode,
             'results' => $result,
             'kb_url'  => KnowbaseItem::getSearchURL(),
+            'ajax_url' => $CFG_GLPI['root_doc'] . '/plugins/halosis/ajax/feedback.php',
         ]);
     }
 
@@ -74,6 +78,8 @@ final class CariKnowledgeController extends AbstractController
                     continue;
                 }
                 $url = KnowbaseItem::getFormURLWithID((int) $m[1]);
+            } else {
+                $url = KnowledgeIndex::serviceUrl($ref) ?? '';
             }
             $items[] = [
                 'title' => (string) ($hit['judul'] ?? ''),

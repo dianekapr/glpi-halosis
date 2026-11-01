@@ -26,6 +26,18 @@ final class Chatbot
 {
     public const MAX_MESSAGE_LENGTH = 1000;
     public const DEMO_MODEL = 'demo-extractive-v1';
+    /**
+     * T31 (wawancara Operator): topik non-TI → unit yang menangani. Hanya berlaku bila pertanyaan tidak memuat kata
+     * kunci TI (OUT_OF_SCOPE_IT), mis. "aplikasi SIMPEG error" tetap dijawab sebagai masalah TI.
+     */
+    private const OUT_OF_SCOPE = [
+        'Kepegawaian/SDM'       => ['cuti', 'kenaikan pangkat', 'pangkat', 'mutasi', 'pensiun', 'skp', 'jabatan fungsional', 'angka kredit', 'kepegawaian', 'diklat'],
+        'Keuangan'              => ['gaji', 'tunjangan', 'tukin', 'honor', 'sppd', 'perjalanan dinas', 'reimburse', 'uang makan', 'lembur'],
+        'Umum/Rumah Tangga'     => ['atk', 'ruang rapat', 'kendaraan dinas', 'konsumsi rapat', 'kebersihan', 'ac ruangan'],
+    ];
+    private const OUT_OF_SCOPE_IT = ['aplikasi', 'login', 'akun', 'sso', 'error', 'email', 'laptop', 'komputer', 'printer',
+        'vpn', 'jaringan', 'internet', 'wifi', 'sistem', 'password', 'kata sandi', 'website', 'server', 'simpeg', 'sinkron'];
+
     /** Nama sumber permintaan (Request source) GLPI untuk tiket yang dibuat dari chatbot */
     public const REQUEST_TYPE = 'HaloSIS Chat';
 
@@ -124,9 +136,20 @@ final class Chatbot
         $question = $privacy['text'];
         $messages = $chat->getMessages();
 
+        // Di luar layanan TI: arahkan ke unit terkait, tanpa mencari artikel & tanpa tawaran laporan TI
+        if (($unit = self::outOfScopeUnit($question)) !== null) {
+            $reply = [
+                'answer'       => sprintf(__('This question is outside HaloSIS IT services. Please contact the %s unit; they handle this topic. For IT problems (applications, accounts, devices, network), ask me again.', 'halosis'), $unit),
+                'found'        => false,
+                'sources'      => [],
+                'model'        => '',
+                'out_of_scope' => true,
+            ];
+        }
+
         // Layanan AI HaloSIS lebih dulu (KB + solusi tiket lama); mati/gagal → pencarian KB lokal di bawah
-        $reply = null;
-        if (Service::isConfigured()) {
+        $reply ??= null;
+        if (!isset($reply) && Service::isConfigured()) {
             try {
                 $reply = self::askService($question, $messages);
             } catch (AiException $e) {
@@ -156,6 +179,7 @@ final class Chatbot
             'found'   => $reply['found'],
             'sources' => $reply['sources'],
             'model'   => $reply['model'],
+            'out_of_scope' => !empty($reply['out_of_scope']),
             'at'      => $now,
         ];
 
@@ -165,7 +189,9 @@ final class Chatbot
             'message_count'  => count($messages),
             'answered_count' => (int) $chat->fields['answered_count'] + ($reply['found'] ? 1 : 0),
         ]);
-        self::recordUsage($chat, $reply['sources']);
+        if ($reply['found']) {
+            self::recordUsage($chat, $reply['sources']);
+        }
 
         return [
             'ok'      => true,
@@ -173,6 +199,7 @@ final class Chatbot
             'answer'  => $reply['answer'],
             'found'   => $reply['found'],
             'ai'      => self::isAiModel($reply['model']),
+            'out_of_scope' => !empty($reply['out_of_scope']),
             'sources' => $reply['sources'],
             'masked'  => $privacy['masked'],
         ];
@@ -204,7 +231,7 @@ final class Chatbot
         }
         $data = Service::post('/chat', ['pertanyaan' => $question, 'riwayat' => $history]);
         if (empty($data['ditemukan'])) {
-            return self::notFound();
+            return self::choices((array) ($data['pilihan'] ?? [])) ?? self::notFound();
         }
 
         $sources = [];
@@ -216,6 +243,9 @@ final class Chatbot
                     return null;
                 }
                 $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+            } elseif (($url = KnowledgeIndex::serviceUrl($ref)) !== null) {
+                // Katalog layanan (BR-03): arahkan ke form / katalog layanan
+                $sources[] = ['id' => 0, 'name' => (string) ($source['judul'] ?? $ref), 'url' => $url];
             } else {
                 // Tiket history tidak ada di GLPI ini: tampilkan nomornya saja, tanpa tautan
                 $sources[] = ['id' => 0, 'name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];
@@ -255,6 +285,32 @@ final class Chatbot
     }
 
     /**
+     * Prompt perangkum untuk penyedia AI eksternal. Pertanyaan, riwayat (6 pesan terakhir), dan artikel disamarkan
+     * lagi di sini meskipun pesan sudah disamarkan saat disimpan (pertahanan berlapis, NFR-06).
+     *
+     * @param array<int, array<string, mixed>> $messages
+     * @param array<int, array{id: int, name: string, text: string, url?: string, score?: int}> $articles
+     */
+    public static function aiPrompt(string $question, array $messages, array $articles): string
+    {
+        $mask = static fn ($text): string => Privacy::mask((string) $text)['text'];
+        $history = [];
+        foreach (array_slice($messages, -6) as $message) {
+            $history[] = sprintf('%s: %s', ($message['role'] ?? '') === 'user' ? 'Pegawai' : 'Asisten', $mask($message['text'] ?? ''));
+        }
+        $blocks = [];
+        foreach ($articles as $article) {
+            $blocks[] = sprintf("<artikel id=\"%d\" judul=\"%s\">\n%s\n</artikel>", $article['id'], $mask($article['name']), $mask($article['text']));
+        }
+        return sprintf(
+            "%s\n\n<percakapan>\n%s\n</percakapan>\n\n<pertanyaan>\n%s\n</pertanyaan>",
+            implode("\n\n", $blocks),
+            implode("\n", $history),
+            $mask($question),
+        );
+    }
+
+    /**
      * @param array<int, array{id: int, name: string, text: string, url: string, score: int}> $articles
      */
     private static function summarizeWithAi(string $question, array $messages, array $articles): array
@@ -269,20 +325,7 @@ final class Chatbot
             Di article_ids, cantumkan id artikel yang benar-benar kamu pakai.
             TXT;
 
-        $history = [];
-        foreach (array_slice($messages, -6) as $message) {
-            $history[] = sprintf('%s: %s', $message['role'] === 'user' ? 'Pegawai' : 'Asisten', $message['text']);
-        }
-        $blocks = [];
-        foreach ($articles as $article) {
-            $blocks[] = sprintf("<artikel id=\"%d\" judul=\"%s\">\n%s\n</artikel>", $article['id'], $article['name'], $article['text']);
-        }
-        $prompt = sprintf(
-            "%s\n\n<percakapan>\n%s\n</percakapan>\n\n<pertanyaan>\n%s\n</pertanyaan>",
-            implode("\n\n", $blocks),
-            implode("\n", $history),
-            $question,
-        );
+        $prompt = self::aiPrompt($question, $messages, $articles);
 
         $ids = array_column($articles, 'id');
         $schema = [
@@ -325,6 +368,51 @@ final class Chatbot
             'found'   => true,
             'sources' => self::sources([$article]),
             'model'   => self::DEMO_MODEL,
+        ];
+    }
+
+    /**
+     * Unit penanganan bila pertanyaan jelas di luar layanan TI; null bila bukan (atau ada kata kunci TI).
+     */
+    public static function outOfScopeUnit(string $question): ?string
+    {
+        $text = ' ' . mb_strtolower($question) . ' ';
+        foreach (self::OUT_OF_SCOPE_IT as $word) {
+            if (preg_match('/\b' . preg_quote($word, '/') . '\b/u', $text)) {
+                return null;
+            }
+        }
+        foreach (self::OUT_OF_SCOPE as $unit => $words) {
+            foreach ($words as $word) {
+                if (preg_match('/\b' . preg_quote($word, '/') . '\b/u', $text)) {
+                    return $unit;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Keyakinan sedang (T3): tidak menjawab, hanya menawarkan 2–3 judul artikel KB yang terlihat oleh pengguna
+     * sebagai pilihan "Maksud Anda…?" + kartu Buat laporan (found = false). Null bila tidak ada pilihan.
+     */
+    private static function choices(array $choices): ?array
+    {
+        $sources = [];
+        foreach ($choices as $choice) {
+            $item = new \KnowbaseItem();
+            if (preg_match('/^KB-(\d+)$/', (string) ($choice['sumber'] ?? ''), $m) && $item->getFromDB((int) $m[1]) && $item->canViewItem()) {
+                $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+            }
+        }
+        if ($sources === []) {
+            return null;
+        }
+        return [
+            'answer'  => __('Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits.', 'halosis'),
+            'found'   => false,
+            'sources' => array_slice($sources, 0, 3),
+            'model'   => '',
         ];
     }
 

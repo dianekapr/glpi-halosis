@@ -4,6 +4,7 @@ Memakai model embedding asli bila sudah terunduh (lewati bila belum tersedia).""
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -28,3 +29,18 @@ def test_lemot_dan_lambat_satu_kelompok():
     groups = patterns.group(tickets, vectors, min_members=3, window_minutes=60)
     assert [g['ids'] for g in groups] == [[1, 2, 3]]
     assert groups[0]['skor_rata'] >= patterns.DEFAULT_THRESHOLD
+
+
+def test_dbscan_kelompok_sama_dan_jendela_waktu():
+    """Metode DBSCAN (PoC): kelompok sintetis terpisah jelas, anggota di luar jendela 60 menit dibuang."""
+    rng = np.random.default_rng(0)
+    base = rng.normal(size=(3, 16))
+    rows = [base[0] + 0.05 * rng.normal(size=16) for _ in range(4)] + [base[1] + 0.05 * rng.normal(size=16) for _ in range(2)]
+    rows += [base[2]]
+    vectors = np.array(rows) / np.linalg.norm(rows, axis=1, keepdims=True)
+    times = ['08:00', '08:10', '08:20', '10:30', '08:05', '08:15', '08:25']
+    tickets = [{'id': i + 1, 'judul': f't{i + 1}', 'waktu': f'2026-10-29 {w}:00'} for i, w in enumerate(times)]
+    groups = patterns.group_dbscan(tickets, vectors, eps=0.1, min_samples=2, min_members=3, window_minutes=60)
+    assert [g['ids'] for g in groups] == [[1, 2, 3]]  # #4 di luar jendela; kelompok #5-#6 < 3 anggota
+    assert patterns.group_dbscan(tickets[:1], vectors[:1]) == []
+

@@ -22,3 +22,6 @@ screenshot/modernisasi/**/*kandidat*
 # Dokumen perancangan & ekstrak teksnya (bahan audit) — jangan di-commit
 docs/
 backup/
+
+# Dependensi uji e2e (tests/e2e: npm install)
+node_modules/
