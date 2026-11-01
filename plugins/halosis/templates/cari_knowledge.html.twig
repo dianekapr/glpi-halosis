@@ -5,7 +5,7 @@
 {% extends "layout/page_skeleton.html.twig" %}
 
 {% block content %}
-<div class="hd hk">
+<div class="hd hk" data-halosis-cari data-ajax-url="{{ ajax_url }}">
     <header class="hd-head">
         <div>
             <h1>{{ __('Search knowledge', 'halosis') }}</h1>
@@ -32,6 +32,8 @@
                 <div class="hk-meta">
                     {% if r.kind == 'kb' %}
                         <span class="hc-badge hc-badge-ok"><i class="ti ti-book" aria-hidden="true"></i> {{ __('Article', 'halosis') }}</span>
+                    {% elseif r.kind == 'layanan' %}
+                        <span class="hc-badge hc-badge-open"><i class="ti ti-apps" aria-hidden="true"></i> {{ __('Service catalog', 'halosis') }}</span>
                     {% else %}
                         <span class="hc-badge hc-badge-ticket"><i class="ti ti-ticket" aria-hidden="true"></i> {{ __('Similar ticket %s', 'halosis')|format(r.ref) }}</span>
                     {% endif %}
@@ -39,6 +41,17 @@
                 </div>
                 <h2 class="hk-title">{% if r.url %}<a href="{{ r.url }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %}</h2>
                 <p class="mb-0">{{ r.text|u.truncate(500, '…') }}</p>
+                {# KR-07: penilaian agent, tersimpan dengan sumber & skor (tanpa teks kueri) #}
+                <div class="hk-actions" data-hf data-ref="{{ r.ref }}" data-score="{{ r.score }}">
+                    <span class="small text-secondary">{{ __('Was this useful?', 'halosis') }}</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-hf-helpful="1">
+                        <i class="ti ti-thumb-up" aria-hidden="true"></i> {{ __('Helpful', 'halosis') }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-hf-helpful="0">
+                        <i class="ti ti-thumb-down" aria-hidden="true"></i> {{ __('Not helpful', 'halosis') }}
+                    </button>
+                    <span class="small text-secondary d-none" data-hf-done role="status">{{ __('Thank you, feedback saved.', 'halosis') }}</span>
+                </div>
             </article>
         {% else %}
             <p class="text-secondary mb-0">{{ __('No knowledge found. Try other words.', 'halosis') }}</p>

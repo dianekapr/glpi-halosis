@@ -29,3 +29,29 @@ def test_klaster_terbesar_dulu_dan_kb_diabaikan():
 def test_solusi_pendek_dan_klaster_kecil_tidak_masuk():
     rows = [('Lain', 'sudah dibantu')] * 9 + [('Email penuh', KUOTA)] * 3
     assert recurring_solutions(chunks(rows), min_size=5) == []
+
+
+def test_indeks_dedup_dihitung_per_tiket():
+    from halosis_ai.search import ticket_chunks
+    qa = pd.DataFrame({
+        'ticket_number': [f'T{i}' for i in range(9)],
+        'masalah': ['SSO terkunci'] * 6 + ['Email penuh'] * 3,
+        'solusi': [RESET] * 5 + [RESET.upper() + '.'] + [KUOTA] * 3,
+        'tanggal': pd.date_range('2026-01-01', periods=9),
+    })
+    index = ticket_chunks(qa, dedup=True)
+    assert len(index) == 2 and sorted(index['jumlah_tiket']) == [3, 6]  # huruf besar/tanda baca diabaikan
+    hasil = recurring_solutions(index, min_size=5)
+    assert [c['jumlah'] for c in hasil] == [6]
+    assert hasil[0]['contoh_tiket'][0] == 'T5'  # tiket terbaru menjadi wakil
+    assert len(hasil[0]['contoh_tiket']) == 5
+
+
+def test_potongan_panjang_dipecah():
+    from halosis_ai.search import MAX_WORDS, ticket_chunks
+    qa = pd.DataFrame({'ticket_number': ['T1'], 'masalah': ['Laptop lambat'], 'solusi': ['langkah ' * (MAX_WORDS + 30)],
+                       'tanggal': [pd.Timestamp('2026-01-01')]})
+    index = ticket_chunks(qa)
+    assert len(index) == 2 and index['sumber'].tolist() == ['T1', 'T1']
+    assert all(t.startswith('Masalah: Laptop lambat Solusi: langkah') for t in index['teks'])
+    assert recurring_solutions(index, min_size=1)[0]['jumlah'] == 1  # satu tiket, bukan dua potongan

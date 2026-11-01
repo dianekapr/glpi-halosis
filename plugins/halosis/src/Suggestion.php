@@ -73,6 +73,9 @@ final class Suggestion extends CommonDBTM
      */
     public function getConfidenceLevel(): string
     {
+        if ((int) ($this->fields['quality_ok'] ?? 1) === 0) {
+            return 'low'; // T32: model belum lolos uji kualitas → selalu penilaian manual
+        }
         $confidence = (int) $this->fields['confidence'];
         return match (true) {
             $confidence >= Config::getTriageThreshold() => 'high',

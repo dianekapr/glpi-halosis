@@ -45,6 +45,19 @@
                 </div>
             {% endif %}
 
+            {# E15: ringkasan ekstraktif deskripsi panjang (tanpa LLM, teks tersamar) #}
+            {% if summary %}
+                <div class="small mb-2" data-halosis-summary>
+                    <div class="text-secondary">
+                        <i class="ti ti-file-text" aria-hidden="true"></i>
+                        {{ __('Description summary (%d words, key sentences)', 'halosis')|format(summary.words) }}
+                    </div>
+                    <ul class="mb-0 ps-3">
+                        {% for sentence in summary.sentences %}<li>{{ sentence }}</li>{% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             {% if suggestion is null %}
                 <p class="text-secondary mb-2">{{ __('No AI suggestion for this ticket yet.', 'halosis') }}</p>
                 {% if can_decide %}
@@ -67,6 +80,14 @@
                         <span class="halosis-meter-threshold" style="left: {{ threshold_low }}%" title="{{ __('Low threshold', 'halosis') }} {{ threshold_low }}%"></span>
                     </div>
                 </div>
+
+                {# T32: model belum lolos gerbang kualitas (pre-kondisi UC-04) #}
+                {% if suggestion.quality_ok is defined and suggestion.quality_ok == 0 %}
+                    <div class="halosis-review mb-2" role="alert">
+                        <i class="ti ti-shield-x" aria-hidden="true"></i>
+                        <span><strong>{{ __('The model has not passed the quality check', 'halosis') }}</strong> · {{ __('triage manually; the suggestion is for reference only', 'halosis') }}</span>
+                    </div>
+                {% endif %}
 
                 {# Tiga tingkat keyakinan (TO-BE hal. 100) #}
                 {% if level == 'high' %}
@@ -93,6 +114,57 @@
                     <dt>{{ __('Priority') }}</dt><dd>{{ values.priority }}</dd>
                     <dt>{{ __('Group') }}</dt><dd>{{ values.group }}</dd>
                 </dl>
+
+                {# BR-05: urgensi Rendah/Sedang dari model history (hanya bila kelasnya lolos gerbang & di atas ambangnya) dan alasan dampak naik #}
+                {% if urgency_hint or impact_reason %}
+                    <ul class="list-unstyled small mb-2" data-halosis-urgensi>
+                        {% if urgency_hint %}
+                            <li><i class="ti ti-chart-dots" aria-hidden="true"></i> <strong>{{ __('Suggested urgency', 'halosis') }}: {{ urgency_hint.urgency }}</strong> ({{ urgency_hint.confidence }}%) · {{ __('from the ticket history model', 'halosis') }}</li>
+                        {% endif %}
+                        {% if impact_reason %}
+                            <li><i class="ti ti-users-group" aria-hidden="true"></i> {{ impact_reason }}</li>
+                        {% endif %}
+                    </ul>
+                {% endif %}
+
+                {# T4: saran jenis hanya bila berbeda dari jenis tiket & yakin; Operator mengubah jenis di form tiket #}
+                {% if type_hint %}
+                    <div class="halosis-review halosis-review-medium mb-2" role="status">
+                        <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                        {% if type_hint.review %}
+                            <span><strong>{{ __('Type: needs review', 'halosis') }}</strong> ({{ type_hint.confidence }}%) · {{ __('the model leans to %s (ticket: %s); check the ticket type', 'halosis')|format(type_hint.suggested, type_hint.current) }}</span>
+                        {% else %}
+                            <span><strong>{{ __('Suggested type', 'halosis') }}: {{ type_hint.suggested }}</strong> ({{ type_hint.confidence }}%) · {{ __('the ticket is currently %s; change it in the ticket form if appropriate', 'halosis')|format(type_hint.current) }}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {# UC-04 langkah 5: kandidat 2 dipilih karena keyakinan hampir sama & beban kerjanya lebih ringan #}
+                {% for w in workload|filter(w => w.tiebreak) %}
+                    <div class="halosis-review halosis-review-medium mb-2" role="status" data-halosis-tiebreak>
+                        <i class="ti ti-scale" aria-hidden="true"></i>
+                        <span>{{ w.tiebreak }}</span>
+                    </div>
+                {% endfor %}
+
+                {# T5: beban kerja tiap kandidat tim (urutan dari model) #}
+                {% if workload|filter(w => w.group)|length > 0 %}
+                    <div class="small mb-2">
+                        <div class="text-secondary">{{ __('Active tickets per candidate team', 'halosis') }}</div>
+                        <ul class="list-unstyled mb-0">
+                            {% for w in workload %}
+                                <li>
+                                    {{ w.team ?: w.group }}{% if w.confidence is not null %} ({{ w.confidence }}%){% endif %}
+                                    {% if w.group %}
+                                        → {{ w.group }} · <strong>{{ _n('%d active ticket', '%d active tickets', w.active, 'halosis')|format(w.active) }}</strong>
+                                    {% else %}
+                                        · {{ __('not mapped to a GLPI group', 'halosis') }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
 
                 {% if suggestion.explanation %}
                     <p class="small mb-1 halosis-explanation">{{ suggestion.explanation }}</p>

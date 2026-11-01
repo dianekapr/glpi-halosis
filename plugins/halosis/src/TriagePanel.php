@@ -56,10 +56,15 @@ final class TriagePanel
         TemplateRenderer::getInstance()->display('@halosis/triase_panel.html.twig', [
             'ticket_id'   => $ticket->getID(),
             'pattern'     => self::pattern($ticket->getID()),
+            'summary'     => Summary::forTicketContent($ticket->fields['content'] ?? ''),
             'suggestion'  => $suggestion?->fields,
             'values'      => $suggestion !== null ? self::describe($suggestion) : null,
             'needs_review' => $suggestion?->needsManualReview() ?? false,
             'level'       => $suggestion?->getConfidenceLevel(),
+            'workload'    => $suggestion !== null ? self::workload($suggestion) : [],
+            'type_hint'   => $suggestion !== null ? self::typeHint($suggestion, $ticket) : null,
+            'urgency_hint' => $suggestion !== null ? self::urgencyHint($suggestion) : null,
+            'impact_reason' => $suggestion !== null ? (string) ($suggestion->fields['impact_reason'] ?? '') : '',
             'threshold'   => Config::getTriageThreshold(),
             'threshold_low' => Config::getLowThreshold(),
             'is_demo'     => Config::isDemoMode(),
@@ -78,6 +83,98 @@ final class TriagePanel
                 'priority_matrix'     => $CFG_GLPI['priority_matrix'] ?? [],
             ],
         ]);
+    }
+
+    /**
+     * Kandidat tim (3 teratas dari model, atau grup saran saja) dengan jumlah tiket aktif yang sedang ditangani
+     * grupnya (T5, `hitungBebanKerja()`). Urutan dari model; kandidat yang dipilih pemecah seri beban kerja
+     * (UC-04, `Triage::workloadTiebreak`) membawa alasannya.
+     *
+     * @return array<int, array{team: string, confidence: ?int, group: string, active: ?int, tiebreak: string}>
+     */
+    private static function workload(Suggestion $suggestion): array
+    {
+        $candidates = json_decode((string) ($suggestion->fields['candidates'] ?? ''), true);
+        if (!is_array($candidates) || $candidates === []) {
+            $candidates = [['team' => '', 'confidence' => null, 'groups_id' => (int) $suggestion->fields['groups_id']]];
+        }
+        $rows = [];
+        foreach ($candidates as $c) {
+            $group_id = (int) ($c['groups_id'] ?? 0);
+            $rows[] = [
+                'team'       => (string) ($c['team'] ?? ''),
+                'confidence' => isset($c['confidence']) ? (int) $c['confidence'] : null,
+                'group'      => $group_id > 0 ? Suggestion::groupName($group_id) : '',
+                'active'     => $group_id > 0 ? self::activeTickets($group_id) : null,
+                'tiebreak'   => (string) ($c['tiebreak'] ?? ''),
+            ];
+        }
+        return $rows;
+    }
+
+    /**
+     * Saran jenis (T4) hanya bila berbeda dari jenis tiket dan keyakinannya ≥ ambang triase; selain itu null (diam).
+     *
+     * Keyakinan ≥ ambang: hanya bila berbeda dari jenis tiket. Keyakinan sedang (ambang rendah–ambang, TO-BE hal. 100):
+     * selalu ditampilkan sebagai "perlu ditinjau" (review = true), juga bila sama dengan jenis tiket.
+     *
+     * @return array{suggested: string, current: string, confidence: int, review: bool}|null
+     */
+    private static function typeHint(Suggestion $suggestion, Ticket $ticket): ?array
+    {
+        $suggested  = (int) ($suggestion->fields['type_suggested'] ?? 0);
+        $confidence = (int) ($suggestion->fields['type_confidence'] ?? 0);
+        $review     = $confidence >= Config::getLowThreshold() && $confidence < Config::getTriageThreshold();
+        if ($suggested === 0 || (!$review && ($suggested === (int) $ticket->fields['type'] || $confidence < Config::getTriageThreshold()))) {
+            return null;
+        }
+        return [
+            'suggested'  => Ticket::getTicketTypeName($suggested),
+            'current'    => Ticket::getTicketTypeName((int) $ticket->fields['type']),
+            'confidence' => $confidence,
+            'review'     => $review,
+        ];
+    }
+
+    /**
+     * Urgensi dari model history (layanan hanya mengirimnya bila kelasnya lolos gerbang & di atas ambangnya); null = aturan.
+     *
+     * @return array{urgency: string, confidence: int}|null
+     */
+    private static function urgencyHint(Suggestion $suggestion): ?array
+    {
+        $confidence = (int) ($suggestion->fields['urgency_confidence'] ?? 0);
+        if ($confidence <= 0) {
+            return null;
+        }
+        // Kelas model (Low/Medium) dengan nama Rendah/Sedang; GLPI id_ID menamai urgensi 3 "Pertengahan"
+        $urgency = (int) $suggestion->fields['urgency'];
+        $label = match ($urgency) {
+            2 => __('Low (model class)', 'halosis'),
+            3 => __('Medium (model class)', 'halosis'),
+            default => Ticket::getUrgencyName($urgency),
+        };
+        return ['urgency' => $label, 'confidence' => $confidence];
+    }
+
+    /**
+     * Tiket belum selesai yang ditugaskan ke grup.
+     */
+    public static function activeTickets(int $group_id): int
+    {
+        global $DB;
+
+        return (int) $DB->request([
+            'COUNT'      => 'cpt',
+            'FROM'       => \Group_Ticket::getTable() . ' AS gt',
+            'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['gt' => 'tickets_id', 't' => 'id']]],
+            'WHERE'      => [
+                'gt.groups_id'  => $group_id,
+                'gt.type'       => \CommonITILActor::ASSIGN,
+                't.is_deleted'  => 0,
+                't.status'      => ['<', \CommonITILObject::SOLVED],
+            ],
+        ])->current()['cpt'];
     }
 
     /**

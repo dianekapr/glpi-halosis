@@ -26,6 +26,8 @@ _SECRET = re.compile(
 _EMAIL = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
 # NIP 18 digit, ditulis rapat atau berkelompok "19870101 201001 1 001"
 _NIP = re.compile(r'(?<!\d)(?:\d{18}|\d{8}[\s.-]?\d{6}[\s.-]?\d[\s.-]?\d{3})(?!\d)')
+# NIP lama BPS 9 digit: hanya bila didahului kata "NIP" (deret 9 digit lain bisa nomor aset/tiket)
+_NIP_OLD = re.compile(r'(?P<key>\bNIP(?:\s*lama)?\.?\s*(?:[:=]\s*)?)(?P<value>\d{9})(?!\d)', re.IGNORECASE)
 _NIK = re.compile(r'(?<!\d)\d{16}(?!\d)')
 # Nomor HP Indonesia: 08xx / +628xx / 628xx, boleh berpemisah spasi/titik/strip
 _PHONE = re.compile(r'(?<![\w+])(?:\+?62|0)\s?8\d(?:[\s.-]?\d){6,11}(?!\d)')
@@ -44,6 +46,7 @@ def mask_text(text: object, names: Iterable[str] | None = None) -> object:
     out = _SECRET.sub(lambda m: f"{m.group('key')}{m.group('sep')}{SECRET}", text)
     out = _EMAIL.sub(EMAIL, out)
     out = _NIP.sub(NIP, out)
+    out = _NIP_OLD.sub(lambda m: f"{m.group('key')}{NIP}", out)
     out = _NIK.sub(NIK, out)
     out = _PHONE.sub(PHONE, out)
     out = _SALUTATION_NAME.sub(lambda m: f"{m.group('salut').rstrip()} {NAME}", out)

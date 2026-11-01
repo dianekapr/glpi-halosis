@@ -31,11 +31,20 @@
     <div class="alert alert-danger d-none mb-0" data-hk-error role="alert"></div>
 
     {% if status == 'review' %}
-        <p class="mb-0">{{ __('Published articles not updated for more than %d months. Review each one in the Knowledge Base: editing the article marks it as reviewed.', 'halosis')|format(review_months) }}</p>
+        <p class="mb-0">{{ __('Published articles due for review: on the review date set here, or %d months after the last update when no date is set. After reviewing, set the next review date or edit the article.', 'halosis')|format(review_months) }}</p>
         {% for a in items %}
             <article class="hd-card hk-card">
                 <h2 class="hk-title"><a href="{{ a.url }}">{{ a.name }}</a></h2>
-                <p class="hk-decision"><i class="ti ti-calendar-time" aria-hidden="true"></i> {{ __('Last updated', 'halosis') }}: {{ a.date_mod|formatted_datetime }}</p>
+                <p class="hk-decision"><i class="ti ti-calendar-time" aria-hidden="true"></i> {{ __('Last updated', 'halosis') }}: {{ a.date_mod|formatted_datetime }}
+                    · {{ __('Review due', 'halosis') }}: {{ a.next_review|formatted_date }}{% if not a.explicit %} ({{ __('automatic', 'halosis') }}){% endif %}</p>
+                {% if can_decide %}
+                    {# KR-03: setelah ditinjau, jadwalkan tinjauan berikutnya #}
+                    <form class="hk-actions align-items-center" data-hk-review data-id="{{ a.id }}">
+                        <label class="small" for="hk-review-{{ a.id }}">{{ __('Reviewed; next review on', 'halosis') }}</label>
+                        <input type="date" class="form-control form-control-sm w-auto" id="hk-review-{{ a.id }}" required data-track-changes="false">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">{{ __('Save date', 'halosis') }}</button>
+                    </form>
+                {% endif %}
             </article>
         {% else %}
             <div class="hd-card hk-empty">{{ __('No articles need review.', 'halosis') }}</div>

@@ -46,6 +46,39 @@ def article_chunks(kb_id: int, title: str, answer_html: str) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
 
 
+def _solution_key(text: str) -> str:
+    return re.sub(r'\W+', ' ', text.lower()).strip()
+
+
+def ticket_chunks(qa: pd.DataFrame, dedup: bool = True) -> pd.DataFrame:
+    """Potongan tiket historis dari qa_pairs (masalah, solusi, ticket_number, tanggal), teks disamarkan ulang.
+
+    dedup: tiket dengan teks solusi identik (abaikan huruf besar & tanda baca) → satu potongan; masalah diambil dari
+    tiket terbaru, `jumlah_tiket` = banyak tiket, `tiket` = semua nomornya (terbaru dulu). Solusi > MAX_WORDS kata
+    dipecah; setiap potongan memuat teks masalah utuh (kueri pengguna berupa masalah; potongan lanjutan yang hanya
+    berawalan judul menurunkan Top-3, reports/banding_solusi.md). Kolom `masalah`/`solusi` menyimpan teks utuh.
+    """
+    qa = qa[qa['solusi'].fillna('').str.strip().str.len() > 0].copy()
+    qa['masalah'] = [str(privacy.mask_text(str(m))) for m in qa['masalah']]
+    qa['solusi'] = [str(privacy.mask_text(str(v))) for v in qa['solusi']]
+    qa['ticket_number'] = qa['ticket_number'].astype(str)
+    qa = qa.sort_values('tanggal', ascending=False, kind='stable') if 'tanggal' in qa else qa
+    key = qa['solusi'].map(_solution_key) if dedup else pd.Series(range(len(qa)), index=qa.index)
+    groups = qa.groupby(key, sort=False)
+    head = groups.head(1).set_index(key[groups.head(1).index])
+    members = groups['ticket_number'].agg(','.join)
+    rows = []
+    for k, r in head.iterrows():
+        title = r['masalah'][:120]
+        tickets = members[k].split(',')
+        for part in chunk(r['solusi']):
+            rows.append({'sumber': r['ticket_number'], 'jenis_sumber': 'tiket', 'judul': title,
+                         'teks': f'Masalah: {r["masalah"]} Solusi: {part}', 'masalah': r['masalah'], 'solusi': r['solusi'],
+                         'jumlah_tiket': len(tickets), 'tiket': ','.join(tickets)})
+    return pd.DataFrame(rows, columns=['sumber', 'jenis_sumber', 'judul', 'teks', 'masalah', 'solusi', 'jumlah_tiket',
+                                       'tiket'])
+
+
 @lru_cache(maxsize=1)
 def encoder():
     from sentence_transformers import SentenceTransformer  # impor berat, hanya saat dipakai
@@ -90,6 +123,28 @@ def update_article(kb_id: int, title: str, answer_html: str, remove: bool = Fals
     return 0 if new_vectors is None else len(new)
 
 
+def replace_services(items: list[dict], index_dir: Path | None = None) -> int:
+    """Ganti seluruh potongan katalog layanan (jenis_sumber 'layanan', sumber LAYANAN-<id>) dengan `items`
+    [{id, nama, deskripsi}]; artikel KB & tiket historis tidak disentuh. Kembalikan jumlah potongan layanan."""
+    index_dir = index_dir or INDEX_DIR
+    new = pd.DataFrame([{
+        'sumber': f'LAYANAN-{item["id"]}', 'jenis_sumber': 'layanan', 'judul': str(privacy.mask_text(item['nama'])),
+        'teks': f'Layanan {privacy.mask_text(item["nama"])}. {privacy.mask_text(strip_html(item.get("deskripsi") or ""))}'.strip(),
+    } for item in items], columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
+    new_vectors = embed(new['teks'].tolist(), 'passage') if len(new) else None
+    with _lock:
+        chunks, vectors = _indexes.get(index_dir) or (pd.read_parquet(index_dir / 'chunks.parquet'),
+                                                      np.load(index_dir / 'vectors.npy'))
+        keep = (chunks['jenis_sumber'] != 'layanan').to_numpy()
+        chunks, vectors = chunks[keep].reset_index(drop=True), vectors[keep]
+        if new_vectors is not None:
+            chunks = pd.concat([chunks, new], ignore_index=True)
+            vectors = np.vstack([vectors, new_vectors]).astype(np.float32)
+        _write_atomic(index_dir, chunks, vectors)
+        _indexes[index_dir] = (chunks, vectors)
+    return len(new)
+
+
 def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) -> None:
     tmp_chunks, tmp_vectors = index_dir / '.chunks.parquet.tmp', index_dir / '.vectors.npy.tmp'
     chunks.to_parquet(tmp_chunks, index=False)
@@ -100,13 +155,26 @@ def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) ->
 
 
 def cari(query: str, k: int = 5, index_dir: Path | None = None) -> list[dict]:
-    """Cari k potongan paling mirip → [{potongan, skor, sumber, jenis_sumber, judul}]."""
+    """Cari k sumber paling mirip → [{potongan, skor, sumber, jenis_sumber, judul, solusi?}].
+
+    Satu hasil per sumber (potongan terbaik); artikel/tiket yang dipecah tidak memenuhi daftar dengan dirinya sendiri.
+    `solusi` = solusi tiket utuh bila potongannya hasil pemecahan (kolom ada di indeks baru).
+    """
     chunks, vectors = load_index(index_dir)
     q = embed([str(privacy.mask_text(query))], 'query')[0]
     scores = vectors @ q
-    top = np.argsort(scores)[::-1][:k]
-    return [
-        {'potongan': chunks.at[i, 'teks'], 'skor': round(float(scores[i]), 4), 'sumber': chunks.at[i, 'sumber'],
-         'jenis_sumber': chunks.at[i, 'jenis_sumber'], 'judul': chunks.at[i, 'judul']}
-        for i in top
-    ]
+    has_solution = 'solusi' in chunks
+    results, seen = [], set()
+    for i in np.argsort(scores)[::-1]:
+        source = chunks.at[i, 'sumber']
+        if source in seen:
+            continue
+        seen.add(source)
+        hit = {'potongan': chunks.at[i, 'teks'], 'skor': round(float(scores[i]), 4), 'sumber': source,
+               'jenis_sumber': chunks.at[i, 'jenis_sumber'], 'judul': chunks.at[i, 'judul']}
+        if has_solution and isinstance(chunks.at[i, 'solusi'], str):
+            hit['solusi'] = chunks.at[i, 'solusi']
+        results.append(hit)
+        if len(results) >= k:
+            break
+    return results

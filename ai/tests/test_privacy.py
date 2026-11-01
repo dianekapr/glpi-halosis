@@ -9,12 +9,21 @@ from halosis_ai.privacy import (  # noqa: E402
 
 
 def test_email():
-    assert mask_text('kirim ke budi.santoso@bps.go.id ya') == f'kirim ke {EMAIL} ya'
+    assert mask_text('kirim ke budi.santoso@contoh.go.id ya') == f'kirim ke {EMAIL} ya'
 
 
 def test_nip_rapat_dan_berkelompok():
     assert mask_text('NIP 198701012010011001') == f'NIP {NIP}'
     assert mask_text('nip: 19870101 201001 1 001.') == f'nip: {NIP}.'
+
+
+def test_nip_lama_sembilan_digit_setelah_kata_nip():
+    assert mask_text('NIP 340012345') == f'NIP {NIP}'
+    assert mask_text('nip lama: 340012345, mohon dicek') == f'nip lama: {NIP}, mohon dicek'
+    assert mask_text('NIP.340012345') == f'NIP.{NIP}'
+    # Tanpa kata NIP, 9 digit (mis. nomor aset) tidak diubah; 10 digit juga bukan NIP lama
+    assert mask_text('aset 310010200 rusak') == 'aset 310010200 rusak'
+    assert mask_text('NIP 3400123456') == 'NIP 3400123456'
 
 
 def test_nik():
