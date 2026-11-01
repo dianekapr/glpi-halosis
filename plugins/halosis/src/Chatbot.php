@@ -285,6 +285,32 @@ final class Chatbot
     }
 
     /**
+     * Prompt perangkum untuk penyedia AI eksternal. Pertanyaan, riwayat (6 pesan terakhir), dan artikel disamarkan
+     * lagi di sini meskipun pesan sudah disamarkan saat disimpan (pertahanan berlapis, NFR-06).
+     *
+     * @param array<int, array<string, mixed>> $messages
+     * @param array<int, array{id: int, name: string, text: string, url?: string, score?: int}> $articles
+     */
+    public static function aiPrompt(string $question, array $messages, array $articles): string
+    {
+        $mask = static fn ($text): string => Privacy::mask((string) $text)['text'];
+        $history = [];
+        foreach (array_slice($messages, -6) as $message) {
+            $history[] = sprintf('%s: %s', ($message['role'] ?? '') === 'user' ? 'Pegawai' : 'Asisten', $mask($message['text'] ?? ''));
+        }
+        $blocks = [];
+        foreach ($articles as $article) {
+            $blocks[] = sprintf("<artikel id=\"%d\" judul=\"%s\">\n%s\n</artikel>", $article['id'], $mask($article['name']), $mask($article['text']));
+        }
+        return sprintf(
+            "%s\n\n<percakapan>\n%s\n</percakapan>\n\n<pertanyaan>\n%s\n</pertanyaan>",
+            implode("\n\n", $blocks),
+            implode("\n", $history),
+            $mask($question),
+        );
+    }
+
+    /**
      * @param array<int, array{id: int, name: string, text: string, url: string, score: int}> $articles
      */
     private static function summarizeWithAi(string $question, array $messages, array $articles): array
@@ -299,20 +325,7 @@ final class Chatbot
             Di article_ids, cantumkan id artikel yang benar-benar kamu pakai.
             TXT;
 
-        $history = [];
-        foreach (array_slice($messages, -6) as $message) {
-            $history[] = sprintf('%s: %s', $message['role'] === 'user' ? 'Pegawai' : 'Asisten', $message['text']);
-        }
-        $blocks = [];
-        foreach ($articles as $article) {
-            $blocks[] = sprintf("<artikel id=\"%d\" judul=\"%s\">\n%s\n</artikel>", $article['id'], $article['name'], $article['text']);
-        }
-        $prompt = sprintf(
-            "%s\n\n<percakapan>\n%s\n</percakapan>\n\n<pertanyaan>\n%s\n</pertanyaan>",
-            implode("\n\n", $blocks),
-            implode("\n", $history),
-            $question,
-        );
+        $prompt = self::aiPrompt($question, $messages, $articles);
 
         $ids = array_column($articles, 'id');
         $schema = [

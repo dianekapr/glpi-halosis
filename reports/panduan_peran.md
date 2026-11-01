@@ -21,6 +21,10 @@ SSO. Skenario demo lengkap: `plugins/halosis/README.md`.
   disarankan → **Terima / Ubah / Tolak** (alasan wajib) (UC-04, UC-05). Catat laporan telepon/walk-in atas nama
   pegawai (Bantuan › Buat tiket). Tutup tiket Selesai tanpa respons di **Siap ditutup**. Tindak lanjuti banner
   **Pola insiden** (UC-08). Bila panel menyatakan model belum lolos uji kualitas: triase manual.
+- **Tiket pejabat:** pemohon grup *Pejabat* (jabatan Kepala/Direktur/Deputi/Sekretaris Utama dari SSO) otomatis
+  mendapat urgensi +1 dan panel menulis "Urgensi …: pemohon pejabat". Prioritas belum ikut naik saat tiket dibuat;
+  **prioritas mengikuti matriks urgensi × dampak saat Anda menerima saran (Terima/Ubah) atau mengubah urgensi/dampak
+  di tiket**, lalu SLA menyesuaikan. Jangan menurunkan urgensi tanpa alasan.
 - **Notifikasi:** peringatan risiko SLA, eskalasi, pola insiden baru (email + lonceng).
 
 ## Tim Teknis — contoh akun `andi`; ketua tim `hendra`

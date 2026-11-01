@@ -8,8 +8,12 @@ use DateTimeImmutable;
 use Glpi\DBAL\QuerySubQuery;
 use Group_Ticket;
 use ITILCategory;
+use ITILFollowup;
 use Problem;
+use ProblemTask;
+use Problem_Ticket;
 use Ticket;
+use Ticket_User;
 use TicketSatisfaction;
 
 /**
@@ -416,18 +420,22 @@ final class Stats
     }
 
     /**
-     * Pola insiden dalam periode (BP-17): terdeteksi, dikonfirmasi (Problem sudah ditangani: status lepas dari
-     * Baru), ditutup (Selesai/Ditutup atau dihapus sebagai pola palsu).
+     * Pola insiden dalam periode (BP-17): terdeteksi, dikonfirmasi (ada tindakan manusia pada Problem: perubahan
+     * status/tautan tiket oleh pengguna, bukan tugas otomatis `cron_*`, atau tindak lanjut/tugas), ditutup
+     * (Selesai/Ditutup atau dihapus sebagai pola palsu). Status awal "Ditugaskan" hasil pembuatan otomatis tidak dihitung. KPI Tabel 1.3 "waktu untuk mengetahui masalah"
+     * & "jumlah pengguna terdampak": median menit dari tiket pertama pola sampai pola dibuat, dan pemohon unik per pola
+     * (median) serta total pemohon unik.
      *
-     * @return array{detected: int, confirmed: int, closed: int}
+     * @return array{detected: int, confirmed: int, closed: int, detect_median_min: ?float, requesters_median: ?float, requesters_total: int}
      */
     private static function patterns(DateTimeImmutable $start): array
     {
         global $DB;
 
         $counts = ['detected' => 0, 'confirmed' => 0, 'closed' => 0];
+        $created = $open = [];
         foreach ($DB->request([
-            'SELECT'    => ['pr.status', 'pr.is_deleted'],
+            'SELECT'    => ['p.problems_id', 'p.date_creation', 'pr.status', 'pr.is_deleted'],
             'FROM'      => PatternDetector::getTable() . ' AS p',
             'LEFT JOIN' => [Problem::getTable() . ' AS pr' => ['ON' => ['p' => 'problems_id', 'pr' => 'id']]],
             'WHERE'     => ['p.date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
@@ -436,11 +444,95 @@ final class Stats
             $status = (int) $row['status'];
             if ($row['status'] === null || (int) $row['is_deleted'] === 1 || in_array($status, [CommonITILObject::SOLVED, CommonITILObject::CLOSED], true)) {
                 $counts['closed']++;
-            } elseif ($status !== CommonITILObject::INCOMING) {
-                $counts['confirmed']++;
+            } else {
+                $open[] = (int) $row['problems_id'];
+            }
+            if ((int) $row['problems_id'] > 0) {
+                $created[(int) $row['problems_id']] = strtotime((string) $row['date_creation']);
             }
         }
-        return $counts;
+        $counts['confirmed'] = count(self::humanTouchedProblems($open));
+
+        $first = $requesters = $all = [];
+        if ($created !== []) {
+            foreach ($DB->request([
+                'SELECT'    => ['pt.problems_id', 't.date', 'tu.users_id'],
+                'FROM'      => Problem_Ticket::getTable() . ' AS pt',
+                'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['pt' => 'tickets_id', 't' => 'id']]],
+                'LEFT JOIN' => [Ticket_User::getTable() . ' AS tu' => ['ON' => ['tu' => 'tickets_id', 't' => 'id', [
+                    'AND' => ['tu.type' => CommonITILActor::REQUESTER],
+                ]]]],
+                'WHERE'     => ['pt.problems_id' => array_keys($created)],
+            ]) as $row) {
+                $pid  = (int) $row['problems_id'];
+                $time = strtotime((string) $row['date']);
+                $first[$pid] = min($first[$pid] ?? $time, $time);
+                if ((int) $row['users_id'] > 0) {
+                    $requesters[$pid][(int) $row['users_id']] = true;
+                    $all[(int) $row['users_id']] = true;
+                }
+            }
+        }
+        $delays = [];
+        foreach ($first as $pid => $time) {
+            $delays[] = max(0, ($created[$pid] - $time) / 60);
+        }
+        return $counts + [
+            'detect_median_min' => self::median($delays),
+            'requesters_median' => self::median(array_map('count', array_values($requesters))),
+            'requesters_total'  => count($all),
+        ];
+    }
+
+    /**
+     * Problem yang sudah disentuh manusia: log dari pengguna (bukan tugas otomatis `cron_*`) atau tindak lanjut/tugas.
+     *
+     * @param array<int, int> $problem_ids
+     * @return array<int, true>
+     */
+    private static function humanTouchedProblems(array $problem_ids): array
+    {
+        global $DB;
+
+        $problem_ids = array_values(array_filter($problem_ids));
+        if ($problem_ids === []) {
+            return [];
+        }
+        $touched = [];
+        foreach ($DB->request([
+            'SELECT' => ['items_id'],
+            'FROM'   => 'glpi_logs',
+            'WHERE'  => [
+                'itemtype' => Problem::getType(),
+                'items_id' => $problem_ids,
+                'NOT'      => ['user_name' => ['LIKE', 'cron_%']],
+                ['NOT' => ['user_name' => '']],
+            ],
+        ]) as $row) {
+            $touched[(int) $row['items_id']] = true;
+        }
+        foreach ($DB->request(['SELECT' => ['items_id'], 'FROM' => ITILFollowup::getTable(),
+            'WHERE' => ['itemtype' => Problem::getType(), 'items_id' => $problem_ids]]) as $row) {
+            $touched[(int) $row['items_id']] = true;
+        }
+        foreach ($DB->request(['SELECT' => ['problems_id'], 'FROM' => ProblemTask::getTable(),
+            'WHERE' => ['problems_id' => $problem_ids]]) as $row) {
+            $touched[(int) $row['problems_id']] = true;
+        }
+        return $touched;
+    }
+
+    /**
+     * @param array<int, int|float> $values
+     */
+    private static function median(array $values): ?float
+    {
+        if ($values === []) {
+            return null;
+        }
+        sort($values);
+        $mid = intdiv(count($values), 2);
+        return round(count($values) % 2 ? (float) $values[$mid] : ($values[$mid - 1] + $values[$mid]) / 2, 1);
     }
 
     /**

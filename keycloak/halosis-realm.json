@@ -142,7 +142,7 @@
       "username": "budi",
       "firstName": "Budi",
       "lastName": "Santoso",
-      "email": "budi@bps.go.id",
+      "email": "budi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -158,7 +158,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011001"
+          "199001012020121001"
         ],
         "unit_kerja": [
           "Direktorat Statistik Kependudukan"
@@ -172,7 +172,7 @@
       "username": "siti",
       "firstName": "Siti",
       "lastName": "Rahma",
-      "email": "siti@bps.go.id",
+      "email": "siti@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -188,7 +188,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011002"
+          "199001012020121002"
         ],
         "unit_kerja": [
           "Direktorat Statistik Harga"
@@ -202,7 +202,7 @@
       "username": "maya",
       "firstName": "Maya",
       "lastName": "Putri",
-      "email": "maya@bps.go.id",
+      "email": "maya@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -218,7 +218,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011003"
+          "199001012020121003"
         ],
         "unit_kerja": [
           "BPS Provinsi Jawa Barat"
@@ -232,7 +232,7 @@
       "username": "rina",
       "firstName": "Rina",
       "lastName": "Wulandari",
-      "email": "rina@bps.go.id",
+      "email": "rina@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -250,7 +250,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011004"
+          "199001012020121004"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -264,7 +264,7 @@
       "username": "andi",
       "firstName": "Andi",
       "lastName": "Pratama",
-      "email": "andi@bps.go.id",
+      "email": "andi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -282,7 +282,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011005"
+          "199001012020121005"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -296,7 +296,7 @@
       "username": "yoga",
       "firstName": "Yoga",
       "lastName": "Saputra",
-      "email": "yoga@bps.go.id",
+      "email": "yoga@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -314,7 +314,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011006"
+          "199001012020121006"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -328,7 +328,7 @@
       "username": "fajar",
       "firstName": "Fajar",
       "lastName": "Nugroho",
-      "email": "fajar@bps.go.id",
+      "email": "fajar@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -346,7 +346,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011007"
+          "199001012020121007"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -360,7 +360,7 @@
       "username": "dedi",
       "firstName": "Dedi",
       "lastName": "Kurniawan",
-      "email": "dedi@bps.go.id",
+      "email": "dedi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -378,7 +378,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011008"
+          "199001012020121008"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -392,7 +392,7 @@
       "username": "sri",
       "firstName": "Sri",
       "lastName": "Handayani",
-      "email": "sri@bps.go.id",
+      "email": "sri@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -408,7 +408,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011009"
+          "199001012020121009"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -422,7 +422,7 @@
       "username": "lina",
       "firstName": "Lina",
       "lastName": "Marlina",
-      "email": "lina@bps.go.id",
+      "email": "lina@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -438,7 +438,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011010"
+          "199001012020121010"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -452,7 +452,7 @@
       "username": "dimas",
       "firstName": "Dimas",
       "lastName": "Aditya",
-      "email": "dimas@bps.go.id",
+      "email": "dimas@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -468,7 +468,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011011"
+          "199001012020121011"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -482,7 +482,7 @@
       "username": "hendra",
       "firstName": "Hendra",
       "lastName": "Wijaya",
-      "email": "hendra@bps.go.id",
+      "email": "hendra@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -501,7 +501,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011012"
+          "199001012020121012"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -515,7 +515,7 @@
       "username": "agus",
       "firstName": "Agus",
       "lastName": "Setiawan",
-      "email": "agus@bps.go.id",
+      "email": "agus@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -534,7 +534,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011013"
+          "199001012020121013"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -548,7 +548,7 @@
       "username": "rudi",
       "firstName": "Rudi",
       "lastName": "Hermawan",
-      "email": "rudi@bps.go.id",
+      "email": "rudi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -567,7 +567,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011014"
+          "199001012020121014"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -581,7 +581,7 @@
       "username": "wati",
       "firstName": "Wati",
       "lastName": "Susanti",
-      "email": "wati@bps.go.id",
+      "email": "wati@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -600,7 +600,7 @@
       ],
       "attributes": {
         "nip": [
-          "199001012015011015"
+          "199001012020121015"
         ],
         "unit_kerja": [
           "Direktorat Sistem Informasi Statistik"
@@ -614,7 +614,7 @@
       "username": "ani",
       "firstName": "Ani",
       "lastName": "Lestari",
-      "email": "ani@bps.go.id",
+      "email": "ani@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -630,7 +630,7 @@
       "groups": [],
       "attributes": {
         "nip": [
-          "199001012015011016"
+          "199001012020121016"
         ],
         "unit_kerja": [
           "BPS Kabupaten Bogor"

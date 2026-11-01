@@ -4,7 +4,9 @@ Sumber: 6.682 tiket dibuka 1 Jan 2026 – 31 Agu 2026 (`data/processed/tickets_c
 
 *Historis:* bagian atas laporan ini (sampai sebelum "Baseline dashboard") dihitung dari **ekspor lama** (137 kolom,
 nilai PASS/BREACH) dan sama dengan angka dokumen (27,59% / 42,62%). Angka history versi baru (MET/OVERDUE, termasuk
-imputasi) ada di bagian "Baseline dashboard" di akhir laporan.
+imputasi) ada di bagian "Baseline dashboard" di akhir laporan. *Waktu selesai* di sini = `resolved − opened`
+(median 6,0 hari; ekspor baru 6,1 hari); dokumen hal. 82 "median umur tiket sampai ditutup 24,0 hari" = `closed −
+opened` (ekspor baru: 24,0 hari, 4.600 tiket) — definisi berbeda, bukan selisih data.
 
 ## Ringkasan
 

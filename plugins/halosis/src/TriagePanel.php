@@ -112,19 +112,24 @@ final class TriagePanel
     /**
      * Saran jenis (T4) hanya bila berbeda dari jenis tiket dan keyakinannya ≥ ambang triase; selain itu null (diam).
      *
-     * @return array{suggested: string, current: string, confidence: int}|null
+     * Keyakinan ≥ ambang: hanya bila berbeda dari jenis tiket. Keyakinan sedang (ambang rendah–ambang, TO-BE hal. 100):
+     * selalu ditampilkan sebagai "perlu ditinjau" (review = true), juga bila sama dengan jenis tiket.
+     *
+     * @return array{suggested: string, current: string, confidence: int, review: bool}|null
      */
     private static function typeHint(Suggestion $suggestion, Ticket $ticket): ?array
     {
         $suggested  = (int) ($suggestion->fields['type_suggested'] ?? 0);
         $confidence = (int) ($suggestion->fields['type_confidence'] ?? 0);
-        if ($suggested === 0 || $suggested === (int) $ticket->fields['type'] || $confidence < Config::getTriageThreshold()) {
+        $review     = $confidence >= Config::getLowThreshold() && $confidence < Config::getTriageThreshold();
+        if ($suggested === 0 || (!$review && ($suggested === (int) $ticket->fields['type'] || $confidence < Config::getTriageThreshold()))) {
             return null;
         }
         return [
             'suggested'  => Ticket::getTicketTypeName($suggested),
             'current'    => Ticket::getTicketTypeName((int) $ticket->fields['type']),
             'confidence' => $confidence,
+            'review'     => $review,
         ];
     }
 

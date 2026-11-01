@@ -7,6 +7,7 @@ use Config as CoreConfig;
 use CronTask;
 use Entity;
 use Glpi\Event;
+use Glpi\Exception\Http\AccessDeniedHttpException;
 use Glpi\Form\Form;
 use GlpiPlugin\Halosis\Controller\CariKnowledgeController;
 use GlpiPlugin\Halosis\Controller\SiapDitutupController;
@@ -36,6 +37,28 @@ use User;
  */
 final class RoleMenu
 {
+    /**
+     * Halaman indeks aturan GLPI (front/rule.php) hanya memeriksa akses antarmuka standar, sehingga peran tanpa
+     * hak aturan apa pun (Operator, Knowledge Manager, Tim Teknis, Manajemen) tetap melihat halaman kosong.
+     * Hook post_init (exception di plugin_init akan menonaktifkan plugin untuk request itu): tolak (403) bila
+     * profil aktif tidak punya satu pun hak `rule_*`.
+     */
+    public static function guardRuleIndex(): void
+    {
+        global $CFG_GLPI;
+
+        $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+        if ($path !== ($CFG_GLPI['root_doc'] ?? '') . '/front/rule.php' || Session::getLoginUserID() === false) {
+            return;
+        }
+        foreach ($_SESSION['glpiactiveprofile'] ?? [] as $right => $value) {
+            if (str_starts_with((string) $right, 'rule_') && (int) $value > 0) {
+                return;
+            }
+        }
+        throw new AccessDeniedHttpException('Peran ini tidak mengelola aturan');
+    }
+
     public const HIDDEN_CLASS = 'halosis-menu-hidden';
     /** Penanda item menu HaloSIS (dipakai public/js/menu.js untuk menyorot item aktif) */
     public const ITEM_CLASS = 'halosis-menu-item';

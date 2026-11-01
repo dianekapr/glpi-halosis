@@ -10,6 +10,7 @@ use Location;
 use Profile_User;
 use Toolbox;
 use User;
+use UserEmail;
 use UserTitle;
 
 /**
@@ -288,8 +289,14 @@ final class KeycloakAuth
         $user = self::provisionUser($claims);
         if ($user !== null) {
             self::syncProfiles($user, self::getClaimList($claims, self::ROLES_CLAIM));
-            self::syncTeams($user, self::getClaimList($claims, self::GROUPS_CLAIM), in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
+            $teams = self::getClaimList($claims, self::GROUPS_CLAIM);
+            // Pemohon pejabat (jabatan Keycloak, Config::official_titles) → grup "Pejabat" untuk RuleTicket urgensi
+            if (Config::matchOfficialTitle(is_string($claims['jabatan'] ?? null) ? $claims['jabatan'] : null) !== null) {
+                $teams[] = Config::OFFICIAL_GROUP;
+            }
+            self::syncTeams($user, $teams, in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
             try {
+                self::syncPrimaryEmail($user, $claims);
                 self::syncAttributes($user, $claims);
             } catch (\Throwable $e) {
                 // Atribut kepegawaian pelengkap: gagal disalin tidak boleh menggagalkan login
@@ -320,6 +327,42 @@ final class KeycloakAuth
         $changed = array_filter($input, static fn ($v, $f) => (string) ($user->fields[$f] ?? '') !== (string) $v, ARRAY_FILTER_USE_BOTH);
         if ($changed !== []) {
             $user->update(['id' => $user->getID()] + $changed);
+        }
+    }
+
+    /**
+     * Email Keycloak MENGGANTI email utama GLPI (sinkron SSO inti hanya menambah alamat baru sebagai non-utama):
+     * alamat klaim dijadikan utama, alamat utama lama dihapus; alamat sekunder lain tidak disentuh.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private static function syncPrimaryEmail(User $user, array $claims): void
+    {
+        $email = is_string($claims['email'] ?? null) ? trim($claims['email']) : '';
+        if ($email === '') {
+            return;
+        }
+        $useremail = new UserEmail();
+        $rows      = $useremail->find(['users_id' => $user->getID()]);
+        $current   = null;
+        foreach ($rows as $row) {
+            if (strcasecmp((string) $row['email'], $email) === 0) {
+                $current = $row;
+            }
+        }
+        foreach ($rows as $row) {
+            if ((int) $row['is_default'] === 1 && ($current === null || (int) $row['id'] !== (int) $current['id'])) {
+                if ($current === null) {
+                    $useremail->update(['id' => $row['id'], 'email' => $email]);   // ganti alamat utama di tempat
+                    return;
+                }
+                $useremail->delete(['id' => $row['id']], true);
+            }
+        }
+        if ($current === null) {
+            $useremail->add(['users_id' => $user->getID(), 'email' => $email, 'is_default' => 1]);
+        } elseif ((int) $current['is_default'] !== 1) {
+            $useremail->update(['id' => $current['id'], 'is_default' => 1]);
         }
     }
 

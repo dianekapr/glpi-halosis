@@ -1342,3 +1342,27 @@ msgstr "Sedang"
 
 msgid "from the ticket history model"
 msgstr "dari model history tiket"
+
+msgid "Official job titles"
+msgstr "Jabatan pejabat"
+
+msgid "Comma-separated words matched at the start of the requester job title (from SSO). Such requesters join the \"Pejabat\" group; the ticket rule and the AI suggestion raise the urgency one level."
+msgstr "Kata dipisah koma yang dicocokkan dengan awal jabatan pemohon (dari SSO). Pemohon tersebut masuk grup \"Pejabat\"; aturan tiket dan saran AI menaikkan urgensi satu tingkat."
+
+msgid "Type: needs review"
+msgstr "Jenis: perlu ditinjau"
+
+msgid "the model leans to %s (ticket: %s); check the ticket type"
+msgstr "model condong ke %s (tiket: %s); periksa jenis tiket"
+
+msgid "Time until known (median)"
+msgstr "Waktu sampai diketahui (median)"
+
+msgid "first ticket → pattern created"
+msgstr "tiket pertama → pola dibuat"
+
+msgid "Affected requesters"
+msgstr "Pemohon terdampak"
+
+msgid "median %s per pattern"
+msgstr "median %s per pola"

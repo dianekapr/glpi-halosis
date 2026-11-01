@@ -124,7 +124,12 @@ final class Triage
             try {
                 $result = self::suggestService($ticket, $context);
             } catch (AiException $e) {
-                self::log(sprintf('Layanan AI gagal untuk tiket #%d, kembali ke mode sebelumnya: %s', $ticket->getID(), $e->getMessage()));
+                self::log(sprintf('Layanan AI gagal untuk tiket #%d: %s', $ticket->getID(), $e->getMessage()));
+                // UC-04 1a: layanan AI tidak tersedia → tiket tanpa saran (bukan saran aturan demo); Operator memakai
+                // "Buat saran AI" atau TriageRetry mencoba lagi. Penyedia AI eksternal (bila dikonfigurasi) tetap dicoba.
+                if (Config::isDemoMode()) {
+                    return null;
+                }
             }
         }
         try {
@@ -179,15 +184,41 @@ final class Triage
         $similar  = PatternDetector::countSimilarRecent($ticket->getID(), (string) $ticket->fields['name'], $category);
         $critical = self::criticalService($category);
 
+        // Pemohon pejabat (sama dengan RuleTicket grup "Pejabat"): urgensi naik satu tingkat sebelum dampak dihitung
+        $urgency_reason = '';
+        if (($title = self::officialRequesterTitle($ticket)) !== null && (int) $result['urgency'] < 5) {
+            $result['urgency'] = (int) $result['urgency'] + 1;
+            $urgency_reason = sprintf('Urgensi %s: pemohon pejabat (%s)', Ticket::getUrgencyName($result['urgency']), $title);
+        }
         $result['impact']        = (int) $result['urgency'];
-        $result['impact_reason'] = '';
+        $result['impact_reason'] = $urgency_reason;
         $reasons = self::impactReasons($similar, max(2, (int) Config::get('pattern_min_tickets')), $window, $critical);
         if ($reasons !== []) {
             $result['impact'] = min(5, $result['impact'] + 1);
-            $result['impact_reason'] = sprintf('Dampak %s: %s', Ticket::getImpactName($result['impact']), implode('; ', $reasons));
+            $result['impact_reason'] = implode(' · ', array_filter([
+                $urgency_reason,
+                sprintf('Dampak %s: %s', Ticket::getImpactName($result['impact']), implode('; ', $reasons)),
+            ]));
         }
         unset($result['impact_rule']);
         return $result;
+    }
+
+    /**
+     * Kata jabatan pejabat milik pemohon tiket (Config::official_titles), null bila tidak ada pemohon pejabat.
+     */
+    private static function officialRequesterTitle(Ticket $ticket): ?string
+    {
+        foreach ($ticket->getUsers(CommonITILActor::REQUESTER) as $actor) {
+            $user = new \User();
+            if ($user->getFromDB((int) $actor['users_id']) && (int) $user->fields['usertitles_id'] > 0) {
+                $name = \Dropdown::getDropdownName('glpi_usertitles', (int) $user->fields['usertitles_id']);
+                if (($word = Config::matchOfficialTitle($name)) !== null) {
+                    return $word;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -298,11 +329,10 @@ final class Triage
             TXT;
         $system = sprintf($system, implode("\n", $category_lines), implode("\n", $group_lines));
 
-        $prompt = sprintf(
-            "<tiket>\nTipe: %s\nJudul: %s\nIsi:\n%s\n</tiket>",
+        $prompt = self::aiPrompt(
             Ticket::getTicketTypeName((int) $ticket->fields['type']),
-            $ticket->fields['name'],
-            self::plainText($ticket->fields['content']),
+            (string) $ticket->fields['name'],
+            $ticket->fields['content'],
         );
 
         $category_ids = array_keys($context['categories']) ?: [0];
@@ -713,6 +743,20 @@ final class Triage
     public static function canChangePriority(): bool
     {
         return Session::haveRight(Ticket::$rightname, Ticket::CHANGEPRIORITY);
+    }
+
+    /**
+     * Isi tiket untuk penyedia AI eksternal: judul & isi disamarkan (Privacy::mask) seperti suggestService;
+     * teks mentah tiket tidak pernah keluar (NFR-06, batas scope hal. 8). Dites: tools/test_ai_masking.php.
+     */
+    public static function aiPrompt(string $type, string $title, ?string $content): string
+    {
+        return sprintf(
+            "<tiket>\nTipe: %s\nJudul: %s\nIsi:\n%s\n</tiket>",
+            $type,
+            Privacy::mask($title)['text'],
+            Privacy::mask(self::plainText($content))['text'],
+        );
     }
 
     private static function plainText(?string $html): string

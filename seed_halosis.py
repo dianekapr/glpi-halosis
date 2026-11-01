@@ -94,7 +94,7 @@ TEAM_LEADERS = {'hendra', 'agus', 'rudi', 'wati'}
 for login, fn, ln, role, grp in USERS:
     prof = P[role]
     is_new = login not in existing('User')
-    uid = ensure('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@bps.go.id'}})
+    uid = ensure('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@contoh.go.id'}})
     U[login] = uid
     if is_new:
         add('Profile_User', {'users_id': uid, 'profiles_id': prof, 'entities_id': 0, 'is_recursive': 1})
@@ -105,6 +105,17 @@ for login, fn, ln, role, grp in USERS:
                 kept = True
             else:
                 s.delete(f'{B}/Profile_User/{pu["id"]}')
+    # Email demo: satu alamat utama {login}@contoh.go.id; alamat demo lama (@bps.go.id) dihapus (idempoten)
+    emails = s.get(f'{B}/User/{uid}/UserEmail').json() or []
+    emails = [e for e in emails if isinstance(e, dict)]
+    for e in emails:
+        if str(e.get('email', '')).lower().endswith('@bps.go.id'):
+            s.delete(f'{B}/UserEmail/{e["id"]}', params={'force_purge': 1})
+    demo = next((e for e in emails if str(e.get('email', '')).lower() == f'{login}@contoh.go.id'), None)
+    if demo is None:
+        add('UserEmail', {'users_id': uid, 'email': f'{login}@contoh.go.id', 'is_default': 1})
+    elif not int(demo.get('is_default') or 0):
+        s.put(f'{B}/UserEmail/{demo["id"]}', data=json.dumps({'input': {'id': demo['id'], 'is_default': 1}}))
     if grp:
         manager = int(login in TEAM_LEADERS)
         link = next((l for l in s.get(f'{B}/User/{uid}/Group_User').json() or []

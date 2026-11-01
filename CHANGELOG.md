@@ -29,6 +29,16 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   (`quality.check('urgensi')` → `kelas_lolos`), model terkalibrasi kedua dihapus; baseline dashboard dua baris
   (dokumen 27,59% / 42,62%, history versi baru 28,87% + respons 43,08%) + cakupan rating 17,3% (`baseline.json`
   `dokumen`, `sla_respons`, `metode`); angka triase/jenis/retrieval/DBSCAN disinkronkan di README & laporan.
+- **Perbaikan verifikasi akhir (1 Nov 2026, masih 1.0.0):** payload ke AI eksternal selalu disamarkan
+  (`Triage::aiPrompt`, `Chatbot::aiPrompt`, `Client::outgoingPrompt`; `tools/test_ai_masking.php`); realm demo
+  `@contoh.go.id` + NIP fiktif; `setup-roles` mencabut Reservasi Pegawai & hak aturan Operator/Tim Teknis/KM,
+  `front/rule.php` → 403 tanpa hak aturan; urgensi +1 pemohon pejabat (config `official_titles`, grup *Pejabat* dari
+  SSO, `setup_pejabat_rules.py`); "Jenis: perlu ditinjau" pada keyakinan sedang; dashboard pola: waktu sampai
+  diketahui & pemohon terdampak; uji alur alternatif `tests/e2e/alur_alternatif.js`.
+- **Penutupan verifikasi (1 Nov 2026, masih 1.0.0):** pola *Dikonfirmasi* dari tindakan manusia
+  (`Stats::humanTouchedProblems`); layanan AI gagal → tiket tanpa saran (bukan aturan demo, UC-04 1a); login SSO
+  mengganti email utama (`KeycloakAuth::syncPrimaryEmail`) + pembersihan email demo lama di seed; uji alur alternatif
+  bertambah UC-03 4a, UC-04 1a, UC-06 S-1, UC-09 5a.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

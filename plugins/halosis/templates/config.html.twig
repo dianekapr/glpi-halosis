@@ -135,6 +135,9 @@
                     {{ fields.textField('critical_services', config.critical_services, __('Critical services', 'halosis'), field_opts|merge({
                         'add_field_html': self.hint(__('Comma-separated words. When the suggested category name contains one of them, or this many similar tickets arrive within the time window, the suggested impact is raised one level.', 'halosis')),
                     })) }}
+                    {{ fields.textField('official_titles', config.official_titles, __('Official job titles', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Comma-separated words matched at the start of the requester job title (from SSO). Such requesters join the "Pejabat" group; the ticket rule and the AI suggestion raise the urgency one level.', 'halosis')),
+                    })) }}
                     {{ fields.dropdownField('Group', 'pattern_group_id', config.pattern_group_id, __('Operator group', 'halosis'), field_opts|merge({
                         'condition': {'is_assign': 1},
                         'emptylabel': __('Default (Operator Service Desk)', 'halosis'),
