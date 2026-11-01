@@ -3,12 +3,18 @@
 namespace GlpiPlugin\Halosis;
 
 use CommonDBTM;
+use CommonITILObject;
+use Dropdown;
 use Glpi\Event;
 use Glpi\Form\Form;
 use ITILCategory;
 use Profile_Reminder;
 use Reminder;
+use RuleTicket;
 use Session;
+use SLA;
+use SLM;
+use Ticket;
 use Toolbox;
 
 /**
@@ -17,7 +23,8 @@ use Toolbox;
  * - Setiap perubahan Pengaturan AI HaloSIS, aturan bisnis tiket (termasuk aturan SLA), SLA, dan kategori layanan
  *   dicatat di log sistem GLPI (Administrasi › Log; sebelum → sesudah, aktor, waktu).
  * - Administrator diberi tahu lewat Catatan (Reminder) publik untuk profil Administrator, tampil di beranda 7 hari.
- * Pratinjau dampak ambang keyakinan: previewThresholds().
+ * Pratinjau dampak ambang keyakinan: previewThresholds(). Pratinjau dampak target SLA / aturan SLA pada tiket aktif:
+ * previewSla(), previewSlaRule() (UC-10 langkah 5; tidak menyimpan apa pun).
  */
 final class ConfigAudit
 {
@@ -26,6 +33,12 @@ final class ConfigAudit
 
     /** Hari tampil Catatan pemberitahuan di beranda */
     private const NOTICE_DAYS = 7;
+
+    /** Status risiko SLA = sisa waktu ≤ 20% durasi target (sama dengan level eskalasi "Peringatan risiko SLA") */
+    public const SLA_RISK_SHARE = 0.2;
+
+    /** Satuan target SLA yang bisa dipratinjau */
+    public const SLA_UNITS = ['minute', 'hour', 'day'];
 
     /**
      * Hook item_add / item_update / item_purge untuk aturan tiket, SLA, kategori layanan, dan form katalog.
@@ -156,5 +169,168 @@ final class ConfigAudit
             }
         }
         return $result;
+    }
+
+    /**
+     * Pilihan form pratinjau SLA: SLA dan aturan tiket yang menetapkan SLA.
+     *
+     * @return array{slas: array<int, string>, rules: array<int, string>}
+     */
+    public static function getSlaTargets(): array
+    {
+        global $DB;
+
+        $slas = [];
+        foreach ($DB->request(['SELECT' => ['id', 'name', 'type'], 'FROM' => SLA::getTable(), 'ORDER' => ['type', 'name']]) as $row) {
+            $slas[(int) $row['id']] = sprintf('%s (%s)', $row['name'], (int) $row['type'] === SLM::TTO ? __('response', 'halosis') : __('resolution', 'halosis'));
+        }
+        $rules = [];
+        foreach ($DB->request([
+            'SELECT'     => ['r.id', 'r.name', 'a.value'],
+            'FROM'       => 'glpi_rules AS r',
+            'INNER JOIN' => ['glpi_ruleactions AS a' => ['ON' => ['a' => 'rules_id', 'r' => 'id']]],
+            'WHERE'      => ['r.sub_type' => RuleTicket::class, 'r.is_active' => 1, 'a.field' => ['slas_id_ttr', 'slas_id_tto']],
+            'ORDER'      => 'r.ranking',
+        ]) as $row) {
+            $rules[(int) $row['id']][] = $slas[(int) $row['value']] ?? '?';
+        }
+        $names = $DB->request(['SELECT' => ['id', 'name'], 'FROM' => 'glpi_rules', 'WHERE' => ['id' => array_keys($rules) ?: [0]]]);
+        foreach ($names as $row) {
+            $rules[(int) $row['id']] = sprintf('%s → %s', $row['name'], implode(', ', $rules[(int) $row['id']]));
+        }
+        return ['slas' => $slas, 'rules' => $rules];
+    }
+
+    /**
+     * Pratinjau perubahan target satu SLA: tiket aktif yang memakai SLA itu dihitung ulang batas waktunya.
+     */
+    public static function previewSla(int $sla_id, int $number_time, string $definition_time): ?array
+    {
+        $sla = new SLA();
+        if (!$sla->getFromDB($sla_id) || $number_time <= 0 || !in_array($definition_time, self::SLA_UNITS, true)) {
+            return null;
+        }
+        $type  = (int) $sla->fields['type'] === SLM::TTO ? 'tto' : 'ttr';
+        $label = sprintf(
+            __('SLA "%1$s": %2$s → %3$d %4$s', 'halosis'),
+            $sla->fields['name'],
+            $sla->fields['number_time'] . ' ' . $sla->fields['definition_time'],
+            $number_time,
+            $definition_time,
+        );
+        $new = clone $sla;
+        $new->fields['number_time']     = $number_time;
+        $new->fields['definition_time'] = $definition_time;
+        $tickets = array_filter(self::activeTicketsForSla(), static fn ($t) => (int) $t["slas_id_{$type}"] === $sla_id);
+        return self::slaImpact($tickets, $type, $new, $label);
+    }
+
+    /**
+     * Pratinjau aturan SLA yang menetapkan SLA lain: jenis SLA pengganti (respons/penyelesaian) menentukan aksi aturan
+     * yang diganti; tiket aktif yang cocok dengan kriteria aturan dan kini memakai SLA aksi itu dihitung ulang.
+     */
+    public static function previewSlaRule(int $rule_id, int $new_sla_id): ?array
+    {
+        $rule = new RuleTicket();
+        if (!$rule->getRuleWithCriteriasAndActions($rule_id, true, true)) {
+            return null;
+        }
+        $new = new SLA();
+        if (!$new->getFromDB($new_sla_id)) {
+            return null;
+        }
+        $type   = (int) $new->fields['type'] === SLM::TTO ? 'tto' : 'ttr';
+        $action = null;
+        foreach ($rule->actions as $candidate) {
+            if ($candidate->fields['field'] === "slas_id_{$type}") {
+                $action = $candidate->fields;
+            }
+        }
+        if ($action === null) {
+            return ['error' => __('The replacement SLA must be of the same kind (response or resolution) as the rule action.', 'halosis')];
+        }
+        $old_sla = (int) $action['value'];
+        $label   = sprintf(__('Rule "%1$s": SLA %2$s → %3$s', 'halosis'), $rule->fields['name'], Dropdown::getDropdownName(SLA::getTable(), $old_sla), $new->fields['name']);
+        $tickets = array_filter(
+            self::activeTicketsForSla(),
+            static fn ($t) => (int) $t["slas_id_{$type}"] === $old_sla && $rule->checkCriterias($t),
+        );
+        return self::slaImpact($tickets, $type, $new, $label);
+    }
+
+    /**
+     * Tiket aktif (Baru s.d. Menunggu) di luar entitas arsip, dengan field yang dipakai SLA & kriteria aturan.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function activeTicketsForSla(): array
+    {
+        global $DB;
+
+        $rows = [];
+        foreach ($DB->request([
+            'SELECT' => [
+                'id', 'date', 'type', 'itilcategories_id', 'priority', 'urgency', 'impact', 'entities_id', 'status',
+                'slas_id_ttr', 'slas_id_tto', 'time_to_resolve', 'time_to_own', 'sla_waiting_duration', 'takeintoaccount_delay_stat',
+            ],
+            'FROM'   => Ticket::getTable(),
+            'WHERE'  => [
+                'is_deleted' => 0,
+                'status'     => ['<', CommonITILObject::SOLVED],
+                'NOT'        => ['entities_id' => Config::getArchiveEntityIds() ?: [-1]],
+            ],
+        ]) as $row) {
+            $rows[(int) $row['id']] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * Status SLA sekarang vs bila target baru diterapkan, per tiket: aman / berisiko / terlewati.
+     *
+     * @param array<int, array<string, mixed>> $tickets
+     * @return array{label: string, total: int, current: array<string, int>, new: array<string, int>, changed: int, worse: int, better: int}
+     */
+    private static function slaImpact(array $tickets, string $type, SLA $new, string $label): array
+    {
+        $now    = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        $empty  = ['ok' => 0, 'risk' => 0, 'overdue' => 0];
+        $result = ['label' => $label, 'total' => 0, 'current' => $empty, 'new' => $empty, 'changed' => 0, 'worse' => 0, 'better' => 0];
+        $rank   = ['ok' => 0, 'risk' => 1, 'overdue' => 2];
+        foreach ($tickets as $ticket) {
+            // SLA respons hanya berlaku sampai tiket diambil
+            if ($type === 'tto' && (int) $ticket['takeintoaccount_delay_stat'] > 0) {
+                continue;
+            }
+            $due_now = (string) ($type === 'ttr' ? $ticket['time_to_resolve'] : $ticket['time_to_own']);
+            $due_new = (string) $new->computeDate($ticket['date'], $type === 'ttr' ? (int) $ticket['sla_waiting_duration'] : 0);
+            $from = self::slaState((string) $ticket['date'], $due_now !== '' ? $due_now : $due_new, $now);
+            $to   = self::slaState((string) $ticket['date'], $due_new, $now);
+            $result['total']++;
+            $result['current'][$from]++;
+            $result['new'][$to]++;
+            if ($from !== $to) {
+                $result['changed']++;
+                $result[$rank[$to] > $rank[$from] ? 'worse' : 'better']++;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * terlewati = lewat batas; berisiko = sisa ≤ SLA_RISK_SHARE durasi target; selain itu aman.
+     */
+    public static function slaState(string $start, string $due, string $now): string
+    {
+        $start_ts = strtotime($start);
+        $due_ts   = strtotime($due);
+        $now_ts   = strtotime($now);
+        if ($due_ts === false || $start_ts === false || $now_ts === false) {
+            return 'ok';
+        }
+        if ($now_ts > $due_ts) {
+            return 'overdue';
+        }
+        return $due_ts - $now_ts <= self::SLA_RISK_SHARE * max(0, $due_ts - $start_ts) ? 'risk' : 'ok';
     }
 }

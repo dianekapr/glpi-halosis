@@ -20,6 +20,7 @@ use GlpiPlugin\Halosis\KeycloakAuth;
 use GlpiPlugin\Halosis\ConfigAudit;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
+use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Reassignment;
 use GlpiPlugin\Halosis\RoleMenu;
@@ -131,6 +132,10 @@ function plugin_init_halosis(): void
 
     // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas
     $PLUGIN_HOOKS[Hooks::DISPLAY_CENTRAL]['halosis'] = [PatternDetector::class, 'displayCentralBanner'];
+
+    // E19: event notifikasi "HaloSIS: Pengingat progres" pada tiket + tag templatnya
+    $PLUGIN_HOOKS[Hooks::ITEM_GET_EVENTS]['halosis'] = [NotificationTargetTicket::class => [ProgressReminder::class, 'addEvent']];
+    $PLUGIN_HOOKS[Hooks::ITEM_GET_DATA]['halosis']   = [NotificationTargetTicket::class => [ProgressReminder::class, 'addTemplateData']];
 
     // Tab "HaloSIS" di form Profil untuk mengatur hak akses plugin
     Plugin::registerClass(Profile::class, ['addtabon' => [\Profile::class]]);

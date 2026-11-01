@@ -42,6 +42,8 @@ final class Config
         'pattern_method'      => 'average',
         'pattern_eps'         => '0.50',
         'pattern_min_samples' => 3,
+        // FR-04: permintaan layanan (REQ) ikut dikelompokkan menjadi pola; bawaan mati (PoC hal. 56: pola dari INC)
+        'pattern_include_requests' => 0,
         // Sinyal dampak saran triase: kategori layanan yang namanya memuat salah satu kata ini → dampak naik 1 tingkat
         'critical_services'   => 'SSO, Email, Jaringan',
         // Jabatan pejabat (awal kata, wawancara PM & operator): pemohon dimasukkan ke grup OFFICIAL_GROUP saat login SSO
@@ -51,6 +53,8 @@ final class Config
         'kb_review_months'    => 6,
         // T21: tiket Selesai tanpa respons pemohon lebih dari N jam masuk daftar "Siap ditutup"
         'close_after_hours'   => 48,
+        // E19: tiket Diproses/Menunggu tanpa tindak lanjut lebih dari N hari kerja → pengingat progres ke teknisi & grup
+        'progress_reminder_days' => 5,
         'feature_triage'    => 1,
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
@@ -264,9 +268,11 @@ final class Config
         $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
         $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
         $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
+        $values['pattern_include_requests'] = (int) !empty($input['pattern_include_requests']);
         $values['critical_services'] = implode(', ', self::parseList((string) ($input['critical_services'] ?? '')));
         $values['official_titles'] = implode(', ', self::parseList((string) ($input['official_titles'] ?? '')));
         $values['close_after_hours'] = max(1, min(720, (int) ($input['close_after_hours'] ?? self::DEFAULTS['close_after_hours'])));
+        $values['progress_reminder_days'] = max(1, min(60, (int) ($input['progress_reminder_days'] ?? self::DEFAULTS['progress_reminder_days'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 
         foreach (self::FEATURES as $feature) {

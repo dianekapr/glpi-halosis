@@ -1,23 +1,161 @@
-# GLPI - HaloSIS
+# HaloSIS — layanan bantuan TI BPS dengan asisten AI
 
-Paket ini menyalakan GLPI di laptop kamu lalu mengisinya dengan data contoh HaloSIS:
-4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 15 pengguna contoh (lihat langkah 6),
-SLA per prioritas, 12 tiket (lengkap dengan balasan, catatan internal, solusi),
-5 artikel knowledge base, dan 1 "masalah" sebagai contoh pola insiden.
+## Apa ini?
 
-Di atas GLPI terpasang **plugin HaloSIS** (modul AI human-in-the-loop: chatbot Tanya HaloSIS, saran triase,
-deteksi pola insiden, kandidat knowledge, dashboard kinerja AI) dan palet tema HaloSIS. Cara pakai, mode demo,
-dan **skenario demo langkah demi langkah** ada di [`plugins/halosis/README.md`](plugins/halosis/README.md).
+HaloSIS adalah aplikasi **layanan bantuan TI (helpdesk)** untuk pegawai BPS. Pegawai yang punya kendala TI
+(misalnya aplikasi FASIH gagal sinkron, VPN putus, lupa password) cukup bertanya ke **asisten chat**. Bila asisten
+tidak bisa menyelesaikan, laporan dibuat otomatis dan diteruskan ke tim TI yang tepat.
 
-**Login lewat SSO Keycloak** (pengganti SSO BPS, langkah 6b): pegawai login sekali di form HaloSIS, password
-dicek ke Keycloak di belakang layar, lalu langsung masuk **Tanya HaloSIS** dengan dua pilihan: *Ajukan
-permintaan* (langsung tiket) atau *Laporkan masalah* (chatbot dulu, tiket bila belum terselesaikan).
-Akun, role, dan tim diatur di Keycloak.
+AI di sini **membantu, bukan memutuskan**: AI menyarankan kategori, tim, dan tingkat kepentingan laporan, lalu
+petugas (Operator) yang menerima, mengubah, atau menolak sarannya. HaloSIS dibangun di atas
+[GLPI](https://glpi-project.org) (aplikasi helpdesk sumber terbuka) dengan tambahan *plugin* HaloSIS.
+
+Paket ini menyalakan semuanya **di laptop sendiri** dan mengisinya dengan **data contoh** (pengguna, tim, laporan,
+artikel bantuan), jadi bisa langsung dicoba tanpa internet kantor dan tanpa data asli.
+
+**Siapa melakukan apa**
+
+| Peran | Akun contoh | Yang dilakukan di HaloSIS |
+| --- | --- | --- |
+| Pegawai | `budi`, `siti`, `maya` | Bertanya ke asisten chat, membuat laporan, memantau dan menyetujui penyelesaian |
+| Operator layanan | `rina` | Memeriksa laporan baru beserta saran AI, lalu meneruskannya ke tim teknis |
+| Tim teknis | `andi`, `fajar`, `dedi`, … | Mengerjakan laporan dan menulis solusinya |
+| Pengelola pengetahuan | `lina` | Menjadikan solusi yang sering dipakai sebagai artikel bantuan |
+| Manajemen | `sri` | Melihat dashboard kinerja layanan dan AI |
+| Administrator | `dimas` | Mengatur layanan, SLA (batas waktu), dan pengaturan AI |
+
+Password semua akun contoh: **`halosis`**. Daftar lengkap ada di [Pemasangan manual › langkah 6](#pemasangan-manual-yang-dijalankan-scriptspasangsh).
+
+## Cara memasang di laptop (untuk pemula)
+
+Tidak perlu bisa memrogram. Ikuti 5 langkah ini berurutan; cukup dilakukan **sekali**.
+
+### Langkah 1 — Pasang tiga aplikasi
+
+| Aplikasi | Gunanya | Unduh |
+| --- | --- | --- |
+| **Docker Desktop** | "Wadah" yang menjalankan HaloSIS di laptop | https://www.docker.com/products/docker-desktop |
+| **Git** | Mengambil kode HaloSIS dari GitHub | Mac: sudah ada (lihat langkah 2). Windows: https://git-scm.com/download/win (klik *Next* terus) |
+| **Python 3** | Mengisi data contoh | Mac: biasanya sudah ada. Windows: https://www.python.org/downloads (**centang "Add python.exe to PATH"**) |
+
+Setelah memasang Docker Desktop, **buka aplikasinya** dan tunggu sampai ikon paus 🐳 di pojok layar berhenti
+bergerak. Laptop sebaiknya punya RAM minimal 8 GB dan ruang kosong ±15 GB.
+
+### Langkah 2 — Buka Terminal
+
+Terminal adalah jendela untuk mengetik perintah. Cukup salin-tempel perintah dari panduan ini, lalu tekan **Enter**.
+
+- **Mac:** tekan `⌘ Command` + `Spasi`, ketik **Terminal**, tekan Enter.
+- **Windows:** klik Start, ketik **Git Bash**, buka aplikasinya (jangan pakai Command Prompt).
+
+Cek ketiga aplikasi sudah terpasang (masing-masing harus menampilkan nomor versi, bukan pesan galat):
+```bash
+docker --version
+git --version
+python3 --version      # Windows: python --version
+```
+Di Mac, bila muncul tawaran memasang *command line developer tools* saat mengetik `git`, klik **Install**.
+
+### Langkah 3 — Ambil kode HaloSIS
+
+Salin-tempel tiga baris ini ke Terminal (satu per satu, tekan Enter tiap baris):
+```bash
+cd ~/Downloads
+git clone https://github.com/dianekapr/glpi-halosis.git
+cd glpi-halosis
+```
+Kode tersimpan di folder **Downloads › glpi-halosis**. (Bila diminta login GitHub, minta akses ke pemilik repo.)
+
+### Langkah 4 — Jalankan pemasangan otomatis
+
+Masih di Terminal yang sama, ketik:
+```bash
+scripts/pasang.sh
+```
+Perintah ini menyalakan HaloSIS, memasang plugin, dan mengisi data contoh. **Pertama kali bisa 10–20 menit**
+(mengunduh beberapa GB) — biarkan sampai muncul tulisan **"Selesai!"**. Kalau muncul tulisan merah **GAGAL**, baca
+pesannya (biasanya Docker belum dibuka) lalu ulangi perintah yang sama; aman dijalankan berkali-kali.
+
+### Langkah 5 — Buka HaloSIS di browser
+
+Buka **http://localhost:8080** di Chrome/Edge/Safari, lalu login **`budi`** / **`halosis`**. Anda langsung masuk ke
+**Tanya HaloSIS** (asisten chat). Selamat, HaloSIS sudah berjalan! Lanjutkan dengan tur di bawah.
+
+> Tanpa file model AI, HaloSIS memakai **mode demo** (jawaban contoh yang tetap). Untuk AI sungguhan dari history
+> tiket, anggota tim memasang file model sesuai bagian [C2](#c2-pasang-model-ai-dari-google-drive-untuk-penguji).
+
+## Tur 10 menit: coba satu laporan dari awal sampai selesai
+
+Pakai **jendela penyamaran/privat** baru untuk setiap akun, supaya bisa login sebagai beberapa orang sekaligus.
+
+1. **Pegawai bertanya** — login `budi`. Klik **Laporkan masalah**, lalu klik contoh **FASIH gagal sinkron**.
+   Asisten menjawab dengan langkah-langkah dari artikel bantuan.
+2. **Pegawai membuat laporan** — di bawah jawaban klik **Belum terselesaikan** → **Ya, buat laporan** →
+   **Kirim laporan**. Ringkasan percakapan ikut terlampir, jadi pegawai tidak perlu menjelaskan ulang.
+3. **Operator memeriksa saran AI** — login `rina`, buka menu **Antrean validasi**, buka laporan tadi. Panel
+   **Saran AI** menunjukkan kategori, tim, dan tingkat keyakinan AI. Klik **Terima** (atau **Ubah**/**Tolak**
+   dengan alasan).
+4. **Tim teknis menyelesaikan** — login `andi`, buka menu **Tiket saya & tim**, buka laporan tadi, lalu klik
+   **Answer ▾ › Add a solution** (beberapa tombol bawaan GLPI masih berbahasa Inggris), tulis solusinya, simpan.
+5. **Pegawai menyetujui** — login `budi`, buka **Laporan saya**, buka laporannya, klik **Approve** (setujui solusi).
+   Laporan pun **Ditutup**.
+6. **Manajemen melihat hasil** — login `sri`, buka **Kinerja AI**: berapa saran AI yang diterima, diubah, ditolak,
+   dan kepatuhan SLA.
+
+Skenario lengkap (termasuk pola insiden, artikel bantuan, dan pengaturan) ada di
+[`plugins/halosis/README.md`](plugins/halosis/README.md#skenario-demo-langkah-demi-langkah).
+
+## Menyalakan, mematikan, dan mengulang
+
+Jalankan dari Terminal di folder `glpi-halosis` (`cd ~/Downloads/glpi-halosis`):
+
+| Mau apa | Perintah |
+| --- | --- |
+| Mematikan HaloSIS (data tetap tersimpan) | `docker compose down` |
+| Menyalakan lagi besok | Buka Docker Desktop, lalu `docker compose up -d`, tunggu ±1 menit |
+| Menyimpan kondisi sebelum demo | `scripts/demo_snapshot.sh simpan` |
+| Kembali ke kondisi yang disimpan | `scripts/demo_snapshot.sh pulihkan` |
+| Menghapus **semua** data lalu mulai dari nol | `docker compose down -v` lalu `scripts/pasang.sh` |
+
+## Kalau ada masalah
+
+| Yang terlihat | Coba ini |
+| --- | --- |
+| `GAGAL: Docker belum menyala` / `Cannot connect to the Docker daemon` | Buka aplikasi Docker Desktop, tunggu ikon paus diam, ulangi perintah |
+| `command not found: python3` (Windows) | Pasang ulang Python dan centang **Add python.exe to PATH**, lalu tutup & buka lagi Git Bash |
+| `permission denied: scripts/pasang.sh` | Ketik `bash scripts/pasang.sh` |
+| Halaman http://localhost:8080 tidak terbuka | Tunggu 1–2 menit setelah menyalakan, lalu muat ulang. Cek Docker Desktop menyala |
+| Login `budi` ditolak padahal password benar | Salah password 5× membuat akun terkunci ±15 menit. Tunggu, lalu coba lagi |
+| Tidak bisa login sama sekali | Login darurat `glpi` / `glpi` tetap bisa; laporkan ke pemilik repo |
+| Laptop jadi lambat | Matikan HaloSIS saat tidak dipakai (`docker compose down`) |
+| Masalah lain | Simpan tulisan galatnya (screenshot), kirim ke pemilik repo |
+
+**Alamat yang perlu diketahui**
+
+| Alamat | Isinya |
+| --- | --- |
+| http://localhost:8080 | Aplikasi HaloSIS |
+| http://localhost:8025 | Kotak masuk email uji (semua email HaloSIS ditahan di sini, tidak terkirim ke luar) |
+| http://localhost:8180 | Pengelola akun/SSO (Keycloak; login `admin` / `admin`) — untuk administrator |
+
+---
+
+# Bagian untuk anggota tim & rincian teknis
+
+Bagian di bawah ini untuk anggota tim yang ikut mengembangkan atau perlu tahu cara kerjanya. Pengguna yang hanya
+mencoba HaloSIS cukup membaca bagian di atas.
+
+**Ringkas teknis:** GLPI 12 + **plugin HaloSIS** (chatbot Tanya HaloSIS, saran triase, deteksi pola insiden,
+kandidat knowledge, pengingat progres, dashboard kinerja AI) + palet tema HaloSIS + layanan AI lokal `halosis-ai` +
+**login SSO Keycloak** (pengganti SSO BPS; password dicek ke Keycloak di belakang layar, akun/role/tim diatur di
+Keycloak). Data contoh: 4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN, dll.), 15 pengguna contoh, SLA
+resmi BPS, 12 tiket, artikel knowledge base, dan 1 "masalah" contoh pola insiden. Cara pakai fitur & skenario demo:
+[`plugins/halosis/README.md`](plugins/halosis/README.md).
 
 ## Untuk anggota tim: mulai dari link GitHub
 
-Belum pernah pakai Git/GitHub? Ikuti bagian ini dari atas sampai bawah. Cukup sekali di langkah A–C;
-langkah D dipakai setiap kali kamu bekerja.
+Untuk anggota tim yang ikut mengubah kode. Belum pernah pakai Git/GitHub? Ikuti dari atas sampai bawah. Cukup
+sekali di langkah A–C; langkah D dipakai setiap kali kamu bekerja.
 
 **Istilah singkat**
 
@@ -67,7 +205,8 @@ File `.env` berisi pengaturan lokal dan sengaja tidak ikut ke GitHub.
 
 ### C. Jalankan di laptop
 
-Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
+Jalankan `scripts/pasang.sh` (sama dengan [Langkah 4 pemula](#langkah-4--jalankan-pemasangan-otomatis)); rincian tiap
+langkahnya ada di [Pemasangan manual](#pemasangan-manual-yang-dijalankan-scriptspasangsh). Catatan untuk anggota tim:
 
 - `docker compose up -d` pertama kali juga membangun layanan AI (`halosis-ai`), mengunduh Keycloak, dan
   mengunduh beberapa GB; bisa 10–20 menit. Selanjutnya cepat.
@@ -90,7 +229,7 @@ Ikuti bagian **Langkah** di bawah (1 s.d. 7). Catatan untuk anggota tim:
 > ⚠️ Isi folder ini diturunkan dari history tiket BPS (sudah disamarkan, tetapi tetap **data internal**).
 > Jangan unggah ulang, jangan kirim ke orang lain/grup chat, dan jangan di-commit ke GitHub.
 
-**Syarat:** Langkah 1–6 di bawah sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi).
+**Syarat:** `scripts/pasang.sh` sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi).
 Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
 
 **1. [Unduh folder `models` dan `index` dari sini](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link)**
@@ -176,8 +315,10 @@ Lalu jalankan skenario lengkap di
 
 ### C3. Update untuk anggota tim (setiap kali `git pull` membawa perubahan plugin/AI)
 
-Jalankan berurutan dari folder repo (aman diulang). Urutan penting: `halosis-ai` harus hidup **sebelum** install
-plugin, karena install juga mengisi katalog layanan ke indeks chatbot.
+**Cara singkat** (aman diulang): `git pull && docker compose up -d --build halosis-ai && scripts/pasang.sh`.
+
+Rinciannya, bila ingin menjalankan satu per satu dari folder repo (aman diulang). Urutan penting: `halosis-ai` harus
+hidup **sebelum** install plugin, karena install juga mengisi katalog layanan ke indeks chatbot.
 
 ```bash
 git pull
@@ -289,12 +430,11 @@ Ragu memilih? Tanya teman yang mengubah bagian itu sebelum commit.
 | Terlanjur commit file data (belum push) | `git reset --soft HEAD~1`, keluarkan file itu dari commit, lalu kabari pemilik repo |
 | Terlanjur **push** file data/`.env` | Jangan push lagi; segera kabari pemilik repo (riwayat GitHub harus dibersihkan & password diganti) |
 
-## Yang dibutuhkan
-- Docker Desktop (Mac/Windows) atau Docker Engine (Linux)
-- Python 3 (untuk skrip pengisi data)
-- Git (untuk mengambil & mengirim kode, lihat bagian di atas)
+## Pemasangan manual (yang dijalankan `scripts/pasang.sh`)
 
-## Langkah
+Langkah 1–7 di bawah adalah isi `scripts/pasang.sh`, dengan penjelasan tiap pengaturan. Pakai bagian ini bila
+skrip gagal di langkah tertentu, atau untuk memasang di server. Butuh Docker Desktop (Mac/Windows) atau Docker
+Engine (Linux), Python 3, dan Git.
 
 **1. Nyalakan GLPI** (pastikan file `.env` sudah ada: `cp .env.example .env`)
 ```bash
@@ -718,12 +858,14 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`, dilatih ulang dari history versi baru, F1 makro 67,52% vs 67,50% model lama → lolos): akurasi 68,25%, ≥ 70% yakin → 83,96%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
 | HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
-| Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | Pratinjau dampak ambang AI (tanpa menyimpan); perubahan Pengaturan AI, aturan SLA, SLA, kategori → log sistem GLPI + Catatan untuk Administrator | Tanpa ubah kode inti: memakai Event log & Reminder GLPI | Pratinjau aturan SLA/kategori |
+| Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | Pratinjau dampak (tanpa menyimpan): ambang AI (saran 30 hari) dan **perubahan SLA / aturan SLA** (tiket aktif terdampak; status aman / berisiko = sisa ≤ 20% / terlewati sekarang vs target baru; aturan: tiket dicocokkan kriteria aturan, jenis SLA pengganti menentukan aksi respons/penyelesaian); perubahan Pengaturan AI, aturan SLA, SLA, kategori → log sistem GLPI + Catatan untuk Administrator | Tanpa ubah kode inti: memakai Event log, Reminder, perhitungan tanggal SLA & pencocokan kriteria aturan GLPI; risiko memakai waktu jam dinding (eskalasi GLPI memakai jam kerja) | Pratinjau kategori (Rules › Test) |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 88,35% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi ≤ 50% (pita 30–50% = 50,0%, 0–30% = 35,5%) | Kalibrasi ulang setelah data keputusan Operator cukup |
 | SLA respons & penyelesaian (T1, T22) | `KebijakanSLA.targetRespons` (hal. 162), SLA per layanan (E3) | **SLA resmi BPS dari history ESTIM** (`config/sla_layanan.json`): respons 15 menit; insiden Crit 2 / Medium 8 / Low 15 hari; permintaan 7 hari (14 hari untuk layanan tim yang dominan 14 hari); kalender jam kerja GLPI | Nama SLA di kolom `*_sla_name` history (6.655 tiket respons, 2.710 insiden, 1.804 permintaan) | Pasang SLA 14 hari ke kategori Server Hosting/SOBAT/LAN-WAN/Container saat katalog memuatnya |
 | Urgensi pemohon pejabat (wawancara PM & operator) | Tiket pejabat/kepala kantor diprioritaskan | Grup GLPI **Pejabat** diisi saat login SSO dari jabatan Keycloak (Pengaturan AI › *Jabatan pejabat*, bawaan Kepala, Direktur, Deputi, Sekretaris Utama); aturan bisnis `setup_pejabat_rules.py` "Pejabat: urgensi N → N+1" (paling awal, menurun, tanpa kenaikan berantai); saran triase menaikkan urgensi yang sama dan panel menulis "Urgensi …: pemohon pejabat (…)" | Konfigurasi GLPI bawaan, tanpa kode inti. GLPI menghitung prioritas sebelum aturan berjalan, jadi saat tiket dibuat prioritas masih dari urgensi awal; **prioritas tiket pejabat mengikuti matriks urgensi × dampak saat saran diterima (Terima/Ubah) atau saat Operator mengubah urgensi/dampak di tiket**, dan SLA menyusul (aturan SLA juga berjalan saat tiket diubah) | — |
-| Beban kerja tim (UC-04 langkah 5) | Rekomendasi berdasarkan kategori, riwayat, beban kerja | Beban kerja (tiket aktif per kandidat) **hanya informasi** di panel; urutan kandidat tetap dari model | Mencampur beban kerja ke skor model akan mengubah metrik yang lolos gerbang tanpa set uji; Operator yang memutuskan bila tim teratas sedang penuh | Pemecah seri berbasis beban kerja bila ada data keputusan Operator |
-| Pola insiden hanya Insiden (FR-04) | Analisis request **dan** incident | `/pola` & `IncidentPattern` hanya tiket Insiden | Mengikuti PoC BR-07 (2.777 INC, hal. 56); lonjakan permintaan (mis. reset password musiman) dipantau lewat volume per minggu di dashboard | — |
+| Beban kerja tim (UC-04 langkah 5) | Rekomendasi berdasarkan kategori, riwayat, beban kerja | Beban kerja (tiket aktif per kandidat) tampil di panel; urutan dari model, **kecuali seri**: selisih keyakinan 2 kandidat teratas < 5 poin dan kandidat 2 lebih sedikit tiket aktif → kandidat 2 disarankan, alasan tampil di panel | Beban kerja tidak dicampur ke skor model (metrik yang lolos gerbang tetap); hanya memutus seri yang secara statistik tidak bermakna; Operator tetap memutuskan | Bobot beban kerja di luar seri setelah ada data keputusan Operator |
+| Pola permintaan (FR-04) | Analisis request **dan** incident | Bawaan hanya Insiden; Pengaturan AI *Sertakan permintaan dalam deteksi pola* (bawaan mati) → REQ dikelompokkan terpisah, Problem "Pola permintaan: …" | Bawaan mengikuti PoC BR-07 (2.777 INC, hal. 56); lonjakan permintaan musiman bisa dipantau sebagai pola bila diaktifkan | — |
+| Pengingat progres (wawancara E19) | Pemohon tidak tahu progres tiket pengembangan | Tugas terjadwal **`ProgressReminder`** (harian 07–17): tiket Diproses/Menunggu tanpa tindak lanjut/tugas > N hari kerja (Pengaturan AI, bawaan 5; kalender entitas) → notifikasi GLPI "HaloSIS: Pengingat progres" (email + browser) ke teknisi & grup yang ditugaskan, sekali per periode | Memakai notifikasi GLPI (penerima & templat dapat diubah di Setup › Notifikasi); aktivitas = tindak lanjut/tugas, waktu diambil, atau waktu dibuat | — |
+| Ringkasan deskripsi panjang (wawancara E15) | Deskripsi panjang sulit dibaca cepat | Panel Saran AI menampilkan **ringkasan ekstraktif 3 kalimat** untuk deskripsi > 150 kata: teks disamarkan dulu, kalimat berskor frekuensi kata kunci, urutan asli (`src/Summary.php`) | Tanpa LLM (NFR-06, tanpa API eksternal), deterministik | Ringkasan abstraktif bila LLM lokal tersedia |
 | Siklus artikel KB (UC-09, state machine hal. 192) | Draf → Terbit → Diarsipkan, versi | **Draf** = artikel tanpa target visibilitas, **Terbit** = punya target, **Diarsipkan** = target dicabut (tetap tersimpan, keluar dari indeks AI); **versi** = revisi GLPI (`KnowbaseItem_Revision`, isi lama tersimpan setiap sunting; uji 1 Nov: 1 revisi tercatat) | Fitur bawaan GLPI, tanpa ubah kode inti | — |
 | Pemilik & metadata knowledge (KR-01, KR-03) | Pemilik per domain, metadata | **Kategori KB = domain**; pemilik domain di `reports/tata_kelola_ai.md` §4b; metadata = kategori, target visibilitas, tanggal tinjau berikut | Tanpa field tambahan di artikel | — |
 | Log retrieval (UC-02 langkah 6) | Catat kueri, sumber, skor | Angka saja (skor teratas, jumlah hasil, latensi) di `ai/logs/latency.jsonl`; teks kueri tidak disimpan | NFR-06: kueri pegawai bisa memuat data pribadi | Kueri tersamar + id sumber bila tata kelola menyetujui |
@@ -768,12 +910,10 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Monitoring | Profile `monitoring`: Prometheus (target AI & MySQL `up`) + Grafana dasbor terprovisi (`screenshot/15-grafana-monitoring.png`) | Partially proven (tanpa metrik GLPI & alert) |
 | Ketersediaan (HA) | — | Rencana |
 
-## Mematikan / mengulang dari nol
-```bash
-docker compose down          # matikan (data tetap)
-docker compose down -v       # hapus semua data, lalu ulangi dari langkah 1
-```
-`down -v` juga menghapus data Keycloak; realm `halosis` diimpor ulang dari `keycloak/halosis-realm.json` saat
+## Mematikan / mengulang dari nol (catatan teknis)
+
+Perintahnya ada di [Menyalakan, mematikan, dan mengulang](#menyalakan-mematikan-dan-mengulang). `docker compose down -v`
+juga menghapus data Keycloak; realm `halosis` diimpor ulang dari `keycloak/halosis-realm.json` saat
 `docker compose up -d` berikutnya.
 
 Folder `screenshot/` berisi contoh tampilan hasil akhirnya (GLPI 12 dengan data ini).

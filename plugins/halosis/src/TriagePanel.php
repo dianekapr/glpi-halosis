@@ -56,6 +56,7 @@ final class TriagePanel
         TemplateRenderer::getInstance()->display('@halosis/triase_panel.html.twig', [
             'ticket_id'   => $ticket->getID(),
             'pattern'     => self::pattern($ticket->getID()),
+            'summary'     => Summary::forTicketContent($ticket->fields['content'] ?? ''),
             'suggestion'  => $suggestion?->fields,
             'values'      => $suggestion !== null ? self::describe($suggestion) : null,
             'needs_review' => $suggestion?->needsManualReview() ?? false,
@@ -86,9 +87,10 @@ final class TriagePanel
 
     /**
      * Kandidat tim (3 teratas dari model, atau grup saran saja) dengan jumlah tiket aktif yang sedang ditangani
-     * grupnya (T5, `hitungBebanKerja()`). Hanya informasi: urutan kandidat tetap dari model.
+     * grupnya (T5, `hitungBebanKerja()`). Urutan dari model; kandidat yang dipilih pemecah seri beban kerja
+     * (UC-04, `Triage::workloadTiebreak`) membawa alasannya.
      *
-     * @return array<int, array{team: string, confidence: ?int, group: string, active: ?int}>
+     * @return array<int, array{team: string, confidence: ?int, group: string, active: ?int, tiebreak: string}>
      */
     private static function workload(Suggestion $suggestion): array
     {
@@ -104,6 +106,7 @@ final class TriagePanel
                 'confidence' => isset($c['confidence']) ? (int) $c['confidence'] : null,
                 'group'      => $group_id > 0 ? Suggestion::groupName($group_id) : '',
                 'active'     => $group_id > 0 ? self::activeTickets($group_id) : null,
+                'tiebreak'   => (string) ($c['tiebreak'] ?? ''),
             ];
         }
         return $rows;
@@ -157,7 +160,7 @@ final class TriagePanel
     /**
      * Tiket belum selesai yang ditugaskan ke grup.
      */
-    private static function activeTickets(int $group_id): int
+    public static function activeTickets(int $group_id): int
     {
         global $DB;
 

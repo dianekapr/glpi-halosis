@@ -132,6 +132,9 @@
                     {{ fields.numberField('pattern_min_samples', config.pattern_min_samples, __('DBSCAN min_samples', 'halosis'), field_opts|merge({
                         'min': 2, 'max': 50,
                     })) }}
+                    {{ fields.sliderField('pattern_include_requests', config.pattern_include_requests, __('Include service requests in pattern detection', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Off by default (the PoC detects patterns from incidents only). When on, service requests are grouped too, separately from incidents, as “Request pattern” problems.', 'halosis')),
+                    })) }}
                     {{ fields.textField('critical_services', config.critical_services, __('Critical services', 'halosis'), field_opts|merge({
                         'add_field_html': self.hint(__('Comma-separated words. When the suggested category name contains one of them, or this many similar tickets arrive within the time window, the suggested impact is raised one level.', 'halosis')),
                     })) }}
@@ -151,6 +154,10 @@
                         'min': 1, 'max': 720,
                         'add_field_html': self.hint(__('Solved tickets without a requester response for this long appear in the Operator list “Ready to close”. Nothing is closed automatically.', 'halosis')),
                     })) }}
+                    {{ fields.numberField('progress_reminder_days', config.progress_reminder_days, __('Progress reminder after (working days without follow-up)', 'halosis'), field_opts|merge({
+                        'min': 1, 'max': 60,
+                        'add_field_html': self.hint(__('Tickets in progress or pending without a follow-up or task for more than this many working days notify the assigned technician and group (scheduled task ProgressReminder, once per period).', 'halosis')),
+                    })) }}
                     {{ fields.numberField('kb_review_months', config.kb_review_months, __('Review published articles after (months)', 'halosis'), field_opts|merge({
                         'min': 1, 'max': 36,
                         'add_field_html': self.hint(__('Published articles not updated for this long appear in the “Needs review” tab of Knowledge candidates.', 'halosis')),
@@ -163,6 +170,70 @@
                         {{ fields.sliderField('feature_' ~ key, config['feature_' ~ key], label, field_opts) }}
                     {% endfor %}
                 </div>
+            </div>
+
+            {# UC-10 langkah 5: pratinjau dampak perubahan SLA / aturan SLA pada tiket aktif (tidak menyimpan) #}
+            <div class="card-body border-top" data-halosis-sla-preview>
+                <h3 class="card-title"><i class="ti ti-clock-exclamation" aria-hidden="true"></i> {{ __('SLA change impact preview', 'halosis') }}</h3>
+                <p class="small text-secondary">{{ __('Shows how many active tickets would be affected and change SLA status (on track / at risk / overdue) if a new target were applied. Nothing is saved; change the SLA or rule itself in Setup › Service levels or Business rules for tickets.', 'halosis') }}</p>
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-5">
+                        <label class="form-label" for="halosis_sla_target">{{ __('SLA or SLA rule', 'halosis') }}</label>
+                        <select class="form-select" name="preview_sla_target" id="halosis_sla_target">
+                            <option value="">-----</option>
+                            <optgroup label="{{ __('SLA (change target)', 'halosis') }}">
+                                {% for id, name in sla_targets.slas %}
+                                    <option value="sla:{{ id }}" {{ sla_form.target == 'sla:' ~ id ? 'selected' : '' }}>{{ name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="{{ __('SLA rule (replace SLA)', 'halosis') }}">
+                                {% for id, name in sla_targets.rules %}
+                                    <option value="rule:{{ id }}" {{ sla_form.target == 'rule:' ~ id ? 'selected' : '' }}>{{ name }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="col-lg-3">
+                        <label class="form-label" for="halosis_sla_number">{{ __('New target (SLA)', 'halosis') }}</label>
+                        <div class="input-group">
+                            <input type="number" min="1" class="form-control" name="preview_sla_number" id="halosis_sla_number" value="{{ sla_form.number }}">
+                            <select class="form-select" name="preview_sla_unit" aria-label="{{ __('Unit', 'halosis') }}">
+                                {% for key, label in sla_units %}<option value="{{ key }}" {{ sla_form.unit == key ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <label class="form-label" for="halosis_sla_new">{{ __('Replacement SLA (rule)', 'halosis') }}</label>
+                        <select class="form-select" name="preview_sla_new" id="halosis_sla_new">
+                            <option value="0">-----</option>
+                            {% for id, name in sla_targets.slas %}<option value="{{ id }}" {{ sla_form.new == id ? 'selected' : '' }}>{{ name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-1">
+                        <button type="submit" name="preview_sla" value="1" class="btn btn-outline-secondary w-100" formnovalidate>
+                            <i class="ti ti-eye" aria-hidden="true"></i><span class="visually-hidden">{{ __('Preview impact', 'halosis') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {% if sla_preview %}
+                    {% if sla_preview.error is defined %}
+                        <div class="alert alert-warning mt-3 mb-0" role="alert">{{ sla_preview.error }}</div>
+                    {% else %}
+                        {% set st = {'ok': __('On track', 'halosis'), 'risk': __('At risk', 'halosis'), 'overdue': __('Overdue', 'halosis')} %}
+                        <div class="alert alert-info mt-3 mb-0" role="status" data-halosis-sla-result>
+                            <strong>{{ __('Impact preview (not saved yet)', 'halosis') }}:</strong> {{ sla_preview.label }}.
+                            {{ __('%1$d active tickets affected; %2$d would change SLA status (%3$d worse, %4$d better).', 'halosis')|format(sla_preview.total, sla_preview.changed, sla_preview.worse, sla_preview.better) }}
+                            <table class="table table-sm mt-2 mb-0 w-auto">
+                                <thead><tr><th></th>{% for k, label in st %}<th class="text-end">{{ label }}</th>{% endfor %}</tr></thead>
+                                <tbody>
+                                    <tr><td>{{ __('Current target', 'halosis') }}</td>{% for k, label in st %}<td class="text-end">{{ sla_preview.current[k] }}</td>{% endfor %}</tr>
+                                    <tr><td>{{ __('New target', 'halosis') }}</td>{% for k, label in st %}<td class="text-end">{{ sla_preview.new[k] }}</td>{% endfor %}</tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                {% endif %}
             </div>
 
             {% if preview %}
