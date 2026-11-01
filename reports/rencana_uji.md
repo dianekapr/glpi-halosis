@@ -122,19 +122,37 @@ Mode jawaban chat: ekstraktif 18, tidak ditemukan 2.
 
 ## 7. Hasil uji beban (diisi saat uji)
 
-Lingkungan: ____ (CPU/RAM server, versi image, jumlah data tiket & potongan indeks) · Tanggal: ____ · Penguji: ____
+Lingkungan (Normal): laptop Apple M4 (10 core, 24 GB), Docker Desktop dibatasi 10 CPU / 7,7 GB; semua layanan di satu
+mesin (GLPI 12, MySQL 8.4, `halosis-ai` CPU tanpa GPU, model `triase-tfidf-lr-20261028`, embedding e5-base,
+indeks 4.243 potongan (4.238 tiket, 5 artikel KB), generasi ekstraktif tanpa Claude); k6 v2.3.0 (`grafana/k6`) di jaringan docker-compose ·
+Tanggal: 31 Okt 2026 · Penguji: tim proyek (dibantu Claude Code).
+
+Cakupan baris Normal: **hanya layanan AI** (`/chat` & `/triage` langsung ke `halosis-ai`, skrip
+[`tests/load/halosis_ai.js`](../tests/load/halosis_ai.js), 10 VU tetap 5 menit, jeda 3–8 dtk, 8 kalimat buatan, tanpa
+data asli). Peak (`-e SCENARIO=peak`) & Stress (`-e SCENARIO=stress`) memakai skrip yang sama. API GLPI:
+[`tests/load/glpi_api.js`](../tests/load/glpi_api.js) (initSession → buat tiket → killSession, akun lokal `glpi`,
+10 VU 5 menit) lewat port host karena klien API GLPI dibatasi IP; 531 tiket uji `K6UJI …` beserta saran AI & notifikasi
+antre dihapus setelah uji. Halaman GLPI: [`tests/load/glpi_pages.js`](../tests/load/glpi_pages.js) (form login HaloSIS →
+Keycloak → daftar tiket → logout, 10 akun petugas berbeda, 10 VU 5 menit; HTML saja, tanpa aset statis).
+Catatan Stress: durasi total 23m52s untuk 16 menit beban dan latensi maksimal 7 menit menunjukkan jeda ±7 menit
+(kemungkinan Docker Desktop/laptop tertidur); p95 tetap di bawah 1 dtk.
 
 | Kondisi | VU | Permintaan | Galat % | Halaman p95 | API tiket p95 | `/chat` e2e p95 | `/triage` p95 | CPU maks (glpi/db/ai) | Lulus? |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| Normal | 10 | | | | | | | | |
-| Peak | 50 | | | | | | | | |
-| Stress | sampai ___ | | | | | | | | titik jenuh: ___ VU |
+| Normal (AI) | 10 | 552 (1,4/dtk) | 0,00% | – | – | 140 ms (langsung ke layanan; median 64 ms) | 25 ms (median 21 ms) | glpi 11% · db 2% · ai 294% (≈3 core) | ✅ untuk AI (≤ 1,5 s & ≤ 0,2 s); halaman/API belum |
+| Normal (API GLPI) | 10 | 1.593 (5,2/dtk; 531 tiket) | 0,00% | – | 71 ms (median 53 ms; termasuk saran triase AI) | – | – | glpi 198% · db 40% · ai 18% | ✅ (≤ 1 s) |
+| Normal (halaman GLPI) | 10 (1 akun per VU) | 2.226 (7,2/dtk; 371 login SSO) | 0,00% | daftar tiket 56 ms · login SSO 60 ms | – | – | – | glpi 25% · db 9% · keycloak 14% | ✅ (≤ 2 s) |
+| Peak (AI) | 50 | 2.742 (7,5/dtk) | 0,03% (1 koneksi direset di detik awal) | – | – | 223 ms (median 77 ms) | 27 ms | glpi 11% · db 3% · ai 698% (≈7 core) | ✅ (≤ 3 s & ≤ 0,5 s, galat < 2%) |
+| Stress (AI) | 25 → 200 (+25 / 2 menit) | 17.440 (12,2/dtk) | 0,04% | – | – | 846 ms (median 195 ms) | 113 ms | ai 868% (≈8,7 core, mendekati batas 10 CPU Docker) | **tidak jenuh sampai 200 VU** (galat < 5%) |
 
 Temuan & tindak lanjut:
 
 | # | Temuan | Dampak | Tindak lanjut (mis. replika `halosis-ai`, indeks DB, cache) |
 | --- | --- | --- | --- |
-| 1 | | | |
+| 1 | `/chat` memakai ±3 core (10 VU) sampai ±8,7 core (200 VU) karena embedding e5 di CPU | Satu container `halosis-ai` memakai hampir semua CPU Docker saat 200 VU; layanan lain bisa ikut melambat | Batasi CPU container AI (`cpus:`), tambah replika di balik load balancer, atau GPU/ONNX untuk embedding |
+| 2 | Klien API GLPI dibatasi IP; dari jaringan docker ditolak `ERROR_NOT_ALLOWED_IP` | Uji/integrasi dari container lain perlu IP yang diizinkan | Pertahankan pembatasan (NFR-05); daftarkan IP integrasi resmi di Setup › Umum › API |
+| 3 | Login bersamaan dengan **akun yang sama** dikunci sementara Keycloak (`user_temporarily_disabled`, 10% gagal) | Bukan cacat: perlindungan brute-force; uji beban harus memakai akun berbeda | Skrip memakai 1 akun per VU |
+| 4 | **Bug (diperbaiki):** login bersamaan dengan jabatan sama membuat baris dropdown Jabatan ganda; pencarian berikutnya melempar galat di `plugin_init`, GLPI **menonaktifkan plugin** dan semua login SSO gagal | Kritis saat banyak pegawai login bersamaan (mis. pagi hari) | Pencarian dropdown toleran duplikat; seluruh jalur login SSO dibungkus `try/catch` (galat dicatat, plugin tetap aktif); duplikat digabung; uji ulang 0% galat |
 
 ## 8. Batasan
 

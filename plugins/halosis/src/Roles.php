@@ -178,6 +178,25 @@ final class Roles
     }
 
     /**
+     * Hak inti yang dicabut agar menu sesuai matriks peran (audit §7): Pegawai tanpa Reservasi; Operator, Tim Teknis,
+     * dan Knowledge Manager tanpa hak aturan apa pun (aturan dikelola Administrator).
+     *
+     * @return array<int, array<string, int>> ID profil → hak bernilai 0
+     */
+    public static function getMenuRevocations(?int $km_id = null): array
+    {
+        $rules = array_fill_keys(array_values(array_filter(
+            array_keys(ProfileRight::getAllPossibleRights()),
+            static fn ($name) => str_starts_with((string) $name, 'rule_'),
+        )), 0);
+        $revocations = [self::PEGAWAI => ['reservation' => 0], self::OPERATOR => $rules, self::TIM_TEKNIS => $rules];
+        if ($km_id !== null) {
+            $revocations[$km_id] = $rules;
+        }
+        return $revocations;
+    }
+
+    /**
      * Hak `ticket` baru untuk profil (selain Super-Admin) yang masih punya hak hapus/purge tiket.
      *
      * @return array<int, int> ID profil → hak tiket tanpa DELETE & PURGE
@@ -267,6 +286,12 @@ final class Roles
             ProfileRight::updateProfileRights($id, ['ticket' => $right]);
         }
         $log[] = 'Hak hapus/purge tiket dicabut dari semua profil kecuali Super-Admin';
+
+        // 3c. Menu sesuai matriks peran: Pegawai tanpa Reservasi; Operator/Tim Teknis/KM tanpa hak aturan
+        foreach (self::getMenuRevocations($km_id) as $id => $rights) {
+            ProfileRight::updateProfileRights($id, $rights);
+        }
+        $log[] = 'Pegawai: Reservasi dicabut; Operator, Tim Teknis, Knowledge Manager: hak aturan (rule_*) dicabut';
 
         // 4. Hak plugin HaloSIS ditegaskan ke nilai default untuk semua profil
         Profile::applyRights(self::getPluginRights(), true);
