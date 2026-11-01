@@ -65,6 +65,7 @@ if ($action === 'history') {
                 'text'    => $m['text'],
                 'sources' => $m['sources'] ?? [],
                 'found'   => (bool) ($m['found'] ?? false),
+                'out_of_scope' => (bool) ($m['out_of_scope'] ?? false),
                 'ai'      => Chatbot::isAiModel($m['model'] ?? null),
             ],
             $chat?->getMessages() ?? [],

@@ -305,7 +305,11 @@
             if (res.masked) {
                 systemMessage(t.masked);
             }
-            attachActions(assistantMessage(res.answer, res), res.found);
+            // Di luar layanan TI (T31): tanpa tombol bantu & tanpa tawaran laporan
+            const col = assistantMessage(res.answer, res);
+            if (!res.out_of_scope) {
+                attachActions(col, res.found);
+            }
             input.focus();
         };
 
@@ -333,6 +337,9 @@
                     } else {
                         lastCol = assistantMessage(m.text, m);
                         lastFound = m.found;
+                        if (m.out_of_scope) {
+                            lastCol = null; // di luar layanan TI: tanpa tombol bantu / tawaran laporan
+                        }
                     }
                 });
                 if (res.status !== 'open') {

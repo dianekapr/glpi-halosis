@@ -3,11 +3,15 @@
 namespace GlpiPlugin\Halosis;
 
 use Auth;
+use CommonDropdown;
 use Group;
 use Group_User;
+use Location;
 use Profile_User;
 use Toolbox;
 use User;
+use UserEmail;
+use UserTitle;
 
 /**
  * Login SSO Keycloak dari form login HaloSIS sendiri (satu kali isi username & password).
@@ -19,7 +23,8 @@ use User;
  *
  * Keycloak adalah sumber akun: setiap login, pengguna GLPI dibuat bila belum ada, lalu profilnya mengikuti
  * role realm (ROLE_PROFILES), timnya mengikuti grup Keycloak bernama sama dengan grup GLPI, dan role ketua-tim
- * menjadikannya supervisor tim. Semua ini dikerjakan sebelum GLPI memulai sesi, jadi langsung berlaku.
+ * menjadikannya supervisor tim. Atribut kepegawaian (NIP, unit kerja, jabatan) disalin ke field GLPI yang setara
+ * (ATTRIBUTE_FIELDS). Semua ini dikerjakan sebelum GLPI memulai sesi, jadi langsung berlaku.
  *
  * Pengguna yang pernah login lewat Keycloak ditandai authtype "Other" (Auth::EXTERNAL) tanpa password lokal,
  * jadi tidak bisa lagi masuk dengan password GLPI. Akun lokal yang tidak ada di Keycloak (mis. Super-Admin
@@ -37,6 +42,16 @@ final class KeycloakAuth
         'given_name'  => ['firstname_ssofield', 'HALOSIS_SSO_FIRSTNAME'],
         'family_name' => ['realname_ssofield', 'HALOSIS_SSO_REALNAME'],
         'email'       => ['email1_ssofield', 'HALOSIS_SSO_EMAIL'],
+    ];
+
+    /**
+     * Atribut pengguna Keycloak (klaim ID token, T11 / kelas Pengguna hal. 156) → field GLPI.
+     * Jabatan & unit kerja disimpan sebagai dropdown GLPI (Jabatan pengguna, Lokasi); dibuat bila belum ada.
+     */
+    private const ATTRIBUTE_FIELDS = [
+        'nip'        => 'registration_number',
+        'jabatan'    => 'usertitles_id',
+        'unit_kerja' => 'locations_id',
     ];
 
     /** Role realm Keycloak → profil GLPI, urut prioritas profil default (seed: satu pegawai = satu role) */
@@ -92,9 +107,15 @@ final class KeycloakAuth
         }
         $handled = true;
 
-        $claims = self::verifyPassword($settings, trim((string) $_POST['login_name']), (string) $_POST['login_password']);
-        if ($claims !== null) {
-            self::prepareExternalLogin($claims);
+        // Berjalan di plugin_init: galat yang lolos membuat GLPI menonaktifkan SELURUH plugin (semua login SSO
+        // berhenti). Karena itu semua galat ditangkap, dicatat, dan login diteruskan ke GLPI apa adanya.
+        try {
+            $claims = self::verifyPassword($settings, trim((string) $_POST['login_name']), (string) $_POST['login_password']);
+            if ($claims !== null) {
+                self::prepareExternalLogin($claims);
+            }
+        } catch (\Throwable $e) {
+            Toolbox::logInFile('halosis', 'Login SSO gagal diproses: ' . $e->getMessage() . "\n", true);
         }
         // Ditolak/gagal: biarkan GLPI melanjutkan; hanya akun lokal (authtype GLPI) yang masih bisa lolos
     }
@@ -268,8 +289,104 @@ final class KeycloakAuth
         $user = self::provisionUser($claims);
         if ($user !== null) {
             self::syncProfiles($user, self::getClaimList($claims, self::ROLES_CLAIM));
-            self::syncTeams($user, self::getClaimList($claims, self::GROUPS_CLAIM), in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
+            $teams = self::getClaimList($claims, self::GROUPS_CLAIM);
+            // Pemohon pejabat (jabatan Keycloak, Config::official_titles) → grup "Pejabat" untuk RuleTicket urgensi
+            if (Config::matchOfficialTitle(is_string($claims['jabatan'] ?? null) ? $claims['jabatan'] : null) !== null) {
+                $teams[] = Config::OFFICIAL_GROUP;
+            }
+            self::syncTeams($user, $teams, in_array(self::TEAM_LEADER_ROLE, self::getClaimList($claims, self::ROLES_CLAIM), true));
+            try {
+                self::syncPrimaryEmail($user, $claims);
+                self::syncAttributes($user, $claims);
+            } catch (\Throwable $e) {
+                // Atribut kepegawaian pelengkap: gagal disalin tidak boleh menggagalkan login
+                Toolbox::logInFile('halosis', "Sinkron atribut Keycloak gagal untuk {$user->fields['name']}: {$e->getMessage()}\n", true);
+            }
         }
+    }
+
+    /**
+     * NIP, jabatan, unit kerja dari Keycloak → field GLPI (ATTRIBUTE_FIELDS). Klaim kosong tidak menghapus nilai.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private static function syncAttributes(User $user, array $claims): void
+    {
+        $input = [];
+        foreach (self::ATTRIBUTE_FIELDS as $claim => $field) {
+            $value = is_string($claims[$claim] ?? null) ? mb_substr(trim($claims[$claim]), 0, 255) : '';
+            if ($value === '') {
+                continue;
+            }
+            $input[$field] = match ($field) {
+                'usertitles_id' => self::dropdownId(new UserTitle(), $value),
+                'locations_id'  => self::dropdownId(new Location(), $value),
+                default         => $value,
+            };
+        }
+        $changed = array_filter($input, static fn ($v, $f) => (string) ($user->fields[$f] ?? '') !== (string) $v, ARRAY_FILTER_USE_BOTH);
+        if ($changed !== []) {
+            $user->update(['id' => $user->getID()] + $changed);
+        }
+    }
+
+    /**
+     * Email Keycloak MENGGANTI email utama GLPI (sinkron SSO inti hanya menambah alamat baru sebagai non-utama):
+     * alamat klaim dijadikan utama, alamat utama lama dihapus; alamat sekunder lain tidak disentuh.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private static function syncPrimaryEmail(User $user, array $claims): void
+    {
+        $email = is_string($claims['email'] ?? null) ? trim($claims['email']) : '';
+        if ($email === '') {
+            return;
+        }
+        $useremail = new UserEmail();
+        $rows      = $useremail->find(['users_id' => $user->getID()]);
+        $current   = null;
+        foreach ($rows as $row) {
+            if (strcasecmp((string) $row['email'], $email) === 0) {
+                $current = $row;
+            }
+        }
+        foreach ($rows as $row) {
+            if ((int) $row['is_default'] === 1 && ($current === null || (int) $row['id'] !== (int) $current['id'])) {
+                if ($current === null) {
+                    $useremail->update(['id' => $row['id'], 'email' => $email]);   // ganti alamat utama di tempat
+                    return;
+                }
+                $useremail->delete(['id' => $row['id']], true);
+            }
+        }
+        if ($current === null) {
+            $useremail->add(['users_id' => $user->getID(), 'email' => $email, 'is_default' => 1]);
+        } elseif ((int) $current['is_default'] !== 1) {
+            $useremail->update(['id' => $current['id'], 'is_default' => 1]);
+        }
+    }
+
+    private static function dropdownId(CommonDropdown $dropdown, string $name): int
+    {
+        global $DB;
+
+        // Bukan getFromDBByCrit: login bersamaan bisa membuat dua baris bernama sama (balapan cari-atau-buat),
+        // dan getFromDBByCrit melempar galat bila hasilnya > 1 sehingga login gagal. Pakai baris tertua.
+        $row = $DB->request([
+            'SELECT' => 'id',
+            'FROM'   => $dropdown::getTable(),
+            'WHERE'  => ['name' => $name],
+            'ORDER'  => 'id',
+            'LIMIT'  => 1,
+        ])->current();
+        if ($row !== null) {
+            return (int) $row['id'];
+        }
+        $input = ['name' => $name];
+        if ($dropdown->isEntityAssign()) {
+            $input += ['entities_id' => 0, 'is_recursive' => 1];
+        }
+        return (int) $dropdown->add($input);
     }
 
     /**

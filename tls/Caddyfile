@@ -1,0 +1,22 @@
+# Reverse proxy HTTPS lokal untuk GLPI HaloSIS (NFR-05). Hanya aktif dengan: docker compose --profile tls up -d
+# Sertifikat dibuat CA internal Caddy (self-signed, berlaku lokal). Produksi: ganti "tls internal" dengan
+# sertifikat resmi BPS (tls /path/cert.pem /path/key.pem) atau ACME, dan tutup port 8080 dari luar.
+{
+	# Tidak memasang CA ke trust store host/container; browser menampilkan peringatan sertifikat sekali
+	skip_install_trust
+}
+
+https://localhost:8443 {
+	tls internal
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+	}
+	reverse_proxy glpi:80 {
+		header_up X-Forwarded-Proto https
+		# GLPI di belakang proxy melihat HTTP, jadi cookie sesi diberi penanda Secure di sini
+		header_down Set-Cookie "^(.*)$" "$1; Secure"
+	}
+}

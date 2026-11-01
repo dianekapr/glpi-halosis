@@ -26,6 +26,16 @@ if (!Session::haveRight(Profile::RIGHT_KANDIDAT, UPDATE)) {
     return;
 }
 
+// KR-03: tanggal tinjau berikut artikel (tab "Perlu ditinjau"), bukan aksi kandidat
+if (($_POST['action'] ?? '') === 'review_date') {
+    $result = KnowledgeCandidates::setReviewDate((int) ($_POST['kb_id'] ?? 0), (string) ($_POST['date'] ?? ''));
+    if ($result['ok']) {
+        Session::addMessageAfterRedirect(__s('Next review date saved.', 'halosis'));
+    }
+    $respond($result['ok'] ? 200 : 422, $result);
+    return;
+}
+
 $candidate = new Candidate();
 if (!$candidate->getFromDB((int) ($_POST['id'] ?? 0))) {
     $respond(404, ['ok' => false, 'message' => __('Candidate not found.', 'halosis')]);
