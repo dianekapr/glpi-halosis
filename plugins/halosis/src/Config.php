@@ -38,8 +38,23 @@ final class Config
         'pattern_min_tickets' => 3, // PoC hal. 56: minimum 3 incident
         'pattern_window'      => 60,
         'pattern_group_id'    => 0,
+        // Metode semantik di /pola: average (rakus rata-rata kemiripan, bawaan) atau dbscan (PoC hal. 56)
+        'pattern_method'      => 'average',
+        'pattern_eps'         => '0.50',
+        'pattern_min_samples' => 3,
+        // FR-04: permintaan layanan (REQ) ikut dikelompokkan menjadi pola; bawaan mati (PoC hal. 56: pola dari INC)
+        'pattern_include_requests' => 0,
+        // Sinyal dampak saran triase: kategori layanan yang namanya memuat salah satu kata ini → dampak naik 1 tingkat
+        'critical_services'   => 'SSO, Email, Jaringan',
+        // Jabatan pejabat (awal kata, wawancara PM & operator): pemohon dimasukkan ke grup OFFICIAL_GROUP saat login SSO
+        // → RuleTicket (setup_pejabat_rules.py) & saran triase menaikkan urgensi satu tingkat
+        'official_titles'     => 'Kepala, Direktur, Deputi, Sekretaris Utama',
         // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
         'kb_review_months'    => 6,
+        // T21: tiket Selesai tanpa respons pemohon lebih dari N jam masuk daftar "Siap ditutup"
+        'close_after_hours'   => 48,
+        // E19: tiket Diproses/Menunggu tanpa tindak lanjut lebih dari N hari kerja → pengingat progres ke teknisi & grup
+        'progress_reminder_days' => 5,
         'feature_triage'    => 1,
         'feature_chat'      => 1,
         'feature_pattern'   => 1,
@@ -120,6 +135,75 @@ final class Config
         return (int) self::get('triage_threshold');
     }
 
+    /**
+     * Pilihan metode deteksi pola semantik untuk form.
+     *
+     * @return array<string, string>
+     */
+    public static function getPatternMethods(): array
+    {
+        return [
+            'average' => __('Average similarity (default)', 'halosis'),
+            'dbscan'  => __('DBSCAN (as in the PoC)', 'halosis'),
+        ];
+    }
+
+    /** Entitas arsip migrasi history (ai/scripts/migrate_sample.py): bukan tiket operasional */
+    public const ARCHIVE_ENTITY = 'Arsip ESTIM';
+
+    /**
+     * ID entitas arsip beserta sub-entitasnya; tugas terjadwal plugin tidak menyentuh tiket di sini.
+     *
+     * @return int[]
+     */
+    public static function getArchiveEntityIds(): array
+    {
+        $entity = new \Entity();
+        if (!$entity->getFromDBByCrit(['name' => self::ARCHIVE_ENTITY])) {
+            return [];
+        }
+        return array_map('intval', array_values(getSonsOf(\Entity::getTable(), $entity->getID())));
+    }
+
+    /**
+     * Kata kunci kategori layanan kritis (sinyal dampak saran triase), mis. ["SSO", "Email", "Jaringan"].
+     *
+     * @return string[]
+     */
+    public static function getCriticalServices(): array
+    {
+        return self::parseList((string) self::get('critical_services'));
+    }
+
+    /** Grup GLPI pemohon pejabat (dibuat setup_pejabat_rules.py, keanggotaan dari jabatan Keycloak) */
+    public const OFFICIAL_GROUP = 'Pejabat';
+
+    /**
+     * Kata jabatan pejabat yang cocok dengan awal jabatan (tanpa beda huruf besar), mis. "Kepala" untuk
+     * "Kepala BPS Kabupaten …"; null bila bukan pejabat.
+     */
+    public static function matchOfficialTitle(?string $title): ?string
+    {
+        $title = trim((string) $title);
+        foreach (self::parseList((string) self::get('official_titles')) as $word) {
+            if ($title !== '' && preg_match('/^' . preg_quote($word, '/') . '\\b/iu', $title)) {
+                return $word;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * "a, b ,, c" → ["a", "b", "c"] (unik, maks. 20 butir, masing-masing maks. 60 karakter).
+     *
+     * @return string[]
+     */
+    private static function parseList(string $value): array
+    {
+        $items = array_filter(array_map(static fn ($v) => mb_substr(trim($v), 0, 60), explode(',', $value)), 'strlen');
+        return array_slice(array_values(array_unique($items)), 0, 20);
+    }
+
     public static function getLowThreshold(): int
     {
         return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
@@ -181,6 +265,14 @@ final class Config
         $values['pattern_window']      = max(15, min(1440, (int) ($input['pattern_window'] ?? self::DEFAULTS['pattern_window'])));
         $group_id = (int) ($input['pattern_group_id'] ?? 0);
         $values['pattern_group_id'] = $group_id > 0 && (new \Group())->getFromDB($group_id) ? $group_id : 0;
+        $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
+        $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
+        $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
+        $values['pattern_include_requests'] = (int) !empty($input['pattern_include_requests']);
+        $values['critical_services'] = implode(', ', self::parseList((string) ($input['critical_services'] ?? '')));
+        $values['official_titles'] = implode(', ', self::parseList((string) ($input['official_titles'] ?? '')));
+        $values['close_after_hours'] = max(1, min(720, (int) ($input['close_after_hours'] ?? self::DEFAULTS['close_after_hours'])));
+        $values['progress_reminder_days'] = max(1, min(60, (int) ($input['progress_reminder_days'] ?? self::DEFAULTS['progress_reminder_days'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 
         foreach (self::FEATURES as $feature) {
@@ -195,8 +287,10 @@ final class Config
             $values[self::API_KEY] = $api_key; // dienkripsi oleh CoreConfig karena terdaftar di secured_configs
         }
 
+        $before = CoreConfig::getConfigurationValues(self::CONTEXT, array_keys($values));
         CoreConfig::setConfigurationValues(self::CONTEXT, $values);
         self::$values = null;
+        ConfigAudit::onConfigSaved($before, $values);
 
         return $errors;
     }

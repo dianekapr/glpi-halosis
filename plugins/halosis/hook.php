@@ -8,8 +8,11 @@
  */
 
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
+use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
+use GlpiPlugin\Halosis\TriageRetry;
 
 /**
  * Daftar tabel plugin beserta definisi kolomnya (tanpa kolom id).
@@ -31,6 +34,12 @@ function plugin_halosis_tables(): array
             `groups_id` int {$sign} NOT NULL DEFAULT '0',
             `confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan 0-100',
             `explanation` text,
+            `candidates` text COMMENT 'JSON 3 tim teratas: tim, keyakinan, groups_id',
+            `type_suggested` tinyint NOT NULL DEFAULT '0' COMMENT 'Saran jenis (T4): 1 insiden, 2 permintaan, 0 tidak ada',
+            `type_confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan saran jenis 0-100',
+            `urgency_confidence` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Keyakinan saran urgensi model 0-100; 0 = aturan',
+            `impact_reason` varchar(255) NOT NULL DEFAULT '' COMMENT 'Alasan dampak naik (sinyal tiket serupa / layanan kritis)',
+            `quality_ok` tinyint NOT NULL DEFAULT '1' COMMENT 'Model lolos gerbang kualitas saat saran dibuat (T32)',
             `model` varchar(255) NOT NULL DEFAULT '',
             `is_demo` tinyint NOT NULL DEFAULT '0',
             `status` varchar(20) NOT NULL DEFAULT 'pending' COMMENT 'pending|accepted|modified|rejected',
@@ -108,6 +117,44 @@ function plugin_halosis_tables(): array
             KEY `chats_id` (`chats_id`),
             KEY `date_creation` (`date_creation`)
         ",
+        // Umpan balik agent di Cari knowledge (KR-07): hasil membantu / tidak. Teks kueri tidak disimpan (NFR-06).
+        'glpi_plugin_halosis_feedback' => "
+            `users_id` int {$sign} NOT NULL DEFAULT '0',
+            `source_kind` varchar(20) NOT NULL DEFAULT '' COMMENT 'kb|tiket',
+            `source_ref` varchar(100) NOT NULL DEFAULT '' COMMENT 'KB-<id> atau nomor tiket historis',
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `score` float DEFAULT NULL COMMENT 'Skor relevansi hasil (0-1), kosong untuk kata kunci',
+            `is_helpful` tinyint NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            KEY `users_id` (`users_id`),
+            KEY `knowbaseitems_id` (`knowbaseitems_id`),
+            KEY `date_creation` (`date_creation`)
+        ",
+        // Percobaan ulang saran triase untuk tiket Baru tanpa saran (NFR-03, tugas TriageRetry)
+        'glpi_plugin_halosis_triage_retries' => "
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `attempts` int NOT NULL DEFAULT '0',
+            `last_error` varchar(255) NOT NULL DEFAULT '',
+            `date_mod` timestamp NULL DEFAULT NULL,
+            UNIQUE KEY `tickets_id` (`tickets_id`)
+        ",
+        // E19: pengingat progres terakhir per tiket (sekali per periode tanpa tindak lanjut).
+        'glpi_plugin_halosis_progress_reminders' => "
+            `tickets_id` int {$sign} NOT NULL DEFAULT '0',
+            `last_activity` timestamp NULL DEFAULT NULL COMMENT 'Aktivitas terakhir saat diingatkan',
+            `date_reminder` timestamp NULL DEFAULT NULL,
+            `idle_days` int NOT NULL DEFAULT '0' COMMENT 'Hari kerja tanpa tindak lanjut saat diingatkan',
+            UNIQUE KEY `tickets_id` (`tickets_id`)
+        ",
+        // Tanggal tinjau berikut per artikel KB (KR-03); tanpa baris = date_mod + kb_review_months.
+        'glpi_plugin_halosis_kb_reviews' => "
+            `knowbaseitems_id` int {$sign} NOT NULL DEFAULT '0',
+            `date_review` date DEFAULT NULL COMMENT 'Tanggal tinjau berikut',
+            `users_id` int {$sign} NOT NULL DEFAULT '0' COMMENT 'Yang mengatur tanggal',
+            `date_mod` timestamp NULL DEFAULT NULL,
+            UNIQUE KEY `knowbaseitems_id` (`knowbaseitems_id`),
+            KEY `date_review` (`date_review`)
+        ",
         // Kandidat Knowledge (UC-09): solusi tiket selesai atau solusi berulang dari indeks AI, dikurasi
         // Knowledge Manager menjadi draf artikel KB atau diabaikan dengan alasan.
         'glpi_plugin_halosis_candidates' => "
@@ -157,6 +204,14 @@ function plugin_halosis_install(): bool
 
     // Kolom yang ditambahkan setelah versi awal (pemasangan lama tetap dimutakhirkan)
     $added = [
+        'glpi_plugin_halosis_suggestions' => [
+            'candidates' => 'text AFTER `explanation`',
+            'type_suggested'  => "tinyint NOT NULL DEFAULT '0' AFTER `candidates`",
+            'type_confidence' => "tinyint unsigned NOT NULL DEFAULT '0' AFTER `type_suggested`",
+            'quality_ok'      => "tinyint NOT NULL DEFAULT '1' AFTER `type_confidence`",
+            'urgency_confidence' => "tinyint unsigned NOT NULL DEFAULT '0' AFTER `type_confidence`",
+            'impact_reason'      => "varchar(255) NOT NULL DEFAULT '' AFTER `urgency_confidence`",
+        ],
         'glpi_plugin_halosis_reassignments' => [
             'kind'   => "varchar(20) NOT NULL DEFAULT 'reassign' AFTER `to_groups_id`",
             'reason' => 'text AFTER `kind`',
@@ -172,12 +227,27 @@ function plugin_halosis_install(): bool
 
     Config::install();
     Profile::install();
+    // Katalog layanan awal ke indeks AI (BR-03); layanan mati → dilewati, tersinkron saat kategori/form berubah
+    KnowledgeIndex::syncServiceCatalog();
 
     // Deteksi pola insiden tiap 15 menit (tidak menimpa jadwal yang sudah diubah admin)
     CronTask::register(PatternDetector::class, PatternDetector::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
         'comment' => 'HaloSIS: deteksi pola insiden',
         'mode'    => CronTask::MODE_EXTERNAL,
     ]);
+    // NFR-03: saran triase yang terlewat karena AI sempat mati dicoba lagi tiap 15 menit
+    CronTask::register(TriageRetry::class, TriageRetry::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
+        'comment' => 'HaloSIS: coba ulang saran triase yang terlewat',
+        'mode'    => CronTask::MODE_EXTERNAL,
+    ]);
+    // E19: pengingat progres harian untuk tiket tanpa tindak lanjut + notifikasi bawaannya
+    CronTask::register(ProgressReminder::class, ProgressReminder::CRON_NAME, DAY_TIMESTAMP, [
+        'comment' => 'HaloSIS: pengingat progres tiket tanpa tindak lanjut',
+        'mode'    => CronTask::MODE_EXTERNAL,
+        'hourmin' => 7,
+        'hourmax' => 17,
+    ]);
+    ProgressReminder::installNotification();
 
     return true;
 }
@@ -192,6 +262,7 @@ function plugin_halosis_uninstall(): bool
 
     Config::uninstall();
     Profile::uninstall();
+    ProgressReminder::uninstallNotification();
     CronTask::unregister('halosis');
 
     return true;

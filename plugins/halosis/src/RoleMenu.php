@@ -7,8 +7,10 @@ use Config as CoreConfig;
 use CronTask;
 use Entity;
 use Glpi\Event;
+use Glpi\Exception\Http\AccessDeniedHttpException;
 use Glpi\Form\Form;
 use GlpiPlugin\Halosis\Controller\CariKnowledgeController;
+use GlpiPlugin\Halosis\Controller\SiapDitutupController;
 use GlpiPlugin\Halosis\Controller\KandidatController;
 use Group;
 use ITILCategory;
@@ -35,6 +37,28 @@ use User;
  */
 final class RoleMenu
 {
+    /**
+     * Halaman indeks aturan GLPI (front/rule.php) hanya memeriksa akses antarmuka standar, sehingga peran tanpa
+     * hak aturan apa pun (Operator, Knowledge Manager, Tim Teknis, Manajemen) tetap melihat halaman kosong.
+     * Hook post_init (exception di plugin_init akan menonaktifkan plugin untuk request itu): tolak (403) bila
+     * profil aktif tidak punya satu pun hak `rule_*`.
+     */
+    public static function guardRuleIndex(): void
+    {
+        global $CFG_GLPI;
+
+        $path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH);
+        if ($path !== ($CFG_GLPI['root_doc'] ?? '') . '/front/rule.php' || Session::getLoginUserID() === false) {
+            return;
+        }
+        foreach ($_SESSION['glpiactiveprofile'] ?? [] as $right => $value) {
+            if (str_starts_with((string) $right, 'rule_') && (int) $value > 0) {
+                return;
+            }
+        }
+        throw new AccessDeniedHttpException('Peran ini tidak mengelola aturan');
+    }
+
     public const HIDDEN_CLASS = 'halosis-menu-hidden';
     /** Penanda item menu HaloSIS (dipakai public/js/menu.js untuk menyorot item aktif) */
     public const ITEM_CLASS = 'halosis-menu-item';
@@ -107,6 +131,7 @@ final class RoleMenu
             ['dashboard', __('Dashboard', 'halosis'), '/front/central.php', 'ti ti-layout-dashboard', true],
             ['queue', __('Validation queue', 'halosis'), self::ticketSearch([self::status('1')], self::BY_DEADLINE), 'ti ti-sparkles', Ticket::canView()],
             ['tickets', __('All tickets', 'halosis'), '/front/ticket.php?reset=reset', 'ti ti-ticket', Ticket::canView()],
+            ['closure', __('Ready to close', 'halosis'), SiapDitutupController::PAGE, 'ti ti-lock-check', Closure::canClose()],
             ...self::monitoring(),
             ['knowledge', __('Search knowledge', 'halosis'), CariKnowledgeController::PAGE, 'ti ti-search', Session::haveRight(Profile::RIGHT_TRIASE, READ)],
         ]);

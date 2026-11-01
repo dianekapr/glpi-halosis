@@ -1136,6 +1136,15 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
+/* Kartu selebar grid (tabel tren 12 minggu) */
+.hd-span-all {
+    grid-column: 1 / -1;
+}
+
+.hd-topic {
+    min-width: 14rem;
+}
+
 .hd-card {
     /* min-width 0: item grid tidak melebar mengikuti tabel; tabel lebar digulir di dalam kartu */
     min-width: 0;

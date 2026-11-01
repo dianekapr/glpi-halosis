@@ -17,15 +17,17 @@ use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
 use GlpiPlugin\Halosis\KeycloakAuth;
+use GlpiPlugin\Halosis\ConfigAudit;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\PatternDetector;
+use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Reassignment;
 use GlpiPlugin\Halosis\RoleMenu;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
-define('PLUGIN_HALOSIS_VERSION', '0.6.0');
+define('PLUGIN_HALOSIS_VERSION', '1.0.0');
 
 // Plugin ditulis & diuji untuk GLPI 12.0.x (hook dan API bisa berubah di versi mayor berikutnya)
 define('PLUGIN_HALOSIS_MIN_GLPI', '12.0.0');
@@ -80,6 +82,14 @@ function plugin_init_halosis(): void
     if (DashboardMenu::canViewDashboard()) {
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/dashboard.js');
     }
+    // Cari knowledge (Operator & Tim Teknis): tombol Membantu / Tidak membantu (KR-07)
+    if (Session::haveRight(Profile::RIGHT_TRIASE, READ)) {
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/feedback.js');
+    }
+    // Siap ditutup (T21): Operator yang boleh memutuskan triase & mengubah tiket
+    if (Session::haveRight(Profile::RIGHT_TRIASE, UPDATE)) {
+        $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/closure.js');
+    }
     // Kandidat Knowledge (UC-09): Knowledge Manager & Administrator
     if (Session::haveRight(Profile::RIGHT_KANDIDAT, READ)) {
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/kandidat.js');
@@ -95,25 +105,37 @@ function plugin_init_halosis(): void
     }
     // Menu ringkas per peran (prototipe halosis-web): Helpdesk Pegawai + sidebar petugas. Lihat RoleMenu.
     $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [RoleMenu::class, 'redefine'];
+    // Halaman indeks aturan GLPI → 403 untuk peran tanpa hak aturan (setelah semua plugin init, lihat RoleMenu)
+    $PLUGIN_HOOKS[Hooks::POST_INIT]['halosis'] = [RoleMenu::class, 'guardRuleIndex'];
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/menu.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
-    // Re-index knowledge (UC-09 langkah 7): artikel KB & target visibilitasnya → indeks pencarian layanan AI
+    // Re-index knowledge (UC-09 langkah 7): artikel KB & target visibilitasnya → indeks pencarian layanan AI.
+    // Katalog layanan (kategori Helpdesk & form, BR-03) ikut diindeks agar chatbot bisa mengarahkan ke layanan.
     $kb_visibility = [Entity_KnowbaseItem::class, KnowbaseItem_Profile::class, Group_KnowbaseItem::class, KnowbaseItem_User::class];
+    // Kategori & form: sinkron katalog; kategori, aturan tiket & SLA: jejak + pemberitahuan perubahan (T20, UC-10)
+    $audited = [\ITILCategory::class, \Glpi\Form\Form::class, \RuleTicket::class, \SLA::class];
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
         Ticket::class       => [Triage::class, 'onTicketAdd'],
         Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave'],
-    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
-    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['halosis'] = [KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave']];
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange'])
+      + array_fill_keys($audited, [ConfigAudit::class, 'onItemAdd']);
+    $PLUGIN_HOOKS[Hooks::ITEM_UPDATE]['halosis'] = [KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave']]
+      + array_fill_keys($audited, [ConfigAudit::class, 'onItemUpdate']);
     $PLUGIN_HOOKS[Hooks::ITEM_PURGE]['halosis'] = [
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticlePurge'],
-    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange']);
+    ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange'])
+      + array_fill_keys($audited, [ConfigAudit::class, 'onItemPurge']);
     $PLUGIN_HOOKS[Hooks::PRE_ITIL_INFO_SECTION]['halosis'] = [TriagePanel::class, 'display'];
 
     // Pola insiden: tugas terjadwal didaftarkan saat install (hook.php); banner di beranda petugas
     $PLUGIN_HOOKS[Hooks::DISPLAY_CENTRAL]['halosis'] = [PatternDetector::class, 'displayCentralBanner'];
+
+    // E19: event notifikasi "HaloSIS: Pengingat progres" pada tiket + tag templatnya
+    $PLUGIN_HOOKS[Hooks::ITEM_GET_EVENTS]['halosis'] = [NotificationTargetTicket::class => [ProgressReminder::class, 'addEvent']];
+    $PLUGIN_HOOKS[Hooks::ITEM_GET_DATA]['halosis']   = [NotificationTargetTicket::class => [ProgressReminder::class, 'addTemplateData']];
 
     // Tab "HaloSIS" di form Profil untuk mengatur hak akses plugin
     Plugin::registerClass(Profile::class, ['addtabon' => [\Profile::class]]);

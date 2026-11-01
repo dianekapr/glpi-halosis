@@ -71,6 +71,12 @@ for parent, kids in {'Akun & Akses': ['SSO / Login', 'TTE', 'Hak akses folder'],
         grp = {'Akun & Akses': 'Tim Identitas & Akses', 'Aplikasi Statistik': 'Tim Aplikasi Statistik'}.get(parent, 'Tim Jaringan' if k == 'Jaringan & VPN' else 'Tim Perangkat')
         C[k] = ensure('ITILCategory', {'name': k, 'itilcategories_id': pid, 'groups_id': G[grp], 'is_recursive': 1, 'is_helpdeskvisible': 1, 'is_incident': 1, 'is_request': 1})
 
+# Contoh layanan tim yang di history dominan SLA pemenuhan 14 hari (config/sla_layanan.json), agar aturan
+# "SLA BPS permintaan 14 hari" bisa didemokan
+C['Server Hosting'] = ensure('ITILCategory', {'name': 'Server Hosting', 'itilcategories_id': C['Jaringan & Perangkat'],
+                                              'groups_id': G['Tim Jaringan'], 'is_recursive': 1, 'is_helpdeskvisible': 1,
+                                              'is_incident': 1, 'is_request': 1})
+
 # Pengguna & role (profile)
 U = {}
 USERS = [
@@ -88,7 +94,7 @@ TEAM_LEADERS = {'hendra', 'agus', 'rudi', 'wati'}
 for login, fn, ln, role, grp in USERS:
     prof = P[role]
     is_new = login not in existing('User')
-    uid = ensure('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@bps.go.id'}})
+    uid = ensure('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@contoh.go.id'}})
     U[login] = uid
     if is_new:
         add('Profile_User', {'users_id': uid, 'profiles_id': prof, 'entities_id': 0, 'is_recursive': 1})
@@ -99,6 +105,17 @@ for login, fn, ln, role, grp in USERS:
                 kept = True
             else:
                 s.delete(f'{B}/Profile_User/{pu["id"]}')
+    # Email demo: satu alamat utama {login}@contoh.go.id; alamat demo lama (@bps.go.id) dihapus (idempoten)
+    emails = s.get(f'{B}/User/{uid}/UserEmail').json() or []
+    emails = [e for e in emails if isinstance(e, dict)]
+    for e in emails:
+        if str(e.get('email', '')).lower().endswith('@bps.go.id'):
+            s.delete(f'{B}/UserEmail/{e["id"]}', params={'force_purge': 1})
+    demo = next((e for e in emails if str(e.get('email', '')).lower() == f'{login}@contoh.go.id'), None)
+    if demo is None:
+        add('UserEmail', {'users_id': uid, 'email': f'{login}@contoh.go.id', 'is_default': 1})
+    elif not int(demo.get('is_default') or 0):
+        s.put(f'{B}/UserEmail/{demo["id"]}', data=json.dumps({'input': {'id': demo['id'], 'is_default': 1}}))
     if grp:
         manager = int(login in TEAM_LEADERS)
         link = next((l for l in s.get(f'{B}/User/{uid}/Group_User').json() or []
@@ -113,6 +130,30 @@ slm = ensure('SLM', {'name': 'SLA HaloSIS', 'calendars_id': 1})
 SLA = {}
 for nama, n, unit in [('Kritis · 4 jam', 4, 'hour'), ('Tinggi · 6 jam', 6, 'hour'), ('Sedang · 1 hari', 1, 'day'), ('Rendah · 3 hari', 3, 'day')]:
     SLA[nama.split(' ')[0]] = ensure('SLA', {'name': nama, 'slms_id': slm, 'type': 0, 'number_time': n, 'definition_time': unit, 'calendars_id': 1})
+
+# T30 (5.1 Outcome): self-service dimulai dari Email, SSO, SiPecut (48,2% tiket). Artikel FAQ umum & fiktif, dibuat
+# bila belum ada (judul sebagai kunci); terbit untuk entitas root → otomatis terindeks chatbot lewat plugin.
+FAQ_LAYANAN = [
+    ('SiPecut: tidak bisa masuk atau sesi berakhir', 'SiPecut',
+     '<p>Bila SiPecut menolak login atau keluar sendiri:</p><ol><li>Pastikan login memakai akun SSO BPS yang sama dengan portal.</li><li>Hapus cache & cookie browser untuk alamat SiPecut, lalu buka ulang.</li><li>Gunakan browser terbaru (Chrome/Edge/Firefox); mode penyamaran membantu menguji.</li><li>Bila tetap gagal, catat jam & pesan error lalu buat laporan.</li></ol>'),
+    ('SiPecut: data entri tidak tersimpan', 'SiPecut',
+     '<p>Data SiPecut tidak tersimpan biasanya karena sesi habis atau koneksi terputus saat menyimpan.</p><ol><li>Simpan berkala; jangan biarkan formulir terbuka lebih dari 30 menit.</li><li>Periksa koneksi lalu tekan <b>Simpan</b> sekali lagi (jangan berulang-ulang).</li><li>Muat ulang halaman dan periksa apakah data sudah ada sebelum mengisi ulang.</li></ol>'),
+    ('Kotak masuk email dinas penuh', 'Email Dinas',
+     '<p>Kuota kotak masuk penuh membuat email baru ditolak.</p><ol><li>Kosongkan folder <i>Sampah</i> dan <i>Spam</i>.</li><li>Hapus atau arsipkan email berlampiran besar (urutkan menurut ukuran).</li><li>Simpan lampiran penting ke Drive BPS lalu hapus emailnya.</li></ol>'),
+    ('Akun SSO terkunci setelah salah kata sandi', 'Akun & SSO',
+     '<p>Akun SSO terkunci sementara setelah beberapa kali salah kata sandi.</p><ol><li>Tunggu 15 menit, lalu coba lagi dengan kata sandi yang benar.</li><li>Bila lupa kata sandi, gunakan <b>Lupa password</b> di portal akun BPS.</li><li>Jangan pernah mengirim kata sandi lewat chat atau email; petugas TI tidak akan memintanya.</li></ol>'),
+]
+kb_existing = existing('KnowbaseItem')
+for judul, kat, isi in FAQ_LAYANAN:
+    if judul in kb_existing:
+        continue
+    kat_id = ensure('Glpi%5CForm%5CCategory', {'name': kat})
+    kid = add('KnowbaseItem', {'name': judul, 'answer': isi, 'is_faq': 1, 'forms_categories_id': kat_id, 'is_recursive': 1})
+    add('Entity_KnowbaseItem', {'knowbaseitems_id': kid, 'entities_id': 0, 'is_recursive': 1})
+    print(f'FAQ "{judul}" dibuat')
+
+# BR-03: SOP = artikel KB berkategori "SOP"; artikel terbit otomatis masuk indeks layanan AI (re-index plugin)
+ensure('Glpi%5CForm%5CCategory', {'name': 'SOP'})
 
 # Data transaksi contoh (tiket, KB, masalah): hanya pada run pertama
 FIRST_TICKET = 'FASIH tidak bisa sinkron data, error 502'

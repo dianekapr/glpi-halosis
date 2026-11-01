@@ -1,6 +1,8 @@
 """AI-1: pembersihan & penyamaran data history tiket.
 
-Masukan : data/raw/ticketing_history_202601_202608.xlsx (berisi data pribadi, tidak pernah di-commit)
+Masukan : data/raw/data_ticketing_202601_202608.xlsx — ekspor history versi baru (220 kolom: + impact/urgency/
+          priority, rating, SLA diperluas); berisi data pribadi, tidak pernah di-commit. Tanggal serial Excel →
+          datetime (halosis_ai.dates).
 Keluaran: data/processed/tickets_clean.parquet  — kolom terpilih, teks tersamarkan, nama pengguna → ID samaran
           data/processed/qa_pairs.parquet       — masalah → solusi untuk tiket Closed/Resolved/Completed
 
@@ -19,11 +21,15 @@ import pandas as pd
 from pandas.api.types import is_object_dtype, is_string_dtype
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from halosis_ai import privacy  # noqa: E402
+from halosis_ai import dates, privacy  # noqa: E402
 from halosis_ai.conversations import extract_solution, meaningful_note, split_conversation  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / 'data/raw/ticketing_history_202601_202608.xlsx'
+RAW_DIR = ROOT / 'data/raw'
+# Ekspor versi baru (nama baku, lalu nama asli unduhan); versi lama hanya untuk rekonsiliasi (reconcile.py)
+RAW_CANDIDATES = ('data_ticketing_202601_202608.xlsx', 'data ticketing (202601_202608).xlsx')
+RAW = next((RAW_DIR / n for n in RAW_CANDIDATES if (RAW_DIR / n).exists()), RAW_DIR / RAW_CANDIDATES[0])
+RAW_OLD = RAW_DIR / 'ticketing_history_202601_202608.xlsx'
 OUT = ROOT / 'data/processed'
 
 KEEP_PREFIXES = ('reassignment_', 'response_sla_')
@@ -31,6 +37,8 @@ KEEP = [
     'ticket_type', 'ticket_number', 'short_description', 'description', 'assignment_group_name', 'state_name',
     'opened', 'resolved', 'closed', 'all_conversations', 'close_notes', 'resolution', 'potential_wrong_routing',
     'routing_result', 'overall_sla_result', 'resolution_sla_name', 'resolution_sla_result', 'fulfillment_sla_result',
+    # Versi baru: urgensi/dampak/prioritas (label model urgensi), kepuasan, SLA diperluas (baseline dashboard)
+    'impact', 'urgency', 'priority', 'rating_value', 'overall_sla_result_extended', 'overall_sla_result_basis',
 ]
 # Kolom pengguna: nama dihapus, ID diganti ID samaran
 USER_COLUMNS = {
@@ -40,6 +48,15 @@ USER_COLUMNS = {
     'closed_by_name': 'closed_by',
 }
 SOLVED_STATES = {'Closed', 'Resolved', 'Completed'}
+
+# Data historis kurang lengkap (DQR-04) & urutan tanggal tidak valid (DQR-02): tetap diproses, tetapi ditandai
+# di kolom `tidak_lengkap` + `alasan_tidak_lengkap` (dipakai juga oleh reconcile.py)
+INCOMPLETE_REASONS = {
+    'no_description': 'Tanpa deskripsi',
+    'no_team': 'Tanpa tim (assignment group)',
+    'no_solution': 'Selesai tanpa solusi yang bisa diambil',
+    'bad_order': 'Urutan tanggal tidak valid (selesai/ditutup sebelum dibuka)',
+}
 
 
 def text_columns(df: pd.DataFrame) -> list[str]:
@@ -70,8 +87,8 @@ def name_patterns(df: pd.DataFrame, names: pd.Series) -> list:
     return [privacy.build_name_pattern(names), privacy.build_name_token_pattern(names, common_words(df))]
 
 
-def load() -> pd.DataFrame:
-    return pd.read_excel(RAW)
+def load(path: Path = RAW) -> pd.DataFrame:
+    return dates.convert_columns(pd.read_excel(path))
 
 
 def pseudonymize(df: pd.DataFrame) -> pd.DataFrame:
@@ -99,20 +116,54 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
         result[col] = result[col].map(lambda v: privacy.mask_text(v, name_pattern))
 
     result = pd.concat([result, pseudonymize(df)], axis=1)
+    # Pengirim pesan terakhir = pemohon (ID asli dibandingkan di sini; ID tidak ikut disimpan)
+    if 'last_conversation_user_id' in df:
+        result['pesan_terakhir_pemohon'] = (df['last_conversation_user_id'].astype('string')
+                                            == df['requester_id'].astype('string')).fillna(False).astype(bool)
+    else:
+        result['pesan_terakhir_pemohon'] = False
 
     # Percakapan → daftar pesan (JSON) + solusi
     messages = result['all_conversations'].map(split_conversation)
     result['messages'] = messages.map(lambda ms: json.dumps([{'waktu': m.time, 'teks': m.text} for m in ms], ensure_ascii=False))
     result['message_count'] = messages.map(len)
-    conv_solution = messages.map(extract_solution)
-    res_note = result['resolution'].map(meaningful_note)
+    resolved = dates.to_datetime(result['resolved']) if 'resolved' in result else pd.Series(pd.NaT, index=result.index)
+    conv_solution = pd.Series([extract_solution(ms, None if pd.isna(r) else r, bool(last))
+                               for ms, r, last in zip(messages, resolved, result['pesan_terakhir_pemohon'])],
+                              index=result.index, dtype='object')
     close_note = result['close_notes'].map(meaningful_note)
-    result['solusi'] = conv_solution.fillna(res_note).fillna(close_note)
+    res_note = result['resolution'].map(meaningful_note)
+    result['solusi'] = conv_solution.fillna(close_note).fillna(res_note)
     result['solusi_sumber'] = 'percakapan'
-    result.loc[conv_solution.isna() & res_note.notna(), 'solusi_sumber'] = 'resolution'
-    result.loc[conv_solution.isna() & res_note.isna() & close_note.notna(), 'solusi_sumber'] = 'close_notes'
+    result.loc[conv_solution.isna() & close_note.notna(), 'solusi_sumber'] = 'close_notes'
+    result.loc[conv_solution.isna() & close_note.isna() & res_note.notna(), 'solusi_sumber'] = 'resolution'
     result.loc[result['solusi'].isna(), 'solusi_sumber'] = None
+    # DQR-04: hasil SLA yang memakai komponen imputasi (bukan catatan asli ESTIM) ditandai, bukan dibuang
+    result['sla_imputasi'] = result.get('overall_sla_result_basis', pd.Series(index=result.index, dtype='object')) == 'IMPUTED'
+
+    flags = incomplete_flags(result)
+    result['tidak_lengkap'] = flags.any(axis=1)
+    result['alasan_tidak_lengkap'] = flags.apply(
+        lambda row: '; '.join(INCOMPLETE_REASONS[k] for k, v in row.items() if v) or None, axis=1)
     return result
+
+
+def _blank(series: pd.Series) -> pd.Series:
+    return series.isna() | (series.astype('string').str.strip().fillna('') == '')
+
+
+def incomplete_flags(df: pd.DataFrame) -> pd.DataFrame:
+    """Satu kolom boolean per alasan INCOMPLETE_REASONS untuk tiket yang sudah dibersihkan (kolom `solusi` ada)."""
+    def date(col: str) -> pd.Series:
+        return pd.to_datetime(df[col], errors='coerce') if col in df else pd.Series(pd.NaT, index=df.index)
+
+    opened = date('opened')
+    f = pd.DataFrame(index=df.index)
+    f['no_description'] = _blank(df['description'])
+    f['no_team'] = _blank(df['assignment_group_name'])
+    f['no_solution'] = df['state_name'].isin(SOLVED_STATES) & df['solusi'].isna()
+    f['bad_order'] = (date('resolved') < opened) | (date('closed') < opened)
+    return f
 
 
 def qa_pairs(clean_df: pd.DataFrame) -> pd.DataFrame:
@@ -158,6 +209,7 @@ def residual_pii(df: pd.DataFrame, names: pd.Series, raw: pd.DataFrame) -> dict[
     return {
         'email': int(cells.str.contains(privacy._EMAIL).sum()),
         'nip': int(cells.str.contains(privacy._NIP).sum()),
+        'nip_lama': int(cells.str.contains(privacy._NIP_OLD).sum()),
         'nik': int(cells.str.contains(privacy._NIK).sum()),
         'telepon': int(cells.str.contains(privacy._PHONE).sum()),
         'password_belum_tersamar': int(cells.map(unmasked_secret).sum()),
@@ -190,6 +242,9 @@ def main() -> None:
     print(f'Total pesan percakapan  : {int(tickets["message_count"].sum())}')
     print(f'Tiket dengan solusi     : {int(tickets["solusi"].notna().sum())} '
           f'(sumber: {tickets["solusi_sumber"].value_counts().to_dict()})')
+    print(f'Hasil SLA berimputasi   : {int(tickets["sla_imputasi"].sum())} (DQR-04, kolom sla_imputasi)')
+    print(f'Ditandai tidak lengkap  : {int(tickets["tidak_lengkap"].sum())} '
+          + str({k: int(v) for k, v in incomplete_flags(tickets).sum().items()}))
     print(f'qa_pairs.parquet        : {len(pairs)} pasangan (status {sorted(SOLVED_STATES)})')
     print(f'  per jenis             : {pairs["jenis"].value_counts().to_dict()}')
     print(f'  panjang solusi (kata) : median {int(pairs["solusi"].str.split().str.len().median())}')
