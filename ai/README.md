@@ -6,6 +6,11 @@ Dibangun dari history tiket versi baru `data/raw/data_ticketing_202601_202608.xl
 lewat satu fungsi bersama `halosis_ai/dates.py`. Ekspor lama `ticketing_history_202601_202608.xlsx` hanya dipakai
 `reconcile.py` untuk banding lama vs baru.
 
+Sumber file Excel (hanya Pengelola AI; minta akses ke pemilik repo):
+[Google Drive › data ticketing](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link).
+Simpan di `data/raw/` (di-ignore git). Model & indeks hasil pelatihan untuk penguji ada di folder Drive yang sama
+(README utama › C2).
+
 ## Aturan data (wajib)
 
 - `data/` (mentah & olahan), model, dan indeks **berisi/berasal dari data pribadi**: di-ignore git, jangan
