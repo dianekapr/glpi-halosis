@@ -2,9 +2,10 @@
 
 Menjalankan pembersihan & penyamaran yang sama dengan prepare_data.py (AI-1), lalu menghitung:
 - baris sumber, berhasil diproses, gagal (per kategori alasan);
-- ditandai tidak lengkap (tanpa deskripsi / tim / solusi) dan duplikat;
+- ditandai tidak lengkap (tanpa deskripsi / tim / solusi, urutan tanggal tidak valid) dan duplikat;
 - jumlah nilai yang disamarkan per jenis (email, NIP, NIK, telepon, rahasia, nama);
-- rincian per bulan (tanggal dibuka) dan per tim.
+- rincian per bulan (tanggal dibuka) dan per tim;
+- banding ekspor lama vs baru (baris, tiket hilang/baru, perubahan status & kolom teks, hasil SLA berimputasi).
 
 Laporan HANYA berisi angka, bulan, dan nama tim. Tidak ada isi tiket, nama orang, atau nilai yang disamarkan.
 Tidak menulis ulang data/processed/ (itu tugas prepare_data.py).
@@ -22,7 +23,9 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from halosis_ai import privacy  # noqa: E402
-from prepare_data import RAW, ROOT, SOLVED_STATES, USER_COLUMNS, clean, common_words, load, text_columns  # noqa: E402
+from prepare_data import (  # noqa: E402
+    INCOMPLETE_REASONS, RAW, RAW_OLD, ROOT, USER_COLUMNS, clean, common_words, incomplete_flags, load, text_columns,
+)
 
 REPORT = ROOT / 'reports/rekonsiliasi.md'
 NO_TEAM = '(tanpa tim)'
@@ -45,11 +48,6 @@ FAIL_REASONS = {
     'unknown_state': 'Status tidak dikenal (tidak bisa dipetakan ke status GLPI)',
     'residual_pii': 'Masih memuat pola data pribadi setelah penyamaran',
 }
-INCOMPLETE_REASONS = {
-    'no_description': 'Tanpa deskripsi',
-    'no_team': 'Tanpa tim (assignment group)',
-    'no_solution': 'Selesai tanpa solusi yang bisa diambil',
-}
 DUPLICATE_REASONS = {
     'dup_number': 'Nomor tiket ganda',
     'dup_content': 'Isi identik dari pemohon yang sama (judul + deskripsi)',
@@ -63,7 +61,7 @@ def blank(series: pd.Series) -> pd.Series:
 def residual_rows(cleaned: pd.DataFrame, raw: pd.DataFrame) -> pd.Series:
     """Baris yang teksnya MASIH memuat pola data pribadi setelah penyamaran (seharusnya 0)."""
     names = pd.concat([raw[c] for c in USER_COLUMNS]).dropna().astype(str)
-    patterns = [privacy._EMAIL, privacy._NIP, privacy._NIK, privacy._PHONE,
+    patterns = [privacy._EMAIL, privacy._NIP, privacy._NIP_OLD, privacy._NIK, privacy._PHONE,
                 privacy.build_name_pattern(names), privacy.build_name_token_pattern(names, common_words(raw))]
     patterns = [p for p in patterns if p is not None]
 
@@ -94,9 +92,8 @@ def flags(raw: pd.DataFrame, cleaned: pd.DataFrame) -> pd.DataFrame:
     f['residual_pii'] = residual_rows(cleaned, raw)
     f['failed'] = f[list(FAIL_REASONS)].any(axis=1)
 
-    f['no_description'] = blank(raw['description'])
-    f['no_team'] = blank(raw['assignment_group_name'])
-    f['no_solution'] = raw['state_name'].isin(SOLVED_STATES) & cleaned['solusi'].isna()
+    # Aturan kelengkapan sama dengan kolom `tidak_lengkap` di tickets_clean.parquet (prepare_data.py)
+    f = f.join(incomplete_flags(cleaned))
     f['incomplete'] = ~f['failed'] & f[list(INCOMPLETE_REASONS)].any(axis=1)
 
     numbered = ~f['no_number']
@@ -131,7 +128,73 @@ def num(n: int) -> str:
     return f'{n:,}'.replace(',', '.')
 
 
-def write_report(raw: pd.DataFrame, f: pd.DataFrame, masked: dict[str, int]) -> None:
+def pct(part: int, whole: int) -> str:
+    return f'{part / max(whole, 1) * 100:.2f}%'.replace('.', ',')
+
+
+COMPARED_TEXT = ['short_description', 'description', 'assignment_group_name', 'all_conversations', 'close_notes',
+                 'resolution']
+
+
+def compare_exports(old: pd.DataFrame, new: pd.DataFrame) -> dict:
+    """Banding ekspor lama vs baru per nomor tiket: hanya hitungan, nama status, dan jenis tiket."""
+    kind = lambda df: df['ticket_type'].astype('string').str.upper().str[:3].fillna('?')  # noqa: E731
+    old_keys, new_keys = set(old['ticket_number'].dropna()), set(new['ticket_number'].dropna())
+    only_old = old[old['ticket_number'].isna() | old['ticket_number'].isin(old_keys - new_keys)]
+    only_new = new[new['ticket_number'].isna() | new['ticket_number'].isin(new_keys - old_keys)]
+    both = old.merge(new, on='ticket_number', suffixes=('_lama', '_baru'))
+    changed = both['state_name_lama'].astype('string') != both['state_name_baru'].astype('string')
+    transitions = both[changed].groupby(['state_name_lama', 'state_name_baru']).size().sort_values(ascending=False)
+    text = {c: int((both[f'{c}_lama'].astype('string').fillna('') != both[f'{c}_baru'].astype('string').fillna('')).sum())
+            for c in COMPARED_TEXT if f'{c}_lama' in both}
+    return {
+        'lama': len(old), 'baru': len(new), 'kolom_lama': old.shape[1], 'kolom_baru': new.shape[1],
+        'hanya_lama': only_old.assign(_k=kind(only_old), _tanpa_nomor=only_old['ticket_number'].isna())
+                              .groupby(['_k', '_tanpa_nomor']).size().to_dict(),
+        'hanya_baru': kind(only_new).value_counts().to_dict(), 'sama': len(both),
+        'status_berubah': int(changed.sum()), 'transisi': transitions.head(10).to_dict(), 'teks_berubah': text,
+        'kolom_tambahan': [c for c in new.columns if c not in old.columns],
+    }
+
+
+def comparison_lines(c: dict, new: pd.DataFrame) -> list[str]:
+    lost = '; '.join(f'{num(n)} {k}{" tanpa nomor tiket" if no_number else ""}'
+                     for (k, no_number), n in c['hanya_lama'].items()) or '0'
+    added = '; '.join(f'{num(n)} {k}' for k, n in c['hanya_baru'].items()) or '0'
+    imputed = int((new.get('overall_sla_result_basis') == 'IMPUTED').sum()) if 'overall_sla_result_basis' in new else 0
+    sla = new['overall_sla_result_extended'].value_counts() if 'overall_sla_result_extended' in new else pd.Series(dtype=int)
+    return [
+        '## Banding ekspor lama vs baru',
+        '',
+        f'Lama `data/raw/{RAW_OLD.name}` ({c["kolom_lama"]} kolom) vs baru `data/raw/{RAW.name}` ({c["kolom_baru"]} '
+        'kolom). Pipeline memakai ekspor baru; dicocokkan per nomor tiket.',
+        '',
+        '| Ukuran | Jumlah |',
+        '| --- | ---: |',
+        f'| Baris lama / baru | {num(c["lama"])} / {num(c["baru"])} |',
+        f'| Hanya di ekspor lama | {lost} |',
+        f'| Hanya di ekspor baru | {added} |',
+        f'| Nomor tiket di keduanya | {num(c["sama"])} |',
+        f'| Status berubah | {num(c["status_berubah"])} ({pct(c["status_berubah"], c["sama"])}) |',
+        *[f'| Kolom `{k}` berubah | {num(v)} |' for k, v in c['teks_berubah'].items()],
+        f'| Hasil SLA keseluruhan berimputasi (DQR-04, kolom `sla_imputasi`) | {num(imputed)} |',
+        '',
+        'Perubahan status terbanyak (lama → baru); umumnya tiket yang masih berjalan saat ekspor lama lalu ditutup:',
+        '',
+        '| Lama | Baru | Tiket |',
+        '| --- | --- | ---: |',
+        *[f'| {a} | {b} | {num(n)} |' for (a, b), n in c['transisi'].items()],
+        '',
+        f'Hasil SLA keseluruhan versi diperluas (`overall_sla_result_extended`): '
+        + ', '.join(f'{k} {num(int(v))}' for k, v in sla.items()) + '.',
+        '',
+        f'Kolom tambahan ekspor baru: {len(c["kolom_tambahan"])} (antara lain impact, urgency, priority, rating_*, '
+        'SLA *_native/_final/_imputation_*).',
+        '',
+    ]
+
+
+def write_report(raw: pd.DataFrame, f: pd.DataFrame, masked: dict[str, int], comparison: list[str] | None = None) -> None:
     months = pd.to_datetime(raw['opened'], errors='coerce').dt.strftime('%Y-%m').fillna('(tanggal tidak valid)')
     teams = raw['assignment_group_name'].astype('string').str.strip().replace('', pd.NA).fillna(NO_TEAM)
     by_team = breakdown(f, teams).sort_values('sumber', ascending=False)
@@ -193,6 +256,7 @@ def write_report(raw: pd.DataFrame, f: pd.DataFrame, masked: dict[str, int]) -> 
         '',
         f'Kolom nama pengguna ({", ".join(USER_COLUMNS)}) dihapus dan diganti ID samaran `*_pid`.',
         '',
+        *(comparison or []),
         '## Per bulan (tanggal dibuka)',
         '',
         *md_table(breakdown(f, months).sort_index(), 'Bulan'),
@@ -216,7 +280,13 @@ def main() -> None:
     before = placeholder_counts(raw[[c for c in cleaned.columns if c in raw.columns]])
     after = placeholder_counts(cleaned)
     masked = {k: after[k] - before[k] for k in PLACEHOLDERS}
-    write_report(raw, f, masked)
+    comparison = None
+    if RAW_OLD.exists() and RAW_OLD != RAW:
+        c = compare_exports(load(RAW_OLD), raw)
+        comparison = comparison_lines(c, raw)
+        print(f'Lama vs baru        : {c["lama"]} vs {c["baru"]}, hanya lama {c["hanya_lama"]}, '
+              f'status berubah {c["status_berubah"]}')
+    write_report(raw, f, masked, comparison)
 
     print(f'Baris sumber        : {len(f)}')
     print(f'Berhasil diproses   : {int(f["processed"].sum())}')

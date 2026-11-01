@@ -5,8 +5,13 @@ PoC 0,70 (MiniLM) tidak bisa dipakai apa adanya. Vektor dipusatkan dulu (dikuran
 pencarian) lalu dinormalkan; setelah itu rata-rata kemiripan tiket bertopik sama ±0,6 dan yang tidak
 berhubungan ±0,4–0,47, sehingga ambang bawaan 0,50 (rata-rata ke semua anggota kelompok).
 
-Pengelompokan rakus (tanpa DBSCAN): tiket urut waktu masuk ke kelompok dengan rata-rata kemiripan tertinggi ke
-semua anggotanya, bila ≥ ambang dan masih dalam jendela waktu dari anggota pertama; selain itu membuka kelompok baru.
+Metode bawaan (`rata`) — pengelompokan rakus: tiket urut waktu masuk ke kelompok dengan rata-rata kemiripan
+tertinggi ke semua anggotanya, bila ≥ ambang dan masih dalam jendela waktu dari anggota pertama; selain itu membuka
+kelompok baru.
+
+Metode opsional (`dbscan`, seperti PoC hal. 56): DBSCAN jarak kosinus pada vektor yang sama-sama dipusatkan, lalu
+anggota di luar jendela waktu dari anggota tertua dibuang. eps PoC 0,25 untuk MiniLM tanpa pemusatan; untuk e5
+yang dipusatkan, jarak tiket bertopik sama ±0,4 sehingga eps bawaan 0,50.
 """
 from __future__ import annotations
 
@@ -17,6 +22,7 @@ import numpy as np
 DEFAULT_THRESHOLD = 0.50
 DEFAULT_MIN_MEMBERS = 3
 DEFAULT_WINDOW_MINUTES = 60
+DEFAULT_EPS = 0.50
 
 
 def center(vectors: np.ndarray, mean: np.ndarray | None) -> np.ndarray:
@@ -56,6 +62,34 @@ def group(tickets: list[dict], vectors: np.ndarray, threshold: float = DEFAULT_T
             continue
         sims = vectors[members] @ vectors[members].T
         # Rata-rata kemiripan antar-anggota (tanpa diagonal); wakil = anggota paling mirip dengan yang lain
+        pair_mean = (sims.sum(axis=1) - 1) / (len(members) - 1)
+        result.append({
+            'ids': [tickets[m]['id'] for m in members],
+            'judul_wakil': tickets[members[int(np.argmax(pair_mean))]]['judul'],
+            'skor_rata': round(float(pair_mean.mean()), 4),
+        })
+    return sorted(result, key=lambda c: len(c['ids']), reverse=True)
+
+
+def group_dbscan(tickets: list[dict], vectors: np.ndarray, eps: float = DEFAULT_EPS,
+                 min_samples: int = DEFAULT_MIN_MEMBERS, min_members: int = DEFAULT_MIN_MEMBERS,
+                 window_minutes: int = DEFAULT_WINDOW_MINUTES) -> list[dict]:
+    """DBSCAN (jarak kosinus) atas vektor ternormalisasi; format keluaran sama dengan group()."""
+    from sklearn.cluster import DBSCAN  # impor hanya saat metode ini dipakai
+
+    if len(tickets) < min_samples:
+        return []
+    labels = DBSCAN(eps=eps, min_samples=min_samples, metric='cosine').fit_predict(vectors)
+    window = timedelta(minutes=window_minutes)
+    result = []
+    for label in sorted(set(labels) - {-1}):
+        members = sorted(np.flatnonzero(labels == label), key=lambda i: str(tickets[i].get('waktu') or ''))
+        start = _parse(tickets[members[0]].get('waktu'))
+        members = [m for m in members if not (start and _parse(tickets[m].get('waktu'))
+                                             and _parse(tickets[m].get('waktu')) - start > window)]
+        if len(members) < min_members:
+            continue
+        sims = vectors[members] @ vectors[members].T
         pair_mean = (sims.sum(axis=1) - 1) / (len(members) - 1)
         result.append({
             'ids': [tickets[m]['id'] for m in members],

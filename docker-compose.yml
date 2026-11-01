@@ -42,6 +42,13 @@ services:
       # Opsional: isi ANTHROPIC_API_KEY di .env agar jawaban chat dirangkum Claude; kosong = ekstraktif
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       HALOSIS_CHAT_MIN_SCORE: ${HALOSIS_CHAT_MIN_SCORE:-0.83}
+      # Skor di antara ini dan CHAT_MIN_SCORE → tawarkan judul artikel "Maksud Anda…?" (tanpa jawaban)
+      HALOSIS_CHAT_SUGGEST_MIN_SCORE: ${HALOSIS_CHAT_SUGGEST_MIN_SCORE:-0.78}
+      # Batas permintaan per klien per menit (T26); 0 = mati
+      HALOSIS_RATE_LIMIT_PER_MIN: ${HALOSIS_RATE_LIMIT_PER_MIN:-1200}
+      # Gerbang kualitas model triase (T32): di bawah syarat → saran ditandai "belum lolos uji kualitas"
+      HALOSIS_GATE_MIN_TOP1: ${HALOSIS_GATE_MIN_TOP1:-0.68}
+      HALOSIS_GATE_MIN_ACC_CONFIDENT: ${HALOSIS_GATE_MIN_ACC_CONFIDENT:-0.85}
     ports:
       # Hanya untuk dicek dari laptop (http://localhost:8001/health); GLPI memakai jaringan internal
       - "127.0.0.1:8001:8000"
@@ -77,8 +84,64 @@ services:
     ports:
       - "127.0.0.1:8025:8025"
 
+  # Opsional (NFR-05): HTTPS lokal https://localhost:8443 lewat Caddy (sertifikat internal/self-signed).
+  # Tidak ikut "docker compose up -d" biasa; aktifkan dengan: docker compose --profile tls up -d
+  tls:
+    image: "caddy:2.10.2"
+    profiles: ["tls"]
+    restart: unless-stopped
+    depends_on:
+      - glpi
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./tls/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+  # Opsional (NFR-09): Prometheus + mysqld-exporter + Grafana (dashboard terprovisi), hanya untuk uji lokal.
+  # Aktifkan: docker compose --profile monitoring up -d  →  Grafana http://localhost:3001 (admin/admin)
+  prometheus:
+    image: "prom/prometheus:v3.5.0"
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  mysqld-exporter:
+    image: "prom/mysqld-exporter:v0.17.2"
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - db
+    command: ["--mysqld.address=db:3306", "--mysqld.username=${GLPI_DB_USER}"]
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${GLPI_DB_PASSWORD}
+
+  grafana:
+    image: "grafana/grafana:12.1.0"
+    profiles: ["monitoring"]
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/halosis.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
 volumes:
   glpi_data:
   db_data:
   hf_cache:
   keycloak_data:
+  caddy_data:
+  prometheus_data:
+  grafana_data:

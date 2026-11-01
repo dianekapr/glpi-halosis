@@ -94,6 +94,45 @@
             "access.token.claim": "false",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "name": "nip",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "nip",
+            "claim.name": "nip",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "unit_kerja",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "unit_kerja",
+            "claim.name": "unit_kerja",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "jabatan",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "jabatan",
+            "claim.name": "jabatan",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "false",
+            "userinfo.token.claim": "true"
+          }
         }
       ]
     }
@@ -103,7 +142,7 @@
       "username": "budi",
       "firstName": "Budi",
       "lastName": "Santoso",
-      "email": "budi@bps.go.id",
+      "email": "budi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -116,13 +155,24 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121001"
+        ],
+        "unit_kerja": [
+          "Direktorat Statistik Kependudukan"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "siti",
       "firstName": "Siti",
       "lastName": "Rahma",
-      "email": "siti@bps.go.id",
+      "email": "siti@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -135,13 +185,24 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121002"
+        ],
+        "unit_kerja": [
+          "Direktorat Statistik Harga"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Muda"
+        ]
+      }
     },
     {
       "username": "maya",
       "firstName": "Maya",
       "lastName": "Putri",
-      "email": "maya@bps.go.id",
+      "email": "maya@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -154,13 +215,24 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121003"
+        ],
+        "unit_kerja": [
+          "BPS Provinsi Jawa Barat"
+        ],
+        "jabatan": [
+          "Statistisi Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "rina",
       "firstName": "Rina",
       "lastName": "Wulandari",
-      "email": "rina@bps.go.id",
+      "email": "rina@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -175,13 +247,24 @@
       ],
       "groups": [
         "/Operator Service Desk"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121004"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Terampil"
+        ]
+      }
     },
     {
       "username": "andi",
       "firstName": "Andi",
       "lastName": "Pratama",
-      "email": "andi@bps.go.id",
+      "email": "andi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -196,13 +279,24 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121005"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "yoga",
       "firstName": "Yoga",
       "lastName": "Saputra",
-      "email": "yoga@bps.go.id",
+      "email": "yoga@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -217,13 +311,24 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121006"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "fajar",
       "firstName": "Fajar",
       "lastName": "Nugroho",
-      "email": "fajar@bps.go.id",
+      "email": "fajar@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -238,13 +343,24 @@
       ],
       "groups": [
         "/Tim Identitas & Akses"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121007"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "dedi",
       "firstName": "Dedi",
       "lastName": "Kurniawan",
-      "email": "dedi@bps.go.id",
+      "email": "dedi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -259,13 +375,24 @@
       ],
       "groups": [
         "/Tim Jaringan"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121008"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Pertama"
+        ]
+      }
     },
     {
       "username": "sri",
       "firstName": "Sri",
       "lastName": "Handayani",
-      "email": "sri@bps.go.id",
+      "email": "sri@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -278,13 +405,24 @@
       "realmRoles": [
         "manajemen"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121009"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Direktur Sistem Informasi Statistik"
+        ]
+      }
     },
     {
       "username": "lina",
       "firstName": "Lina",
       "lastName": "Marlina",
-      "email": "lina@bps.go.id",
+      "email": "lina@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -297,13 +435,24 @@
       "realmRoles": [
         "knowledge-manager"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121010"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Madya"
+        ]
+      }
     },
     {
       "username": "dimas",
       "firstName": "Dimas",
       "lastName": "Aditya",
-      "email": "dimas@bps.go.id",
+      "email": "dimas@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -316,13 +465,24 @@
       "realmRoles": [
         "administrator"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121011"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Madya"
+        ]
+      }
     },
     {
       "username": "hendra",
       "firstName": "Hendra",
       "lastName": "Wijaya",
-      "email": "hendra@bps.go.id",
+      "email": "hendra@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -338,13 +498,24 @@
       ],
       "groups": [
         "/Tim Aplikasi Statistik"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121012"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "agus",
       "firstName": "Agus",
       "lastName": "Setiawan",
-      "email": "agus@bps.go.id",
+      "email": "agus@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -360,13 +531,24 @@
       ],
       "groups": [
         "/Tim Jaringan"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121013"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "rudi",
       "firstName": "Rudi",
       "lastName": "Hermawan",
-      "email": "rudi@bps.go.id",
+      "email": "rudi@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -382,13 +564,24 @@
       ],
       "groups": [
         "/Tim Perangkat"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121014"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "wati",
       "firstName": "Wati",
       "lastName": "Susanti",
-      "email": "wati@bps.go.id",
+      "email": "wati@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -404,13 +597,24 @@
       ],
       "groups": [
         "/Tim Identitas & Akses"
-      ]
+      ],
+      "attributes": {
+        "nip": [
+          "199001012020121015"
+        ],
+        "unit_kerja": [
+          "Direktorat Sistem Informasi Statistik"
+        ],
+        "jabatan": [
+          "Pranata Komputer Ahli Muda"
+        ]
+      }
     },
     {
       "username": "ani",
       "firstName": "Ani",
       "lastName": "Lestari",
-      "email": "ani@bps.go.id",
+      "email": "ani@contoh.go.id",
       "emailVerified": true,
       "enabled": true,
       "credentials": [
@@ -423,7 +627,31 @@
       "realmRoles": [
         "pegawai"
       ],
-      "groups": []
+      "groups": [],
+      "attributes": {
+        "nip": [
+          "199001012020121016"
+        ],
+        "unit_kerja": [
+          "BPS Kabupaten Bogor"
+        ],
+        "jabatan": [
+          "Statistisi Terampil"
+        ]
+      }
     }
-  ]
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\": [{\"name\": \"username\", \"displayName\": \"${username}\", \"validations\": {\"length\": {\"min\": 3, \"max\": 255}, \"username-prohibited-characters\": {}, \"up-username-not-idn-homograph\": {}}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"email\", \"displayName\": \"${email}\", \"validations\": {\"email\": {}, \"length\": {\"max\": 255}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"firstName\", \"displayName\": \"${firstName}\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"lastName\", \"displayName\": \"${lastName}\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"nip\", \"displayName\": \"NIP\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"unit_kerja\", \"displayName\": \"Unit kerja\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"jabatan\", \"displayName\": \"Jabatan\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"multivalued\": false, \"validations\": {\"length\": {\"max\": 255}}}], \"groups\": [{\"name\": \"user-metadata\", \"displayHeader\": \"User metadata\", \"displayDescription\": \"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  }
 }

@@ -62,3 +62,17 @@ def test_kategori_dan_penyamaran(tmp_path, monkeypatch):
     assert '| 2026-01 |' in text and '| Tim A |' in text
     for secret in ('budi.rekaan', '081234567890', 'Rekaan'):
         assert secret not in text
+
+
+def test_urutan_tanggal_dan_kolom_tidak_lengkap():
+    """DQR-02: selesai sebelum dibuka ditandai; DQR-04: flag + alasan tertulis di data bersih."""
+    raw = make_raw()
+    raw['resolved'] = pd.to_datetime(['2026-01-04', None, None, None, '2026-02-04'])  # baris 0 selesai < dibuka
+    cleaned = clean(raw)
+    f = reconcile.flags(raw, cleaned)
+    assert f['bad_order'].tolist() == [True, False, False, False, False]
+    assert f['incomplete'].tolist() == [True, False, False, True, False]
+    assert cleaned['tidak_lengkap'].tolist() == [True, False, False, True, False]
+    assert 'Urutan tanggal tidak valid' in cleaned.loc[0, 'alasan_tidak_lengkap']
+    assert cleaned.loc[3, 'alasan_tidak_lengkap'] == 'Tanpa deskripsi; Tanpa tim (assignment group)'
+    assert pd.isna(cleaned.loc[4, 'alasan_tidak_lengkap'])

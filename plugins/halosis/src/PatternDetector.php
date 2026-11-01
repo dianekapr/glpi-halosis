@@ -24,7 +24,9 @@ use Toolbox;
  * Kelompok dengan ≥ N tiket menjadi Problem "Pola insiden: …" yang ditautkan ke tiketnya dan ditugaskan
  * ke grup Operator. Problem dibiarkan berstatus Baru: petugas yang memutuskan tindak lanjut.
  * Pola yang sama dan Problem-nya masih terbuka tidak dibuat ulang; tiket barunya ditautkan ke Problem itu.
- * Hanya tiket Insiden yang dihitung (PoC hal. 56: pola dari tiket INC); permintaan layanan tidak membentuk pola.
+ * Bawaan hanya tiket Insiden yang dihitung (PoC hal. 56: pola dari tiket INC). FR-04: bila Pengaturan AI
+ * "Sertakan permintaan" aktif, permintaan layanan (REQ) dikelompokkan juga, terpisah dari insiden (tanda pola `req:`,
+ * Problem "Pola permintaan: …"), sehingga lonjakan permintaan yang sama terlihat tanpa tercampur insiden.
  *
  * Tabel glpi_plugin_halosis_patterns mencatat pola yang terdeteksi.
  */
@@ -106,10 +108,20 @@ final class PatternDetector extends CommonDBTM
     {
         $min     = max(2, (int) Config::get('pattern_min_tickets'));
         $window  = max(15, (int) Config::get('pattern_window'));
-        $tickets = self::getRecentTickets($window);
 
-        // Semantik lewat layanan AI bila tersedia; gagal/tidak dikonfigurasi → metode kata kunci
-        $patterns = self::groupSemantic($tickets, $min, $window) ?? self::group($tickets, $min);
+        $patterns = [];
+        $types = self::includeRequests() ? [Ticket::INCIDENT_TYPE, Ticket::DEMAND_TYPE] : [Ticket::INCIDENT_TYPE];
+        foreach ($types as $type) {
+            $tickets = self::getRecentTickets($window, $type);
+            // Semantik lewat layanan AI bila tersedia; gagal/tidak dikonfigurasi → metode kata kunci
+            foreach (self::groupSemantic($tickets, $min, $window) ?? self::group($tickets, $min) as $pattern) {
+                if ($type === Ticket::DEMAND_TYPE) {
+                    $pattern['signature']  = 'req:' . $pattern['signature'];
+                    $pattern['is_request'] = true;
+                }
+                $patterns[] = $pattern;
+            }
+        }
 
         $results = [];
         foreach ($patterns as $pattern) {
@@ -119,11 +131,49 @@ final class PatternDetector extends CommonDBTM
     }
 
     /**
-     * Tiket Insiden yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
+     * FR-04: permintaan layanan ikut dikelompokkan (Pengaturan AI, bawaan mati).
+     */
+    public static function includeRequests(): bool
+    {
+        return (bool) Config::get('pattern_include_requests');
+    }
+
+    /**
+     * Sinyal dampak saran triase: banyaknya insiden belum selesai dalam jendela pola (menit `pattern_window`),
+     * termasuk tiket ini, yang mirip tiket ini — kategori sama (kategori saran bila belum berkategori) atau judul
+     * mirip (aturan sama dengan metode kata kunci). Bila tiket sudah tertaut ke Problem pola yang masih terbuka,
+     * jumlah tiket pola itu dipakai bila lebih besar.
+     */
+    public static function countSimilarRecent(int $tickets_id, string $name, int $category_id): int
+    {
+        $tokens = KnowledgeSearch::tokens($name);
+        $count  = 1; // tiket ini
+        foreach (self::getRecentTickets(max(15, (int) Config::get('pattern_window'))) as $other) {
+            if ($other['id'] === $tickets_id) {
+                continue;
+            }
+            $other_tokens = $tokens === [] ? [] : KnowledgeSearch::tokens($other['name']);
+            if (($category_id > 0 && $other['category'] === $category_id)
+                || ($other_tokens !== [] && self::isSimilarTitle($tokens, $other_tokens))) {
+                $count++;
+            }
+        }
+        $pattern = self::getPatternForTicket($tickets_id);
+        if ($pattern !== null) {
+            $problem = new Problem();
+            if ($problem->getFromDB($pattern['problems_id']) && (int) $problem->fields['status'] < CommonITILObject::SOLVED) {
+                $count = max($count, $pattern['ticket_count']);
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Tiket satu jenis (bawaan Insiden) yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
      *
      * @return array<int, array{id: int, name: string, entities_id: int, urgency: int, category: int}>
      */
-    private static function getRecentTickets(int $window_minutes): array
+    private static function getRecentTickets(int $window_minutes, int $type = Ticket::INCIDENT_TYPE): array
     {
         global $DB;
 
@@ -135,7 +185,8 @@ final class PatternDetector extends CommonDBTM
             'FROM'   => Ticket::getTable(),
             'WHERE'  => [
                 'is_deleted' => 0,
-                'type'       => Ticket::INCIDENT_TYPE,
+                'type'       => $type,
+                'NOT'        => ['entities_id' => Config::getArchiveEntityIds() ?: [-1]],
                 'date'       => ['>=', $since],
                 'status'     => ['<', CommonITILObject::SOLVED],
             ],
@@ -186,6 +237,9 @@ final class PatternDetector extends CommonDBTM
                 ], array_values($tickets)),
                 'min_anggota'   => $min,
                 'jendela_menit' => $window,
+                'metode'        => Config::get('pattern_method') === 'dbscan' ? 'dbscan' : 'rata',
+                'eps'           => (float) Config::get('pattern_eps'),
+                'min_sampel'    => (int) Config::get('pattern_min_samples'),
             ]);
         } catch (AiException $e) {
             Toolbox::logInFile('halosis', 'Deteksi pola semantik gagal, memakai kata kunci: ' . $e->getMessage() . "\n", true);
@@ -305,7 +359,10 @@ final class PatternDetector extends CommonDBTM
             $urgency = max(array_column($pattern['tickets'], 'urgency')) ?: 3;
             $impact  = 4; // banyak pengguna terdampak
             $input = [
-                'name'              => sprintf(__('Incident pattern: %s', 'halosis'), mb_substr($pattern['label'], 0, 200)),
+                'name'              => sprintf(
+                    !empty($pattern['is_request']) ? __('Request pattern: %s', 'halosis') : __('Incident pattern: %s', 'halosis'),
+                    mb_substr($pattern['label'], 0, 200),
+                ),
                 'content'           => self::describe($pattern, $window),
                 'entities_id'       => $pattern['tickets'][0]['entities_id'],
                 'urgency'           => $urgency,
@@ -440,6 +497,9 @@ final class PatternDetector extends CommonDBTM
             default    => __('similar titles', 'halosis'),
         };
         $method = $pattern['criteria'] === 'semantic' ? __('semantic', 'halosis') : __('keyword', 'halosis');
+        if ($pattern['criteria'] === 'semantic' && Config::get('pattern_method') === 'dbscan') {
+            $method .= ' (DBSCAN)';
+        }
 
         $items = [];
         foreach ($pattern['tickets'] as $ticket) {

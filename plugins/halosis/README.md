@@ -6,13 +6,14 @@ petugas yang memutuskan**. Semua kustomisasi lewat plugin dan palet tema; kode i
 | Fitur | Siapa | Di mana |
 | --- | --- | --- |
 | **Tanya HaloSIS**: chatbot self-service yang menjawab hanya dari artikel Pusat Bantuan | Pegawai | Beranda Helpdesk (`/plugins/halosis/Chat`) |
-| **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; Terima / Ubah / Tolak; Kembalikan ke operator (salah tim) | Operator (putuskan), Tim Teknis (lihat, kembalikan) | Panel "Saran AI" di form tiket |
-| **Deteksi pola insiden**: tiket mirip ≥ N dalam 1 jam → Problem "Pola insiden: …" | Operator | Tugas terjadwal + banner beranda |
-| **Kandidat Knowledge** (UC-09): solusi tiket selesai & solusi berulang dari indeks AI → Jadikan artikel (draf KB) / Abaikan (dengan alasan) | Knowledge Manager, Administrator, Super-Admin | Menu Kandidat knowledge (`/plugins/halosis/Kandidat`) |
-| **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
+| **Saran triase AI**: kategori, dampak, urgensi, prioritas, grup, keyakinan; beban kerja kandidat tim (pemecah seri bila selisih < 5 poin); ringkasan 3 kalimat untuk deskripsi > 150 kata; Terima / Ubah / Tolak; Kembalikan ke operator (salah tim) | Operator (putuskan), Tim Teknis (lihat, kembalikan) | Panel "Saran AI" di form tiket |
+| **Deteksi pola insiden**: ≥ N tiket Insiden mirip (semantik lewat `halosis-ai`, cadangan kata kunci) dalam 1 jam → Problem "Pola insiden: …" + notifikasi grup Operator; opsional permintaan (REQ) → "Pola permintaan: …" | Operator | Tugas terjadwal + banner beranda |
+| **Pengingat progres** (E19): tiket Diproses/Menunggu tanpa tindak lanjut > N hari kerja → notifikasi ke teknisi & grup | Tim Teknis | Tugas terjadwal `ProgressReminder` + notifikasi GLPI |
+| **Kandidat Knowledge** (UC-09): solusi tiket selesai & solusi berulang dari indeks AI → Jadikan artikel (draf KB) / Abaikan (dengan alasan); tab **Perlu ditinjau** untuk artikel terbit yang lama tidak diubah | Knowledge Manager, Administrator, Super-Admin | Menu Kandidat knowledge (`/plugins/halosis/Kandidat`) |
+| **Dashboard kinerja AI**: % diterima/diubah/ditolak, tren mingguan, salah tim, chat terbantu, artikel paling sering dipakai / dinilai tidak membantu, pola terdeteksi vs dikonfirmasi vs ditutup, drift bulanan; filter periode, tim, kategori; ekspor koreksi CSV | Manajemen, Administrator, Super-Admin | Bantuan › Kinerja AI |
 | **Konfigurasi**: penyedia AI, API key terenkripsi, ambang, toggle fitur | Administrator, Super-Admin | Setup › AI HaloSIS |
 
-Versi 0.5.0 · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
+Versi 1.0.0 ([CHANGELOG](../../CHANGELOG.md)) · GLPI 12.0.x · PHP 8.3–8.5 (syarat GLPI 12: `GLPI_MIN_PHP` 8.3, `GLPI_MAX_PHP` 8.5).
 Tanpa API berbayar: AI berjalan di layanan lokal `halosis-ai`. Bila layanan itu mati dan tidak ada API key,
 semua fitur berjalan dalam **mode demo** (jawaban contoh yang deterministik, tanpa internet).
 
@@ -84,11 +85,21 @@ password sebelum membukanya.
 | Batas waktu | 20 detik | Jika terlewati, tiket tetap tersimpan tanpa saran |
 | URL layanan AI | `http://halosis-ai:8000` | Layanan lokal `ai/service` (model history tiket + pencarian); kosong/mati → mode di atas |
 | Batas waktu layanan | 8 detik | Untuk layanan AI lokal |
-| Ambang keyakinan | 70% | Di bawah ambang → "Perlu penilaian manual" |
-| Minimal tiket mirip | 10 | Deteksi pola insiden |
+| Ambang keyakinan | 70% | ≥ ambang → "Disarankan" |
+| Ambang keyakinan rendah | 40% | Antara kedua ambang → "Pilih dari 3 kandidat"; di bawahnya → "Perlu penilaian manual" |
+| Minimal tiket mirip | 3 | Deteksi pola insiden (PoC hal. 56: minimum 3 insiden) |
 | Jendela waktu | 60 menit | Deteksi pola insiden |
+| Metode semantik | Rata-rata kemiripan | Atau **DBSCAN** (seperti PoC); eps bawaan 0,50, min_samples 3 (`reports/banding_pola.md`) |
+| Sertakan permintaan dalam deteksi pola | mati | FR-04: bila aktif, permintaan layanan (REQ) dikelompokkan terpisah dari insiden → Problem "Pola permintaan: …" |
 | Grup Operator | bawaan "Operator Service Desk" | Penerima Problem pola insiden |
+| Layanan kritis | `SSO, Email, Jaringan` | Kata (pisah koma) di nama kategori saran → dampak saran naik 1 tingkat |
+| Pengingat progres setelah | 5 hari kerja | E19: tiket Diproses/Menunggu tanpa tindak lanjut/tugas lebih lama dari ini → notifikasi "HaloSIS: Pengingat progres" ke teknisi & grup (tugas `ProgressReminder`, harian, sekali per periode) |
+| Tinjau artikel terbit setelah | 6 bulan | Artikel terbit yang tidak diubah selama ini muncul di tab "Perlu ditinjau" |
 | Fitur AI | semua aktif | Saran triase, chatbot, deteksi pola, dashboard |
+
+**Pratinjau dampak** (tombol di bawah form, tidak menyimpan): ambang keyakinan (saran 30 hari yang berpindah tingkat)
+dan **perubahan SLA / aturan SLA** (UC-10): pilih SLA + target baru, atau aturan SLA + SLA pengganti → jumlah tiket
+aktif terdampak dan status aman / berisiko (sisa ≤ 20% durasi) / terlewati sekarang vs target baru.
 
 ### Mode demo
 
@@ -100,7 +111,8 @@ yang sama:
   ada "semua", "rekan". Model tercatat `demo-rules-v1`.
 - **Chatbot**: kutipan langkah dari artikel Pusat Bantuan yang paling relevan, dengan label
   "Dari Pusat Bantuan" (label "Dijawab AI" hanya bila Claude yang merangkum).
-- **Deteksi pola & dashboard** tidak memakai AI, sehingga sama di kedua mode.
+- **Deteksi pola** memakai layanan AI (`POST /pola`, semantik) bila `halosis-ai` hidup, terlepas dari API key;
+  layanan mati → pengelompokan kata kunci (kategori / judul mirip). **Dashboard** tidak memakai AI.
 
 Dengan API key, Claude dipanggil di server (SDK resmi, *structured output*, effort `low`, dan
 *server-side fallback* untuk model yang mendukungnya). Bila AI gagal atau timeout, triase dilewati dan
@@ -114,7 +126,9 @@ Bila service `halosis-ai` di docker-compose hidup, plugin memakainya **lebih dul
   dengan top-3 tim dan nomor tiket lama yang mirip di penjelasan. Tim history dipetakan ke kategori/grup GLPI.
 - **Chatbot** mencari di artikel KB + solusi tiket lama (embedding lokal); sumber tiket tampil
   "Tiket serupa <nomor>".
-- Layanan mati → otomatis kembali ke mode demo / AI penyedia di atas. Cara membangun model & indeks:
+- Layanan mati → chatbot & pencarian memakai mode demo / kata kunci; **triase** tidak memakai aturan demo: tiket
+  tersimpan tanpa saran (UC-04 1a), lalu tombol *Buat saran AI* atau tugas `TriageRetry` mencoba lagi (penyedia AI
+  eksternal tetap dicoba bila dikonfigurasi). Cara membangun model & indeks:
   [`ai/README.md`](../../ai/README.md) (AI-3 s.d. AI-5).
 
 ## Skenario demo langkah demi langkah
@@ -155,6 +169,22 @@ per akun.
 > Untuk melihat tanda **Perlu penilaian manual**, buka tiket berjudul samar (mis. "Aplikasi error terus")
 > yang keyakinannya di bawah 70%.
 
+### 2b. Operator mencatat laporan telepon/email/walk-in (`rina`)
+
+Pegawai yang melapor tanpa portal (EI "Input tiket oleh operator", dokumen hal. 7, 63):
+
+1. Login `rina`, **Bantuan › Buat tiket** (form tiket GLPI standar).
+2. **Pemohon** = pegawai pelapor (mis. `siti`), **Sumber permintaan** = *Phone* / *E-Mail* / *Direct*, isi judul
+   & deskripsi → Tambah.
+3. Tiket tercatat atas nama pegawai (pemohon), dengan `rina` sebagai pencatat; saran triase AI langsung muncul
+   dan divalidasi seperti langkah 2. Pegawai melihatnya di **Laporan saya**.
+
+### 2c. Operator menutup tiket menggantung (`rina`)
+
+Menu **Siap ditutup** (T21): tiket *Selesai* yang tidak direspons pemohon lebih dari 48 jam (Pengaturan AI). Periksa,
+lalu **Tutup** per tiket atau centang beberapa → **Tutup yang dipilih**. Tidak ada penutupan otomatis; alasan tercatat
+sebagai tindak lanjut privat dan perubahan status di Riwayat. Tiket yang sudah dibalas pemohon tidak muncul.
+
 ### 3. Tim Teknis menyelesaikan (`andi`)
 
 1. Login `andi` / `halosis`. Tiket muncul di **Beranda › Tampilan Group** dan **Bantuan › Tiket**.
@@ -177,22 +207,25 @@ per akun.
 1. Login `sri` / `halosis`, buka **Bantuan › Kinerja AI**.
 2. Tunjukkan: % saran diterima apa adanya, batang komposisi Diterima/Diubah/Ditolak, **Dipindah ke tim lain
    setelah triase**, grafik keputusan per minggu (arahkan kursor ke kolom; **Tampilkan sebagai tabel**),
-   keyakinan AI vs keputusan petugas, dan kartu chatbot (terbantu tanpa tiket, rating).
-3. Ganti periode 4 / 8 / 12 minggu.
+   keyakinan AI vs keputusan petugas, kartu chatbot (terbantu tanpa tiket, rating, artikel paling sering dipakai /
+   dinilai tidak membantu), kartu **Pola insiden** (terdeteksi / dikonfirmasi / ditutup), dan tabel **Indikator
+   drift** (% Ubah+Tolak per bulan).
+3. Ganti periode 4 / 8 / 12 minggu, lalu pilih **Tim** dan/atau **Kategori layanan** → Terapkan (angka triase,
+   salah tim, dan drift ikut tersaring).
+4. (Login `dimas` / Administrator) tombol **Ekspor koreksi (CSV, tersamar)** mengunduh keputusan Ubah/Tolak untuk
+   data latih berikutnya.
 
 ### Bonus: pola insiden (`glpi` + `rina`)
 
-Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan ambangnya:
+Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
 
-1. Login `glpi`, **Setup › AI HaloSIS** → **Minimal tiket mirip** = 3 → Simpan.
-2. Sebagai `budi`/`siti`/`maya`, buat 3 laporan cepat dengan judul mirip (mis. "Tidak bisa login SSO",
+1. Sebagai `budi`/`siti`/`maya`, buat 3 laporan cepat dengan judul mirip (mis. "Tidak bisa login SSO",
    "Login SSO gagal", "SSO error tidak bisa masuk") lewat menu **Buat laporan** › *Report an issue*.
-3. Sebagai `glpi`, buka **Setup › Tindakan otomatis › IncidentPattern** → **Jalankan** (atau tunggu
+2. Sebagai `glpi`, buka **Setup › Tindakan otomatis › IncidentPattern** → **Jalankan** (atau tunggu
    jadwal 15 menit). Log tugas menampilkan "Pola baru: …".
-4. Login `rina`, buka **Beranda**: banner **Pola insiden terdeteksi** dengan tautan ke Problem
+3. Login `rina`, buka **Beranda**: banner **Pola insiden terdeteksi** dengan tautan ke Problem
    "Pola insiden: …" yang berisi daftar tiket dan sudah ditugaskan ke grup Operator. Panel Saran AI di tiket
    terkait menampilkan **Bagian dari pola insiden**. Operator yang memutuskan tindak lanjutnya.
-5. Kembalikan **Minimal tiket mirip** ke 10.
 
 ## Detail fitur
 
@@ -201,11 +234,43 @@ Deteksi butuh ≥ 10 tiket mirip dalam 60 menit. Untuk demo langsung, turunkan a
 - Dibuat saat tiket baru disimpan (hook `item_add` Ticket, dari antarmuka mana pun termasuk REST API),
   disimpan di tabel plugin, **bukan** di field tiket. Kategori & grup dibatasi ke daftar yang valid untuk
   entitas & tipe tiket dan divalidasi ulang di server; prioritas dari matriks urgensi × dampak GLPI.
-- AI gagal/timeout → tiket tetap tersimpan normal tanpa saran (tidak ada coba ulang, waktu tunggu maksimal =
-  batas waktu). Petugas bisa menekan **Buat saran AI** di panel.
+- AI gagal/timeout → tiket tetap tersimpan normal tanpa saran (tidak ada coba ulang saat menyimpan, waktu tunggu
+  maksimal = batas waktu). Petugas bisa menekan **Buat saran AI** di panel, dan tugas terjadwal **`TriageRetry`**
+  (tiap 15 menit) mencoba lagi tiket **Baru** ≤ 3 hari yang belum punya saran: idempoten (satu saran per tiket),
+  maks. 5 percobaan per tiket (`glpi_plugin_halosis_triage_retries`), tiap kegagalan tercatat di log tugas &
+  `halosis.log`. Manual: `docker compose exec glpi php front/cron.php --force TriageRetry`.
+- **Pemecah seri beban kerja** (UC-04 langkah 5): bila keyakinan kandidat 1 dan 2 berselisih < 5 poin, keduanya
+  terpetakan ke grup berbeda, dan kandidat 2 punya tiket aktif lebih sedikit, kandidat 2 yang disarankan; alasannya
+  tampil di panel dan di penjelasan (`Triage::workloadTiebreak`).
+- **Ringkasan deskripsi** (E15): deskripsi > 150 kata → 3 kalimat kunci di panel (ekstraktif, tanpa LLM, teks
+  disamarkan dulu; `src/Summary.php`).
 - Keputusan butuh hak triase *putuskan* **dan** hak ubah tiket GLPI. Nilai diterapkan lewat update tiket
   biasa, jadi aturan bisnis, notifikasi, dan riwayat field GLPI tetap berjalan. Alasan Ubah/Tolak divalidasi
   di server (minimal 5 karakter). Tanpa hak GLPI "Ubah prioritas", prioritas mengikuti matriks.
+- **Tingkat keyakinan**: ≥ ambang (70%) *Disarankan*; antara ambang rendah (40%) dan ambang *Pilih dari 3
+  kandidat*; di bawahnya *Perlu penilaian manual*. Panel menampilkan **tiket aktif per kandidat tim** (3 tim
+  teratas model → grup GLPI, tiket belum selesai yang ditugaskan ke grup itu); hanya info, urutan tetap dari model.
+- **Gerbang kualitas model** (T32, pre-kondisi UC-04): `/health` & `/triage` melaporkan apakah model triase lolos
+  syarat (Top-1 ≥ 0,68, akurasi pada ambang ≥ 85%, **recall tim besar** (≥ 5% tiket uji) terendah ≥ 50%, Top-1/Top-3
+  tidak turun > 2 poin dari versi aktif; syarat yang tidak tercatat = tidak lolos; `HALOSIS_GATE_*`). Kelas gabungan
+  **"Lainnya"** (tim < 30 tiket latih) bukan tim: tidak ikut syarat tim besar (recall-nya dicatat terpisah) dan bila
+  menjadi tim teratas, tingkat selalu *Perlu penilaian manual*. Tidak lolos → panel menampilkan
+  "Model belum lolos uji kualitas" dan tingkat selalu *Perlu penilaian manual*.
+- **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
+  menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
+- **Jenis perlu ditinjau**: keyakinan jenis di antara ambang rendah dan ambang (TO-BE hal. 100) tampil sebagai
+  "Jenis: perlu ditinjau (…%) · model condong ke …" walau sama dengan jenis tiket.
+- **Pemohon pejabat**: jabatan SSO yang diawali kata di Pengaturan AI › *Jabatan pejabat* → grup *Pejabat* saat login;
+  aturan `setup_pejabat_rules.py` dan saran triase menaikkan urgensi satu tingkat, panel menulis alasannya.
+- **Urgensi disarankan + alasan dampak** (BR-05): untuk insiden, `ai/models/urgensi.joblib`
+  (`ai/scripts/train_urgensi.py`) memakai **ambang per kelas** dari validasi silang: Rendah bila P(Low) ≥ ambang Low
+  (presisi ≥ 75%), Sedang bila P(Low) ≤ ambang Medium (akurasi > pembanding + 3 poin); gerbang dinilai per kelas
+  dan kelas yang tidak lolos tidak pernah disarankan. Bila kelasnya lolos & di atas ambang, panel menampilkan
+  "Urgensi disarankan: Rendah/Sedang (keyakinan)" (angka terakhir: `reports/triase.md` bagian urgensi; Rendah
+  hanya mengenali ± 5% insiden Low). Selain itu urgensi dari kata kunci (kata utuh; negasi "tidak
+  mendesak" diabaikan; pertanyaan tanpa gangguan → Rendah). **Dampak = urgensi**, naik satu tingkat bila ≥ minimal
+  tiket mirip (pola) dalam jendela waktu atau kategori saran termasuk *Layanan kritis*; panel menampilkan alasannya,
+  mis. "Dampak Tinggi: 3 tiket serupa dalam 1 jam; layanan kritis (SSO)". Prioritas = matriks urgensi × dampak GLPI.
 - **Kembalikan ke operator (salah tim)**, UC-06 alur alternatif: tombol hanya tampil untuk teknisi/anggota tim
   yang ditugaskan, selama tiket Diproses/Direncanakan/Menunggu. Hak dicek ulang di server. Alasan wajib.
   Hasilnya: grup & teknisi penugasan dihapus, status Baru, tindak lanjut privat "Dikembalikan ke operator
@@ -237,6 +302,14 @@ Sidebar/menu mengikuti prototipe halosis-web (hook `redefine_menus`, kelas `Role
 
 Antrean validasi, Tiket saya & tim, dan Monitoring SLA diurutkan "Waktu untuk menyelesaikan" terdekat dulu
 (parameter `sort`/`order` di URL menu). Kolom daftarnya diatur `setup_list_columns.py` (README induk langkah 5c).
+### Cari knowledge (Operator & Tim Teknis, FR-03)
+
+Halaman `/plugins/halosis/CariKnowledge`: pencarian semantik artikel KB & tiket historis lewat layanan AI
+(`POST /cari`), cadangan kata kunci artikel KB bila layanan mati. Tiap hasil punya tombol **Membantu / Tidak
+membantu** (KR-07) yang menyimpan pengguna, waktu, sumber (artikel/tiket), dan skor relevansi di
+`glpi_plugin_halosis_feedback`; teks kueri tidak disimpan (NFR-06). Penilaian "Tidak membantu" artikel ikut
+dihitung di dashboard.
+
 ### Kandidat Knowledge (UC-09, hak `plugin_halosis_kandidat`)
 
 Halaman `/plugins/halosis/Kandidat` (Knowledge Manager, Administrator, Super-Admin). Setiap dibuka, kandidat
@@ -249,6 +322,10 @@ baru disinkronkan dari dua sumber:
 
 Aksi: **Jadikan artikel** membuat *draf* artikel KB (masalah + solusi + sumber, tanpa target visibilitas =
 belum terbit) lalu membuka draf itu untuk disunting & diterbitkan; **Abaikan** wajib beralasan (≥ 5 karakter).
+Tab **Perlu ditinjau**: artikel terbit (FAQ/punya target) yang jatuh tempo: tanggal tinjau berikut yang diatur
+(KR-03, tabel `kb_reviews`) atau, bila belum diatur, `date_mod` + *Tinjau artikel terbit setelah* (bawaan 6 bulan).
+Setelah meninjau, isi **Sudah ditinjau; tinjau lagi pada** → Simpan tanggal. SOP ditulis sebagai artikel KB
+berkategori **SOP** (dibuat `seed_halosis.py`), jadi ikut terindeks saat terbit.
 Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates`). Teks kandidat disamarkan.
 
 ### Tanya HaloSIS (chatbot)
@@ -267,18 +344,27 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
   dengan `canViewItem()`. Artikel internal tidak pernah dipakai. Tautan sumber dibuat server, bukan dari teks model.
 - **Data pribadi** (pola kata sandi, email, nomor HP, NIK/NIP) disamarkan di server sebelum dikirim ke AI
   maupun disimpan.
-- **Buat laporan** memakai sesi & hak GLPI pegawai; deskripsi = ringkasan percakapan; tiket langsung
-  mendapat saran triase.
+- **Buat laporan** memakai sesi & hak GLPI pegawai; deskripsi = ringkasan percakapan; sumber permintaan
+  (*Request source*) **"HaloSIS Chat"** (dibuat otomatis bila belum ada); tiket langsung mendapat saran triase.
+- **Katalog layanan**: kategori yang terlihat di Helpdesk & form katalog aktif diindeks ke layanan AI
+  (`POST /reindex/layanan`, saat install/update dan setiap kategori/form berubah); pertanyaan permintaan layanan
+  dijawab dengan arahan ke form / katalog layanan.
+- **Pemakaian artikel**: id artikel KB yang dikutip tiap jawaban dicatat (`article_uses`) untuk dashboard.
 - **Widget melayang** "Tanya asisten" muncul di halaman Helpdesk lain (detail tiket, FAQ) dan melanjutkan
   percakapan yang sama; tidak dimuat di halaman chat.
 - **Riwayat chat** (`/plugins/halosis/ChatHistory`, menu kedua Pegawai): 50 percakapan terbaru milik pengguna
-  sendiri dengan status *Bisa dilanjutkan* / *Terselesaikan · rating* / *Laporan #id* (tertaut ke tiket).
+  sendiri dengan status *Bisa dilanjutkan* / *Terselesaikan · rating* / *Laporan #id* (tertaut ke tiket) /
+  *Berakhir (tidak aktif)*.
   Item dibuka di halaman chat lewat `?chat=<id>`; id milik orang lain diabaikan (`Chat::getOwned`).
   Percakapan selesai hanya bisa dibaca.
 - **Lanjut otomatis**: di tab/login baru, percakapan terbuka terakhir yang aktif dalam 30 menit
   (`Chat::IDLE_MINUTES`) dimuat ulang. Percakapan terbuka yang menganggur lebih lama berstatus `expired`
   ("Berakhir (tidak aktif)", state machine SesiChat hal. 192); diperiksa saat chat/riwayat/dashboard dibuka. Setelah "Percakapan baru", percakapan itu tidak dilanjutkan otomatis lagi
   (diingat di `localStorage` browser) dan tetap bisa dibuka dari Riwayat chat.
+- **Di luar layanan TI** (T31): pertanyaan kepegawaian/keuangan/umum tanpa kata kunci TI (mis. cuti, tunjangan) dijawab
+  "di luar layanan TI" + unit yang menangani, tanpa tawaran laporan TI (`Chatbot::OUT_OF_SCOPE`).
+- **Keyakinan sedang** (skor layanan AI 0,78–0,83): asisten tidak menjawab, hanya menawarkan ≤ 3 judul artikel KB
+  "Maksud Anda…?" plus kartu Buat laporan.
 - Fitur chat dimatikan → halaman menampilkan "Asisten sedang tidak tersedia" + tombol Buat laporan.
 
 ### Deteksi pola insiden
@@ -286,15 +372,19 @@ Setiap keputusan menyimpan pelaku & waktu (tabel `glpi_plugin_halosis_candidates
 Tugas terjadwal **`IncidentPattern`** (tiap 15 menit, mode CLI; penjadwal container menjalankan
 `front/cron.php` tiap menit). Manual: `docker compose exec glpi php front/cron.php --force IncidentPattern`.
 
-1. Tiket yang dibuat dalam jendela waktu, belum dihapus, belum selesai.
-2. Dikelompokkan per **kategori** (tiket tanpa kategori memakai kategori saran triase AI), sisanya per
-   **judul mirip** (≥ 2 kata kunci sama dan overlap ≥ 0,5).
+1. Tiket **Insiden** yang dibuat dalam jendela waktu, belum dihapus, belum selesai (permintaan tidak dihitung).
+2. **Semantik** lewat layanan AI (`POST /pola`: embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50; atau DBSCAN
+   bila dipilih di Pengaturan AI).
+   Layanan mati/gagal → **cadangan kata kunci**: per kategori (tiket tanpa kategori memakai kategori saran
+   triase), sisanya per judul mirip (≥ 2 kata kunci sama dan overlap ≥ 0,5). Metode dicatat di Problem.
 3. Kelompok ≥ N tiket → Problem **"Pola insiden: …"** (daftar tiket & kriteria), ditautkan ke tiketnya,
    ditugaskan ke grup Operator. Tidak ada penyelesaian/penerusan otomatis.
-4. Pola yang sama dengan Problem masih terbuka (≤ 24 jam) tidak dibuat ulang; tiket baru ditautkan ke sana.
+4. Pola yang sama dengan Problem masih terbuka tidak dibuat ulang: tiket mirip yang baru ditautkan ke Problem
+   itu, termasuk bila tanda pola bergeser (salah satu anggotanya sudah tertaut ke Problem pola yang terbuka).
 
-Notifikasi: penugasan ke grup Operator (notifikasi GLPI standar terkirim bila email dikonfigurasi), banner
-di beranda pemegang hak triase *putuskan*, dan catatan di panel Saran AI tiket terkait.
+Notifikasi: **"New problem"** GLPI ke grup yang ditugaskan & grup Operator, lewat email dan browser
+(dipasang `setup_sla_alerts.py`), banner di beranda pemegang hak triase *putuskan*, dan catatan di panel
+Saran AI tiket terkait.
 
 ### Dashboard kinerja AI
 
@@ -306,6 +396,16 @@ Semua angka dari tabel log plugin (`src/Stats.php`):
 | Keyakinan AI vs keputusan (di atas / di bawah ambang) | `decisions` + `suggestions` |
 | % tiket dipindah ke tim lain setelah triase ("salah tim"), termasuk yang dikembalikan Tim Teknis | `reassignments` ÷ tiket dengan keputusan Terima/Ubah |
 | Chat terbantu tanpa tiket, jadi laporan, rata-rata rating | `chats` |
+| Artikel yang paling sering dipakai chatbot (5 teratas) | `article_uses` |
+| Artikel paling sering dinilai tidak membantu: chat yang mengutipnya lalu jadi laporan / rating ≤ 2, plus "Tidak membantu" di Cari knowledge | `article_uses` + `chats`, `feedback` |
+| Pola insiden terdeteksi / dikonfirmasi (Problem terbuka yang sudah disentuh manusia: status diubah oleh pengguna non-sistem, tindak lanjut/tugas ditambahkan, atau tiket ditautkan manual; status awal *Ditugaskan* dari pembuatan otomatis tidak dihitung) / ditutup (Selesai, Ditutup, atau dihapus) | `patterns` + Problem, `glpi_logs` (tanpa `cron_*`), tindak lanjut & tugas Problem |
+| Drift: % Ubah+Tolak per bulan, 6 bulan terakhir | `decisions` |
+| Tren pola insiden: tiket per minggu per topik (5 topik, 12 minggu) | `patterns` |
+| KPI tabel 1.3: % SLA respons & penyelesaian terlampaui, median waktu sampai diambil, % diselesaikan Operator tanpa eskalasi; volume tiket per minggu per jenis & 5 kategori teratas (12 minggu) | tiket GLPI (tanpa entitas arsip) |
+
+Filter **tim** (grup yang ditugaskan) dan **kategori layanan** (termasuk subkategori) berlaku untuk angka
+triase, salah tim, dan drift. Pemegang hak Pengaturan AI melihat tombol **Ekspor koreksi (CSV, tersamar)**:
+keputusan Ubah/Tolak untuk data latih berikutnya (`reports/tata_kelola_ai.md` §2).
 
 GLPI tidak punya aksi "kembalikan karena salah tim", jadi plugin mencatat dua hal: tombol **Kembalikan ke
 operator** (`kind = return`, beserta alasan) dan setiap kali tiket yang triasenya sudah diterapkan lalu
@@ -361,10 +461,13 @@ mendaftarkan `plugin_halosis_chatbot` di sana (`setup.php`).
   terbukti (request sampai ke API dan ditolak karena key uji palsu), tapi isi request belum divalidasi oleh
   API dengan key sungguhan. Uji sekali dengan key asli sebelum dipakai.
 - AI dipanggil saat tiket disimpan, jadi pegawai menunggu sampai saran jadi (maksimal = batas waktu).
+- **Pengaturan AI**: tombol *Pratinjau dampak* menghitung saran 30 hari terakhir yang berpindah tingkat dengan ambang
+  baru (tanpa menyimpan). Perubahan Pengaturan AI, aturan tiket/SLA, SLA, dan kategori dicatat di log sistem GLPI
+  (Administrasi › Log, sebelum → sesudah, aktor) dan diumumkan lewat Catatan di beranda profil Administrator (7 hari).
+- Tugas terjadwal plugin tidak menyentuh tiket di entitas arsip migrasi "Arsip ESTIM".
 - **Mode demo saja** (layanan `halosis-ai` mati): pencarian artikel memakai pencocokan kata kunci, jadi sinonim
   (mis. "lemot" vs "lambat") belum dikenali; cukup untuk KB kecil. Dengan `halosis-ai`, pencarian chatbot
   memakai embedding (`intfloat/multilingual-e5-base`) sehingga makna serupa tetap ditemukan.
-- Deteksi pola insiden mengelompokkan judul dengan kata kunci di semua mode (tidak memakai layanan AI).
 - Sebagian menu GLPI masih berbahasa Inggris (terjemahan `id_ID` bawaan GLPI 12 belum lengkap).
 - Notifikasi email pola insiden bergantung pada konfigurasi email GLPI.
 
@@ -378,24 +481,32 @@ src/Profile.php           hak akses plugin + tab di form Profil;  src/Roles.php 
 src/RoleMenu.php          menu ringkas per peran (hook redefine_menus)
 src/Console/              perintah plugins:halosis:setup-roles
 src/Ai/Client.php         pemanggil AI di server (SDK Anthropic / API kompatibel OpenAI)
-src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /kandidat);  src/Ai/AiException.php
+src/Ai/Service.php        klien layanan lokal halosis-ai (/triage, /chat, /cari, /pola, /kandidat, /reindex/artikel,
+                          /reindex/layanan);
+                          src/Ai/AiException.php
 src/Triage.php            saran triase (AI & demo) + keputusan;  src/TriagePanel.php  panel di form tiket
 src/Suggestion.php        model saran;  src/Decision.php  model keputusan
 src/Chatbot.php           jawaban chatbot, rating, buat laporan;  src/Chat.php  model percakapan
 src/KnowledgeSearch.php   pencarian KB yang menghormati visibilitas GLPI;  src/Privacy.php  penyamaran data
 src/HelpdeskHome.php      menu Helpdesk & pengalihan beranda ke halaman chat
 src/KeycloakAuth.php      login SSO Keycloak (password grant dari form login GLPI) + sinkron pengguna, profil, tim
-src/PatternDetector.php   tugas terjadwal pola insiden + banner
+src/PatternDetector.php   tugas terjadwal pola insiden/permintaan + banner;  src/TriageRetry.php  tugas coba ulang saran triase
+src/ProgressReminder.php  tugas terjadwal pengingat progres + notifikasi (E19);  src/Summary.php  ringkasan deskripsi (E15)
+src/Closure.php           daftar "Siap ditutup" (T21);  src/ConfigAudit.php  pratinjau dampak (ambang, SLA, aturan SLA) & jejak konfigurasi (T20)
 src/Stats.php             angka dashboard;  src/Reassignment.php  pemindahan tim & Kembalikan ke operator
-src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan;  src/Candidate.php  model kandidat
+src/KnowledgeCandidates.php  sinkron, daftar, Jadikan artikel / Abaikan, Perlu ditinjau;  src/Candidate.php  model kandidat
+src/KnowledgeIndex.php    re-index artikel KB ke layanan AI saat terbit / ditarik / dihapus (hook KnowbaseItem)
 src/Controller/           ChatController (/plugins/halosis/Chat, /plugins/halosis/ChatHistory),
-                          DashboardController (/plugins/halosis/Dashboard), KandidatController (/plugins/halosis/Kandidat)
+                          DashboardController (/plugins/halosis/Dashboard, /Dashboard/Koreksi CSV),
+                          KandidatController (/plugins/halosis/Kandidat), CariKnowledgeController (/plugins/halosis/CariKnowledge),
+                          SiapDitutupController (/plugins/halosis/SiapDitutup)
 src/ConfigMenu.php, src/DashboardMenu.php  entri menu
-ajax/triase.php, ajax/chat.php, ajax/kandidat.php  endpoint JSON panel triase, chatbot, kandidat knowledge
+ajax/triase.php, ajax/chat.php, ajax/kandidat.php, ajax/feedback.php, ajax/siap_ditutup.php  endpoint JSON panel
+                          triase, chatbot, kandidat knowledge, umpan balik Cari knowledge, tutup tiket
 front/config.form.php     halaman konfigurasi
 templates/                template Twig (@halosis/...)
 public/css, public/js     aset, disajikan di /plugins/halosis/css|js/... (chat, config, dashboard, kandidat,
-                          menu, triase)
+                          closure, feedback, menu, triase)
 public/fonts              Plus Jakarta Sans (woff2, OFL) untuk judul; dipakai palet themes/halosis.scss
 public/logo               logo HaloSIS: file asli (*.webp) + versi transparan halosis-logo-light/dark.png untuk palet
 locales/id_ID.po          terjemahan;  tools/locales.py  cek string belum diterjemahkan + kompilasi .mo
@@ -405,13 +516,30 @@ composer.json             SDK Anthropic (vendor/ tidak di-commit)
 Teks di kode memakai msgid bahasa Inggris (konvensi GLPI) dengan terjemahan `id_ID`. Setelah menambah teks
 UI, jalankan `python3 tools/locales.py`.
 
+### Uji otomatis
+
+Semua memakai data rekaan dan tidak mencetak isi tiket; uji aplikasi menghapus data ujinya sendiri.
+
+```bash
+.venv/bin/python -m pytest -q ai/tests                                     # layanan AI
+docker compose exec glpi php plugins/halosis/tools/test_ai_masking.php     # payload ke AI eksternal tersamar
+docker compose exec glpi php plugins/halosis/tools/test_fitur.php          # ringkasan, pemecah seri, status SLA
+cd tests/e2e && npm install && node alur_alternatif.js                     # alur alternatif UC-01..09 (Playwright)
+node fitur_penutup.js                                                      # pratinjau SLA, pola permintaan, pemecah
+                                                                           # seri, pengingat progres, ringkasan
+```
+
 ### Tabel
 
 | Tabel | Isi |
 | --- | --- |
-| `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, model, status) |
+| `glpi_plugin_halosis_suggestions` | Saran triase AI per tiket (kategori, dampak, urgensi, prioritas, grup, keyakinan, penjelasan, 3 kandidat tim, keyakinan urgensi model, alasan dampak, model, status) |
 | `glpi_plugin_halosis_decisions` | Keputusan petugas: aktor, waktu, nilai saran vs final, alasan |
 | `glpi_plugin_halosis_reassignments` | Tiket yang dipindah ke grup lain (`reassign`) atau dikembalikan ke operator dengan alasan (`return`) setelah triase AI diterapkan |
-| `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (kategori/judul), Problem, jumlah tiket |
-| `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status, rating, tiket |
+| `glpi_plugin_halosis_patterns` | Pola insiden: tanda pola, kriteria (`semantic` dari `/pola`; cadangan kata kunci `category` / `title`), Problem, jumlah tiket |
+| `glpi_plugin_halosis_chats` | Percakapan chatbot: pemilik, transkrip (tersamarkan), status (`open` / `resolved` / `ticket` / `expired` setelah 30 menit tanpa aktivitas), rating, tiket |
+| `glpi_plugin_halosis_feedback` | Penilaian agent di Cari knowledge (KR-07): pengguna, sumber (artikel KB / tiket historis), skor relevansi, membantu/tidak, waktu; teks kueri tidak disimpan |
+| `glpi_plugin_halosis_triage_retries` | Percobaan ulang saran triase per tiket (NFR-03): jumlah percobaan, galat terakhir |
+| `glpi_plugin_halosis_kb_reviews` | Tanggal tinjau berikut per artikel KB (KR-03): artikel, tanggal, pengatur |
+| `glpi_plugin_halosis_article_uses` | Artikel KB yang dikutip chatbot per jawaban (artikel, percakapan, waktu) |
 | `glpi_plugin_halosis_candidates` | Kandidat Knowledge (UC-09): sumber (tiket selesai / klaster AI), masalah & solusi (tersamarkan), jumlah kemunculan, status (`pending` / `article` / `ignored`), artikel KB yang dibuat, alasan diabaikan, Knowledge Manager & waktu keputusan |

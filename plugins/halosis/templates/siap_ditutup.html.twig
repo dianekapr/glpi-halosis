@@ -1,0 +1,43 @@
+{#
+ # T21: tiket Selesai tanpa respons pemohon > N jam. Operator menutup per tiket atau massal; tidak ada tutup otomatis.
+ #}
+{% extends "layout/page_skeleton.html.twig" %}
+
+{% block content %}
+<div class="hd hk" data-halosis-closure data-ajax-url="{{ ajax_url }}">
+    <header class="hd-head">
+        <div>
+            <h1>{{ __('Ready to close', 'halosis') }}</h1>
+            <p>{{ __('Solved tickets without a response from the requester for more than %d hours. Close them after checking; nothing is closed automatically.', 'halosis')|format(hours) }}</p>
+        </div>
+    </header>
+    {% if items %}
+        <article class="hd-card">
+            <table class="table table-sm align-middle mb-2">
+                <thead><tr>
+                    <th><input type="checkbox" class="form-check-input" data-close-all aria-label="{{ __('Select all', 'halosis') }}"></th>
+                    <th>{{ __('Ticket', 'halosis') }}</th><th>{{ __('Requester', 'halosis') }}</th>
+                    <th>{{ __('Solved', 'halosis') }}</th><th class="text-end">{{ __('Hours without response', 'halosis') }}</th><th></th>
+                </tr></thead>
+                <tbody>
+                    {% for t in items %}
+                        <tr>
+                            <td><input type="checkbox" class="form-check-input" value="{{ t.id }}" data-close-check aria-label="#{{ t.id }}"></td>
+                            <td><a href="{{ t.url }}">#{{ t.id }} {{ t.name }}</a></td>
+                            <td>{{ t.requesters ?: '–' }}</td>
+                            <td>{{ t.solvedate|formatted_datetime }}</td>
+                            <td class="text-end">{{ t.hours }}</td>
+                            <td class="text-end"><button type="button" class="btn btn-outline-primary btn-sm" data-close-id="{{ t.id }}">{{ __('Close', 'halosis') }}</button></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-primary btn-sm" data-close-selected>
+                <i class="ti ti-lock" aria-hidden="true"></i> {{ __('Close selected', 'halosis') }}
+            </button>
+        </article>
+    {% else %}
+        <div class="hd-card hk-empty">{{ __('No tickets are waiting to be closed.', 'halosis') }}</div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -9,13 +9,16 @@ import re
 from dataclasses import dataclass, field
 
 import numpy as np
+import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import OneHotEncoder
 
-from . import privacy
+from . import privacy, quality
 
 OTHER = 'Lainnya'
 MIN_TEAM_TICKETS = 30
@@ -32,6 +35,11 @@ def model_text(title: object, description: object, ticket_type: object) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def jenis_text(title: object, description: object) -> str:
+    """Teks fitur klasifier jenis REQ/INC (T4): sama dengan model_text tetapi tanpa token jenis yang diprediksi."""
+    return model_text(title, description, None).removeprefix('jenis_x ')
+
+
 def build_pipeline(c: float = 10.0, class_weight: str | None = 'balanced', calibrate: bool = True) -> Pipeline:
     features = FeatureUnion([
         ('kata', TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.5, sublinear_tf=True,
@@ -43,6 +51,62 @@ def build_pipeline(c: float = 10.0, class_weight: str | None = 'balanced', calib
     if calibrate:
         classifier = CalibratedClassifierCV(classifier, method='sigmoid', cv=5)
     return Pipeline([('fitur', features), ('model', classifier)])
+
+
+def urgency_frame(title: object, description: object, team: object) -> pd.DataFrame:
+    """Masukan model urgensi: teks fitur (sama dengan jenis_text) + nama tim (tim tiket atau saran triase)."""
+    return pd.DataFrame({'teks': [jenis_text(title, description)], 'tim': [str(team or '').strip() or OTHER]})
+
+
+def build_urgency_pipeline(c: float = 3.0) -> Pipeline:
+    """Urgensi insiden Medium/Low: TF-IDF teks tersamar + one-hot nama tim, LR berbobot kelas seimbang.
+
+    Keputusan dari P(Low) dengan ambang per kelas (pick_urgency_thresholds): Low bila P(Low) ≥ ambang Low, Medium bila
+    P(Low) ≤ ambang Medium, di antaranya tidak disarankan (aturan kata kunci).
+    """
+    features = ColumnTransformer([
+        ('kata', TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_df=0.5, sublinear_tf=True,
+                                 token_pattern=r'(?u)\b\w\w+\b|\[[a-z]+\]'), 'teks'),
+        ('karakter', TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5), min_df=3, sublinear_tf=True,
+                                     max_features=100_000), 'teks'),
+        ('tim', OneHotEncoder(handle_unknown='ignore', min_frequency=5), ['tim']),
+    ])
+    return Pipeline([('fitur', features), ('model', LogisticRegression(C=c, class_weight='balanced', max_iter=3000))])
+
+
+URGENCY_GRID_LOW = tuple(round(0.50 + 0.05 * i, 2) for i in range(10))     # 0,50 … 0,95
+URGENCY_GRID_MEDIUM = tuple(round(0.50 - 0.05 * i, 2) for i in range(10))  # 0,50 … 0,05
+
+
+def urgency_class_metrics(kelas: str, p_low: np.ndarray, y: np.ndarray, threshold: float) -> dict:
+    """Metrik satu kelas pada ambangnya dari P(Low) validasi silang. Low: presisi (+ Wilson 95%), recall; Medium:
+    akurasi & cakupan. pembanding = proporsi kelas itu (tebakan tanpa model)."""
+    is_low = np.asarray(y) == 'Low'
+    chosen = p_low >= threshold if kelas == 'Low' else p_low <= threshold
+    target = is_low if kelas == 'Low' else ~is_low
+    hits, n = int((chosen & target).sum()), int(chosen.sum())
+    r = lambda v: round(float(v), 4)  # noqa: E731
+    m = {'ambang': threshold, 'tiket': n, 'cakupan': r(chosen.mean()), 'pembanding': r(target.mean())}
+    if kelas == 'Low':
+        ci = quality.wilson(hits, n)
+        m.update({'presisi': r(hits / n) if n else None, 'wilson_95': [r(ci[0]), r(ci[1])] if ci else None,
+                  'recall': r(hits / max(int(target.sum()), 1))})
+    else:
+        m['akurasi'] = r(hits / n) if n else None
+    return m
+
+
+def pick_urgency_thresholds(p_low: np.ndarray, y: np.ndarray) -> dict:
+    """Ambang per kelas otomatis: Low = ambang terendah yang lolos (recall maksimum); Medium = ambang tertinggi yang
+    lolos (cakupan maksimum); syarat = quality.urgency_class_check. Tidak ada yang lolos → ambang terketat dicatat
+    dengan `lolos` False (kelas itu tidak disarankan)."""
+    p_low = np.asarray(p_low, dtype=float)
+    out = {}
+    for kelas, grid in (('Low', URGENCY_GRID_LOW), ('Medium', URGENCY_GRID_MEDIUM)):
+        candidates = [urgency_class_metrics(kelas, p_low, y, t) for t in grid]
+        passing = [m for m in candidates if quality.urgency_class_check(kelas, m)[0]]
+        out[kelas] = {**(passing[0] if passing else candidates[-1]), 'lolos': bool(passing)}
+    return out
 
 
 @dataclass
@@ -90,7 +154,8 @@ class TriageModel:
         return {
             'tim': top[0]['tim'],
             'keyakinan': top[0]['keyakinan'],
-            'perlu_penilaian_manual': top[0]['keyakinan'] < self.threshold,
+            # Kelas gabungan "Lainnya" (tim kecil) bukan tim tujuan: selalu penilaian manual (tata_kelola_ai.md §2)
+            'perlu_penilaian_manual': top[0]['keyakinan'] < self.threshold or top[0]['tim'] == OTHER,
             'top3': top,
             'tiket_mirip': self.similar.search(text, k=k),
             'versi_model': self.version,
