@@ -104,6 +104,8 @@ function plugin_init_halosis(): void
     }
     // Menu ringkas per peran (prototipe halosis-web): Helpdesk Pegawai + sidebar petugas. Lihat RoleMenu.
     $PLUGIN_HOOKS[Hooks::REDEFINE_MENUS]['halosis'] = [RoleMenu::class, 'redefine'];
+    // Halaman indeks aturan GLPI → 403 untuk peran tanpa hak aturan (setelah semua plugin init, lihat RoleMenu)
+    $PLUGIN_HOOKS[Hooks::POST_INIT]['halosis'] = [RoleMenu::class, 'guardRuleIndex'];
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/menu.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket

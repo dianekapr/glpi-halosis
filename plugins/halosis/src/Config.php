@@ -44,6 +44,9 @@ final class Config
         'pattern_min_samples' => 3,
         // Sinyal dampak saran triase: kategori layanan yang namanya memuat salah satu kata ini → dampak naik 1 tingkat
         'critical_services'   => 'SSO, Email, Jaringan',
+        // Jabatan pejabat (awal kata, wawancara PM & operator): pemohon dimasukkan ke grup OFFICIAL_GROUP saat login SSO
+        // → RuleTicket (setup_pejabat_rules.py) & saran triase menaikkan urgensi satu tingkat
+        'official_titles'     => 'Kepala, Direktur, Deputi, Sekretaris Utama',
         // Artikel terbit yang tidak diubah selama N bulan masuk tab "Perlu ditinjau" (tinjau berkala, hal. 139)
         'kb_review_months'    => 6,
         // T21: tiket Selesai tanpa respons pemohon lebih dari N jam masuk daftar "Siap ditutup"
@@ -168,6 +171,24 @@ final class Config
         return self::parseList((string) self::get('critical_services'));
     }
 
+    /** Grup GLPI pemohon pejabat (dibuat setup_pejabat_rules.py, keanggotaan dari jabatan Keycloak) */
+    public const OFFICIAL_GROUP = 'Pejabat';
+
+    /**
+     * Kata jabatan pejabat yang cocok dengan awal jabatan (tanpa beda huruf besar), mis. "Kepala" untuk
+     * "Kepala BPS Kabupaten …"; null bila bukan pejabat.
+     */
+    public static function matchOfficialTitle(?string $title): ?string
+    {
+        $title = trim((string) $title);
+        foreach (self::parseList((string) self::get('official_titles')) as $word) {
+            if ($title !== '' && preg_match('/^' . preg_quote($word, '/') . '\\b/iu', $title)) {
+                return $word;
+            }
+        }
+        return null;
+    }
+
     /**
      * "a, b ,, c" → ["a", "b", "c"] (unik, maks. 20 butir, masing-masing maks. 60 karakter).
      *
@@ -244,6 +265,7 @@ final class Config
         $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
         $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
         $values['critical_services'] = implode(', ', self::parseList((string) ($input['critical_services'] ?? '')));
+        $values['official_titles'] = implode(', ', self::parseList((string) ($input['official_titles'] ?? '')));
         $values['close_after_hours'] = max(1, min(720, (int) ($input['close_after_hours'] ?? self::DEFAULTS['close_after_hours'])));
         $values['kb_review_months'] = max(1, min(36, (int) ($input['kb_review_months'] ?? self::DEFAULTS['kb_review_months'])));
 

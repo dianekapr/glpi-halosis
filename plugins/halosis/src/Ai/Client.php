@@ -5,6 +5,7 @@ namespace GlpiPlugin\Halosis\Ai;
 use Anthropic\Client as AnthropicClient;
 use Anthropic\Core\Exceptions\APIException;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\Privacy;
 use GLPIKey;
 use GuzzleHttp\Client as GuzzleClient;
 use Throwable;
@@ -34,6 +35,7 @@ final class Client
             throw new AiException('Mode demo aktif: pemanggilan AI tidak dilakukan.');
         }
 
+        $prompt = self::outgoingPrompt($prompt);
         try {
             return match (Config::get('ai_provider')) {
                 Config::PROVIDER_OPENAI => self::callOpenAiCompatible($system, $prompt, $schema, $max_tokens),
@@ -44,6 +46,15 @@ final class Client
         } catch (Throwable $e) {
             throw new AiException(sprintf('%s: %s', $e::class, $e->getMessage()), 0, $e);
         }
+    }
+
+    /**
+     * Jaring pengaman terakhir sebelum teks keluar ke penyedia AI eksternal: data pribadi yang lolos dari pemanggil
+     * tetap disamarkan (NFR-06, batas scope hal. 8). Pemanggil (Triage::aiPrompt, Chatbot::aiPrompt) sudah menyamarkan.
+     */
+    public static function outgoingPrompt(string $prompt): string
+    {
+        return Privacy::mask($prompt)['text'];
     }
 
     /**

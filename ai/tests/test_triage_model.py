@@ -17,10 +17,10 @@ DATA = [
 
 
 def test_model_text_menyamarkan_dan_menandai_jenis():
-    text = model_text('Reset akun', 'email saya budi@bps.go.id password: Rahasia1', 'REQ')
+    text = model_text('Reset akun', 'email saya budi@contoh.go.id password: Rahasia1', 'REQ')
     assert text.startswith('jenis_req ')
     assert EMAIL.lower() in text and SECRET.lower() in text
-    assert 'budi@bps.go.id' not in text and 'rahasia1' not in text
+    assert 'budi@contoh.go.id' not in text and 'rahasia1' not in text
 
 
 def test_prediksi_lengkap_dan_konsisten():

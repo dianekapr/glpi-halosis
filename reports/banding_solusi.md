@@ -17,6 +17,10 @@ Tanggal: 31 Oct 2026. `ai/scripts/banding_solusi.py`. Hanya angka; teks tiket ti
 | sesudah + dedup | 2.138 | 3.324 | 86 | 71,19% | 88,96% | 0,8037 |
 | acuan: ekspor lama + aturan lama (906 kueri, set banding_embedding) | 3.332 | 3.332 | 117 | 72,85% | 89,74% | 0,8161 |
 
+Catatan: baris *acuan* (72,85%) dan `banding_embedding.md` (72,74%) memakai ekspor, aturan solusi, dan 906 kueri yang sama,
+tetapi potongan dibangun oleh dua skrip berbeda. Selisih 0,11 poin = **1 kueri dari 906** (1/906 = 0,11%), jauh di
+bawah galat baku (± 1,5 poin); bukan perbedaan model.
+
 ## Aturan
 
 - **Sebelum**: pesan substantif terakhir di seluruh percakapan (termasuk sesudah tiket diselesaikan), pesan bercirikan petugas diutamakan; cadangan `resolution` → `close_notes`; satu potongan utuh per tiket.

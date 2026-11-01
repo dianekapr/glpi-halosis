@@ -9,7 +9,7 @@ from halosis_ai.privacy import (  # noqa: E402
 
 
 def test_email():
-    assert mask_text('kirim ke budi.santoso@bps.go.id ya') == f'kirim ke {EMAIL} ya'
+    assert mask_text('kirim ke budi.santoso@contoh.go.id ya') == f'kirim ke {EMAIL} ya'
 
 
 def test_nip_rapat_dan_berkelompok():

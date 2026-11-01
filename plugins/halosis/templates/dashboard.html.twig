@@ -237,6 +237,8 @@
                 <div><div class="hd-label">{{ __('Detected', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.detected }}</div></div>
                 <div><div class="hd-label">{{ __('Confirmed', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.confirmed }}</div></div>
                 <div><div class="hd-label">{{ __('Closed', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.closed }}</div></div>
+                <div><div class="hd-label">{{ __('Time until known (median)', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.detect_median_min is not null ? stats.patterns.detect_median_min|number_format(0, ',', '.') ~ ' ' ~ __('min', 'halosis') : '–' }}</div><div class="hd-sub">{{ __('first ticket → pattern created', 'halosis') }}</div></div>
+                <div><div class="hd-label">{{ __('Affected requesters', 'halosis') }}</div><div class="hd-value">{{ stats.patterns.requesters_total }}</div><div class="hd-sub">{{ __('median %s per pattern', 'halosis')|format(stats.patterns.requesters_median is not null ? stats.patterns.requesters_median|number_format(1, ',', '.') : '–') }}</div></div>
             </div>
         </section>
         <section class="hd-card">

@@ -70,7 +70,9 @@ Kandidat knowledge; menyuntingnya menandai sudah ditinjau.
 Knowledge Manager tetap **A** (menerbitkan/menarik). Pemilik domain **R**: menjamin isi teknis benar dan
 meninjau artikel domainnya saat muncul di "Perlu ditinjau".
 
-Domain mengikuti kategori layanan (service catalog) dan grup penanganannya di `seed_halosis.py`.
+Domain mengikuti kategori layanan (service catalog) dan grup penanganannya di `seed_halosis.py`. **Kategori artikel KB = domain**:
+artikel ditempatkan di kategori KB domainnya, sehingga pemilik domain (tabel di bawah) berlaku tanpa field tambahan per artikel
+(KR-01, KR-03).
 
 | Domain | Kategori layanan | Pemilik domain (R) | Penyetuju terbit (A) |
 | --- | --- | --- | --- |

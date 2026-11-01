@@ -50,7 +50,7 @@ ulang, `plugin:install --force` (kolom `urgency_confidence`, `impact_reason`). D
 | 2.2 Panel Saran AI (`rina`) | UI | ✅ | "Email … segera … pagi ini": urgensi Tinggi (aturan; model tidak menimpa High), "Dampak Sangat Tinggi: layanan kritis (Email)", prioritas = matriks |
 | 2.3 Terima | UI | ✅ | Status *Diterima* |
 | Bonus pola (3 insiden SSO) | server + UI | ✅ | Tiket ke-3: "Dampak Tinggi: 3 tiket serupa dalam 1 jam; layanan kritis (SSO)"; Problem pola baru; banner *Pola insiden terdeteksi* di beranda `rina` |
-| Dashboard (`sri`) | UI | ✅ | "baseline ESTIM 28,87% (1.819 dengan SLA berimputasi)", kartu *Kepuasan pemohon (nilai ≥ 4)* + baseline 95,76% |
+| Dashboard (`sri`) | UI | ✅ | "baseline ESTIM 28,87% (1.819 dengan SLA berimputasi)", kartu *Kepuasan pemohon (nilai ≥ 4)* + baseline 95,76% *(historis: sejak 1 Nov teksnya "Baseline dokumen 27,59% (overall) / 42,62% (respons)" dan "History versi baru 28,87% (extended, 1.819 imputasi) · respons 43,08%")* |
 | Pengaturan *Layanan kritis* | server (render Twig + simpan) | ✅ | Bawaan "SSO, Email, Jaringan"; daftar dinormalisasi; nilai dikembalikan. Halaman UI diblok prompt autentikasi ulang GLPI di Playwright |
 | /chat Email, SSO, SiPecut | API | ✅ | 6 pertanyaan menjawab (FAQ KB-13/14/15 & tiket historis) |
 

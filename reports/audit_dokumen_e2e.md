@@ -28,6 +28,10 @@ akurasi 84,30% vs 81,24%), gerbang per kelas, kedua kelas lolos → 2.1.4 ✅ (k
 disinkronkan dengan metrik model `20261031`; baseline dashboard menampilkan angka dokumen (27,59% / 42,62%) dan
 history versi baru (28,87% extended, 1.819 imputasi; respons 43,08%) beserta cakupan rating 17,3%.
 
+**Pembaruan 1 Nov 2026 (perbaikan dari `verifikasi_akhir.md`):** batas scope hal. 8 / NFR-06 — payload ke AI eksternal disamarkan di semua jalur (tes container); realm demo tanpa domain BPS; hak menu sesuai matriks; urgensi pemohon pejabat (aturan GLPI + saran); jenis REQ/INC keyakinan sedang "perlu ditinjau" (TO-BE hal. 100); KPI 8.3 diperbarui; uji alur alternatif otomatis (`tests/e2e/`).
+
+**Pembaruan 1 Nov 2026 (penutupan verifikasi):** BP-17 pola *Dikonfirmasi* = tindakan manusia (bukan status otomatis); UC-04 1a layanan AI gagal → tanpa saran + tombol *Buat saran AI*; email SSO mengganti alamat utama; prioritas pejabat mengikuti matriks saat keputusan Operator; 9 alur alternatif teruji otomatis. Status akhir `verifikasi_akhir.md`: 234 ✅ · 24 🟡 · 15 ⚪ · 0 ⚠ · 0 🔍.
+
 **Cakupan pembacaan.** Seluruh teks 212 halaman, ditambah **semua gambar yang memodelkan sistem**: arsitektur &
 alur TO-BE (hal. 96–102, 106–108, 122), PoC (hal. 53–59), use case diagram (hal. 125), 10 activity diagram
 (hal. 144–153), class diagram (hal. 170), 10 sequence diagram (hal. 176–185), 10 communication diagram
@@ -185,12 +189,12 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 
 | KPI | Diukur di |
 | --- | --- |
-| Waktu perubahan; % perubahan oleh tim internal | Log konfigurasi (`ConfigAudit`, Administrasi › Log); konfigurasi tanpa kode |
-| % tiket SLA breach; waktu monitoring | Dashboard **KPI layanan** (respons & penyelesaian); Monitoring SLA + peringatan otomatis |
-| Waktu pencarian solusi; % selesai tanpa eskalasi | Cari knowledge (latensi `latensi.md`); KPI "% diselesaikan Operator tanpa eskalasi" |
+| Waktu perubahan; % perubahan oleh tim internal | Log konfigurasi (`ConfigAudit`, Administrasi › Log) mencatat perubahan; **waktu perubahan = time study pilot** |
+| % tiket SLA breach; waktu monitoring | Dashboard **KPI layanan** (respons & penyelesaian); Monitoring SLA + peringatan otomatis; **waktu monitoring = time study pilot** |
+| Waktu pencarian solusi; % selesai tanpa eskalasi | KPI "% diselesaikan Operator tanpa eskalasi"; latensi sistem di `latensi.md`; **waktu pencarian manusia = time study pilot** |
 | % tiket tidak dibuat lewat self-service | Kartu Chatbot: "Terbantu tanpa tiket" |
 | % tiket dipindah ke tim lain; waktu sampai diterima tim | "Dipindah ke tim lain setelah triase"; KPI "median waktu sampai diambil/ditugaskan" |
-| Waktu mengetahui masalah; jumlah terdampak | Pola insiden (cron 15 menit, jendela 60 menit), jumlah tiket per pola, tren 12 minggu |
+| Waktu mengetahui masalah; jumlah terdampak | Kartu **Pola insiden**: median *waktu sampai diketahui* (tiket pertama → pola dibuat) dan *pemohon terdampak* (unik per pola & total), plus tren 12 minggu (1 Nov) |
 | Waktu pembuatan laporan; jumlah indikator; pembaruan data | Dashboard Kinerja AI langsung dari DB (tanpa ekspor), Grafana (profile `monitoring`) |
 
 ### 8.4 Syarat kelayakan teknis & integrasi (2.1.2–2.1.6) dan Skenario 2 (2.4.2)

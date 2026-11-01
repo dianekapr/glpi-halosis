@@ -22,10 +22,10 @@ def test_cari_urut_skor_dan_menyamarkan_query(tmp_path, monkeypatch):
         return np.array([[0.1, 0.9, 0.3]], dtype=np.float32)
     monkeypatch.setattr(search, 'embed', fake_embed)
 
-    hasil = search.cari('email saya budi@bps.go.id penuh', k=2, index_dir=tmp_path)
+    hasil = search.cari('email saya budi@contoh.go.id penuh', k=2, index_dir=tmp_path)
     assert [h['sumber'] for h in hasil] == ['T-001', 'T-002']
     assert hasil[0]['skor'] > hasil[1]['skor']
-    assert 'budi@bps.go.id' not in seen[0]
+    assert 'budi@contoh.go.id' not in seen[0]
 
 
 def test_cari_satu_hasil_per_sumber_dengan_solusi_utuh(tmp_path, monkeypatch):

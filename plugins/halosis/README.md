@@ -119,7 +119,9 @@ Bila service `halosis-ai` di docker-compose hidup, plugin memakainya **lebih dul
   dengan top-3 tim dan nomor tiket lama yang mirip di penjelasan. Tim history dipetakan ke kategori/grup GLPI.
 - **Chatbot** mencari di artikel KB + solusi tiket lama (embedding lokal); sumber tiket tampil
   "Tiket serupa <nomor>".
-- Layanan mati → otomatis kembali ke mode demo / AI penyedia di atas. Cara membangun model & indeks:
+- Layanan mati → chatbot & pencarian memakai mode demo / kata kunci; **triase** tidak memakai aturan demo: tiket
+  tersimpan tanpa saran (UC-04 1a), lalu tombol *Buat saran AI* atau tugas `TriageRetry` mencoba lagi (penyedia AI
+  eksternal tetap dicoba bila dikonfigurasi). Cara membangun model & indeks:
   [`ai/README.md`](../../ai/README.md) (AI-3 s.d. AI-5).
 
 ## Skenario demo langkah demi langkah
@@ -244,6 +246,10 @@ Deteksi butuh ≥ 3 tiket Insiden mirip dalam 60 menit (bawaan, sesuai PoC).
   "Model belum lolos uji kualitas" dan tingkat selalu *Perlu penilaian manual*.
 - **Jenis disarankan (REQ/INC)**: bila layanan AI punya `ai/models/jenis.joblib` (`ai/scripts/train_jenis.py`), panel
   menampilkan saran jenis hanya bila berbeda dari jenis tiket dan keyakinan ≥ ambang; Operator mengubahnya di form.
+- **Jenis perlu ditinjau**: keyakinan jenis di antara ambang rendah dan ambang (TO-BE hal. 100) tampil sebagai
+  "Jenis: perlu ditinjau (…%) · model condong ke …" walau sama dengan jenis tiket.
+- **Pemohon pejabat**: jabatan SSO yang diawali kata di Pengaturan AI › *Jabatan pejabat* → grup *Pejabat* saat login;
+  aturan `setup_pejabat_rules.py` dan saran triase menaikkan urgensi satu tingkat, panel menulis alasannya.
 - **Urgensi disarankan + alasan dampak** (BR-05): untuk insiden, `ai/models/urgensi.joblib`
   (`ai/scripts/train_urgensi.py`) memakai **ambang per kelas** dari validasi silang: Rendah bila P(Low) ≥ ambang Low
   (presisi ≥ 75%), Sedang bila P(Low) ≤ ambang Medium (akurasi > pembanding + 3 poin); gerbang dinilai per kelas
@@ -380,7 +386,7 @@ Semua angka dari tabel log plugin (`src/Stats.php`):
 | Chat terbantu tanpa tiket, jadi laporan, rata-rata rating | `chats` |
 | Artikel yang paling sering dipakai chatbot (5 teratas) | `article_uses` |
 | Artikel paling sering dinilai tidak membantu: chat yang mengutipnya lalu jadi laporan / rating ≤ 2, plus "Tidak membantu" di Cari knowledge | `article_uses` + `chats`, `feedback` |
-| Pola insiden terdeteksi / dikonfirmasi (Problem lepas dari Baru) / ditutup (Selesai, Ditutup, atau dihapus) | `patterns` + Problem |
+| Pola insiden terdeteksi / dikonfirmasi (Problem terbuka yang sudah disentuh manusia: status diubah oleh pengguna non-sistem, tindak lanjut/tugas ditambahkan, atau tiket ditautkan manual; status awal *Ditugaskan* dari pembuatan otomatis tidak dihitung) / ditutup (Selesai, Ditutup, atau dihapus) | `patterns` + Problem, `glpi_logs` (tanpa `cron_*`), tindak lanjut & tugas Problem |
 | Drift: % Ubah+Tolak per bulan, 6 bulan terakhir | `decisions` |
 | Tren pola insiden: tiket per minggu per topik (5 topik, 12 minggu) | `patterns` |
 | KPI tabel 1.3: % SLA respons & penyelesaian terlampaui, median waktu sampai diambil, % diselesaikan Operator tanpa eskalasi; volume tiket per minggu per jenis & 5 kategori teratas (12 minggu) | tiket GLPI (tanpa entitas arsip) |
