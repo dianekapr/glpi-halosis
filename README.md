@@ -232,8 +232,18 @@ langkahnya ada di [Pemasangan manual](#pemasangan-manual-yang-dijalankan-scripts
 **Syarat:** `scripts/pasang.sh` sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi).
 Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
 
-**1. [Unduh folder `models` dan `index` dari sini](https://drive.google.com/drive/folders/1S_Cpm0qa0OoqGSC4-SFt-ZZfhaw9X87Y?usp=share_link)**
-(login dengan akun Google yang diberi akses oleh pemilik repo). Isinya **7 file**: `models/triage.joblib` (±40 MB,
+**1. Unduh dari Google Drive** (login dengan akun Google yang diberi akses oleh pemilik repo):
+
+| Yang diunduh | Untuk siapa | Link |
+| --- | --- | --- |
+| Folder **`models`** (model AI) | Semua penguji | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
+| Folder **`index`** (indeks pencarian chatbot) | Semua penguji | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
+| **Data ticketing** (Excel history tiket mentah) | **Hanya Pengelola AI** yang melatih ulang model ([`ai/README.md`](ai/README.md)); penguji **tidak perlu** | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
+
+Ketiganya ada di folder Drive yang sama; unduh hanya yang Anda perlukan. File data ticketing disimpan di
+`data/raw/` (di-ignore git) dan **tidak boleh** disalin ke tempat lain.
+
+Isi `models` + `index` **7 file**: `models/triage.joblib` (±40 MB,
 saran tim) + `models/triage.metrics.json` (metrik gerbang kualitas), `models/jenis.joblib` (saran jenis REQ/INC),
 `models/urgensi.joblib` + `models/urgensi.metrics.json` (saran urgensi insiden), dan `index/chunks.parquet` +
 `index/vectors.npy`. Versi 31 Okt 2026 dilatih dari **ekspor history versi baru** (220 kolom); `prioritas.joblib`
@@ -247,9 +257,10 @@ Di Drive: pilih kedua folder (atau folder induknya) → klik kanan → **Downloa
 `.zip` (namanya bisa seperti `drive-download-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip;
 Windows → klik kanan → **Extract All**.
 
-> 🔒 **Untuk pemilik repo:** bagikan folder Drive ini **hanya ke akun Google anggota tim** (Bagikan › tambahkan
-> email satu per satu, peran *Pelihat*). Jangan pakai akses umum "Siapa saja yang memiliki link": link di README
-> ini bisa terbaca siapa pun yang membuka repo, dan isinya diturunkan dari data internal.
+> 🔒 **Untuk pemilik repo:** repo ini **publik**, jadi link di atas terbaca siapa pun. Bagikan folder Drive
+> **hanya ke akun Google anggota tim** (Bagikan › tambahkan email satu per satu, peran *Pelihat*); jangan pakai akses
+> umum "Siapa saja yang memiliki link". **Data ticketing berisi data pribadi mentah**: sebaiknya ditaruh di folder
+> Drive terpisah yang hanya dibagikan ke Pengelola AI.
 
 **2. Taruh di folder proyek** sehingga susunannya **persis** seperti ini (nama huruf kecil semua):
 ```text
