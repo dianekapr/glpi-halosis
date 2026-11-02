@@ -787,7 +787,7 @@ Jadikan default untuk semua pengguna:
 ```bash
 docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
 docker compose exec glpi php bin/console config:set language id_ID --allow-superuser
-docker compose exec glpi php bin/console config:set text_login '<p style="text-align:center">Selamat datang di <strong>HaloSIS</strong>, layanan TI BPS.<br>Masuk dengan akun dinas Anda.</p>' --allow-superuser
+docker compose exec glpi php bin/console config:set text_login '<p>Gunakan akun dinas BPS Anda.</p>' --allow-superuser
 ```
 Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
 
@@ -808,6 +808,45 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
   bawaan GLPI. Kartu 16px, tombol & input 10px, badge pill, bayangan halus, tabel daftar lebih lega.
 - Antarmuka Helpdesk (Pegawai) memakai header putih seperti prototipe; sidebar petugas tetap primary.
 - Header notifikasi info & peringatan GLPI disesuaikan agar kontras teks memenuhi WCAG AA.
+- **Halaman login** (`LoginPage`: hook `add_css_anonymous_page`, `add_javascript_anonymous_page`, `display_login`;
+  `public/css/login.css`, `public/js/login.js`, `templates/login.html.twig`, `public/img/login-ilustrasi.svg`
+  [unDraw]; warna dari token `--halosis-login-*` di palet). Latar teal gelap dengan lingkaran samar; satu kartu dua
+  panel: kiri (±55%) teal dengan ilustrasi, "Selamat datang di HaloSIS" · "Layanan TI BPS", dibatasi lengkung SVG
+  bergaris aksen teal terang; kanan putih: logo kecil, judul "Masuk", field berikon (tombol tampil/sembunyikan kata
+  sandi: `aria-label`, `aria-pressed`), tombol "Masuk", lencana "Login terpusat (SSO)" (bila Keycloak aktif) dan
+  "Lupa kata sandi? Hubungi Operator layanan TI" (menggantikan tautan reset GLPI; akun lokal seperti `glpi` tetap bisa
+  memakai `/front/lostpassword.php?lostpassword=1`). Footer di luar kartu "Didukung GLPI · © Teclib' and
+  contributors" (tautan atribusi tetap); tautan *Bantuan* (dokumentasi GLPI) disembunyikan. HP (≤ 768px): pita
+  sambutan pendek di atas tanpa ilustrasi & lengkung, form penuh lebar. Teks konfigurasi `text_login` tampil sebagai
+  subjudul ("Gunakan akun dinas BPS Anda."). Field `login_name`/`login_password`, alamat form & CSRF tidak berubah;
+  tanpa JS form bawaan GLPI tampil apa adanya; aset ini tidak dimuat setelah login. Halaman galat login & lupa
+  password ikut berlatar teal dengan logo terang. Tangkapan: `screenshot/modernisasi/login-*.png`.
+- **Halaman login selalu Bahasa Indonesia:** GLPI memilih bahasa halaman anonim dari bahasa browser; sebelum login
+  plugin memakai bahasa default instansi (`config language`, `LoginPage::useDefaultLanguage`), sesudah login bahasa
+  mengikuti preferensi pengguna. Label inti ("Masuk", "Nama pengguna", "Kata sandi", pesan galat login):
+  `plugins/halosis/locales/core/id_ID.po`, disalin `plugin:install` ke folder terjemahan lokal GLPI
+  (`files/_locales/core_halosis`, mekanisme bawaan, bukan mengubah GLPI) lalu `cache:clear`. Berlaku di seluruh
+  GLPI (mis. kolom "Login" pada daftar pengguna jadi "Nama pengguna"); dihapus saat plugin di-uninstall.
+- **Warna aksen per peran** (`RoleTheme`, `public/js/role.js`, variabel di `public/css/halosis.css`, pemakaian di
+  palet): peran dibaca dari **profil aktif** (ID profil seperti `RoleMenu`, bukan nama pengguna) → `<meta
+  name="halosis-role">` (hook `add_header_tag`, tanpa kedip) + kelas `hs-role-<peran>` di `<body>`; ikut berubah
+  saat pengguna ganti profil tanpa logout. Super-Admin = Administrator, ketua tim = Tim Teknis; halaman login tetap
+  teal. Yang memakai warna peran: sidebar & item aktif, tombol utama, tautan & ring fokus, judul kartu/bagian form,
+  chip filter, chat Pegawai, dan lencana nama peran di header (latar `--hs-role-soft`, teks `--hs-role-ink`). Yang
+  tetap: warna status/prioritas/SLA, peringatan & galat, grafik dashboard, tingkat keyakinan Saran AI, logo.
+
+  | Peran | `--hs-role` | `--hs-role-soft` | `--hs-role-ink` | putih / role | ink / soft | ink / putih |
+  |---|---|---|---|---|---|---|
+  | Pegawai | `#176568` | `#E1F0EF` | `#176568` | 6,78 | 5,78 | 6,78 |
+  | Operator | `#496B85` | `#E8EFF4` | `#496B85` | 5,64 | 4,85 | 5,64 |
+  | Tim Teknis | `#A66552` | `#F4EAE6` | `#905747` | 4,56 | 4,88 | 5,77 |
+  | Knowledge Manager | `#79627F` | `#F0EAF2` | `#755F7B` | 5,43 | 4,83 | 5,71 |
+  | Manajemen | `#667C62` | `#EAF0E7` | `#596C56` | 4,54 | 4,89 | 5,67 |
+  | Administrator | `#A05D70` | `#F4E8EC` | `#905465` | 4,89 | 4,83 | 5,77 |
+
+  `--hs-role-ink` = warna utama dengan lightness HLS diturunkan sampai ≥ 4,5:1 di atas aksen ringan (Terracotta,
+  Sage, Rose gagal bila memakai warna utama: 3,9 / 3,9 / 4,1). Teks redup sidebar memakai putih penuh dan item
+  aktif memakai warna peran digelapkan 22% (≥ 6,7:1). Tangkapan: `screenshot/modernisasi/peran-*.png`.
 - **Semua tabel daftar** (tiket, masalah, KB, pengguna, grup, kategori, SLA, aturan, log): kartu membulat, header
   11px huruf kapital, isi 14px, garis tipis & hover baris; kolom nama/judul min. 260px (maks. 2 baris); ID,
   tanggal, status & prioritas tidak terpotong; kolom lain satu baris dengan ellipsis (lengkap saat baris

@@ -9,6 +9,7 @@
 
 use GlpiPlugin\Halosis\Config;
 use GlpiPlugin\Halosis\KnowledgeIndex;
+use GlpiPlugin\Halosis\LoginPage;
 use GlpiPlugin\Halosis\PatternDetector;
 use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
@@ -248,6 +249,8 @@ function plugin_halosis_install(): bool
         'hourmax' => 17,
     ]);
     ProgressReminder::installNotification();
+    // Label inti halaman login ("Sign in", …) dalam Bahasa Indonesia lewat folder terjemahan lokal GLPI
+    LoginPage::installCoreLocales();
 
     return true;
 }
@@ -263,6 +266,7 @@ function plugin_halosis_uninstall(): bool
     Config::uninstall();
     Profile::uninstall();
     ProgressReminder::uninstallNotification();
+    LoginPage::uninstallCoreLocales();
     CronTask::unregister('halosis');
 
     return true;

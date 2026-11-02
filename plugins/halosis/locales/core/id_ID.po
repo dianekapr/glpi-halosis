@@ -1,0 +1,43 @@
+# Terjemahan label INTI GLPI untuk halaman login HaloSIS (domain "glpi").
+# Tidak mengubah GLPI: LoginPage::installCoreLocales() menyalin .mo ke GLPI_LOCAL_I18N_DIR/core_halosis
+# (mekanisme terjemahan lokal bawaan GLPI). Kompilasi: python3 tools/locales.py
+# Catatan: berlaku di seluruh GLPI, jadi hanya label yang belum/kurang tepat di terjemahan id_ID bawaan.
+msgid ""
+msgstr ""
+"Project-Id-Version: HaloSIS\n"
+"PO-Revision-Date: 2026-11-02 00:00+0700\n"
+"Last-Translator: Tim HaloSIS BPS\n"
+"Language-Team: Indonesian\n"
+"Language: id_ID\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "Login to your account"
+msgstr "Masuk"
+
+msgid "Login"
+msgstr "Nama pengguna"
+
+msgid "Password"
+msgstr "Kata sandi"
+
+msgid "Sign in"
+msgstr "Masuk"
+
+msgid "Incorrect username or password"
+msgstr "Nama pengguna atau kata sandi salah"
+
+msgid "Empty login or password"
+msgstr "Nama pengguna atau kata sandi belum diisi"
+
+msgid "Error"
+msgid_plural "Errors"
+msgstr[0] "Galat"
+
+msgid "Log in again"
+msgstr "Masuk lagi"
+
+msgid "Go to main content"
+msgstr "Langsung ke konten utama"

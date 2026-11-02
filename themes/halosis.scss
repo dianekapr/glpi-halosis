@@ -52,13 +52,18 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --tblr-border-color-translucent: rgb(32 51 50 / 10%);
     --tblr-box-shadow: 0 1px 2px rgb(32 51 50 / 4%), 0 4px 14px rgb(32 51 50 / 5%);
     --tblr-box-shadow-sm: 0 1px 2px rgb(32 51 50 / 5%);
-    // Fokus: ring primary
-    --tblr-focus-ring-color: rgb(21 94 99 / 22%);
+    // Warna aksen per peran (plugin HaloSIS, RoleTheme): --hs-role / --hs-role-soft / --hs-role-ink dipasang di
+    // :root oleh plugins/halosis/public/css/halosis.css sesuai profil aktif. Cadangan = teal HaloSIS (tanpa
+    // plugin / halaman login). Teks di atas --hs-role putih (≥ 4,5:1), teks di atas --hs-role-soft & tautan
+    // memakai --hs-role-ink (≥ 4,5:1). Warna semantik (status, prioritas, SLA, peringatan, galat) tetap.
 
-    // Primary: tombol utama & elemen aktif (teks putih, kontras 7,4:1)
-    --tblr-primary-rgb: 21, 94, 99;
+    // Fokus: ring warna peran
+    --tblr-focus-ring-color: color-mix(in srgb, var(--hs-role, #155e63) 22%, transparent);
+
+    // Primary: tombol utama & elemen aktif (teks putih, kontras ≥ 4,5:1 untuk semua peran)
+    --tblr-primary-rgb: var(--hs-role-rgb, 21, 94, 99);
     --tblr-primary-fg: #fff;
-    --tblr-link-color-rgb: 21, 94, 99;
+    --tblr-link-color-rgb: var(--hs-role-ink-rgb, 21, 94, 99);
 
     // GLPI/Tabler memakai "secondary" sebagai warna TEKS sekunder (link header, deskripsi,
     // .text-secondary). #77B8A8 terlalu pucat untuk teks di atas putih (2:1), jadi variabel
@@ -74,14 +79,16 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --tblr-bg-surface: #fff;
     --tblr-body-color: #203332;
     --tblr-body-color-rgb: 32, 51, 50;
-    --tblr-navbar-color: #155e63;
+    --tblr-navbar-color: var(--hs-role-ink, #155e63);
 
-    // Sidebar & header pakai primary
-    --glpi-mainmenu-bg: #155e63;
+    // Sidebar pakai warna peran (cadangan primary)
+    --glpi-mainmenu-bg: var(--hs-role, #155e63);
     --glpi-mainmenu-fg: #fff;
-    --glpi-mainmenu-fg-muted: #ffffffb3;
-    // Latar item aktif di menu flyout (menu flyout berlatar putih, teks primary)
-    --glpi-mainmenu-active-bg: #dcede8;
+    // Teks redup sidebar: putih 70% di teal (4,9:1); warna peran yang lebih terang (Terracotta, Sage, Rose) hanya
+    // ±4,6:1 dengan putih penuh, jadi teks redup memakai putih penuh (--hs-role-menu-muted, lihat di bawah)
+    --glpi-mainmenu-fg-muted: var(--hs-role-menu-muted, #ffffffb3);
+    // Latar item aktif di menu flyout (menu flyout berlatar putih, teks warna peran)
+    --glpi-mainmenu-active-bg: var(--hs-role-soft, #dcede8);
 
     // Badge & highlight pakai accent, teks gelap demi kontras (6,2:1)
     --tblr-badge-bg: #ff965a;
@@ -89,8 +96,8 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --glpi-badge-bg: #ff965a;
     --glpi-badge-fg: #203332;
 
-    // Judul bagian form
-    --glpi-form-header-fg: #155e63;
+    // Judul bagian form (latar & garisnya diturunkan GLPI dari warna ini)
+    --glpi-form-header-fg: var(--hs-role-ink, #155e63);
 
     // Antarmuka Helpdesk (Self-Service)
     // Header putih bersih, sama dengan antarmuka standar
@@ -119,6 +126,24 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --glpi-logo-dark-login: var(--halosis-logo-dark);
     --glpi-logo-light-login: var(--halosis-logo-light);
 
+    // Halaman login (plugins/halosis/public/css/login.css): latar teal gelap + lingkaran samar, kartu dua panel.
+    // Panel brand primary → primary gelap, teks putih (kontras 7,4:1 s.d. 9:1); garis lengkung teal terang
+    // (elemen dekoratif); teks di luar kartu putih 80% di latar gelap (≥ 8:1).
+    --halosis-login-page-bg: #0b3a3d;
+    --halosis-login-page-bg-2: #072a2c;
+    --halosis-login-circle: rgb(119 184 168 / 12%);
+    --halosis-login-on-page: rgb(255 255 255 / 80%);
+    --halosis-login-brand-bg: #155e63;
+    --halosis-login-brand-bg-2: #0e4245;
+    --halosis-login-brand-fg: #fff;
+    --halosis-login-brand-fg-muted: rgb(255 255 255 / 85%);
+    --halosis-login-art-bg: #e8f3f0;
+    --halosis-login-line: #8fd3c1;
+    --halosis-login-primary: #155e63;
+    --halosis-login-soft: #e3f1ed;
+    --halosis-login-error: #a33a06;
+    --halosis-login-error-bg: #fff4ec;
+
     // Secondary #77B8A8 sebagai latar (teks gelap demi kontras)
     .btn-secondary {
         --tblr-btn-bg: #77b8a8;
@@ -139,8 +164,8 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
 
     // Pita ikon pada judul bagian form (macro largeTitle memakai .bg-blue bawaan Tabler)
     .ribbon.bg-blue {
-        background-color: #155e63 !important;
-        border-color: #155e63 !important;
+        background-color: var(--hs-role, #155e63) !important;
+        border-color: var(--hs-role, #155e63) !important;
     }
 
     // Menu atas antarmuka Helpdesk: halaman aktif ditandai garis accent & huruf tebal
@@ -160,8 +185,26 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     .sidebar #navbar-menu .nav-item > .nav-link.active,
     .sidebar #navbar-menu .nav-item > .nav-link.show {
         color: #fff !important;
-        background-color: rgb(255 255 255 / 14%);
+        background-color: var(--hs-role-menu-active, rgb(255 255 255 / 14%));
         border-left-color: #ff965a !important;
+    }
+
+    // ---- Warna peran (hanya bila plugin memasang peran; halaman login & profil lain tetap teal) ----
+    &:has(> body[class*="hs-role-"]),
+    &:has(> head > meta[name="halosis-role"]) {
+        // Sidebar: teks redup putih penuh, item aktif = warna peran digelapkan (putih di atasnya ≥ 5,6:1;
+        // lapisan putih transparan bawaan menurunkan kontras di warna peran yang terang)
+        --hs-role-menu-muted: #fff;
+        --hs-role-menu-active: color-mix(in srgb, var(--hs-role), black 22%);
+
+        // Header kartu: judul warna peran (ink) + garis bawah aksen ringan
+        .card > .card-header {
+            border-bottom-color: var(--hs-role-soft);
+
+            .card-title {
+                color: var(--hs-role-ink);
+            }
+        }
     }
 
     // ---- Judul: Plus Jakarta Sans ----
@@ -189,8 +232,8 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
 
         header.navbar.navbar-dark {
             --tblr-navbar-color: #4f6763;
-            --tblr-navbar-hover-color: #155e63;
-            --tblr-navbar-active-color: #155e63;
+            --tblr-navbar-hover-color: var(--hs-role-ink, #155e63);
+            --tblr-navbar-active-color: var(--hs-role-ink, #155e63);
             --tblr-navbar-brand-color: #203332;
             --tblr-navbar-brand-hover-color: #203332;
             background-color: #fff;
@@ -213,7 +256,7 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     // ---- Input: ring fokus primary ----
     .form-control:focus,
     .form-select:focus {
-        border-color: #155e63;
+        border-color: var(--hs-role, #155e63);
         box-shadow: 0 0 0 0.2rem var(--tblr-focus-ring-color);
     }
 
@@ -457,14 +500,14 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
         // Chip filter & urutan aktif: lembut (bawaan GLPI hijau/oranye pucat, selektor bersarang → !important)
         .btn-active-search,
         .btn-active-sort {
-            background-color: #e3f1ed !important;
-            color: #155e63 !important;
+            background-color: var(--hs-role-soft, #e3f1ed) !important;
+            color: var(--hs-role-ink, #155e63) !important;
             border-radius: var(--tblr-border-radius-pill);
         }
 
         // Tombol tampilan aktif (tabel/peta/kanban)
         .btn-pill.btn-ghost-info {
-            background-color: #155e63 !important;
+            background-color: var(--hs-role, #155e63) !important;
             color: #fff !important;
         }
     }
