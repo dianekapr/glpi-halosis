@@ -1,34 +1,27 @@
 {# Bagian halaman login HaloSIS (hook display_login). public/js/login.js menempatkan tiap bagian; tanpa JS
    semuanya tersembunyi (login.css) dan form bawaan GLPI tampil apa adanya. #}
-<aside class="halosis-login-brand" aria-label="HaloSIS">
+<aside class="halosis-login-brand">
     <div class="halosis-login-brand-inner">
-        <div class="halosis-login-logo">
-            <img src="{{ logo }}" alt="" width="48" height="48">
-            <span>HaloSIS</span>
+        <div class="halosis-login-art">
+            <img src="{{ illustration }}" alt="" width="774" height="670">
         </div>
-        <p class="halosis-login-tagline">{{ __('IT services of BPS in a single conversation', 'halosis') }}</p>
-        <ul class="halosis-login-points">
-            <li>
-                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-message-chatbot"></i></span>
-                <span><strong>{{ __('Ask the assistant', 'halosis') }}</strong>
-                    <small>{{ __('Instant answers from the help center', 'halosis') }}</small></span>
-            </li>
-            <li>
-                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-file-plus"></i></span>
-                <span><strong>{{ __('Create a report', 'halosis') }}</strong>
-                    <small>{{ __('Report a problem or request a service', 'halosis') }}</small></span>
-            </li>
-            <li>
-                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-progress-check"></i></span>
-                <span><strong>{{ __('Track status', 'halosis') }}</strong>
-                    <small>{{ __('Follow your reports until they are solved', 'halosis') }}</small></span>
-            </li>
-        </ul>
+        <h1 class="halosis-login-welcome">{{ __('Welcome to HaloSIS', 'halosis') }}</h1>
+        <p class="halosis-login-subtitle">{{ __('BPS IT services', 'halosis') }}</p>
     </div>
+    {# Batas lengkung ke panel form: isi putih + garis aksen (tidak dipakai di HP) #}
+    <svg class="halosis-login-curve" viewBox="0 0 100 800" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path class="halosis-login-curve-fill" d="M100 0H72C8 220 8 580 72 800H100Z"/>
+        <path class="halosis-login-curve-line" d="M72 0C8 220 8 580 72 800"/>
+        <path class="halosis-login-curve-line halosis-login-curve-line-soft" d="M56 0C-8 220 -8 580 56 800"/>
+    </svg>
 </aside>
 <div class="halosis-login-parts d-none"
      data-show-password="{{ __('Show password', 'halosis') }}"
      data-hide-password="{{ __('Hide password', 'halosis') }}">
+    <div class="halosis-login-logo">
+        <img src="{{ logo }}" alt="" width="32" height="32">
+        <span>HaloSIS</span>
+    </div>
     {% if sso %}
         <span class="halosis-login-badge"><i class="ti ti-shield-lock" aria-hidden="true"></i>{{ __('Central sign-in (SSO)', 'halosis') }}</span>
     {% endif %}
