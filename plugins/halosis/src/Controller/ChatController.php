@@ -75,7 +75,7 @@ final class ChatController extends AbstractController
         );
 
         return $this->render('@halosis/chat_history.html.twig', [
-            'title'    => __('Chat history', 'halosis'),
+            'title'    => _x('page title', 'Chat history', 'halosis'),
             'menu'     => [HelpdeskHome::MENU_HISTORY_KEY],
             'chats'    => $chats,
             'limit'    => Chat::HISTORY_LIMIT,

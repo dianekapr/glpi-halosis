@@ -215,6 +215,7 @@ final class ProgressReminder extends CommonDBTM
     {
         $notification = new Notification();
         if ($notification->getFromDBByCrit(['itemtype' => Ticket::class, 'event' => self::EVENT])) {
+            self::standardizeTemplateText();
             return;
         }
 
@@ -226,10 +227,10 @@ final class ProgressReminder extends CommonDBTM
             'subject'                  => '[HaloSIS] Pengingat progres tiket ##ticket.id##',
             'content_text'             => "Tiket ##ticket.id## (##ticket.status##) belum mendapat tindak lanjut selama "
                 . "##halosis.idle_days## hari kerja (batas ##halosis.reminder_days## hari kerja).\n"
-                . "Mohon perbarui progres atau beri tindak lanjut kepada pemohon.\n##ticket.url##",
+                . "Mohon perbarui progres atau berikan tindak lanjut kepada pemohon.\n##ticket.url##",
             'content_html'             => '<p>Tiket ##ticket.id## (##ticket.status##) belum mendapat tindak lanjut selama '
                 . '##halosis.idle_days## hari kerja (batas ##halosis.reminder_days## hari kerja).</p>'
-                . '<p>Mohon perbarui progres atau beri tindak lanjut kepada pemohon.</p>'
+                . '<p>Mohon perbarui progres atau berikan tindak lanjut kepada pemohon.</p>'
                 . '<p><a href="##ticket.url##">##ticket.url##</a></p>',
         ]);
 
@@ -254,6 +255,31 @@ final class ProgressReminder extends CommonDBTM
                 'type'             => Notification::USER_TYPE,
                 'items_id'         => $recipient,
             ]);
+        }
+    }
+
+    /**
+     * Templat yang dipasang versi lama memakai "beri tindak lanjut" (tidak baku): perbaiki tanpa menimpa teks lain
+     * yang mungkin sudah diubah admin (idempoten).
+     */
+    private static function standardizeTemplateText(): void
+    {
+        $template = new NotificationTemplate();
+        if (!$template->getFromDBByCrit(['itemtype' => Ticket::class, 'name' => 'HaloSIS: Pengingat progres'])) {
+            return;
+        }
+        $translation = new NotificationTemplateTranslation();
+        foreach ($translation->find(['notificationtemplates_id' => $template->getID()]) as $row) {
+            $fields = [];
+            foreach (['content_text', 'content_html'] as $field) {
+                $fixed = str_replace('atau beri tindak lanjut', 'atau berikan tindak lanjut', (string) $row[$field]);
+                if ($fixed !== $row[$field]) {
+                    $fields[$field] = $fixed;
+                }
+            }
+            if ($fields !== []) {
+                $translation->update(['id' => $row['id']] + $fields);
+            }
         }
     }
 }

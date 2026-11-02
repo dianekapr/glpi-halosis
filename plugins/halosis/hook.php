@@ -249,8 +249,10 @@ function plugin_halosis_install(): bool
         'hourmax' => 17,
     ]);
     ProgressReminder::installNotification();
-    // Label inti halaman login ("Sign in", …) dalam Bahasa Indonesia lewat folder terjemahan lokal GLPI
+    // Label inti halaman login ("Sign in", …) dalam Bahasa Indonesia lewat folder terjemahan lokal GLPI;
+    // bahasa bawaan GLPI = id_ID
     LoginPage::installCoreLocales();
+    LoginPage::setDefaultLanguage();
 
     return true;
 }

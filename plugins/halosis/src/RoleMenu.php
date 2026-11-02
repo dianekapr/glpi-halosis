@@ -56,7 +56,7 @@ final class RoleMenu
                 return;
             }
         }
-        throw new AccessDeniedHttpException('Peran ini tidak mengelola aturan');
+        throw new AccessDeniedHttpException(__('This role does not manage rules.', 'halosis'));
     }
 
     public const HIDDEN_CLASS = 'halosis-menu-hidden';

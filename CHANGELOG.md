@@ -56,6 +56,15 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   `role.js`, meta `halosis-role`), ikut berubah saat ganti profil; variabel `--hs-role` / `--hs-role-soft` /
   `--hs-role-ink` (ink digelapkan sampai ≥ 4,5:1) untuk sidebar, tombol utama, tautan & fokus, judul kartu, lencana
   nama peran di header; warna semantik, grafik, keyakinan Saran AI, logo, dan halaman login tetap.
+- **Bahasa Indonesia baku (2 Nov 2026, masih 1.0.0):** penyebab login berbahasa Inggris di laptop anggota tim =
+  instalasi lama (bahasa bawaan GLPI bukan id_ID, label inti belum disalin, cache terjemahan usang), bukan berkas
+  `.mo` (ikut git). Halaman anonim kini selalu id_ID (`LoginPage::useIndonesian`), terjemahan dipasang ulang & cache
+  dikosongkan otomatis saat `.mo` berubah (`syncLocales`), bahasa bawaan/akun demo/akun SSO baru = id_ID. Login sesuai
+  teks baku ("Masuk ke Akun Anda", "Nama Pengguna", "Kata Sandi"; `text_login` tidak ditampilkan). Seluruh msgstr
+  plugin dibakukan (PUEBI/KBBI + glosarium: Dasbor, pengetahuan, asisten, percakapan, kunci API, Panel
+  administrasi, Jejak audit, Pemantauan SLA, …; judul halaman ber-msgctxt "page title"); ±210 label inti GLPI di
+  alur demo diterjemahkan lewat `locales/core` (Balas, Tambah solusi, Setujui, Tolak, Tampilan Pribadi/Grup, …).
+  Artikel demo & templat pengingat progres dibakukan secara idempoten. Anggota tim: jalankan ulang `pasang.sh`.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

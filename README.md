@@ -328,6 +328,14 @@ Lalu jalankan skenario lengkap di
 
 **Cara singkat** (aman diulang): `git pull && docker compose up -d --build halosis-ai && scripts/pasang.sh`.
 
+> **Anggota tim yang sudah clone sebelum 2 Nov 2026: jalankan ulang `scripts/pasang.sh` sekali.** Gejala bila belum:
+> halaman login/menu tampil berbahasa Inggris di browser berbahasa Inggris ("Login to your account", "Welcome to
+> HaloSIS"). Penyebabnya bukan berkas `.mo` (ikut git), melainkan instalasi lama: bahasa bawaan GLPI belum id_ID,
+> label inti belum disalin ke `files/_locales/core_halosis`, dan cache terjemahan GLPI masih versi lama. Sejak
+> versi ini plugin memaksa halaman login berbahasa Indonesia dan memasang ulang terjemahan + mengosongkan cache
+> terjemahan otomatis bila berkas `.mo` berubah setelah `git pull` (`LoginPage::syncLocales`); `pasang.sh` juga
+> menyetel bahasa bawaan & bahasa akun demo ke id_ID.
+
 Rinciannya, bila ingin menjalankan satu per satu dari folder repo (aman diulang). Urutan penting: `halosis-ai` harus
 hidup **sebelum** install plugin, karena install juga mengisi katalog layanan ke indeks chatbot.
 
@@ -348,7 +356,7 @@ docker compose exec glpi php bin/console cache:clear --allow-superuser          
   Ini menghapus **data Keycloak saja** (akun & role dibuat ulang dari JSON; data GLPI tidak tersentuh):
   `docker compose stop keycloak && docker compose rm -f keycloak && docker volume rm glpi-halosis_keycloak_data && docker compose up -d keycloak`
 - **Katalog layanan belum masuk indeks** (cek: `curl -s localhost:8001/metrics | grep index_chunks`): ulangi
-  `plugin:install` saat `halosis-ai` hidup, atau simpan ulang salah satu kategori di Setup › Dropdowns › ITIL categories.
+  `plugin:install` saat `halosis-ai` hidup, atau simpan ulang salah satu kategori di Pengaturan › Daftar pilihan › Kategori ITIL.
 - Sebelum demo: `scripts/demo_snapshot.sh simpan`; kembali ke kondisi itu: `scripts/demo_snapshot.sh pulihkan`
   (lihat `reports/checklist_demo.md`).
 
@@ -537,7 +545,7 @@ Skrip ini hanya memakai fitur bawaan GLPI (lewat API, tanpa mengubah kode inti):
   (Senin–Jumat 08.00–20.00).
 - **Aturan bisnis "SLA BPS …"** (jenis × prioritas, dan kategori 14 hari) memasang SLA respons & penyelesaian saat
   tiket dibuat maupun saat prioritas/kategori diubah (mis. operator menerima saran triase). Aturan versi lama ("SLA
-  Kritis/Tinggi/Sedang/Rendah", "SLA layanan: …") dinonaktifkan. Bisa diubah Administrator di **Workflow & aturan**.
+  Kritis/Tinggi/Sedang/Rendah", "SLA layanan: …") dinonaktifkan. Bisa diubah Administrator di **Alur kerja & aturan**.
 - **Level eskalasi "Peringatan risiko SLA"** di tiap SLA penyelesaian/pemenuhan, **±20% sebelum batas** dalam jam
   kerja (2 hari → 5 jam, 7 hari → 17 jam, 8 hari → 19 jam, 14 hari → 34 jam, 15 hari → 36 jam). Dokumen memodelkan
   `ambangPeringatan` sebagai persentase (hal. 162); GLPI memakai waktu tetap sebelum batas, jadi persentase
@@ -588,9 +596,9 @@ menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri →
 | Tim (Grup) | Manager (ketua tim), Jumlah pengguna, Bisa ditugaskan | Komentar (kosong) |
 | Kategori layanan (ITIL) | Grup, Jumlah tiket, Terlihat untuk insiden / permintaan / antarmuka sederhana | — |
 | SLA / SLM | SLM, Tipe, Waktu / Kalender | — |
-| Workflow & aturan (aturan tiket) | Kolom tetap bawaan GLPI (Nama, Deskripsi, Dipakai untuk, Kriteria, Tindakan, Aktif, Posisi) | Daftar aturan bukan mesin pencarian, kolomnya tidak bisa diatur preferensi |
+| Alur kerja & aturan (aturan tiket) | Kolom tetap bawaan GLPI (Nama, Deskripsi, Dipakai untuk, Kriteria, Tindakan, Aktif, Posisi) | Daftar aturan bukan mesin pencarian, kolomnya tidak bisa diatur preferensi |
 
-Urutan default **Antrean validasi, Tiket saya & tim, Monitoring SLA**: "Waktu untuk menyelesaikan" terdekat dulu
+Urutan default **Antrean validasi, Tiket saya & tim, Pemantauan SLA**: "Waktu untuk menyelesaikan" terdekat dulu
 (URL menu ringkas di `plugins/halosis/src/RoleMenu.php`).
 
 Batasan GLPI: preferensi kolom berlaku per *itemtype* (dan per pengguna), **bukan per URL pencarian**. Antrean
@@ -616,7 +624,7 @@ Role mengikuti aktor pada dokumen perancangan (Tabel 6.1, UC-01 s.d. UC-10):
 | sri | Sri Handayani | Manajemen | Manajemen / Pimpinan | UC-08 | Standar | Hanya-baca: tiket, Masalah, dashboard, statistik |
 | lina | Lina Marlina | Knowledge Manager | Knowledge Manager | UC-09 | Standar | Kelola Knowledge Base & Kandidat Knowledge; tiket hanya-baca |
 | dimas | Dimas Aditya | Administrator | Administrator Sistem | UC-10 | Standar | Konfigurasi platform (katalog, SLA, tim, aturan, AI) |
-| — | — | — | Petugas Layanan TI (abstrak) | UC-08 | — | Aktor induk Operator + Tim Teknis, tanpa akun sendiri: kemampuan bersama Monitoring SLA & Masalah (pola insiden) |
+| — | — | — | Petugas Layanan TI (abstrak) | UC-08 | — | Aktor induk Operator + Tim Teknis, tanpa akun sendiri: kemampuan bersama Pemantauan SLA & Masalah (pola insiden) |
 | — | — | — | AI Engine (aktor sistem) | UC-02, UC-04 | — | Layanan `halosis-ai` (lihat [`ai/README.md`](ai/README.md)) |
 | glpi | — | Super-Admin | **Di luar aktor dokumen** | — | Standar | Akun pengelola sistem (instalasi, plugin, profil); bukan role bisnis |
 
@@ -631,7 +639,7 @@ Hak inti GLPI untuk UC-08 (diatur `setup-roles`):
 
 | Hak | Operator | Tim Teknis | Manajemen |
 | --- | --- | --- | --- |
-| Monitoring SLA (tiket melewati batas waktu) | lihat | lihat | lihat |
+| Pemantauan SLA (tiket melewati batas waktu) | lihat | lihat | lihat |
 | Masalah / pola insiden | lihat & ubah (konfirmasi/tutup pola, tautkan tiket, FR-04) | lihat | lihat |
 
 Untuk UC-10, `setup-roles` juga memberi **Administrator** hak service catalog (form) dan notifikasi (`notification`:
@@ -660,7 +668,7 @@ Hak plugin HaloSIS (bisa diubah di **Administrasi › Profil › (profil) › ta
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Chatbot | ✓ | | | | | | |
 | Saran triase AI | | lihat & putuskan | lihat | | | lihat & putuskan | lihat & putuskan |
-| Dashboard kinerja AI | | | | ✓ | | ✓ | ✓ |
+| Dasbor kinerja AI | | | | ✓ | | ✓ | ✓ |
 | Kandidat Knowledge (UC-09) | | | | | lihat & putuskan | lihat & putuskan | lihat & putuskan |
 | Konfigurasi plugin | | | | | | ✓ | ✓ |
 
@@ -787,7 +795,7 @@ Jadikan default untuk semua pengguna:
 ```bash
 docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
 docker compose exec glpi php bin/console config:set language id_ID --allow-superuser
-docker compose exec glpi php bin/console config:set text_login '<p>Gunakan akun dinas BPS Anda.</p>' --allow-superuser
+docker compose exec glpi php bin/console config:set text_login '' --allow-superuser
 ```
 Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
 
@@ -817,16 +825,21 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
   "Lupa kata sandi? Hubungi Operator layanan TI" (menggantikan tautan reset GLPI; akun lokal seperti `glpi` tetap bisa
   memakai `/front/lostpassword.php?lostpassword=1`). Footer di luar kartu "Didukung GLPI · © Teclib' and
   contributors" (tautan atribusi tetap); tautan *Bantuan* (dokumentasi GLPI) disembunyikan. HP (≤ 768px): pita
-  sambutan pendek di atas tanpa ilustrasi & lengkung, form penuh lebar. Teks konfigurasi `text_login` tampil sebagai
-  subjudul ("Gunakan akun dinas BPS Anda."). Field `login_name`/`login_password`, alamat form & CSRF tidak berubah;
+  sambutan pendek di atas tanpa ilustrasi & lengkung, form penuh lebar. Teks konfigurasi `text_login` tidak ditampilkan
+  (sambutan sudah ada di panel kiri; `pasang.sh` mengosongkannya). Field `login_name`/`login_password`, alamat form & CSRF tidak berubah;
   tanpa JS form bawaan GLPI tampil apa adanya; aset ini tidak dimuat setelah login. Halaman galat login & lupa
   password ikut berlatar teal dengan logo terang. Tangkapan: `screenshot/modernisasi/login-*.png`.
-- **Halaman login selalu Bahasa Indonesia:** GLPI memilih bahasa halaman anonim dari bahasa browser; sebelum login
-  plugin memakai bahasa default instansi (`config language`, `LoginPage::useDefaultLanguage`), sesudah login bahasa
-  mengikuti preferensi pengguna. Label inti ("Masuk", "Nama pengguna", "Kata sandi", pesan galat login):
-  `plugins/halosis/locales/core/id_ID.po`, disalin `plugin:install` ke folder terjemahan lokal GLPI
-  (`files/_locales/core_halosis`, mekanisme bawaan, bukan mengubah GLPI) lalu `cache:clear`. Berlaku di seluruh
-  GLPI (mis. kolom "Login" pada daftar pengguna jadi "Nama pengguna"); dihapus saat plugin di-uninstall.
+- **HaloSIS hanya berbahasa Indonesia (PUEBI/KBBI):** GLPI memilih bahasa halaman anonim dari bahasa browser; plugin
+  memaksa id_ID di halaman login & lupa kata sandi apa pun bahasa browser (`LoginPage::useIndonesian`). Bahasa
+  bawaan GLPI = id_ID (`plugin:install` & `pasang.sh`), akun demo (`seed_halosis.py`) & akun baru dari SSO = id_ID.
+  Label inti GLPI yang belum diterjemahkan/tidak baku di id_ID bawaan (hanya ±19% lengkap): login ("Masuk ke Akun
+  Anda", "Nama Pengguna", "Kata Sandi", "Masuk", pesan galat) dan label di alur demo (Balas, Tambah solusi, Setujui,
+  Tolak, Tampilan Pribadi/Grup, "Menampilkan … baris", dll.) di `plugins/halosis/locales/core/id_ID.po` → folder
+  terjemahan lokal GLPI `files/_locales/core_halosis` (mekanisme bawaan, bukan mengubah GLPI). Dipasang ulang dan
+  cache terjemahan dikosongkan otomatis bila `.mo` berubah (`LoginPage::syncLocales`); dihapus saat uninstall.
+  Glosarium: Dasbor, pengetahuan/basis pengetahuan, asisten, layanan mandiri, percakapan, riwayat, penilaian,
+  kunci API, isian, formulir, petugas, acuan awal, pergeseran, Masalah, Tanya Jawab (FAQ), ponsel. Judul halaman/
+  kartu huruf kapital tiap kata; menu, tombol, label huruf kapital di awal saja.
 - **Warna aksen per peran** (`RoleTheme`, `public/js/role.js`, variabel di `public/css/halosis.css`, pemakaian di
   palet): peran dibaca dari **profil aktif** (ID profil seperti `RoleMenu`, bukan nama pengguna) → `<meta
   name="halosis-role">` (hook `add_header_tag`, tanpa kedip) + kelas `hs-role-<peran>` di `<body>`; ikut berubah
@@ -865,7 +878,7 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 | Login (SSO BPS) | Form login HaloSIS, password dicek ke **Keycloak** (langkah 6b) |
 | Beranda pegawai: permintaan / masalah | **Tanya HaloSIS** › *Ajukan permintaan* (form *Request a service*) / *Laporkan masalah* (chatbot → laporan) |
 | Laporan Saya, Detail Laporan (pegawai) | Login pegawai → **Tiket** (antarmuka sederhana/Helpdesk) |
-| Buat Laporan | **Service catalog** / Create a ticket |
+| Buat Laporan | **Katalog layanan** / Buat tiket |
 | Pusat Bantuan | **FAQ** (artikel KB yang ditandai FAQ) |
 | Migrasi data (FR-10) | `ai/scripts/prepare_data.py` (pembersihan & penyamaran) + `ai/scripts/reconcile.py` → `reports/rekonsiliasi.md`: jumlah sumber/berhasil/gagal, tidak lengkap, duplikat, nilai disamarkan per jenis, per bulan & per tim (lihat [`ai/README.md`](ai/README.md#fr-10--rekonsiliasi-migrasi)) |
 | Konfirmasi "sudah beres / belum beres" (UC-07) | Tombol **Approve / Refuse** pada solusi tiket. *Refuse* wajib disertai alasan (ditegakkan GLPI) dan membuka kembali tiket ke tim |
@@ -874,15 +887,15 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 | Antrean validasi & Semua tiket (operator) | **Bantuan › Tiket** (filter status Baru) |
 | Tiket saya & tim (Tim Teknis) | Beranda **Tampilan Personal / Tampilan Group** |
 | Komentar publik / catatan internal | **Answer › Followup** (centang *Private* untuk internal), **Task** |
-| Monitoring SLA (respons & penyelesaian) | Kolom "Waktu untuk mengambil alih" (SLA respons) & "Waktu untuk menyelesaikan" + **Setup › Service levels** |
+| Pemantauan SLA (respons & penyelesaian) | Kolom "Waktu untuk mengambil alih" (SLA respons) & "Waktu untuk menyelesaikan" + **Setup › Service levels** |
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
-| Cari knowledge (Operator & Tim Teknis) | Menu **Cari knowledge** (plugin, `/plugins/halosis/CariKnowledge`): pencarian semantik artikel KB & tiket historis; layanan AI mati → kata kunci artikel KB |
-| Kandidat Knowledge (KM, UC-09) | Menu **Kandidat knowledge** (plugin): solusi tiket selesai & solusi berulang dari indeks AI → *Jadikan artikel* (draf KB) / *Abaikan* (dengan alasan) |
-| Dashboard manajemen, laporan | **Bantuan › Dashboard**, **Bantuan › Statistik** |
-| Service catalog, tim, pengguna & role | **Setup › Dropdowns › ITIL categories**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |
-| Workflow & aturan otomatis | **Administrasi › Rules › Business rules for tickets** |
-| Audit trail | Tab **Riwayat** di setiap tiket/objek |
+| Cari pengetahuan (Operator & Tim Teknis) | Menu **Cari pengetahuan** (plugin, `/plugins/halosis/CariKnowledge`): pencarian semantik artikel KB & tiket historis; layanan AI mati → kata kunci artikel KB |
+| Kandidat Knowledge (KM, UC-09) | Menu **Kandidat pengetahuan** (plugin): solusi tiket selesai & solusi berulang dari indeks AI → *Jadikan artikel* (draf KB) / *Abaikan* (dengan alasan) |
+| Dashboard manajemen, laporan | **Bantuan › Dasbor**, **Bantuan › Statistik** |
+| Katalog layanan, tim, pengguna & peran | **Pengaturan › Daftar pilihan › Kategori ITIL**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |
+| Alur kerja & aturan otomatis | **Administrasi › Rules › Business rules for tickets** |
+| Jejak audit | Tab **Riwayat** di setiap tiket/objek |
 
 **Tidak ada di GLPI** (tetap dibangun sendiri di HaloSIS): chatbot AI, saran triase + keyakinan,
 alur Terima/Ubah/Tolak saran AI, deteksi pola otomatis, kandidat knowledge, dan dashboard kinerja AI.

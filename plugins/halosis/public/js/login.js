@@ -24,16 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.body.classList.add('halosis-login');
 
-    // Logo kecil di atas judul; teks login (config text_login) jadi subjudul di bawahnya
+    // Logo kecil di atas judul. Teks sambutan GLPI (config text_login) tidak ditampilkan: sambutan sudah ada di
+    // panel kiri
     const title = card.querySelector('form .card-header');
-    if (title) {
-        title.prepend(parts.querySelector('.halosis-login-logo'));
-        const intro = card.querySelector('form > .rich_text_container');
-        if (intro) {
-            intro.classList.add('halosis-login-intro');
-            title.append(intro);
-        }
-    }
+    title?.prepend(parts.querySelector('.halosis-login-logo'));
+    card.querySelector('form > .rich_text_container')?.remove();
 
     // Di bawah tombol Masuk: lencana SSO, lalu bantuan lupa kata sandi untuk akun SSO menggantikan tautan reset
     // GLPI (URL bawaan tetap berlaku untuk akun lokal: front/lostpassword.php?lostpassword=1)
@@ -52,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyright = document.querySelector('.page-anonymous a.copyright');
     if (copyright) {
         copyright.textContent = parts.querySelector('.halosis-login-footer').textContent;
+        copyright.title = copyright.textContent;
     }
 
     // Ikon di dalam field
