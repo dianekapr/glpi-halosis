@@ -1,0 +1,349 @@
+/**
+ * Halaman login HaloSIS (hanya dimuat di halaman anonim GLPI: login, galat login, lupa password; lihat LoginPage).
+ * Tata letak dua kolom diaktifkan public/js/login.js (kelas body.halosis-login); tanpa JS form bawaan GLPI tetap
+ * dipakai apa adanya. Warna dari token palet themes/halosis.scss (--halosis-login-*), cadangan primary GLPI.
+ */
+body.welcome-anonymous {
+    --hl-brand-bg: var(--halosis-login-brand-bg, var(--tblr-primary, #155e63));
+    --hl-brand-bg-2: var(--halosis-login-brand-bg-2, var(--tblr-primary, #155e63));
+    --hl-brand-glow: var(--halosis-login-brand-glow, rgb(255 255 255 / 12%));
+    --hl-brand-fg: var(--halosis-login-brand-fg, #fff);
+    --hl-brand-fg-muted: var(--halosis-login-brand-fg-muted, rgb(255 255 255 / 85%));
+    --hl-brand-icon: var(--halosis-login-brand-icon, #fff);
+    --hl-soft: var(--halosis-login-soft, #e3f1ed);
+    --hl-primary: var(--halosis-login-primary, var(--tblr-primary, #155e63));
+    --hl-muted: var(--tblr-muted, #5a6e6c);
+    --hl-error: var(--halosis-login-error, #a33a06);
+    --hl-error-bg: var(--halosis-login-error-bg, #fff4ec);
+    --hl-font-display: var(--halosis-font-display, inherit);
+}
+
+/* Bagian dari hook display_login: tampil hanya setelah ditata login.js */
+.halosis-login-brand,
+.halosis-login-parts {
+    display: none;
+}
+
+/* Tautan "Bantuan" bawaan mengarah ke dokumentasi GLPI, bukan bantuan layanan TI BPS: disembunyikan
+   (Pusat bantuan = FAQ publik, tampil sebagai tombol di form login bila use_public_faq aktif) */
+body.welcome-anonymous .container-tight > .text-center:has(> a > .ti-help) {
+    display: none;
+}
+
+/* Fokus keyboard selalu terlihat */
+body.welcome-anonymous a:focus-visible,
+body.welcome-anonymous .btn:focus-visible,
+.halosis-password-toggle:focus-visible {
+    outline: 2px solid var(--hl-primary);
+    outline-offset: 2px;
+}
+
+/* ---- Galat login (halaman anonim berisi peringatan + tombol "Login lagi") ---- */
+body.welcome-anonymous .main-content-card .card-body > .alert {
+    margin: 0;
+    border: 0;
+    border-left: 4px solid var(--hl-error);
+    border-radius: 12px;
+    background: var(--hl-error-bg);
+    color: var(--tblr-body-color, #203332);
+}
+
+body.welcome-anonymous .main-content-card .card-body > .alert .alert-title {
+    color: var(--hl-error);
+    font-family: var(--hl-font-display);
+    font-weight: 700;
+}
+
+body.welcome-anonymous .main-content-card .card-body > .alert .ti-alert-triangle {
+    color: var(--hl-error);
+    font-size: 1.75rem;
+}
+
+/* ==== Halaman login (body.halosis-login dari login.js) ==== */
+body.halosis-login .page-anonymous {
+    display: flex;
+    min-height: 100vh;
+}
+
+body.halosis-login .halosis-login-brand {
+    display: flex;
+    flex: 0 0 min(44%, 40rem);
+    align-items: center;
+    justify-content: center;
+    padding: 3rem clamp(2rem, 4vw, 4rem);
+    background:
+        radial-gradient(circle at 85% 12%, var(--hl-brand-glow), transparent 42%),
+        linear-gradient(160deg, var(--hl-brand-bg) 0%, var(--hl-brand-bg-2) 100%);
+    color: var(--hl-brand-fg);
+}
+
+.halosis-login-brand-inner {
+    width: 100%;
+    max-width: 27rem;
+}
+
+.halosis-login-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    font-family: var(--hl-font-display);
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.halosis-login-logo img {
+    width: 48px;
+    height: 48px;
+}
+
+.halosis-login-tagline {
+    margin: 2.5rem 0 2.25rem;
+    font-family: var(--hl-font-display);
+    font-size: clamp(1.875rem, 2.6vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+}
+
+.halosis-login-points {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.halosis-login-points li {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.halosis-login-points strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.halosis-login-points small {
+    display: block;
+    color: var(--hl-brand-fg-muted);
+    font-size: 0.875rem;
+}
+
+.halosis-login-point-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 14%);
+    color: var(--hl-brand-icon);
+    font-size: 1.375rem;
+}
+
+/* Kolom kanan: kartu form di tengah */
+body.halosis-login .page-anonymous > .flex-fill {
+    flex: 1 1 auto;
+    margin: 0 !important;
+    padding: 2rem 1.5rem !important;
+}
+
+/* Tanda logo di atas kartu diganti panel brand */
+body.halosis-login .container-tight > .text-center:first-child {
+    display: none;
+}
+
+/* Palet & template GLPI memberi max-width lewat !important / style inline */
+body.halosis-login .page-anonymous .container-tight {
+    width: 100%;
+    max-width: 27rem !important;
+    padding-block: 0 !important;
+}
+
+body.halosis-login .main-content-card {
+    border-radius: var(--tblr-border-radius-xl, 20px);
+    box-shadow: 0 1px 2px rgb(32 51 50 / 4%), 0 12px 32px rgb(32 51 50 / 8%);
+}
+
+body.halosis-login .main-content-card > .card-body {
+    padding: 2.25rem 2rem 2rem;
+}
+
+body.halosis-login .main-content-card form .row > [class*="col-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+body.halosis-login .main-content-card form .card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem !important;
+    padding: 0;
+    border: 0;
+}
+
+body.halosis-login .main-content-card form .card-header h2 {
+    margin: 0 !important;
+    font-family: var(--hl-font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+body.halosis-login .main-content-card .form-label {
+    font-weight: 600;
+}
+
+body.halosis-login .main-content-card .form-control {
+    min-height: 2.75rem;
+    font-size: 1rem;
+}
+
+body.halosis-login .main-content-card .btn-primary[name="submit"] {
+    min-height: 2.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.halosis-login-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    background: var(--hl-soft);
+    color: var(--hl-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Teks login dari konfigurasi GLPI (text_login, rata tengah lewat style inline) jadi subjudul */
+.halosis-login-intro {
+    color: var(--hl-muted);
+    font-size: 0.9375rem;
+}
+
+.halosis-login-intro p {
+    margin: 0;
+    text-align: left !important;
+}
+
+.halosis-password {
+    position: relative;
+}
+
+.halosis-password .form-control {
+    padding-right: 3rem;
+}
+
+.halosis-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.375rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--hl-muted);
+    font-size: 1.25rem;
+}
+
+.halosis-password-toggle:hover {
+    background: var(--hl-soft);
+    color: var(--hl-primary);
+}
+
+.halosis-login-help {
+    margin: 1rem 0 0;
+    color: var(--hl-muted);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.halosis-login-help .ti {
+    margin-right: 0.375rem;
+    color: var(--hl-primary);
+    font-size: 1.125rem;
+    vertical-align: -0.2em;
+}
+
+body.halosis-login .container-tight > .text-muted {
+    margin-top: 1.25rem !important;
+    font-size: 0.75rem;
+}
+
+body.halosis-login .container-tight > .text-muted a.copyright {
+    color: var(--hl-muted);
+}
+
+/* ---- HP: satu kolom, panel brand ringkas di atas ---- */
+@media (max-width: 768px) {
+    body.halosis-login .page-anonymous {
+        flex-direction: column;
+    }
+
+    body.halosis-login .halosis-login-brand {
+        flex: none;
+        padding: 1.5rem 1rem 1.25rem;
+    }
+
+    .halosis-login-logo {
+        gap: 0.625rem;
+        font-size: 1.375rem;
+    }
+
+    .halosis-login-logo img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .halosis-login-tagline {
+        margin: 0.875rem 0 1.125rem;
+        font-size: 1.25rem;
+    }
+
+    .halosis-login-points {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    .halosis-login-points li {
+        flex-direction: column;
+        gap: 0.375rem;
+        text-align: center;
+    }
+
+    .halosis-login-points strong {
+        font-size: 0.8125rem;
+    }
+
+    .halosis-login-points small {
+        display: none;
+    }
+
+    .halosis-login-point-icon {
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 10px;
+        font-size: 1.125rem;
+    }
+
+    body.halosis-login .page-anonymous > .flex-fill {
+        justify-content: flex-start !important;
+        padding: 1.25rem 1rem 1.5rem !important;
+    }
+
+    body.halosis-login .main-content-card > .card-body {
+        padding: 1.5rem 1.25rem 1.25rem;
+    }
+}

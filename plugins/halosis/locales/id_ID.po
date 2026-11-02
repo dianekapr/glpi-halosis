@@ -1456,3 +1456,37 @@ msgstr "Pengingat progres setelah (hari kerja tanpa tindak lanjut)"
 
 msgid "Tickets in progress or pending without a follow-up or task for more than this many working days notify the assigned technician and group (scheduled task ProgressReminder, once per period)."
 msgstr "Tiket Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja memberi tahu teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
+
+# Halaman login
+msgid "IT services of BPS in a single conversation"
+msgstr "Layanan TI BPS dalam satu percakapan"
+
+msgid "Instant answers from the help center"
+msgstr "Jawaban cepat dari Pusat bantuan"
+
+msgid "Create a report"
+msgstr "Buat laporan"
+
+msgid "Report a problem or request a service"
+msgstr "Laporkan masalah atau ajukan layanan"
+
+msgid "Track status"
+msgstr "Pantau status"
+
+msgid "Follow your reports until they are solved"
+msgstr "Ikuti laporan Anda sampai selesai"
+
+msgid "Show password"
+msgstr "Tampilkan kata sandi"
+
+msgid "Hide password"
+msgstr "Sembunyikan kata sandi"
+
+msgid "Central sign-in (SSO)"
+msgstr "Login terpusat (SSO)"
+
+msgid "Forgot your password? Contact the IT service Operator"
+msgstr "Lupa kata sandi? Hubungi Operator layanan TI"
+
+msgid "Powered by GLPI"
+msgstr "Didukung GLPI"
