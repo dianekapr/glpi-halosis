@@ -30,7 +30,7 @@ final class SiapDitutupController extends AbstractController
             throw new AccessDeniedHttpException();
         }
         return $this->render('@halosis/siap_ditutup.html.twig', [
-            'title'    => __('Ready to close', 'halosis'),
+            'title'    => _x('page title', 'Ready to close', 'halosis'),
             'menu'     => ['helpdesk', Ticket::class],
             'items'    => Closure::readyToClose(),
             'hours'    => (int) Config::get('close_after_hours'),

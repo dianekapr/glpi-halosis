@@ -52,7 +52,7 @@ final class CariKnowledgeController extends AbstractController
         }
 
         return $this->render('@halosis/cari_knowledge.html.twig', [
-            'title'   => __('Search knowledge', 'halosis'),
+            'title'   => _x('page title', 'Search knowledge', 'halosis'),
             'menu'    => ['tools', KnowbaseItem::class],
             'query'   => $query,
             'mode'    => $mode,

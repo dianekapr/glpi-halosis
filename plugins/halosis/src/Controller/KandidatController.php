@@ -51,7 +51,7 @@ final class KandidatController extends AbstractController
         ], KnowledgeCandidates::list($status));
 
         return $this->render('@halosis/kandidat.html.twig', [
-            'title'      => __('Knowledge candidates', 'halosis'),
+            'title'      => _x('page title', 'Knowledge candidates', 'halosis'),
             'menu'       => ['tools', KnowbaseItem::class],
             'status'     => $status,
             'counts'     => KnowledgeCandidates::counts() + [self::TAB_REVIEW => count($review)],

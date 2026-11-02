@@ -274,17 +274,6 @@ body.halosis-login .main-content-card form .card-header h2 {
     height: 32px;
 }
 
-/* Teks login dari konfigurasi GLPI (text_login, rata tengah lewat style inline) jadi subjudul */
-.halosis-login-intro {
-    color: var(--hl-muted);
-    font-size: 0.9375rem;
-}
-
-.halosis-login-intro p {
-    margin: 0;
-    text-align: left !important;
-}
-
 body.halosis-login .main-content-card .form-label {
     color: var(--hl-text);
     font-weight: 600;

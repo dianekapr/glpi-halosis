@@ -414,7 +414,8 @@ final class KeycloakAuth
         $login = $claims['preferred_username'];
         $user  = new User();
         if (!$user->getFromDBbyName($login)) {
-            $input = ['name' => $login, 'authtype' => Auth::EXTERNAL, 'is_active' => 1, '_extauth' => 1];
+            // HaloSIS hanya berbahasa Indonesia: akun baru dari SSO langsung id_ID
+            $input = ['name' => $login, 'authtype' => Auth::EXTERNAL, 'is_active' => 1, '_extauth' => 1, 'language' => LoginPage::LANGUAGE];
             foreach (['given_name' => 'firstname', 'family_name' => 'realname'] as $claim => $field) {
                 if (is_string($claims[$claim] ?? null)) {
                     $input[$field] = $claims[$claim];

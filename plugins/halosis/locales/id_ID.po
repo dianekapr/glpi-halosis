@@ -17,7 +17,7 @@ msgid "HaloSIS configuration"
 msgstr "Konfigurasi HaloSIS"
 
 msgid "HaloSIS configuration saved."
-msgstr "Konfigurasi HaloSIS tersimpan."
+msgstr "Konfigurasi HaloSIS berhasil disimpan."
 
 msgid "HaloSIS AI module"
 msgstr "Modul AI HaloSIS"
@@ -29,10 +29,10 @@ msgid "Decide (accept / modify / reject)"
 msgstr "Memutuskan (terima / ubah / tolak)"
 
 msgid "AI performance dashboard"
-msgstr "Dashboard kinerja AI"
+msgstr "Dasbor kinerja AI"
 
 msgid "Self-service chatbot"
-msgstr "Chatbot self-service"
+msgstr "Asisten layanan mandiri"
 
 msgid "HaloSIS AI"
 msgstr "AI HaloSIS"
@@ -47,7 +47,7 @@ msgid "AI triage suggestions on new tickets"
 msgstr "Saran triase AI untuk tiket baru"
 
 msgid "Self-service chatbot for employees"
-msgstr "Chatbot self-service untuk pegawai"
+msgstr "Asisten layanan mandiri untuk pegawai"
 
 msgid "Incident pattern detection"
 msgstr "Deteksi pola insiden"
@@ -60,13 +60,13 @@ msgid "Demo mode is active"
 msgstr "Mode demo aktif"
 
 msgid "No API key is stored. All AI features use deterministic sample answers so they can be demonstrated without internet access."
-msgstr "Belum ada API key tersimpan. Semua fitur AI memakai jawaban contoh yang deterministik sehingga tetap bisa didemokan tanpa internet."
+msgstr "Belum ada kunci API yang tersimpan. Semua fitur AI memakai jawaban contoh yang deterministik sehingga tetap dapat didemokan tanpa akses internet."
 
 msgid "Connected to AI provider"
 msgstr "Terhubung ke penyedia AI"
 
 msgid "AI calls are made from the GLPI server. The API key is never sent to the browser."
-msgstr "Pemanggilan AI dilakukan dari server GLPI. API key tidak pernah dikirim ke browser."
+msgstr "Pemanggilan AI dilakukan dari server GLPI. Kunci API tidak pernah dikirim ke peramban."
 
 msgid "AI provider"
 msgstr "Penyedia AI"
@@ -75,16 +75,16 @@ msgid "Provider"
 msgstr "Penyedia"
 
 msgid "API key"
-msgstr "API key"
+msgstr "Kunci API"
 
 msgid "An API key is stored (encrypted). Leave empty to keep it."
-msgstr "API key sudah tersimpan (terenkripsi). Biarkan kosong untuk mempertahankannya."
+msgstr "Kunci API sudah tersimpan (terenkripsi). Biarkan kosong untuk mempertahankannya."
 
 msgid "Leave empty to use demo mode."
 msgstr "Biarkan kosong untuk memakai mode demo."
 
 msgid "Delete stored API key"
-msgstr "Hapus API key tersimpan"
+msgstr "Hapus kunci API yang tersimpan"
 
 msgid "Return to demo mode."
 msgstr "Kembali ke mode demo."
@@ -93,19 +93,19 @@ msgid "Model"
 msgstr "Model"
 
 msgid "Model ID at the provider, e.g. claude-opus-5-5."
-msgstr "ID model di penyedia, mis. claude-opus-5-5."
+msgstr "ID model di penyedia, misalnya claude-opus-5-5."
 
 msgid "API base URL"
 msgstr "URL dasar API"
 
 msgid "Optional. Fill in for an OpenAI-compatible gateway or proxy; leave empty for the provider default."
-msgstr "Opsional. Isi untuk gateway/proxy kompatibel OpenAI; kosongkan untuk alamat bawaan penyedia."
+msgstr "Opsional. Isi untuk gateway atau proxy yang kompatibel dengan OpenAI; kosongkan untuk memakai alamat bawaan penyedia."
 
 msgid "Timeout (seconds)"
 msgstr "Batas waktu (detik)"
 
 msgid "If the AI does not answer in time, tickets are still saved normally without a suggestion."
-msgstr "Jika AI tidak menjawab tepat waktu, tiket tetap tersimpan normal tanpa saran."
+msgstr "Jika AI tidak menjawab tepat waktu, tiket tetap tersimpan seperti biasa tanpa saran."
 
 msgid "Triage"
 msgstr "Triase"
@@ -192,7 +192,7 @@ msgid "Reject & triage manually"
 msgstr "Tolak & triase manual"
 
 msgid "Ticket fields are not changed. Fill them in manually below."
-msgstr "Field tiket tidak diubah. Isi secara manual di bawah."
+msgstr "Isian tiket tidak diubah. Silakan isi secara manual di bawah."
 
 msgid "Awaiting decision by an Operator."
 msgstr "Menunggu keputusan Operator."
@@ -204,7 +204,7 @@ msgid "Reason"
 msgstr "Alasan"
 
 msgid "Final"
-msgstr "Final"
+msgstr "Akhir"
 
 msgid "You are not allowed to decide on AI suggestions."
 msgstr "Anda tidak berhak memutuskan saran AI."
@@ -222,10 +222,10 @@ msgid "The modified values are not valid."
 msgstr "Nilai yang diubah tidak valid."
 
 msgid "The values are identical to the suggestion. Use Accept instead."
-msgstr "Nilainya sama dengan saran. Gunakan Terima."
+msgstr "Nilainya sama dengan saran. Gunakan tombol Terima."
 
 msgid "Unknown action."
-msgstr "Aksi tidak dikenal."
+msgstr "Tindakan tidak dikenal."
 
 msgid "The ticket could not be updated."
 msgstr "Tiket gagal diperbarui."
@@ -234,7 +234,7 @@ msgid "AI suggestion accepted (confidence %d%%). %s"
 msgstr "Saran AI diterima (keyakinan %d%%). %s"
 
 msgid "AI suggestion modified (confidence %d%%). Suggested: %s. Final: %s. Reason: %s"
-msgstr "Saran AI diubah (keyakinan %d%%). Saran: %s. Final: %s. Alasan: %s"
+msgstr "Saran AI diubah (keyakinan %d%%). Saran: %s. Akhir: %s. Alasan: %s"
 
 msgid "AI suggestion rejected, manual triage (confidence %d%%). Suggested: %s. Reason: %s"
 msgstr "Saran AI ditolak, triase manual (keyakinan %d%%). Saran: %s. Alasan: %s"
@@ -255,13 +255,13 @@ msgid "Suggestion not found."
 msgstr "Saran tidak ditemukan."
 
 msgid "The AI could not produce a suggestion. The ticket is unchanged; check files/_log/halosis.log."
-msgstr "AI belum bisa memberi saran. Tiket tidak berubah; periksa files/_log/halosis.log."
+msgstr "AI belum dapat memberikan saran. Tiket tidak berubah; periksa files/_log/halosis.log."
 
 msgid "Anthropic SDK is not installed"
 msgstr "SDK Anthropic belum terpasang"
 
 msgid "Demo mode works without it. To call Claude, run composer install in the plugin folder (see README)."
-msgstr "Mode demo tetap berjalan tanpanya. Untuk memanggil Claude, jalankan composer install di folder plugin (lihat README)."
+msgstr "Mode demo tetap berjalan tanpa SDK ini. Untuk memanggil Claude, jalankan composer install di folder plugin (lihat README)."
 
 # Chatbot self-service (Fase 5)
 msgid "Chat"
@@ -284,7 +284,7 @@ msgid "Close"
 msgstr "Tutup"
 
 msgid "Do not send passwords or personal data (NIK, NIP, phone number)."
-msgstr "Jangan kirim kata sandi atau data pribadi (NIK, NIP, nomor HP)."
+msgstr "Jangan mengirim kata sandi atau data pribadi (NIK, NIP, nomor ponsel)."
 
 msgid "Hello %s!"
 msgstr "Halo %s!"
@@ -293,7 +293,7 @@ msgid "Hello!"
 msgstr "Halo!"
 
 msgid "Describe your IT problem and I will look for the answer in the Help Center."
-msgstr "Ceritakan kendala TI Anda, saya carikan jawabannya di Pusat Bantuan."
+msgstr "Ceritakan kendala TI Anda, saya akan mencarikan jawabannya di Pusat Bantuan."
 
 msgid "Problem solved"
 msgstr "Masalah terselesaikan"
@@ -356,10 +356,10 @@ msgid "According to the article “%s”:"
 msgstr "Menurut artikel “%s”:"
 
 msgid "Sorry, I have not found an answer in the Help Center yet. Try other words, or click “Create report” so an officer can help you."
-msgstr "Maaf, saya belum menemukan jawabannya di Pusat Bantuan. Coba dengan kata lain, atau klik “Buat laporan” agar petugas membantu Anda."
+msgstr "Maaf, saya belum menemukan jawabannya di Pusat Bantuan. Silakan coba dengan kata lain, atau klik “Buat laporan” agar petugas dapat membantu Anda."
 
 msgid "Choose a rating from 1 to 5."
-msgstr "Pilih penilaian 1 sampai 5."
+msgstr "Pilih penilaian dari 1 sampai 5."
 
 msgid "You are not allowed to create tickets."
 msgstr "Anda tidak berhak membuat tiket."
@@ -386,16 +386,16 @@ msgid "Conversation summary:"
 msgstr "Ringkasan percakapan:"
 
 msgid "The chatbot is not available for your account."
-msgstr "Chatbot tidak tersedia untuk akun Anda."
+msgstr "Asisten tidak tersedia untuk akun Anda."
 
 msgid "Conversation not found."
 msgstr "Percakapan tidak ditemukan."
 
 msgid "Thank you! Glad your problem is solved."
-msgstr "Terima kasih! Senang masalah Anda terselesaikan."
+msgstr "Terima kasih! Kami senang masalah Anda sudah terselesaikan."
 
 msgid "Report #%d has been created. An officer will follow it up."
-msgstr "Laporan #%d sudah dibuat. Petugas akan menindaklanjutinya."
+msgstr "Laporan #%d sudah dibuat. Petugas akan segera menindaklanjutinya."
 
 # Halaman penuh "Tanya HaloSIS" (revisi Fase 5)
 msgid "Ask HaloSIS"
@@ -405,10 +405,10 @@ msgid "My reports"
 msgstr "Laporan saya"
 
 msgid "Help center (FAQ)"
-msgstr "Pusat bantuan (FAQ)"
+msgstr "Tanya Jawab (FAQ)"
 
 msgid "Answers from Help Center articles, available any time."
-msgstr "Jawaban dari artikel Pusat Bantuan, kapan saja."
+msgstr "Jawaban dari artikel Pusat Bantuan, tersedia kapan saja."
 
 msgid "Create a report directly"
 msgstr "Langsung buat laporan"
@@ -417,13 +417,13 @@ msgid "Quick questions"
 msgstr "Pertanyaan cepat"
 
 msgid "Forgot my SSO password"
-msgstr "Lupa password SSO"
+msgstr "Lupa kata sandi SSO"
 
 msgid "FASIH fails to sync"
-msgstr "FASIH gagal sinkron"
+msgstr "FASIH gagal sinkronisasi"
 
 msgid "VPN keeps disconnecting"
-msgstr "VPN putus"
+msgstr "VPN sering terputus"
 
 msgid "Email attachment is too large"
 msgstr "Lampiran email terlalu besar"
@@ -435,17 +435,17 @@ msgid "Open full screen"
 msgstr "Buka layar penuh"
 
 msgid "The assistant is not available right now"
-msgstr "Asisten sedang tidak tersedia"
+msgstr "Asisten Sedang Tidak Tersedia"
 
 msgid "The assistant is not available right now. You can still create a report."
-msgstr "Asisten sedang tidak tersedia. Anda tetap bisa membuat laporan."
+msgstr "Asisten sedang tidak tersedia. Anda tetap dapat membuat laporan."
 
 msgid "Report your problem and an officer will help you."
-msgstr "Laporkan kendala Anda, petugas akan membantu."
+msgstr "Laporkan kendala Anda dan petugas akan membantu."
 
 # Tampilan chatbot baru (mengikuti prototipe halosis-web)
 msgid "Tell us about your IT problem. The assistant looks for solutions in official BPS guides."
-msgstr "Ceritakan kendala TI Anda. Asisten mencarikan solusi dari panduan resmi BPS."
+msgstr "Ceritakan kendala TI Anda. Asisten akan mencarikan solusi dari panduan resmi BPS."
 
 msgid "Try asking:"
 msgstr "Coba tanyakan:"
@@ -454,10 +454,10 @@ msgid "Describe your problem…"
 msgstr "Tulis kendala Anda…"
 
 msgid "The assistant only answers from official BPS Help Center articles. Do not send passwords or personal data."
-msgstr "Asisten hanya menjawab dari artikel resmi Pusat Bantuan BPS. Jangan kirim kata sandi atau data pribadi."
+msgstr "Asisten hanya menjawab berdasarkan artikel resmi Pusat Bantuan BPS. Jangan mengirim kata sandi atau data pribadi."
 
 msgid "Answered by AI"
-msgstr "Dijawab AI"
+msgstr "Dijawab oleh AI"
 
 msgid "From the Help Center"
 msgstr "Dari Pusat Bantuan"
@@ -475,10 +475,10 @@ msgid "Not solved yet"
 msgstr "Belum terselesaikan"
 
 msgid "Problem not solved? I will create a report for the IT team. This conversation summary is attached, so you do not need to explain again."
-msgstr "Masalah belum selesai? Saya buatkan laporan ke tim TI. Ringkasan percakapan ini akan dilampirkan, jadi Anda tidak perlu menjelaskan ulang."
+msgstr "Masalah belum selesai? Saya akan membuatkan laporan untuk tim TI. Ringkasan percakapan ini akan dilampirkan sehingga Anda tidak perlu menjelaskan ulang."
 
 msgid "I could not find the answer yet. Shall I create a report for the IT team? This conversation summary will be attached."
-msgstr "Saya belum menemukan jawabannya. Mau saya buatkan laporan ke tim TI? Ringkasan percakapan ini akan dilampirkan."
+msgstr "Saya belum menemukan jawabannya. Apakah Anda ingin saya buatkan laporan untuk tim TI? Ringkasan percakapan ini akan dilampirkan."
 
 msgid "Yes, create report"
 msgstr "Ya, buat laporan"
@@ -525,7 +525,7 @@ msgid "Linked tickets:"
 msgstr "Tiket yang ditautkan:"
 
 msgid "Detected automatically. An officer decides the follow-up (investigate, assign a team, or close if unrelated)."
-msgstr "Terdeteksi otomatis. Petugas yang memutuskan tindak lanjut (investigasi, tugaskan tim, atau tutup bila tidak berkaitan)."
+msgstr "Terdeteksi otomatis. Petugas memutuskan tindak lanjutnya (investigasi, tugaskan tim, atau tutup bila tidak berkaitan)."
 
 msgid "Incident pattern detected"
 msgstr "Pola insiden terdeteksi"
@@ -534,22 +534,22 @@ msgid "%d linked tickets"
 msgstr "%d tiket tertaut"
 
 msgid "Open the problem to decide the follow-up: investigate, assign a team, or close if unrelated."
-msgstr "Buka masalahnya untuk memutuskan tindak lanjut: investigasi, tugaskan tim, atau tutup bila tidak berkaitan."
+msgstr "Buka Masalah ini untuk memutuskan tindak lanjut: investigasi, tugaskan tim, atau tutup bila tidak berkaitan."
 
 msgid "Part of an incident pattern"
 msgstr "Bagian dari pola insiden"
 
 msgid "Minimum similar tickets"
-msgstr "Minimal tiket mirip"
+msgstr "Jumlah minimal tiket serupa"
 
 msgid "A pattern is created when at least this many new tickets share a category or have similar titles."
-msgstr "Pola dibuat bila sedikitnya sejumlah ini tiket baru berkategori sama atau berjudul mirip."
+msgstr "Pola dibuat bila sedikitnya sejumlah ini tiket baru memiliki kategori yang sama atau judul yang mirip."
 
 msgid "Time window (minutes)"
 msgstr "Jendela waktu (menit)"
 
 msgid "Tickets created within this window are checked. The scheduled task runs every 15 minutes."
-msgstr "Tiket yang dibuat dalam jendela ini diperiksa. Tugas terjadwal berjalan tiap 15 menit."
+msgstr "Tiket yang dibuat dalam jendela waktu ini akan diperiksa. Tugas terjadwal berjalan setiap 15 menit."
 
 msgid "Operator group"
 msgstr "Grup Operator"
@@ -558,7 +558,7 @@ msgid "Default (Operator Service Desk)"
 msgstr "Bawaan (Operator Service Desk)"
 
 msgid "The incident pattern problem is assigned to this group so Operators are notified and decide the follow-up."
-msgstr "Masalah pola insiden ditugaskan ke grup ini agar Operator mendapat notifikasi dan memutuskan tindak lanjut."
+msgstr "Masalah pola insiden ditugaskan ke grup ini agar Operator mendapat notifikasi dan memutuskan tindak lanjutnya."
 
 # Dashboard kinerja AI (Fase 7)
 msgid "Team reassignment"
@@ -569,7 +569,7 @@ msgid "AI performance"
 msgstr "Kinerja AI"
 
 msgid "How officers use AI suggestions and how many employees are helped by the assistant, since %s."
-msgstr "Seberapa sering petugas memakai saran AI dan berapa pegawai terbantu asisten, sejak %s."
+msgstr "Seberapa sering petugas memakai saran AI dan berapa banyak pegawai yang terbantu oleh asisten, sejak %s."
 
 msgid "Period"
 msgstr "Periode"
@@ -587,7 +587,7 @@ msgid "No suggestion has been decided in this period yet."
 msgstr "Belum ada saran yang diputuskan pada periode ini."
 
 msgid "Modified by an officer"
-msgstr "Diubah petugas"
+msgstr "Diubah oleh petugas"
 
 msgid "%d suggestions corrected before being applied"
 msgstr "%d saran dikoreksi sebelum diterapkan"
@@ -599,13 +599,13 @@ msgid "%d suggestions not used"
 msgstr "%d saran tidak dipakai"
 
 msgid "Moved to another team after triage"
-msgstr "Dipindah ke tim lain setelah triase"
+msgstr "Dipindahkan ke tim lain setelah triase"
 
 msgid "%1$d of %2$d tickets triaged with AI were reassigned to another group (wrong team)"
-msgstr "%1$d dari %2$d tiket yang ditriase dengan AI dipindah ke grup lain (salah tim)"
+msgstr "%1$d dari %2$d tiket yang ditriase dengan AI dipindahkan ke grup lain (salah tim)"
 
 msgid "Decisions per week"
-msgstr "Keputusan per minggu"
+msgstr "Keputusan per Minggu"
 
 msgid "Stacked columns of accepted, modified and rejected suggestions per week"
 msgstr "Kolom bertumpuk saran diterima, diubah, dan ditolak per minggu"
@@ -623,10 +623,10 @@ msgid "Week"
 msgstr "Minggu"
 
 msgid "AI confidence vs officer decisions"
-msgstr "Keyakinan AI vs keputusan petugas"
+msgstr "Perbandingan Keyakinan AI dan Keputusan Petugas"
 
 msgid "If the AI is well calibrated, suggestions above the threshold are accepted more often."
-msgstr "Bila AI terkalibrasi baik, saran di atas ambang lebih sering diterima."
+msgstr "Bila AI terkalibrasi dengan baik, saran di atas ambang lebih sering diterima."
 
 msgid "Decided"
 msgstr "Diputuskan"
@@ -638,7 +638,7 @@ msgid "< %d%% (needs manual review)"
 msgstr "< %d%% (perlu penilaian manual)"
 
 msgid "Employee chatbot"
-msgstr "Chatbot pegawai"
+msgstr "Asisten Pegawai"
 
 msgid "Conversations"
 msgstr "Percakapan"
@@ -653,13 +653,13 @@ msgid "Turned into a report"
 msgstr "Menjadi laporan"
 
 msgid "Average rating"
-msgstr "Rata-rata rating"
+msgstr "Rata-rata penilaian"
 
 msgid "%d ratings"
 msgstr "%d penilaian"
 
 msgid "Definitions: accepted = suggestion applied unchanged; modified = applied after an officer changed values (reason required); rejected = manual triage (reason required); moved to another team = an AI-triaged ticket later assigned to a different group; helped without a ticket = conversation marked solved by the employee."
-msgstr "Definisi: diterima = saran diterapkan tanpa perubahan; diubah = diterapkan setelah petugas mengubah nilai (alasan wajib); ditolak = triase manual (alasan wajib); dipindah ke tim lain = tiket yang ditriase dengan AI kemudian ditugaskan ke grup lain; terbantu tanpa tiket = percakapan yang ditandai selesai oleh pegawai."
+msgstr "Definisi: diterima = saran diterapkan tanpa perubahan; diubah = diterapkan setelah petugas mengubah nilai (alasan wajib); ditolak = triase manual (alasan wajib); dipindahkan ke tim lain = tiket yang ditriase dengan AI kemudian ditugaskan ke grup lain; terbantu tanpa tiket = percakapan yang ditandai selesai oleh pegawai."
 
 msgid "HaloSIS AI service"
 msgstr "Layanan AI HaloSIS"
@@ -668,7 +668,7 @@ msgid "AI service URL"
 msgstr "URL layanan AI"
 
 msgid "Local model trained on ticket history (triage) and Help Center search (chat), e.g. http://halosis-ai:8000. Used first; if empty or unreachable, the plugin falls back to the mode above."
-msgstr "Model lokal yang dilatih dari history tiket (triase) dan pencarian Pusat Bantuan (chat), mis. http://halosis-ai:8000. Dipakai lebih dulu; jika kosong atau tidak bisa dihubungi, plugin kembali ke mode di atas."
+msgstr "Model lokal yang dilatih dari riwayat tiket (triase) dan pencarian Pusat Bantuan (percakapan), misalnya http://halosis-ai:8000. Dipakai terlebih dahulu; jika kosong atau tidak dapat dihubungi, plugin kembali ke mode di atas."
 
 msgid "Service timeout (seconds)"
 msgstr "Batas waktu layanan (detik)"
@@ -680,13 +680,13 @@ msgid "Similar ticket %s"
 msgstr "Tiket serupa %s"
 
 msgid "Chat history"
-msgstr "Riwayat chat"
+msgstr "Riwayat percakapan"
 
 msgid "Your conversations with the assistant. Open one to read it again or continue it."
 msgstr "Percakapan Anda dengan asisten. Buka untuk membaca ulang atau melanjutkannya."
 
 msgid "No conversations yet"
-msgstr "Belum ada percakapan"
+msgstr "Belum Ada Percakapan"
 
 msgid "Questions you ask the assistant will appear here."
 msgstr "Pertanyaan yang Anda ajukan ke asisten akan muncul di sini."
@@ -708,13 +708,13 @@ msgid "Report created"
 msgstr "Laporan dibuat"
 
 msgid "Can be continued"
-msgstr "Bisa dilanjutkan"
+msgstr "Dapat dilanjutkan"
 
 msgid "Showing your %d most recent conversations."
 msgstr "Menampilkan %d percakapan terbaru Anda."
 
 msgid "Dashboard"
-msgstr "Dashboard"
+msgstr "Dasbor"
 
 msgid "Validation queue"
 msgstr "Antrean validasi"
@@ -723,19 +723,19 @@ msgid "All tickets"
 msgstr "Semua tiket"
 
 msgid "Search knowledge"
-msgstr "Cari knowledge"
+msgstr "Cari pengetahuan"
 
 msgid "My & team tickets"
 msgstr "Tiket saya & tim"
 
 msgid "Performance dashboard"
-msgstr "Dashboard kinerja"
+msgstr "Dasbor kinerja"
 
 msgid "Reports"
 msgstr "Laporan"
 
 msgid "Knowledge candidates"
-msgstr "Kandidat knowledge"
+msgstr "Kandidat pengetahuan"
 
 msgid "Articles"
 msgstr "Daftar artikel"
@@ -744,10 +744,10 @@ msgid "Write article"
 msgstr "Tulis artikel"
 
 msgid "Admin console"
-msgstr "Admin console"
+msgstr "Panel administrasi"
 
 msgid "Service catalog"
-msgstr "Service catalog"
+msgstr "Katalog layanan"
 
 msgid "Service categories"
 msgstr "Kategori layanan"
@@ -759,19 +759,19 @@ msgid "Technical teams"
 msgstr "Tim teknis"
 
 msgid "Users & roles"
-msgstr "Pengguna & role"
+msgstr "Pengguna & peran"
 
 msgid "Workflow & rules"
-msgstr "Workflow & aturan"
+msgstr "Alur kerja & aturan"
 
 msgid "AI settings"
 msgstr "Pengaturan AI"
 
 msgid "Notification templates"
-msgstr "Template notifikasi"
+msgstr "Templat notifikasi"
 
 msgid "Audit trail"
-msgstr "Audit trail"
+msgstr "Jejak audit"
 
 msgid "General setup"
 msgstr "Pengaturan umum"
@@ -786,19 +786,19 @@ msgid "Entities"
 msgstr "Entitas"
 
 msgid "Automatic actions"
-msgstr "Aksi otomatis"
+msgstr "Tindakan otomatis"
 
 msgid "Changes"
 msgstr "Perubahan"
 
 msgid "Dropdowns"
-msgstr "Dropdown"
+msgstr "Daftar pilihan"
 
 msgid "GLPI system"
 msgstr "Sistem GLPI"
 
 msgid "SLA monitoring"
-msgstr "Monitoring SLA"
+msgstr "Pemantauan SLA"
 
 msgid "Incident patterns"
 msgstr "Pola insiden"
@@ -816,7 +816,7 @@ msgid "Source: solution of ticket #%d."
 msgstr "Sumber: solusi tiket #%d."
 
 msgid "Source: recurring solution in %d historical tickets (AI index)."
-msgstr "Sumber: solusi berulang di %d tiket history (indeks AI)."
+msgstr "Sumber: solusi berulang di %d tiket dalam riwayat (indeks AI)."
 
 msgid "Problem"
 msgstr "Masalah"
@@ -825,7 +825,7 @@ msgid "Solution"
 msgstr "Solusi"
 
 msgid "Draft from Knowledge candidates; review before publishing."
-msgstr "Draf dari Kandidat knowledge; tinjau sebelum diterbitkan."
+msgstr "Draf dari Kandidat pengetahuan; tinjau sebelum diterbitkan."
 
 msgid "The draft article could not be created."
 msgstr "Draf artikel gagal dibuat."
@@ -834,7 +834,7 @@ msgid "Please give a reason of at least %d characters."
 msgstr "Tuliskan alasan minimal %d karakter."
 
 msgid "You are not allowed to decide on knowledge candidates."
-msgstr "Anda tidak berhak memutuskan kandidat knowledge."
+msgstr "Anda tidak berhak memutuskan kandidat pengetahuan."
 
 msgid "Candidate not found."
 msgstr "Kandidat tidak ditemukan."
@@ -858,10 +858,10 @@ msgid "Status"
 msgstr "Status"
 
 msgid "Solutions from solved tickets and solutions that recur in ticket history (AI index). Make the useful ones into a draft article, or dismiss them with a reason."
-msgstr "Solusi dari tiket yang sudah selesai dan solusi yang sering berulang di history tiket (indeks AI). Jadikan yang bermanfaat sebagai draf artikel, atau abaikan dengan alasan."
+msgstr "Solusi dari tiket yang sudah selesai dan solusi yang sering berulang di riwayat tiket (indeks AI). Jadikan yang bermanfaat sebagai draf artikel, atau abaikan dengan alasan."
 
 msgid "The HaloSIS AI service cannot be reached, so recurring solutions from ticket history are not refreshed. Candidates from solved tickets are still shown."
-msgstr "Layanan AI HaloSIS tidak dapat dihubungi, jadi solusi berulang dari history tiket tidak diperbarui. Kandidat dari tiket selesai tetap ditampilkan."
+msgstr "Layanan AI HaloSIS tidak dapat dihubungi sehingga solusi berulang dari riwayat tiket tidak diperbarui. Kandidat dari tiket yang sudah selesai tetap ditampilkan."
 
 msgid "Ticket #%d"
 msgstr "Tiket #%d"
@@ -870,7 +870,7 @@ msgid "Approved by requester"
 msgstr "Disetujui pemohon"
 
 msgid "Recurring in %d historical tickets"
-msgstr "Berulang di %d tiket history"
+msgstr "Berulang di %d tiket dalam riwayat"
 
 msgid "(untitled)"
 msgstr "(tanpa judul)"
@@ -885,7 +885,7 @@ msgid "Dismiss"
 msgstr "Abaikan"
 
 msgid "Reason for dismissing"
-msgstr "Alasan diabaikan"
+msgstr "Alasan pengabaian"
 
 msgid "Dismiss candidate"
 msgstr "Abaikan kandidat"
@@ -898,7 +898,7 @@ msgstr "Belum ada kandidat di sini."
 
 msgid "Knowledge candidate"
 msgid_plural "Knowledge candidates"
-msgstr[0] "Kandidat knowledge"
+msgstr[0] "Kandidat pengetahuan"
 
 msgid "Notifications"
 msgstr "Notifikasi"
@@ -907,16 +907,16 @@ msgid "Only the assigned team can return this ticket while it is in progress."
 msgstr "Hanya tim yang ditugaskan yang dapat mengembalikan tiket ini selama masih diproses."
 
 msgid "Returned to operator (wrong team): %s"
-msgstr "Dikembalikan ke operator (salah tim): %s"
+msgstr "Dikembalikan ke Operator (salah tim): %s"
 
 msgid "Ticket returned to the operator validation queue."
-msgstr "Tiket dikembalikan ke antrean validasi operator."
+msgstr "Tiket dikembalikan ke antrean validasi Operator."
 
 msgid "Return to operator (wrong team)"
-msgstr "Kembalikan ke operator (salah tim)"
+msgstr "Kembalikan ke Operator (salah tim)"
 
 msgid "Return to operator"
-msgstr "Kembalikan ke operator"
+msgstr "Kembalikan ke Operator"
 
 msgid "Why is this ticket not for your team?"
 msgstr "Mengapa tiket ini bukan untuk tim Anda?"
@@ -943,19 +943,19 @@ msgid "Search index updated."
 msgstr "Indeks pencarian diperbarui."
 
 msgid "Failed to update the search index; the previous index is still used."
-msgstr "Gagal memperbarui indeks, memakai indeks lama."
+msgstr "Gagal memperbarui indeks pencarian; indeks sebelumnya tetap dipakai."
 
 msgid "Find knowledge base articles and similar historical tickets by meaning, not only exact words."
-msgstr "Temukan artikel knowledge base dan tiket historis serupa berdasarkan makna, bukan hanya kata yang sama persis."
+msgstr "Temukan artikel basis pengetahuan dan tiket lama yang serupa berdasarkan makna, bukan hanya kata yang sama persis."
 
 msgid "Describe the problem, e.g. FASIH cannot sync"
-msgstr "Jelaskan masalahnya, mis. FASIH tidak bisa sinkron"
+msgstr "Jelaskan masalahnya, misalnya FASIH tidak dapat sinkronisasi"
 
 msgid "The HaloSIS AI service cannot be reached: showing keyword results from knowledge base articles only."
-msgstr "Layanan AI HaloSIS tidak dapat dihubungi: menampilkan hasil kata kunci dari artikel knowledge base saja."
+msgstr "Layanan AI HaloSIS tidak dapat dihubungi: hanya menampilkan hasil kata kunci dari artikel basis pengetahuan."
 
 msgid "Open the GLPI knowledge base"
-msgstr "Buka knowledge base GLPI"
+msgstr "Buka basis pengetahuan GLPI"
 
 msgid "Article"
 msgstr "Artikel"
@@ -964,7 +964,7 @@ msgid "Relevance"
 msgstr "Relevansi"
 
 msgid "No knowledge found. Try other words."
-msgstr "Knowledge tidak ditemukan. Coba kata lain."
+msgstr "Pengetahuan tidak ditemukan. Silakan coba kata lain."
 
 msgid "What do you need today?"
 msgstr "Apa yang Anda butuhkan hari ini?"
@@ -979,7 +979,7 @@ msgid "Report a problem"
 msgstr "Laporkan masalah"
 
 msgid "Something is not working. The assistant looks for a solution first; a report is created if it is not solved."
-msgstr "Ada yang tidak berfungsi? Asisten mencarikan solusi dulu; laporan dibuat bila belum terselesaikan."
+msgstr "Ada yang tidak berfungsi? Asisten mencarikan solusi terlebih dahulu; laporan dibuat bila belum terselesaikan."
 
 msgid "Low threshold"
 msgstr "Ambang bawah"
@@ -1006,7 +1006,7 @@ msgid "Needs review"
 msgstr "Perlu ditinjau"
 
 msgid "Published articles not updated for more than %d months. Review each one in the Knowledge Base: editing the article marks it as reviewed."
-msgstr "Artikel terbit yang tidak diperbarui lebih dari %d bulan. Tinjau satu per satu di Knowledge Base: menyunting artikel menandainya sudah ditinjau."
+msgstr "Artikel terbit yang tidak diperbarui lebih dari %d bulan. Tinjau satu per satu di basis pengetahuan: menyunting artikel akan menandainya sudah ditinjau."
 
 msgid "Last updated"
 msgstr "Terakhir diperbarui"
@@ -1015,19 +1015,19 @@ msgid "No articles need review."
 msgstr "Tidak ada artikel yang perlu ditinjau."
 
 msgid "Knowledge base"
-msgstr "Knowledge base"
+msgstr "Basis pengetahuan"
 
 msgid "Review published articles after (months)"
 msgstr "Tinjau artikel terbit setelah (bulan)"
 
 msgid "Published articles not updated for this long appear in the “Needs review” tab of Knowledge candidates."
-msgstr "Artikel terbit yang tidak diperbarui selama ini muncul di tab “Perlu ditinjau” halaman Kandidat knowledge."
+msgstr "Artikel terbit yang tidak diperbarui selama ini muncul di tab “Perlu ditinjau” pada halaman Kandidat pengetahuan."
 
 msgid "Ended (inactive)"
 msgstr "Berakhir (tidak aktif)"
 
 msgid "Articles most used by the chatbot"
-msgstr "Artikel yang paling sering dipakai chatbot"
+msgstr "Artikel yang Paling Sering Dipakai Asisten"
 
 msgid "used %d time"
 msgid_plural "used %d times"
@@ -1044,7 +1044,7 @@ msgid "not mapped to a GLPI group"
 msgstr "belum terpetakan ke grup GLPI"
 
 msgid "You are not allowed to search knowledge."
-msgstr "Anda tidak berhak mencari knowledge."
+msgstr "Anda tidak berhak mencari pengetahuan."
 
 msgid "Was this useful?"
 msgstr "Apakah ini membantu?"
@@ -1056,10 +1056,10 @@ msgid "Not helpful"
 msgstr "Tidak membantu"
 
 msgid "Thank you, feedback saved."
-msgstr "Terima kasih, umpan balik tersimpan."
+msgstr "Terima kasih, umpan balik Anda tersimpan."
 
 msgid "Filter"
-msgstr "Filter"
+msgstr "Saring"
 
 msgid "Team"
 msgstr "Tim"
@@ -1080,10 +1080,10 @@ msgid "Export corrections (CSV, masked)"
 msgstr "Ekspor koreksi (CSV, tersamar)"
 
 msgid "Articles most often marked not helpful"
-msgstr "Artikel paling sering dinilai tidak membantu"
+msgstr "Artikel yang Paling Sering Dinilai Tidak Membantu"
 
 msgid "%d chats not resolved, %d agent votes"
-msgstr "%d chat tidak terselesaikan, %d penilaian agent"
+msgstr "%d percakapan tidak terselesaikan, %d penilaian petugas"
 
 msgid "Detected"
 msgstr "Terdeteksi"
@@ -1095,7 +1095,7 @@ msgid "Closed"
 msgstr "Ditutup"
 
 msgid "Drift indicator: modified + rejected per month"
-msgstr "Indikator drift: diubah + ditolak per bulan"
+msgstr "Indikator Pergeseran: Diubah + Ditolak per Bulan"
 
 msgid "Month"
 msgstr "Bulan"
@@ -1107,7 +1107,7 @@ msgid "Modified + rejected"
 msgstr "Diubah + ditolak"
 
 msgid "Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits."
-msgstr "Maksud Anda salah satu artikel berikut? Buka yang sesuai, atau klik “Buat laporan” bila tidak ada yang cocok."
+msgstr "Apakah yang Anda maksud salah satu artikel berikut? Buka artikel yang sesuai, atau klik “Buat laporan” bila tidak ada yang cocok."
 
 msgid "Choose a review date after today."
 msgstr "Pilih tanggal tinjau setelah hari ini."
@@ -1116,10 +1116,10 @@ msgid "Article not found."
 msgstr "Artikel tidak ditemukan."
 
 msgid "Next review date saved."
-msgstr "Tanggal tinjau berikut tersimpan."
+msgstr "Tanggal tinjau berikutnya tersimpan."
 
 msgid "Review due"
-msgstr "Jatuh tempo tinjau"
+msgstr "Jatuh tempo peninjauan"
 
 msgid "automatic"
 msgstr "otomatis"
@@ -1131,7 +1131,7 @@ msgid "Save date"
 msgstr "Simpan tanggal"
 
 msgid "Incident pattern trend: tickets per week by topic (12 weeks)"
-msgstr "Tren pola insiden: tiket per minggu per topik (12 minggu)"
+msgstr "Tren Pola Insiden: Tiket per Minggu per Topik (12 Minggu)"
 
 msgid "Topic"
 msgstr "Topik"
@@ -1161,19 +1161,19 @@ msgid "Average similarity (default)"
 msgstr "Rata-rata kemiripan (bawaan)"
 
 msgid "DBSCAN (as in the PoC)"
-msgstr "DBSCAN (seperti PoC)"
+msgstr "DBSCAN (seperti pada uji konsep (PoC))"
 
 msgid "Semantic method"
 msgstr "Metode semantik"
 
 msgid "Used when the HaloSIS AI service is running. DBSCAN uses the two settings below; see reports/banding_pola.md."
-msgstr "Dipakai bila layanan AI HaloSIS hidup. DBSCAN memakai dua pengaturan di bawah; lihat reports/banding_pola.md."
+msgstr "Dipakai bila layanan AI HaloSIS berjalan. DBSCAN memakai dua pengaturan di bawah; lihat reports/banding_pola.md."
 
 msgid "DBSCAN eps (cosine distance)"
 msgstr "eps DBSCAN (jarak kosinus)"
 
 msgid "Default 0.50 for centred e5 vectors (the PoC used 0.25 with MiniLM)."
-msgstr "Bawaan 0,50 untuk vektor e5 yang dipusatkan (PoC memakai 0,25 dengan MiniLM)."
+msgstr "Bawaan 0,50 untuk vektor e5 yang dipusatkan (uji konsep (PoC) memakai 0,25 dengan MiniLM)."
 
 msgid "DBSCAN min_samples"
 msgstr "min_samples DBSCAN"
@@ -1182,7 +1182,7 @@ msgid "Suggested type"
 msgstr "Jenis disarankan"
 
 msgid "the ticket is currently %s; change it in the ticket form if appropriate"
-msgstr "tiket saat ini %s; ubah di form tiket bila sesuai"
+msgstr "tiket saat ini %s; ubah di formulir tiket bila sesuai"
 
 msgid "deleted"
 msgstr "dihapus"
@@ -1203,10 +1203,10 @@ msgid "Impact preview (not saved yet)"
 msgstr "Pratinjau dampak (belum disimpan)"
 
 msgid "%1$d of %2$d suggestions in the last 30 days would change level."
-msgstr "%1$d dari %2$d saran 30 hari terakhir akan berpindah tingkat."
+msgstr "%1$d dari %2$d saran dalam 30 hari terakhir akan berpindah tingkat."
 
 msgid "Current thresholds"
-msgstr "Ambang sekarang"
+msgstr "Ambang saat ini"
 
 msgid "New thresholds"
 msgstr "Ambang baru"
@@ -1218,7 +1218,7 @@ msgid "Ready to close"
 msgstr "Siap ditutup"
 
 msgid "Closed by the Operator: no response from the requester within %d hours after the solution (HaloSIS closure recommendation)."
-msgstr "Ditutup Operator: tidak ada respons pemohon dalam %d jam setelah solusi (rekomendasi penutupan HaloSIS)."
+msgstr "Ditutup oleh Operator: tidak ada respons pemohon dalam %d jam setelah solusi (rekomendasi penutupan HaloSIS)."
 
 msgid "You are not allowed to close tickets."
 msgstr "Anda tidak berhak menutup tiket."
@@ -1227,7 +1227,7 @@ msgid "%1$d ticket(s) closed, %2$d skipped."
 msgstr "%1$d tiket ditutup, %2$d dilewati."
 
 msgid "Solved tickets without a response from the requester for more than %d hours. Close them after checking; nothing is closed automatically."
-msgstr "Tiket Selesai tanpa respons pemohon lebih dari %d jam. Tutup setelah diperiksa; tidak ada yang ditutup otomatis."
+msgstr "Tiket berstatus Selesai tanpa respons pemohon lebih dari %d jam. Tutup setelah diperiksa; tidak ada tiket yang ditutup otomatis."
 
 msgid "Select all"
 msgstr "Pilih semua"
@@ -1251,10 +1251,10 @@ msgid "Ready to close after (hours without requester response)"
 msgstr "Siap ditutup setelah (jam tanpa respons pemohon)"
 
 msgid "Solved tickets without a requester response for this long appear in the Operator list “Ready to close”. Nothing is closed automatically."
-msgstr "Tiket Selesai tanpa respons pemohon selama ini muncul di daftar Operator “Siap ditutup”. Tidak ada yang ditutup otomatis."
+msgstr "Tiket berstatus Selesai tanpa respons pemohon selama ini muncul di daftar Operator “Siap ditutup”. Tidak ada tiket yang ditutup otomatis."
 
 msgid "Service KPIs (document table 1.3)"
-msgstr "KPI layanan (tabel 1.3 dokumen)"
+msgstr "KPI Layanan (Tabel 1.3 Dokumen)"
 
 msgid "Response SLA breached"
 msgstr "SLA respons terlampaui"
@@ -1269,7 +1269,7 @@ msgid "%d tickets with a resolution SLA"
 msgstr "%d tiket dengan SLA penyelesaian"
 
 msgid "Median time to take into account"
-msgstr "Median waktu sampai diambil/ditugaskan"
+msgstr "Median waktu sampai tiket diambil"
 
 msgid "min"
 msgstr "menit"
@@ -1287,49 +1287,49 @@ msgid "(uncategorised)"
 msgstr "(tanpa kategori)"
 
 msgid "This question is outside HaloSIS IT services. Please contact the %s unit; they handle this topic. For IT problems (applications, accounts, devices, network), ask me again."
-msgstr "Pertanyaan ini di luar layanan TI HaloSIS. Silakan hubungi unit %s yang menangani topik ini. Untuk masalah TI (aplikasi, akun, perangkat, jaringan), silakan bertanya lagi."
+msgstr "Pertanyaan ini di luar layanan TI HaloSIS. Silakan hubungi unit %s yang menangani topik ini. Untuk masalah TI (aplikasi, akun, perangkat, jaringan), silakan bertanya kembali kepada saya."
 
 msgid "The model has not passed the quality check"
 msgstr "Model belum lolos uji kualitas"
 
 msgid "triage manually; the suggestion is for reference only"
-msgstr "triase manual; saran hanya sebagai rujukan"
+msgstr "lakukan triase manual; saran hanya sebagai rujukan"
 
 msgid "SLA compliance (passed)"
 msgstr "Kepatuhan SLA (lolos)"
 
 msgid "%d decided tickets"
-msgstr "%d tiket sudah ditentukan"
+msgstr "%d tiket sudah diputuskan"
 
 msgid "Document baseline %s%% (overall) / %s%% (response)"
-msgstr "Baseline dokumen %s%% (overall) / %s%% (respons)"
+msgstr "Acuan awal dokumen %s%% (keseluruhan) / %s%% (respons)"
 
 msgid "New-history baseline %s%% (extended, %s imputed)"
-msgstr "History versi baru %s%% (extended, %s imputasi)"
+msgstr "Acuan awal riwayat versi baru %s%% (diperluas, %s imputasi)"
 
 msgid "response %s%%"
 msgstr "respons %s%%"
 
 msgid "rating coverage %s/%s = %s%%"
-msgstr "cakupan rating %s/%s = %s%%"
+msgstr "cakupan penilaian %s/%s = %s%%"
 
 msgid "Rating is optional (document §5.2.1): a high satisfaction claim risks being optimistic."
-msgstr "Rating tidak wajib (dokumen §5.2.1): klaim kepuasan tinggi berisiko optimistis."
+msgstr "Penilaian tidak wajib (dokumen §5.2.1): klaim kepuasan tinggi berisiko terlalu optimistis."
 
 msgid "Requester satisfaction (rating ≥ 4)"
-msgstr "Kepuasan pemohon (nilai ≥ 4)"
+msgstr "Kepuasan pemohon (penilaian ≥ 4)"
 
 msgid "%d answered surveys"
 msgstr "%d survei dijawab"
 
 msgid "ESTIM baseline %s%% of %s rated tickets"
-msgstr "baseline ESTIM %s%% dari %s tiket dinilai"
+msgstr "acuan awal ESTIM %s%% dari %s tiket yang dinilai"
 
 msgid "Critical services"
 msgstr "Layanan kritis"
 
 msgid "Comma-separated words. When the suggested category name contains one of them, or this many similar tickets arrive within the time window, the suggested impact is raised one level."
-msgstr "Kata dipisah koma. Bila nama kategori saran memuat salah satunya, atau tiket serupa sebanyak minimum di atas masuk dalam jendela waktu, dampak yang disarankan naik satu tingkat."
+msgstr "Kata dipisahkan koma. Bila nama kategori yang disarankan memuat salah satunya, atau tiket serupa sebanyak jumlah minimal di atas masuk dalam jendela waktu, dampak yang disarankan naik satu tingkat."
 
 msgid "Suggested urgency"
 msgstr "Urgensi disarankan"
@@ -1341,13 +1341,13 @@ msgid "Medium (model class)"
 msgstr "Sedang"
 
 msgid "from the ticket history model"
-msgstr "dari model history tiket"
+msgstr "dari model riwayat tiket"
 
 msgid "Official job titles"
 msgstr "Jabatan pejabat"
 
 msgid "Comma-separated words matched at the start of the requester job title (from SSO). Such requesters join the \"Pejabat\" group; the ticket rule and the AI suggestion raise the urgency one level."
-msgstr "Kata dipisah koma yang dicocokkan dengan awal jabatan pemohon (dari SSO). Pemohon tersebut masuk grup \"Pejabat\"; aturan tiket dan saran AI menaikkan urgensi satu tingkat."
+msgstr "Kata dipisahkan koma yang dicocokkan dengan awal jabatan pemohon (dari SSO). Pemohon tersebut masuk grup \"Pejabat\"; aturan tiket dan saran AI menaikkan urgensi satu tingkat."
 
 msgid "Type: needs review"
 msgstr "Jenis: perlu ditinjau"
@@ -1371,13 +1371,13 @@ msgid "Request pattern: %s"
 msgstr "Pola permintaan: %s"
 
 msgid "Workload tie-break: %1$s (%2$d%%) and %3$s (%4$d%%) differ by less than %5$d points; %3$s has fewer active tickets (%6$d vs %7$d), so it is suggested."
-msgstr "Pemecah seri beban kerja: %1$s (%2$d%%) dan %3$s (%4$d%%) berselisih kurang dari %5$d poin; %3$s punya tiket aktif lebih sedikit (%6$d vs %7$d), jadi %3$s yang disarankan."
+msgstr "Pemecah seri beban kerja: %1$s (%2$d%%) dan %3$s (%4$d%%) berselisih kurang dari %5$d poin; %3$s memiliki tiket aktif lebih sedikit (%6$d dibanding %7$d) sehingga %3$s yang disarankan."
 
 msgid "Description summary (%d words, key sentences)"
 msgstr "Ringkasan deskripsi (%d kata, kalimat kunci)"
 
 msgid "HaloSIS: remind assigned technicians of tickets without progress"
-msgstr "HaloSIS: ingatkan teknisi atas tiket tanpa progres"
+msgstr "HaloSIS: ingatkan teknisi yang ditugaskan tentang tiket tanpa progres"
 
 msgid "Ticket #%1$d: progress reminder sent (%2$d working days without follow-up)"
 msgstr "Tiket #%1$d: pengingat progres dikirim (%2$d hari kerja tanpa tindak lanjut)"
@@ -1395,7 +1395,7 @@ msgid "SLA \"%1$s\": %2$s → %3$d %4$s"
 msgstr "SLA \"%1$s\": %2$s → %3$d %4$s"
 
 msgid "The replacement SLA must be of the same kind (response or resolution) as the rule action."
-msgstr "SLA pengganti harus sejenis (respons atau penyelesaian) dengan aksi aturan."
+msgstr "SLA pengganti harus sejenis (respons atau penyelesaian) dengan tindakan aturan."
 
 msgid "Rule \"%1$s\": SLA %2$s → %3$s"
 msgstr "Aturan \"%1$s\": SLA %2$s → %3$s"
@@ -1407,7 +1407,7 @@ msgid "SLA change impact preview"
 msgstr "Pratinjau dampak perubahan SLA"
 
 msgid "Shows how many active tickets would be affected and change SLA status (on track / at risk / overdue) if a new target were applied. Nothing is saved; change the SLA or rule itself in Setup › Service levels or Business rules for tickets."
-msgstr "Menampilkan berapa tiket aktif yang terdampak dan berubah status SLA (aman / berisiko / terlewati) bila target baru diterapkan. Tidak ada yang disimpan; ubah SLA atau aturannya sendiri di Pengaturan › Tingkat layanan atau Aturan bisnis tiket."
+msgstr "Menampilkan jumlah tiket aktif yang terdampak dan berubah status SLA (aman / berisiko / terlewati) bila target baru diterapkan. Tidak ada yang disimpan; ubah SLA atau aturannya di Pengaturan › Tingkat layanan atau Aturan bisnis untuk tiket."
 
 msgid "SLA or SLA rule"
 msgstr "SLA atau aturan SLA"
@@ -1449,25 +1449,20 @@ msgid "Include service requests in pattern detection"
 msgstr "Sertakan permintaan dalam deteksi pola"
 
 msgid "Off by default (the PoC detects patterns from incidents only). When on, service requests are grouped too, separately from incidents, as “Request pattern” problems."
-msgstr "Bawaan mati (PoC mendeteksi pola dari insiden saja). Bila aktif, permintaan layanan ikut dikelompokkan, terpisah dari insiden, sebagai Problem “Pola permintaan”."
+msgstr "Bawaan mati (uji konsep (PoC) hanya mendeteksi pola dari insiden). Bila aktif, permintaan layanan ikut dikelompokkan, terpisah dari insiden, sebagai Masalah “Pola permintaan”."
 
 msgid "Progress reminder after (working days without follow-up)"
 msgstr "Pengingat progres setelah (hari kerja tanpa tindak lanjut)"
 
 msgid "Tickets in progress or pending without a follow-up or task for more than this many working days notify the assigned technician and group (scheduled task ProgressReminder, once per period)."
-msgstr "Tiket Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja memberi tahu teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
+msgstr "Tiket berstatus Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja akan memicu notifikasi ke teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
 
 # Halaman login
 msgid "Welcome to HaloSIS"
-msgstr "Selamat datang di HaloSIS"
+msgstr "Selamat Datang di HaloSIS"
 
 msgid "BPS IT services"
-msgstr "Layanan TI BPS"
-
-
-
-
-
+msgstr "Layanan TI Pegawai BPS"
 
 msgid "Show password"
 msgstr "Tampilkan kata sandi"
@@ -1479,7 +1474,30 @@ msgid "Central sign-in (SSO)"
 msgstr "Login terpusat (SSO)"
 
 msgid "Forgot your password? Contact the IT service Operator"
-msgstr "Lupa kata sandi? Hubungi Operator layanan TI"
+msgstr "Lupa kata sandi? Hubungi Operator Layanan TI"
 
 msgid "Powered by GLPI"
 msgstr "Didukung GLPI"
+
+msgctxt "page title"
+msgid "Chat history"
+msgstr "Riwayat Percakapan"
+
+msgctxt "page title"
+msgid "Knowledge candidates"
+msgstr "Kandidat Pengetahuan"
+
+msgctxt "page title"
+msgid "Search knowledge"
+msgstr "Cari Pengetahuan"
+
+msgctxt "page title"
+msgid "Incident patterns"
+msgstr "Pola Insiden"
+
+msgctxt "page title"
+msgid "Ready to close"
+msgstr "Siap Ditutup"
+
+msgid "This role does not manage rules."
+msgstr "Peran ini tidak mengelola aturan."

@@ -69,8 +69,8 @@ function plugin_init_halosis(): void
     KeycloakAuth::handleLoginRequest();
     $PLUGIN_HOOKS[Hooks::INIT_SESSION]['halosis'] = [KeycloakAuth::class, 'onInitSession'];
     // Halaman login HaloSIS: panel brand, tombol lihat kata sandi, bantuan akun SSO (hanya halaman anonim),
-    // dalam bahasa default instansi walau browser berbahasa lain
-    LoginPage::useDefaultLanguage();
+    // selalu Bahasa Indonesia walau browser berbahasa lain; terjemahan baru dipasang otomatis setelah git pull
+    LoginPage::useIndonesian();
     LoginPage::register();
 
     // API key disimpan terenkripsi oleh GLPI (GLPIKey) dan ikut diproses oleh `glpi:security:changekey`

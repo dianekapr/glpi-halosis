@@ -1,7 +1,8 @@
 # Terjemahan label INTI GLPI untuk halaman login HaloSIS (domain "glpi").
 # Tidak mengubah GLPI: LoginPage::installCoreLocales() menyalin .mo ke GLPI_LOCAL_I18N_DIR/core_halosis
 # (mekanisme terjemahan lokal bawaan GLPI). Kompilasi: python3 tools/locales.py
-# Catatan: berlaku di seluruh GLPI, jadi hanya label yang belum/kurang tepat di terjemahan id_ID bawaan.
+# Catatan: berlaku di seluruh GLPI, jadi hanya label yang belum diterjemahkan / tidak baku (PUEBI/KBBI) di
+# terjemahan id_ID bawaan (±19% lengkap). Selain halaman login, mencakup label inti yang tampil di alur demo HaloSIS.
 msgid ""
 msgstr ""
 "Project-Id-Version: HaloSIS\n"
@@ -15,13 +16,13 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Login to your account"
-msgstr "Masuk"
+msgstr "Masuk ke Akun Anda"
 
 msgid "Login"
-msgstr "Nama pengguna"
+msgstr "Nama Pengguna"
 
 msgid "Password"
-msgstr "Kata sandi"
+msgstr "Kata Sandi"
 
 msgid "Sign in"
 msgstr "Masuk"
@@ -41,3 +42,670 @@ msgstr "Masuk lagi"
 
 msgid "Go to main content"
 msgstr "Langsung ke konten utama"
+
+# ---- Label inti lain di alur demo HaloSIS (belum diterjemahkan / tidak baku di id_ID bawaan GLPI) ----
+
+msgid "Authentication"
+msgstr "Autentikasi"
+
+msgid "Please enter your email address. An email will be sent to you and you will be able to choose a new password."
+msgstr "Masukkan alamat email Anda. Email akan dikirim kepada Anda untuk memilih kata sandi baru."
+
+msgid "Forget it,"
+msgstr "Batalkan,"
+
+msgid "send me back"
+msgstr "kembalikan saya"
+
+msgid "to the login screen."
+msgstr "ke halaman masuk."
+
+msgid "Go to main navigation"
+msgstr "Langsung ke navigasi utama"
+
+msgid "Item not found"
+msgstr "Item tidak ditemukan"
+
+msgid "The requested item has not been found."
+msgstr "Item yang diminta tidak ditemukan."
+
+msgid "You don't have permission to perform this action."
+msgstr "Anda tidak memiliki izin untuk melakukan tindakan ini."
+
+msgid "Return to previous page"
+msgstr "Kembali ke halaman sebelumnya"
+
+msgid "Find menu"
+msgstr "Cari menu"
+
+msgid "Collapse menu"
+msgstr "Ciutkan menu"
+
+msgid "Main navigation"
+msgstr "Navigasi utama"
+
+msgid "Breadcrumbs"
+msgstr "Jejak navigasi"
+
+msgid "Sidebar"
+msgstr "Bilah samping"
+
+msgid "tree structure"
+msgstr "struktur pohon"
+
+msgid "Change profile"
+msgstr "Ganti profil"
+
+msgid "Search..."
+msgstr "Cari..."
+
+msgid "Update"
+msgstr "Perbarui"
+
+msgctxt "button"
+msgid "Update"
+msgstr "Perbarui"
+
+msgctxt "name"
+msgid "Update"
+msgstr "Perbarui"
+
+msgid "Last update"
+msgstr "Terakhir diperbarui"
+
+msgid "Last updated"
+msgstr "Terakhir diperbarui"
+
+msgid "Last update on %s"
+msgstr "Terakhir diperbarui pada %s"
+
+msgid "Personal View"
+msgstr "Tampilan Pribadi"
+
+msgid "Group View"
+msgstr "Tampilan Grup"
+
+msgid "Global View"
+msgstr "Tampilan Global"
+
+msgid "RSS feed"
+msgid_plural "RSS feed"
+msgstr[0] "Umpan RSS"
+
+msgid "Your planning"
+msgstr "Rencana Anda"
+
+msgid "Tickets to be processed"
+msgstr "Tiket yang perlu diproses"
+
+msgid "Personal reminder"
+msgid_plural "Personal reminders"
+msgstr[0] "Pengingat pribadi"
+
+msgid "Public reminder"
+msgid_plural "Public reminders"
+msgstr[0] "Pengingat publik"
+
+msgid "View TODO list"
+msgstr "Lihat daftar tugas"
+
+msgid "Actions"
+msgstr "Tindakan"
+
+msgid "Refresh"
+msgstr "Muat ulang"
+
+msgid "Toggle auto-refresh"
+msgstr "Aktifkan/nonaktifkan muat ulang otomatis"
+
+msgid "Toggle filter mode"
+msgstr "Aktifkan/nonaktifkan mode saring"
+
+msgid "Toggle fullscreen"
+msgstr "Aktifkan/nonaktifkan layar penuh"
+
+msgid "Toggle night mode"
+msgstr "Aktifkan/nonaktifkan mode malam"
+
+msgid "You are viewing demonstration data."
+msgstr "Anda sedang melihat data demonstrasi."
+
+msgid "%1$s by %2$s"
+msgstr "%1$s menurut %2$s"
+
+msgid "%s by %s"
+msgstr "%s menurut %s"
+
+msgid "Tickets status by month"
+msgstr "Status tiket per bulan"
+
+msgid "Evolution of ticket in the past year"
+msgstr "Perkembangan tiket dalam setahun terakhir"
+
+msgid "Top ticket's categories"
+msgstr "Kategori tiket teratas"
+
+msgid "Top ticket's entities"
+msgstr "Entitas tiket teratas"
+
+msgid "Top ticket's request sources"
+msgstr "Sumber permintaan tiket teratas"
+
+msgid "Top ticket's requesters"
+msgstr "Pemohon tiket teratas"
+
+msgid "Late tickets"
+msgstr "Tiket terlambat"
+
+msgid "Solved tickets"
+msgstr "Tiket terselesaikan"
+
+msgid "Not solved tickets"
+msgstr "Tiket belum terselesaikan"
+
+msgid "Incoming tickets"
+msgstr "Tiket masuk"
+
+msgid "Pending tickets"
+msgstr "Tiket tertunda"
+
+msgid "Planned tickets"
+msgstr "Tiket terencana"
+
+msgid "Assigned tickets"
+msgstr "Tiket yang ditugaskan"
+
+msgid "Number of tickets already assigned"
+msgstr "Jumlah tiket yang sudah ditugaskan"
+
+msgid "Showing %s to %s of %s rows"
+msgstr "Menampilkan %s sampai %s dari %s baris"
+
+msgid "Sorted by %s"
+msgstr "Diurutkan menurut %s"
+
+msgid "Filtered by %s"
+msgstr "Disaring menurut %s"
+
+msgid "Sort by"
+msgstr "Urutkan menurut"
+
+msgid "Sort by: "
+msgstr "Urutkan menurut: "
+
+msgid "Sort"
+msgstr "Urutkan"
+
+msgid "rows / page"
+msgstr "baris/halaman"
+
+msgid "Entries to show:"
+msgstr "Jumlah entri ditampilkan:"
+
+msgid "Check all as"
+msgstr "Tandai semua sebagai"
+
+msgid "Clear search"
+msgstr "Hapus pencarian"
+
+msgid "Or complete search"
+msgstr "Atau pencarian lengkap"
+
+msgid "Show saved searches"
+msgstr "Tampilkan pencarian tersimpan"
+
+msgid "Show as map"
+msgstr "Tampilkan sebagai peta"
+
+msgid "Show as table"
+msgstr "Tampilkan sebagai tabel"
+
+msgid "Show the trashbin"
+msgstr "Tampilkan tempat sampah"
+
+msgid "Global Kanban"
+msgstr "Kanban global"
+
+msgid "Select item"
+msgstr "Pilih item"
+
+msgid "Select default items to show"
+msgstr "Pilih item bawaan yang ditampilkan"
+
+msgid "is"
+msgstr "adalah"
+
+msgid "exists"
+msgstr "ada"
+
+msgid "does not exist"
+msgstr "tidak ada"
+
+msgid "Add a new %s"
+msgstr "Tambah %s baru"
+
+msgid "Add a new item"
+msgstr "Tambah item baru"
+
+msgid "Enter or select a date"
+msgstr "Ketik atau pilih tanggal"
+
+msgid "Drag to resize, double-click to reset"
+msgstr "Seret untuk mengubah ukuran, klik dua kali untuk mengatur ulang"
+
+msgid "Default"
+msgstr "Bawaan"
+
+msgid "Tools"
+msgstr "Peralatan"
+
+msgid "Monitor"
+msgid_plural "Monitors"
+msgstr[0] "Monitor"
+
+msgctxt "wifi_card_mode"
+msgid "Monitor"
+msgstr "Monitor"
+
+msgid "Position"
+msgstr "Posisi"
+
+msgid "Rack"
+msgid_plural "Racks"
+msgstr[0] "Rak"
+
+msgctxt "priority"
+msgid "Major"
+msgstr "Mayor"
+
+msgid "Event"
+msgid_plural "Events"
+msgstr[0] "Peristiwa"
+
+msgid "External ID"
+msgstr "ID eksternal"
+
+msgid "My devices"
+msgstr "Perangkat saya"
+
+msgctxt "button"
+msgid "Answer"
+msgstr "Balas"
+
+msgctxt "button"
+msgid "Create a task"
+msgstr "Buat tugas"
+
+msgid "Task"
+msgid_plural "Tasks"
+msgstr[0] "Tugas"
+
+msgctxt "button"
+msgid "Task"
+msgstr "Tugas"
+
+msgctxt "button"
+msgid "Add a solution"
+msgstr "Tambah solusi"
+
+msgid "Solution"
+msgid_plural "Solutions"
+msgstr[0] "Solusi"
+
+msgctxt "button"
+msgid "Solution"
+msgstr "Solusi"
+
+msgid "Add a document"
+msgstr "Tambah dokumen"
+
+msgctxt "button"
+msgid "Add a document"
+msgstr "Tambah dokumen"
+
+msgid "Document"
+msgid_plural "Documents"
+msgstr[0] "Dokumen"
+
+msgctxt "button"
+msgid "Document"
+msgstr "Dokumen"
+
+msgctxt "icons"
+msgid "Document"
+msgstr "Dokumen"
+
+msgctxt "button"
+msgid "Ask for approval"
+msgstr "Minta persetujuan"
+
+msgid "Approve"
+msgstr "Setujui"
+
+msgid "Refuse"
+msgstr "Tolak"
+
+msgctxt "validation"
+msgid "Refused"
+msgstr "Ditolak"
+
+msgctxt "status"
+msgid "Refused"
+msgstr "Ditolak"
+
+msgctxt "solution"
+msgid "Refused"
+msgstr "Ditolak"
+
+msgid "Followup"
+msgid_plural "Followups"
+msgstr[0] "Tindak lanjut"
+
+msgid "New followup"
+msgstr "Tindak lanjut baru"
+
+msgid "Actors"
+msgstr "Pelaku"
+
+msgid "Observer"
+msgid_plural "Observers"
+msgstr[0] "Pengamat"
+
+msgid "Associate myself"
+msgstr "Tambahkan saya"
+
+msgid "Cancel ticket"
+msgstr "Batalkan tiket"
+
+msgid "Timeline filter"
+msgstr "Saring linimasa"
+
+msgid "Toggle panels width"
+msgstr "Ubah lebar panel"
+
+msgid "View other actions"
+msgstr "Lihat tindakan lain"
+
+msgid "More actions"
+msgstr "Tindakan lain"
+
+msgid "Collapse"
+msgstr "Ciutkan"
+
+msgid "Linked assistance object"
+msgid_plural "Linked assistance objects"
+msgstr[0] "Objek bantuan tertaut"
+
+msgid "Item location"
+msgstr "Lokasi item"
+
+msgid "Requester location"
+msgstr "Lokasi pemohon"
+
+msgid "Requester in group"
+msgstr "Pemohon dalam grup"
+
+msgid "Service level"
+msgid_plural "Service levels"
+msgstr[0] "Tingkat layanan"
+
+msgid "Time to own"
+msgstr "Waktu sampai diambil"
+
+msgid "Time to resolve exceeded"
+msgstr "Waktu penyelesaian terlampaui"
+
+msgid "Ticket solved"
+msgstr "Tiket terselesaikan"
+
+msgid "Closing of the ticket"
+msgstr "Penutupan tiket"
+
+msgid "Incident"
+msgstr "Insiden"
+
+msgid "Request"
+msgstr "Permintaan"
+
+msgid "Private"
+msgstr "Privat"
+
+msgid "Confirmation"
+msgstr "Konfirmasi"
+
+msgid "Confirmation required"
+msgstr "Konfirmasi diperlukan"
+
+msgid "Confirm that you want to continue."
+msgstr "Konfirmasi bahwa Anda ingin melanjutkan."
+
+msgid "Sensitive area"
+msgstr "Area sensitif"
+
+msgid "The action you requested may change GLPI behavior or display confidential data."
+msgstr "Tindakan yang Anda minta dapat mengubah perilaku GLPI atau menampilkan data rahasia."
+
+msgid "Verify"
+msgstr "Verifikasi"
+
+msgid "Helpdesk"
+msgstr "Layanan bantuan"
+
+msgctxt "Icon"
+msgid "Helpdesk"
+msgstr "Layanan bantuan"
+
+msgid "Service catalog"
+msgstr "Katalog layanan"
+
+msgid "Service catalog category"
+msgid_plural "Service catalog categories"
+msgstr[0] "Kategori katalog layanan"
+
+msgctxt "Icon"
+msgid "Request a service"
+msgstr "Ajukan layanan"
+
+msgid "Request a service"
+msgstr "Ajukan layanan"
+
+msgctxt "Icon"
+msgid "Report an issue"
+msgstr "Laporkan masalah"
+
+msgid "Report an issue"
+msgstr "Laporkan masalah"
+
+msgid "Ask for a service to be provided by our team."
+msgstr "Ajukan layanan yang disediakan oleh tim kami."
+
+msgid "Ask for support from our helpdesk team."
+msgstr "Minta bantuan dari tim layanan bantuan kami."
+
+msgid "Search for forms..."
+msgstr "Cari formulir..."
+
+msgid "Form"
+msgid_plural "Forms"
+msgstr[0] "Formulir"
+
+msgid "Forms"
+msgstr "Formulir"
+
+msgid "Import forms"
+msgstr "Impor formulir"
+
+msgid "Select an illustration"
+msgstr "Pilih ilustrasi"
+
+msgid "Articles"
+msgstr "Artikel"
+
+msgid "All articles"
+msgstr "Semua artikel"
+
+msgid "Add article"
+msgstr "Tambah artikel"
+
+msgid "Search articles"
+msgstr "Cari artikel"
+
+msgid "Sub-articles"
+msgstr "Subartikel"
+
+msgid "Most popular"
+msgstr "Paling populer"
+
+msgid "FAQ item"
+msgstr "Item Tanya Jawab (FAQ)"
+
+msgid "This item is part of the FAQ"
+msgstr "Item ini termasuk Tanya Jawab (FAQ)"
+
+msgid "This item is not published yet"
+msgstr "Item ini belum diterbitkan"
+
+msgid "Show unpublished"
+msgstr "Tampilkan yang belum diterbitkan"
+
+msgid "Collapse articles list"
+msgstr "Ciutkan daftar artikel"
+
+msgid "Resize articles list"
+msgstr "Ubah ukuran daftar artikel"
+
+msgid "Visible for a request"
+msgstr "Terlihat untuk permintaan"
+
+msgid "Visible for an incident"
+msgstr "Terlihat untuk insiden"
+
+msgid "Visible in the simplified interface"
+msgstr "Terlihat di antarmuka sederhana"
+
+msgid "ITIL category"
+msgid_plural "ITIL categories"
+msgstr[0] "Kategori ITIL"
+
+msgid "Business rules for tickets"
+msgstr "Aturan bisnis untuk tiket"
+
+msgid "Test rules engine"
+msgstr "Uji mesin aturan"
+
+msgid "Rule is active"
+msgstr "Aturan aktif"
+
+msgid "Rule is inactive"
+msgstr "Aturan nonaktif"
+
+msgid "Rules used for"
+msgstr "Aturan dipakai untuk"
+
+msgid "Use rule for"
+msgstr "Pakai aturan untuk"
+
+msgid "The engine passes the result of each rule to the next matching rule."
+msgstr "Mesin meneruskan hasil setiap aturan ke aturan berikutnya yang cocok."
+
+msgid "The engine will run all matching rules."
+msgstr "Mesin akan menjalankan semua aturan yang cocok."
+
+msgid "The rules are conditional based on a type of action."
+msgstr "Aturan bersyarat berdasarkan jenis tindakan."
+
+msgid "Copy from item"
+msgstr "Salin dari item"
+
+msgid "Copy from user"
+msgstr "Salin dari pengguna"
+
+msgid "Create user"
+msgstr "Buat pengguna"
+
+msgid "Reservation"
+msgid_plural "Reservations"
+msgstr[0] "Reservasi"
+
+msgid "New reservation"
+msgstr "Reservasi baru"
+
+msgid "Deletion of a followup"
+msgstr "Penghapusan tindak lanjut"
+
+msgid "Deletion of a reservation"
+msgstr "Penghapusan reservasi"
+
+msgid "Deletion of a task"
+msgstr "Penghapusan tugas"
+
+msgid "Update of a followup"
+msgstr "Pembaruan tindak lanjut"
+
+msgid "Update of a reservation"
+msgstr "Pembaruan reservasi"
+
+msgid "Update of a task"
+msgstr "Pembaruan tugas"
+
+msgid "Update of a ticket"
+msgstr "Pembaruan tiket"
+
+msgid "Operator"
+msgstr "Operator"
+
+msgid "by"
+msgstr "oleh"
+
+msgid "Updated:"
+msgstr "Diperbarui:"
+
+msgid "%s view"
+msgid_plural "%s views"
+msgstr[0] "%s kali dilihat"
+
+msgid "Last update: %1$s by %2$s"
+msgstr "Terakhir diperbarui: %1$s oleh %2$s"
+
+msgid "Created: %1$s by %2$s"
+msgstr "Dibuat: %1$s oleh %2$s"
+
+msgid "Dashboard"
+msgstr "Dasbor"
+
+msgid "Dashboards"
+msgstr "Dasbor"
+
+msgid "Dropdown"
+msgid_plural "Dropdowns"
+msgstr[0] "Daftar pilihan"
+
+msgctxt "form_editor"
+msgid "Dropdown"
+msgid_plural "Dropdowns"
+msgstr[0] "Daftar pilihan"
+
+msgid "Forgotten password?"
+msgstr "Lupa kata sandi?"
+
+msgid "FAQ"
+msgstr "Tanya Jawab (FAQ)"
+
+msgid "Notification template"
+msgid_plural "Notification templates"
+msgstr[0] "Templat notifikasi"
+
+msgid "User not authorized to connect in GLPI"
+msgstr "Pengguna tidak berwenang masuk ke HaloSIS"
+
+msgid "For security reasons, your password has expired. Please contact your administrator to reset it."
+msgstr "Demi keamanan, kata sandi Anda sudah kedaluwarsa. Silakan hubungi administrator untuk mengatur ulang kata sandi."
+
+msgid "%1$s (%2$s)"
+msgstr "%1$s (%2$s)"
+
+msgid "full structure"
+msgstr "struktur lengkap"
+
+msgid "Setup"
+msgstr "Pengaturan"

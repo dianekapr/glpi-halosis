@@ -10,7 +10,7 @@ Aman dijalankan berulang: tim, kategori, pengguna (beserta tim & status ketua ti
 nama lalu dibuat bila belum ada. Tiket, tindak lanjut, artikel KB, dan masalah contoh hanya dibuat pada run
 pertama (penanda: tiket contoh pertama sudah ada).
 """
-import json, sys
+import html, json, sys
 import requests
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8080').rstrip('/')
@@ -96,6 +96,9 @@ for login, fn, ln, role, grp in USERS:
     is_new = login not in existing('User')
     uid = ensure('User', {'name': login, 'firstname': fn, 'realname': ln, 'password': 'halosis', 'password2': 'halosis', 'is_active': 1, 'profiles_id': prof, '_useremails': {'-1': f'{login}@contoh.go.id'}})
     U[login] = uid
+    # HaloSIS hanya berbahasa Indonesia: bahasa akun demo id_ID (diulang tiap jalan, idempoten). GLPI menyimpan
+    # NULL bila sama dengan bahasa bawaan instansi (config language = id_ID), artinya tetap id_ID.
+    s.put(f'{B}/User/{uid}', data=json.dumps({'input': {'id': uid, 'language': 'id_ID'}}))
     if is_new:
         add('Profile_User', {'users_id': uid, 'profiles_id': prof, 'entities_id': 0, 'is_recursive': 1})
         # GLPI otomatis menambahkan profil default (Pegawai) ke pengguna baru; satu pengguna = satu role HaloSIS
@@ -125,6 +128,11 @@ for login, fn, ln, role, grp in USERS:
         elif int(link.get('is_manager') or 0) != manager:
             s.put(f'{B}/Group_User/{link["id"]}', data=json.dumps({'input': {'id': link['id'], 'is_manager': manager}}))
 
+# Akun bawaan GLPI (glpi; tech/normal/post-only nonaktif) juga berbahasa Indonesia
+for login in ['glpi', 'tech', 'normal', 'post-only']:
+    if login in existing('User'):
+        s.put(f'{B}/User/{existing("User")[login]}', data=json.dumps({'input': {'id': existing('User')[login], 'language': 'id_ID'}}))
+
 # SLA per prioritas (time to resolve)
 slm = ensure('SLM', {'name': 'SLA HaloSIS', 'calendars_id': 1})
 SLA = {}
@@ -134,16 +142,37 @@ for nama, n, unit in [('Kritis · 4 jam', 4, 'hour'), ('Tinggi · 6 jam', 6, 'ho
 # T30 (5.1 Outcome): self-service dimulai dari Email, SSO, SiPecut (48,2% tiket). Artikel FAQ umum & fiktif, dibuat
 # bila belum ada (judul sebagai kunci); terbit untuk entitas root → otomatis terindeks chatbot lewat plugin.
 FAQ_LAYANAN = [
-    ('SiPecut: tidak bisa masuk atau sesi berakhir', 'SiPecut',
-     '<p>Bila SiPecut menolak login atau keluar sendiri:</p><ol><li>Pastikan login memakai akun SSO BPS yang sama dengan portal.</li><li>Hapus cache & cookie browser untuk alamat SiPecut, lalu buka ulang.</li><li>Gunakan browser terbaru (Chrome/Edge/Firefox); mode penyamaran membantu menguji.</li><li>Bila tetap gagal, catat jam & pesan error lalu buat laporan.</li></ol>'),
+    ('SiPecut: tidak dapat masuk atau sesi berakhir', 'SiPecut',
+     '<p>Bila SiPecut menolak Anda masuk atau keluar dengan sendirinya:</p><ol><li>Pastikan Anda masuk memakai akun SSO BPS yang sama dengan portal.</li><li>Hapus <i>cache</i> dan <i>cookie</i> peramban untuk alamat SiPecut, lalu buka kembali.</li><li>Gunakan peramban versi terbaru (Chrome/Edge/Firefox); mode penyamaran dapat membantu pengujian.</li><li>Bila tetap gagal, catat waktu kejadian dan pesan galat, lalu buat laporan.</li></ol>'),
     ('SiPecut: data entri tidak tersimpan', 'SiPecut',
      '<p>Data SiPecut tidak tersimpan biasanya karena sesi habis atau koneksi terputus saat menyimpan.</p><ol><li>Simpan berkala; jangan biarkan formulir terbuka lebih dari 30 menit.</li><li>Periksa koneksi lalu tekan <b>Simpan</b> sekali lagi (jangan berulang-ulang).</li><li>Muat ulang halaman dan periksa apakah data sudah ada sebelum mengisi ulang.</li></ol>'),
     ('Kotak masuk email dinas penuh', 'Email Dinas',
      '<p>Kuota kotak masuk penuh membuat email baru ditolak.</p><ol><li>Kosongkan folder <i>Sampah</i> dan <i>Spam</i>.</li><li>Hapus atau arsipkan email berlampiran besar (urutkan menurut ukuran).</li><li>Simpan lampiran penting ke Drive BPS lalu hapus emailnya.</li></ol>'),
     ('Akun SSO terkunci setelah salah kata sandi', 'Akun & SSO',
-     '<p>Akun SSO terkunci sementara setelah beberapa kali salah kata sandi.</p><ol><li>Tunggu 15 menit, lalu coba lagi dengan kata sandi yang benar.</li><li>Bila lupa kata sandi, gunakan <b>Lupa password</b> di portal akun BPS.</li><li>Jangan pernah mengirim kata sandi lewat chat atau email; petugas TI tidak akan memintanya.</li></ol>'),
+     '<p>Akun SSO terkunci sementara setelah beberapa kali salah kata sandi.</p><ol><li>Tunggu 15 menit, lalu coba lagi dengan kata sandi yang benar.</li><li>Bila lupa kata sandi, gunakan <b>Lupa password</b> di portal akun BPS.</li><li>Jangan pernah mengirim kata sandi melalui percakapan atau email; petugas TI tidak akan memintanya.</li></ol>'),
 ]
 kb_existing = existing('KnowbaseItem')
+
+# Pembakuan bahasa artikel demo (PUEBI/KBBI) pada instalasi lama: judul/isi lama → baru, hanya bila isinya masih
+# teks bawaan (artikel yang sudah disunting Knowledge Manager tidak ditimpa). Idempoten.
+KB_BAKU = {
+    'SiPecut: tidak bisa masuk atau sesi berakhir': 'SiPecut: tidak dapat masuk atau sesi berakhir',
+    'Reset password SSO BPS': 'Mengatur ulang kata sandi SSO BPS',
+    'Restart layanan sinkronisasi FASIH (internal)': 'Memulai ulang layanan sinkronisasi FASIH (internal)',
+}
+KB_ISI_LAMA = {
+    'SiPecut: tidak dapat masuk atau sesi berakhir': ['menolak login atau keluar sendiri'],
+    'Akun SSO terkunci setelah salah kata sandi': ['lewat chat atau email'],
+    'FASIH: sinkronisasi gagal': ['belum tersinkron bisa hilang'],
+    'Memulai ulang layanan sinkronisasi FASIH (internal)': ['Restart layanan, tunggu status healthy'],
+}
+KB_ISI_BARU = {judul: isi for judul, _, isi in FAQ_LAYANAN}
+for lama, baru in KB_BAKU.items():
+    if lama in kb_existing and baru not in kb_existing:
+        s.put(f'{B}/KnowbaseItem/{kb_existing[lama]}', data=json.dumps({'input': {'id': kb_existing[lama], 'name': baru}}))
+        kb_existing[baru] = kb_existing.pop(lama)
+        print(f'Artikel "{lama}" → "{baru}"')
+
 for judul, kat, isi in FAQ_LAYANAN:
     if judul in kb_existing:
         continue
@@ -152,8 +181,31 @@ for judul, kat, isi in FAQ_LAYANAN:
     add('Entity_KnowbaseItem', {'knowbaseitems_id': kid, 'entities_id': 0, 'is_recursive': 1})
     print(f'FAQ "{judul}" dibuat')
 
+def migrasi_isi_kb(baru_per_judul):
+    """Isi artikel demo lama → teks baku, hanya bila masih memuat penanda teks lama (idempoten)."""
+    for judul, isi in baru_per_judul.items():
+        if judul not in kb_existing or judul not in KB_ISI_LAMA:
+            continue
+        kid = kb_existing[judul]
+        sekarang = (s.get(f'{B}/KnowbaseItem/{kid}').json() or {}).get('answer', '')
+        if any(penanda in html.unescape(str(sekarang)) for penanda in KB_ISI_LAMA[judul]):
+            s.put(f'{B}/KnowbaseItem/{kid}', data=json.dumps({'input': {'id': kid, 'answer': isi}}))
+            print(f'Isi artikel "{judul}" dibakukan')
+
+migrasi_isi_kb(KB_ISI_BARU)
+
 # BR-03: SOP = artikel KB berkategori "SOP"; artikel terbit otomatis masuk indeks layanan AI (re-index plugin)
 ensure('Glpi%5CForm%5CCategory', {'name': 'SOP'})
+
+# Artikel KB demo (dibuat pada run pertama, lihat di bawah); isi lama pada instalasi lama dibakukan
+KB = [
+    ('Mengatur ulang kata sandi SSO BPS', 'Akun & SSO', 1, '<p>Buka portal akun BPS, pilih <b>Lupa password</b>, masukkan NIP, lalu ikuti tautan yang dikirim ke email dinas.</p>'),
+    ('FASIH: sinkronisasi gagal', 'FASIH & aplikasi survei', 1, '<p>Gunakan panduan ini jika FASIH menampilkan pesan "Sinkronisasi gagal".</p><ol><li>Pastikan tablet terhubung ke internet.</li><li>Tutup FASIH sepenuhnya, lalu buka lagi.</li><li>Pengaturan › Sinkronisasi › Coba sinkron ulang.</li><li>Perbarui FASIH ke versi terbaru.</li></ol><p><b>Jangan hapus aplikasi FASIH</b> karena data yang belum tersinkronisasi dapat hilang.</p>'),
+    ('Mengatasi VPN sering terputus', 'Jaringan & VPN', 1, '<p>Perbarui klien VPN ke versi 4.3, matikan mode hemat daya Wi-Fi, lalu sambung ulang.</p>'),
+    ('Memulai ulang layanan sinkronisasi FASIH (internal)', 'FASIH & aplikasi survei', 0, '<ol><li>Masuk ke konsol node sinkronisasi wilayah.</li><li>Periksa status layanan <code>fasih-sync</code>.</li><li>Mulai ulang layanan, lalu tunggu hingga statusnya <i>healthy</i>.</li><li>Pastikan antrean data tertunda berkurang.</li></ol>'),
+    ('Lampiran email lebih dari 10 MB', 'Email Dinas', 1, '<p>Lampiran di atas 10 MB ditolak server. Unggah ke Drive BPS lalu bagikan tautannya.</p>'),
+]
+migrasi_isi_kb({judul: isi for judul, _, _, isi in KB})
 
 # Data transaksi contoh (tiket, KB, masalah): hanya pada run pertama
 FIRST_TICKET = 'FASIH tidak bisa sinkron data, error 502'
@@ -204,13 +256,6 @@ if not seeded:
     KC = {}
     for n in ['Akun & SSO', 'FASIH & aplikasi survei', 'Jaringan & VPN', 'Laptop & perangkat', 'Email Dinas']:
         KC[n] = add('Glpi%5CForm%5CCategory', {'name': n})  # GLPI 11+: kategori artikel = kategori form
-    KB = [
-        ('Reset password SSO BPS', 'Akun & SSO', 1, '<p>Buka portal akun BPS, pilih <b>Lupa password</b>, masukkan NIP, lalu ikuti tautan yang dikirim ke email dinas.</p>'),
-        ('FASIH: sinkronisasi gagal', 'FASIH & aplikasi survei', 1, '<p>Gunakan panduan ini jika FASIH menampilkan pesan "Sinkronisasi gagal".</p><ol><li>Pastikan tablet terhubung ke internet.</li><li>Tutup FASIH sepenuhnya, lalu buka lagi.</li><li>Pengaturan › Sinkronisasi › Coba sinkron ulang.</li><li>Perbarui FASIH ke versi terbaru.</li></ol><p><b>Jangan hapus aplikasi FASIH</b>, data yang belum tersinkron bisa hilang.</p>'),
-        ('Mengatasi VPN sering terputus', 'Jaringan & VPN', 1, '<p>Perbarui klien VPN ke versi 4.3, matikan mode hemat daya Wi-Fi, lalu sambung ulang.</p>'),
-        ('Restart layanan sinkronisasi FASIH (internal)', 'FASIH & aplikasi survei', 0, '<ol><li>Masuk ke konsol node sinkronisasi wilayah.</li><li>Cek status layanan <code>fasih-sync</code>.</li><li>Restart layanan, tunggu status healthy.</li><li>Verifikasi antrean data tertunda berkurang.</li></ol>'),
-        ('Lampiran email lebih dari 10 MB', 'Email Dinas', 1, '<p>Lampiran di atas 10 MB ditolak server. Unggah ke Drive BPS lalu bagikan tautannya.</p>'),
-    ]
     for judul, kat, faq, isi in KB:
         kid = add('KnowbaseItem', {'name': judul, 'answer': isi, 'is_faq': faq, 'users_id': U['lina'], 'forms_categories_id': KC[kat], 'is_recursive': 1})
         add('Entity_KnowbaseItem', {'knowbaseitems_id': kid, 'entities_id': 0, 'is_recursive': 1})

@@ -10,7 +10,7 @@
     "realm": [
       {
         "name": "pegawai",
-        "description": "Pegawai BPS (Requester): profil GLPI Pegawai"
+        "description": "Pegawai BPS (pemohon): profil GLPI Pegawai"
       },
       {
         "name": "operator",
@@ -18,7 +18,7 @@
       },
       {
         "name": "tim-teknis",
-        "description": "Tim Teknis (Resolver): profil GLPI Tim Teknis"
+        "description": "Tim Teknis (penyelesai tiket): profil GLPI Tim Teknis"
       },
       {
         "name": "manajemen",

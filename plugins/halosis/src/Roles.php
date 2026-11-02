@@ -28,6 +28,7 @@ final class Roles
     public const TIM_TEKNIS    = 6; // Technician
 
     public const KNOWLEDGE_MANAGER_NAME = 'Knowledge Manager';
+    private const KNOWLEDGE_MANAGER_COMMENT = 'Peran HaloSIS: mengelola basis pengetahuan, tiket hanya dapat dibaca';
 
     /** Akun bawaan GLPI yang tidak dipakai HaloSIS dan dinonaktifkan */
     public const DEFAULT_ACCOUNTS = ['tech', 'normal', 'post-only'];
@@ -271,10 +272,11 @@ final class Roles
             $km_id = (int) (new CoreProfile())->add([
                 'name'      => self::KNOWLEDGE_MANAGER_NAME,
                 'interface' => 'central',
-                'comment'   => 'Role HaloSIS: kelola Knowledge Base, tiket hanya baca',
+                'comment'   => self::KNOWLEDGE_MANAGER_COMMENT,
             ]);
             $log[] = "Profil Knowledge Manager dibuat (#{$km_id})";
         } else {
+            (new CoreProfile())->update(['id' => $km_id, 'comment' => self::KNOWLEDGE_MANAGER_COMMENT]);
             $log[] = "Profil Knowledge Manager sudah ada (#{$km_id})";
         }
         $km_rights = array_fill_keys(array_keys(ProfileRight::getAllPossibleRights()), 0);
