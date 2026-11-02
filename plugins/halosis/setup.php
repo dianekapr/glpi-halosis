@@ -25,6 +25,7 @@ use GlpiPlugin\Halosis\ProgressReminder;
 use GlpiPlugin\Halosis\Profile;
 use GlpiPlugin\Halosis\Reassignment;
 use GlpiPlugin\Halosis\RoleMenu;
+use GlpiPlugin\Halosis\RoleTheme;
 use GlpiPlugin\Halosis\Triage;
 use GlpiPlugin\Halosis\TriagePanel;
 
@@ -113,6 +114,13 @@ function plugin_init_halosis(): void
     // Halaman indeks aturan GLPI → 403 untuk peran tanpa hak aturan (setelah semua plugin init, lihat RoleMenu)
     $PLUGIN_HOOKS[Hooks::POST_INIT]['halosis'] = [RoleMenu::class, 'guardRuleIndex'];
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/menu.js');
+    // Warna aksen per peran dari profil aktif: <meta name="halosis-role"> → kelas hs-role-<peran> + lencana.
+    // Lihat RoleTheme.
+    $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] = array_merge(
+        $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] ?? [],
+        RoleTheme::getHeaderTags(),
+    );
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/role.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")

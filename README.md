@@ -827,6 +827,26 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
   `plugins/halosis/locales/core/id_ID.po`, disalin `plugin:install` ke folder terjemahan lokal GLPI
   (`files/_locales/core_halosis`, mekanisme bawaan, bukan mengubah GLPI) lalu `cache:clear`. Berlaku di seluruh
   GLPI (mis. kolom "Login" pada daftar pengguna jadi "Nama pengguna"); dihapus saat plugin di-uninstall.
+- **Warna aksen per peran** (`RoleTheme`, `public/js/role.js`, variabel di `public/css/halosis.css`, pemakaian di
+  palet): peran dibaca dari **profil aktif** (ID profil seperti `RoleMenu`, bukan nama pengguna) → `<meta
+  name="halosis-role">` (hook `add_header_tag`, tanpa kedip) + kelas `hs-role-<peran>` di `<body>`; ikut berubah
+  saat pengguna ganti profil tanpa logout. Super-Admin = Administrator, ketua tim = Tim Teknis; halaman login tetap
+  teal. Yang memakai warna peran: sidebar & item aktif, tombol utama, tautan & ring fokus, judul kartu/bagian form,
+  chip filter, chat Pegawai, dan lencana nama peran di header (latar `--hs-role-soft`, teks `--hs-role-ink`). Yang
+  tetap: warna status/prioritas/SLA, peringatan & galat, grafik dashboard, tingkat keyakinan Saran AI, logo.
+
+  | Peran | `--hs-role` | `--hs-role-soft` | `--hs-role-ink` | putih / role | ink / soft | ink / putih |
+  |---|---|---|---|---|---|---|
+  | Pegawai | `#176568` | `#E1F0EF` | `#176568` | 6,78 | 5,78 | 6,78 |
+  | Operator | `#496B85` | `#E8EFF4` | `#496B85` | 5,64 | 4,85 | 5,64 |
+  | Tim Teknis | `#A66552` | `#F4EAE6` | `#905747` | 4,56 | 4,88 | 5,77 |
+  | Knowledge Manager | `#79627F` | `#F0EAF2` | `#755F7B` | 5,43 | 4,83 | 5,71 |
+  | Manajemen | `#667C62` | `#EAF0E7` | `#596C56` | 4,54 | 4,89 | 5,67 |
+  | Administrator | `#A05D70` | `#F4E8EC` | `#905465` | 4,89 | 4,83 | 5,77 |
+
+  `--hs-role-ink` = warna utama dengan lightness HLS diturunkan sampai ≥ 4,5:1 di atas aksen ringan (Terracotta,
+  Sage, Rose gagal bila memakai warna utama: 3,9 / 3,9 / 4,1). Teks redup sidebar memakai putih penuh dan item
+  aktif memakai warna peran digelapkan 22% (≥ 6,7:1). Tangkapan: `screenshot/modernisasi/peran-*.png`.
 - **Semua tabel daftar** (tiket, masalah, KB, pengguna, grup, kategori, SLA, aturan, log): kartu membulat, header
   11px huruf kapital, isi 14px, garis tipis & hover baris; kolom nama/judul min. 260px (maks. 2 baris); ID,
   tanggal, status & prioritas tidak terpotong; kolom lain satu baris dengan ellipsis (lengkap saat baris

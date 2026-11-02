@@ -52,6 +52,10 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   `--halosis-login-*` di palet); halaman anonim selalu bahasa default instansi (bukan bahasa browser); label inti
   login dalam Bahasa Indonesia lewat `locales/core` → `_locales/core_halosis` (jalankan `plugin:install --force` +
   `cache:clear`); `text_login` demo → "Gunakan akun dinas BPS Anda.".
+- **Warna aksen per peran (2 Nov 2026, masih 1.0.0):** kelas `hs-role-<peran>` dari profil aktif (`RoleTheme`,
+  `role.js`, meta `halosis-role`), ikut berubah saat ganti profil; variabel `--hs-role` / `--hs-role-soft` /
+  `--hs-role-ink` (ink digelapkan sampai ≥ 4,5:1) untuk sidebar, tombol utama, tautan & fokus, judul kartu, lencana
+  nama peran di header; warna semantik, grafik, keyakinan Saran AI, logo, dan halaman login tetap.
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

@@ -1603,3 +1603,107 @@ a.hc-badge-ticket:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* ==== Warna aksen per peran (RoleTheme, public/js/role.js) ====
+   Profil aktif → <meta name="halosis-role"> di <head> + kelas hs-role-<peran> di <body>. Variabel dipasang di
+   :root (lewat :has) agar turunan GLPI yang dihitung di :root (mis. --tblr-primary) ikut berubah, dan sudah
+   berlaku sejak meta terbaca (tanpa kedip sebelum role.js berjalan).
+   --hs-role        warna utama: sidebar, tombol utama, teks putih di atasnya (≥ 4,5:1)
+   --hs-role-soft   aksen ringan: latar lencana, chip, item aktif menu flyout
+   --hs-role-ink    warna utama yang digelapkan (lightness HLS diturunkan) sampai ≥ 4,5:1 di atas --hs-role-soft,
+                    putih, dan latar halaman: teks di atas aksen ringan, tautan, judul kartu
+   Tanpa peran (halaman login, profil lain) tetap teal HaloSIS. Warna semantik (status, prioritas, SLA,
+   peringatan, galat), grafik dashboard, tingkat keyakinan Saran AI, dan logo tidak memakai variabel ini. */
+:root {
+    --hs-role: #155e63;
+    --hs-role-rgb: 21, 94, 99;
+    --hs-role-soft: #e3f1ed;
+    --hs-role-ink: #155e63;
+    --hs-role-ink-rgb: 21, 94, 99;
+}
+
+:root:has(> head > meta[name="halosis-role"][content="pegawai"]),
+:root:has(> body.hs-role-pegawai) {
+    --hs-role: #176568;
+    --hs-role-rgb: 23, 101, 104;
+    --hs-role-soft: #e1f0ef;
+    --hs-role-ink: #176568;
+    --hs-role-ink-rgb: 23, 101, 104;
+}
+
+:root:has(> head > meta[name="halosis-role"][content="operator"]),
+:root:has(> body.hs-role-operator) {
+    --hs-role: #496b85;
+    --hs-role-rgb: 73, 107, 133;
+    --hs-role-soft: #e8eff4;
+    --hs-role-ink: #496b85;
+    --hs-role-ink-rgb: 73, 107, 133;
+}
+
+/* Terracotta: warna utama hanya 3,9:1 di atas aksen ringan → ink digelapkan */
+:root:has(> head > meta[name="halosis-role"][content="tim-teknis"]),
+:root:has(> body.hs-role-tim-teknis) {
+    --hs-role: #a66552;
+    --hs-role-rgb: 166, 101, 82;
+    --hs-role-soft: #f4eae6;
+    --hs-role-ink: #905747;
+    --hs-role-ink-rgb: 144, 87, 71;
+}
+
+:root:has(> head > meta[name="halosis-role"][content="knowledge-manager"]),
+:root:has(> body.hs-role-knowledge-manager) {
+    --hs-role: #79627f;
+    --hs-role-rgb: 121, 98, 127;
+    --hs-role-soft: #f0eaf2;
+    --hs-role-ink: #755f7b;
+    --hs-role-ink-rgb: 117, 95, 123;
+}
+
+/* Sage: 3,9:1 di atas aksen ringan → ink digelapkan */
+:root:has(> head > meta[name="halosis-role"][content="manajemen"]),
+:root:has(> body.hs-role-manajemen) {
+    --hs-role: #667c62;
+    --hs-role-rgb: 102, 124, 98;
+    --hs-role-soft: #eaf0e7;
+    --hs-role-ink: #596c56;
+    --hs-role-ink-rgb: 89, 108, 86;
+}
+
+/* Rose: 4,1:1 di atas aksen ringan → ink digelapkan */
+:root:has(> head > meta[name="halosis-role"][content="administrator"]),
+:root:has(> body.hs-role-administrator) {
+    --hs-role: #a05d70;
+    --hs-role-rgb: 160, 93, 112;
+    --hs-role-soft: #f4e8ec;
+    --hs-role-ink: #905465;
+    --hs-role-ink-rgb: 144, 84, 101;
+}
+
+/* Lencana nama peran di header (sebelum menu pengguna) */
+.hs-role-badge {
+    align-self: center;
+    margin-inline-end: 0.5rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: var(--hs-role-soft);
+    color: var(--hs-role-ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+/* Nama profil di tombol menu pengguna sudah diwakili lencana; baris entitas tetap */
+body[class*="hs-role-"] .user-menu-dropdown-toggle .pe-2 > div:first-child {
+    display: none;
+}
+
+body[class*="hs-role-"] .user-menu-dropdown-toggle .pe-2 > div.mt-1 {
+    margin-top: 0 !important;
+}
+
+/* Komponen plugin yang berperan sebagai tombol utama / tautan ikut warna peran (chat Pegawai, tautan banner pola,
+   pemilih periode dashboard). Panel Saran AI & grafik dashboard tetap memakai --halosis-primary teal. */
+body[class*="hs-role-"] :is(.hc, .hc-launcher, .hc-panel, .hd-period, .hd-table-toggle, .halosis-pattern-banner) {
+    --halosis-primary: var(--hs-role-ink);
+}
