@@ -160,6 +160,15 @@
  * Chatbot self-service "Tanya HaloSIS" (antarmuka Helpdesk)
  * Mengikuti prototipe halosis-web (ChatRoom): halaman penuh & widget melayang memakai komponen yang sama.
  * ===================================================================================== */
+
+/* Beranda Helpdesk GLPI yang sedang dialihkan ke Tanya HaloSIS (meta refresh dari HelpdeskHome, setelah login atau
+   klik logo): isinya ("Halo, ada yang bisa kami bantu?") tidak ditampilkan agar tidak berkedip sebelum pindah.
+   Widget chat melayang juga disembunyikan (halaman tujuan tidak memilikinya). Header & menu tetap, sama dengan
+   halaman tujuan. */
+html:has(> head > meta[http-equiv="refresh"][content*="/plugins/halosis/Chat"]) :is(#page, .hc-launcher, .hc-panel) {
+    visibility: hidden;
+}
+
 .hc {
     color: var(--halosis-text);
     font-size: 0.9rem;
