@@ -1,0 +1,40 @@
+{# Bagian halaman login HaloSIS (hook display_login). public/js/login.js menempatkan tiap bagian; tanpa JS
+   semuanya tersembunyi (login.css) dan form bawaan GLPI tampil apa adanya. #}
+<aside class="halosis-login-brand" aria-label="HaloSIS">
+    <div class="halosis-login-brand-inner">
+        <div class="halosis-login-logo">
+            <img src="{{ logo }}" alt="" width="48" height="48">
+            <span>HaloSIS</span>
+        </div>
+        <p class="halosis-login-tagline">{{ __('IT services of BPS in a single conversation', 'halosis') }}</p>
+        <ul class="halosis-login-points">
+            <li>
+                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-message-chatbot"></i></span>
+                <span><strong>{{ __('Ask the assistant', 'halosis') }}</strong>
+                    <small>{{ __('Instant answers from the help center', 'halosis') }}</small></span>
+            </li>
+            <li>
+                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-file-plus"></i></span>
+                <span><strong>{{ __('Create a report', 'halosis') }}</strong>
+                    <small>{{ __('Report a problem or request a service', 'halosis') }}</small></span>
+            </li>
+            <li>
+                <span class="halosis-login-point-icon" aria-hidden="true"><i class="ti ti-progress-check"></i></span>
+                <span><strong>{{ __('Track status', 'halosis') }}</strong>
+                    <small>{{ __('Follow your reports until they are solved', 'halosis') }}</small></span>
+            </li>
+        </ul>
+    </div>
+</aside>
+<div class="halosis-login-parts d-none"
+     data-show-password="{{ __('Show password', 'halosis') }}"
+     data-hide-password="{{ __('Hide password', 'halosis') }}">
+    {% if sso %}
+        <span class="halosis-login-badge"><i class="ti ti-shield-lock" aria-hidden="true"></i>{{ __('Central sign-in (SSO)', 'halosis') }}</span>
+    {% endif %}
+    <p class="halosis-login-help">
+        <i class="ti ti-headset" aria-hidden="true"></i>
+        <span>{{ __('Forgot your password? Contact the IT service Operator', 'halosis') }}</span>
+    </p>
+    <span class="halosis-login-footer">{{ __('Powered by GLPI', 'halosis') }} · © Teclib' and contributors</span>
+</div>
