@@ -82,7 +82,7 @@ setcfg notifications_mailing 1
 langkah 7/8 "Tampilan HaloSIS (warna, bahasa, teks login)"
 setcfg palette halosis
 setcfg language id_ID
-setcfg text_login '<p style="text-align:center">Selamat datang di <strong>HaloSIS</strong>, layanan TI BPS.<br>Masuk dengan akun dinas Anda.</p>'
+setcfg text_login '<p>Gunakan akun dinas BPS Anda.</p>'
 setcfg display_login_source 0
 setcfg login_remember_time 0     # bug GLPI 12.0.0 "Remember me" (README › Bagian teknis)
 for pair in 6:#c92a2a 5:#e03131 4:#f76707 3:#f59f00 2:#868e96 1:#adb5bd; do setcfg "priority_${pair%%:*}" "${pair#*:}"; done

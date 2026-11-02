@@ -15,7 +15,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Login to your account"
-msgstr "Masuk ke akun Anda"
+msgstr "Masuk"
 
 msgid "Login"
 msgstr "Nama pengguna"

@@ -1458,23 +1458,16 @@ msgid "Tickets in progress or pending without a follow-up or task for more than 
 msgstr "Tiket Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja memberi tahu teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
 
 # Halaman login
-msgid "IT services of BPS in a single conversation"
-msgstr "Layanan TI BPS dalam satu percakapan"
+msgid "Welcome to HaloSIS"
+msgstr "Selamat datang di HaloSIS"
 
-msgid "Instant answers from the help center"
-msgstr "Jawaban cepat dari Pusat bantuan"
+msgid "BPS IT services"
+msgstr "Layanan TI BPS"
 
-msgid "Create a report"
-msgstr "Buat laporan"
 
-msgid "Report a problem or request a service"
-msgstr "Laporkan masalah atau ajukan layanan"
 
-msgid "Track status"
-msgstr "Pantau status"
 
-msgid "Follow your reports until they are solved"
-msgstr "Ikuti laporan Anda sampai selesai"
+
 
 msgid "Show password"
 msgstr "Tampilkan kata sandi"
