@@ -45,6 +45,13 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
   terjadwal `ProgressReminder` + notifikasi "HaloSIS: Pengingat progres" (E19, > N hari kerja, bawaan 5; tabel
   `glpi_plugin_halosis_progress_reminders`: jalankan `plugin:install --force`); ringkasan ekstraktif deskripsi
   > 150 kata di panel (E15); uji `tools/test_fitur.php`, `tests/e2e/fitur_penutup.js`.
+- **Modernisasi halaman login (2 Nov 2026, masih 1.0.0):** latar teal gelap + kartu dua panel (ilustrasi &
+  sambutan di kiri, lengkung SVG bergaris aksen, form di kanan; HP: pita atas pendek + form penuh lebar), field
+  berikon + tombol tampil/sembunyikan kata sandi, lencana SSO & bantuan lupa kata sandi di bawah tombol, footer
+  atribusi GLPI ringkas, halaman galat login dirapikan (`LoginPage`, `login.css`/`login.js`, token
+  `--halosis-login-*` di palet); halaman anonim selalu bahasa default instansi (bukan bahasa browser); label inti
+  login dalam Bahasa Indonesia lewat `locales/core` → `_locales/core_halosis` (jalankan `plugin:install --force` +
+  `cache:clear`); `text_login` demo → "Gunakan akun dinas BPS Anda.".
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.

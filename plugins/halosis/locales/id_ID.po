@@ -1456,3 +1456,30 @@ msgstr "Pengingat progres setelah (hari kerja tanpa tindak lanjut)"
 
 msgid "Tickets in progress or pending without a follow-up or task for more than this many working days notify the assigned technician and group (scheduled task ProgressReminder, once per period)."
 msgstr "Tiket Diproses atau Menunggu tanpa tindak lanjut atau tugas lebih dari sekian hari kerja memberi tahu teknisi dan grup yang ditugaskan (tugas terjadwal ProgressReminder, sekali per periode)."
+
+# Halaman login
+msgid "Welcome to HaloSIS"
+msgstr "Selamat datang di HaloSIS"
+
+msgid "BPS IT services"
+msgstr "Layanan TI BPS"
+
+
+
+
+
+
+msgid "Show password"
+msgstr "Tampilkan kata sandi"
+
+msgid "Hide password"
+msgstr "Sembunyikan kata sandi"
+
+msgid "Central sign-in (SSO)"
+msgstr "Login terpusat (SSO)"
+
+msgid "Forgot your password? Contact the IT service Operator"
+msgstr "Lupa kata sandi? Hubungi Operator layanan TI"
+
+msgid "Powered by GLPI"
+msgstr "Didukung GLPI"

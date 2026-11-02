@@ -119,6 +119,24 @@ $halosis-latin-ext: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-0
     --glpi-logo-dark-login: var(--halosis-logo-dark);
     --glpi-logo-light-login: var(--halosis-logo-light);
 
+    // Halaman login (plugins/halosis/public/css/login.css): latar teal gelap + lingkaran samar, kartu dua panel.
+    // Panel brand primary → primary gelap, teks putih (kontras 7,4:1 s.d. 9:1); garis lengkung teal terang
+    // (elemen dekoratif); teks di luar kartu putih 80% di latar gelap (≥ 8:1).
+    --halosis-login-page-bg: #0b3a3d;
+    --halosis-login-page-bg-2: #072a2c;
+    --halosis-login-circle: rgb(119 184 168 / 12%);
+    --halosis-login-on-page: rgb(255 255 255 / 80%);
+    --halosis-login-brand-bg: #155e63;
+    --halosis-login-brand-bg-2: #0e4245;
+    --halosis-login-brand-fg: #fff;
+    --halosis-login-brand-fg-muted: rgb(255 255 255 / 85%);
+    --halosis-login-art-bg: #e8f3f0;
+    --halosis-login-line: #8fd3c1;
+    --halosis-login-primary: #155e63;
+    --halosis-login-soft: #e3f1ed;
+    --halosis-login-error: #a33a06;
+    --halosis-login-error-bg: #fff4ec;
+
     // Secondary #77B8A8 sebagai latar (teks gelap demi kontras)
     .btn-secondary {
         --tblr-btn-bg: #77b8a8;

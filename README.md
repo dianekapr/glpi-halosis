@@ -787,7 +787,7 @@ Jadikan default untuk semua pengguna:
 ```bash
 docker compose exec glpi php bin/console config:set palette halosis --allow-superuser
 docker compose exec glpi php bin/console config:set language id_ID --allow-superuser
-docker compose exec glpi php bin/console config:set text_login '<p style="text-align:center">Selamat datang di <strong>HaloSIS</strong>, layanan TI BPS.<br>Masuk dengan akun dinas Anda.</p>' --allow-superuser
+docker compose exec glpi php bin/console config:set text_login '<p>Gunakan akun dinas BPS Anda.</p>' --allow-superuser
 ```
 Judul beranda Helpdesk: **Administrasi › Entitas › BPS › Helpdesk** → judul kustom "Halo, ada yang bisa kami bantu?".
 
@@ -808,6 +808,25 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
   bawaan GLPI. Kartu 16px, tombol & input 10px, badge pill, bayangan halus, tabel daftar lebih lega.
 - Antarmuka Helpdesk (Pegawai) memakai header putih seperti prototipe; sidebar petugas tetap primary.
 - Header notifikasi info & peringatan GLPI disesuaikan agar kontras teks memenuhi WCAG AA.
+- **Halaman login** (`LoginPage`: hook `add_css_anonymous_page`, `add_javascript_anonymous_page`, `display_login`;
+  `public/css/login.css`, `public/js/login.js`, `templates/login.html.twig`, `public/img/login-ilustrasi.svg`
+  [unDraw]; warna dari token `--halosis-login-*` di palet). Latar teal gelap dengan lingkaran samar; satu kartu dua
+  panel: kiri (±55%) teal dengan ilustrasi, "Selamat datang di HaloSIS" · "Layanan TI BPS", dibatasi lengkung SVG
+  bergaris aksen teal terang; kanan putih: logo kecil, judul "Masuk", field berikon (tombol tampil/sembunyikan kata
+  sandi: `aria-label`, `aria-pressed`), tombol "Masuk", lencana "Login terpusat (SSO)" (bila Keycloak aktif) dan
+  "Lupa kata sandi? Hubungi Operator layanan TI" (menggantikan tautan reset GLPI; akun lokal seperti `glpi` tetap bisa
+  memakai `/front/lostpassword.php?lostpassword=1`). Footer di luar kartu "Didukung GLPI · © Teclib' and
+  contributors" (tautan atribusi tetap); tautan *Bantuan* (dokumentasi GLPI) disembunyikan. HP (≤ 768px): pita
+  sambutan pendek di atas tanpa ilustrasi & lengkung, form penuh lebar. Teks konfigurasi `text_login` tampil sebagai
+  subjudul ("Gunakan akun dinas BPS Anda."). Field `login_name`/`login_password`, alamat form & CSRF tidak berubah;
+  tanpa JS form bawaan GLPI tampil apa adanya; aset ini tidak dimuat setelah login. Halaman galat login & lupa
+  password ikut berlatar teal dengan logo terang. Tangkapan: `screenshot/modernisasi/login-*.png`.
+- **Halaman login selalu Bahasa Indonesia:** GLPI memilih bahasa halaman anonim dari bahasa browser; sebelum login
+  plugin memakai bahasa default instansi (`config language`, `LoginPage::useDefaultLanguage`), sesudah login bahasa
+  mengikuti preferensi pengguna. Label inti ("Masuk", "Nama pengguna", "Kata sandi", pesan galat login):
+  `plugins/halosis/locales/core/id_ID.po`, disalin `plugin:install` ke folder terjemahan lokal GLPI
+  (`files/_locales/core_halosis`, mekanisme bawaan, bukan mengubah GLPI) lalu `cache:clear`. Berlaku di seluruh
+  GLPI (mis. kolom "Login" pada daftar pengguna jadi "Nama pengguna"); dihapus saat plugin di-uninstall.
 - **Semua tabel daftar** (tiket, masalah, KB, pengguna, grup, kategori, SLA, aturan, log): kartu membulat, header
   11px huruf kapital, isi 14px, garis tipis & hover baris; kolom nama/judul min. 260px (maks. 2 baris); ID,
   tanggal, status & prioritas tidak terpotong; kolom lain satu baris dengan ellipsis (lengkap saat baris

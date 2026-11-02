@@ -3,6 +3,8 @@
 Mencari semua string ber-domain 'halosis' di kode PHP/Twig, melaporkan yang belum ada
 di locales/*.po, lalu mengompilasi setiap .po menjadi .mo dengan msgfmt.
 
+Label inti GLPI di locales/core/*.po ikut dikompilasi (lihat LoginPage).
+
 Pakai (dari folder plugin):  python3 tools/locales.py
 """
 import pathlib
@@ -31,5 +33,10 @@ for po in sorted((ROOT / 'locales').glob('*.po')):
             print(f'  msgid "{s}"')
     subprocess.run(['msgfmt', '--check', '-o', str(po.with_suffix('.mo')), str(po)], check=True)
     print(f'{po.name} → {po.with_suffix(".mo").name}')
+
+# Label inti GLPI (domain "glpi") untuk halaman login: hanya dikompilasi, disalin saat install (LoginPage)
+for po in sorted((ROOT / 'locales' / 'core').glob('*.po')):
+    subprocess.run(['msgfmt', '--check', '-o', str(po.with_suffix('.mo')), str(po)], check=True)
+    print(f'core/{po.name} → core/{po.with_suffix(".mo").name}')
 
 sys.exit(0 if ok else 1)
