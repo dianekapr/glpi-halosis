@@ -146,7 +146,7 @@
                 el('div', 'hc-actions-q', t.helpful),
                 el('div', 'hc-actions-btns', [
                     button('hc-btn hc-btn-primary hc-btn-sm', [icon('circle-check'), t.resolved], () => ratingActions(box)),
-                    button('hc-btn hc-btn-sm', t.not_resolved, () => { box.remove(); offerCard(col, t.offer); }),
+                    button('hc-btn hc-btn-sm', t.not_resolved, () => { box.remove(); offerCard(col, t.offer, true); }),
                 ]),
             ]);
             col.append(box);
@@ -175,15 +175,31 @@
         };
 
         /** Kartu oranye bergaris putus-putus: tawarkan laporan berisi ringkasan percakapan */
-        const offerCard = (col, text) => {
+        const offerCard = (col, text, endOnDecline = false) => {
             clearActions();
             // Tanpa percakapan tersimpan (asisten tidak tersedia) → form laporan biasa
             const startReport = () => (chatId ? reportForm(card) : (window.location.href = root.dataset.reportUrl));
+            // UC-01 6b: setelah "Belum terselesaikan", menolak laporan mengakhiri percakapan. Bila solusi tidak ditemukan
+            // (4a), kartu ditutup dan pegawai tetap bisa bertanya lagi.
+            const decline = async () => {
+                if (!endOnDecline || !chatId) {
+                    card.remove();
+                    input.focus();
+                    return;
+                }
+                const res = await post({ action: 'decline', chat_id: chatId });
+                if (res.ok) {
+                    card.remove();
+                    end(res.message);
+                } else {
+                    systemMessage(res.message);
+                }
+            };
             const card = el('div', 'hc-offer', [
                 el('p', '', text),
                 el('div', 'hc-actions-btns', [
                     button('hc-btn hc-btn-primary hc-btn-sm', [icon('file-plus'), t.yes_report], startReport),
-                    button('hc-btn hc-btn-sm', t.no_thanks, () => { card.remove(); input.focus(); }),
+                    button('hc-btn hc-btn-sm', t.no_thanks, decline),
                 ]),
             ]);
             col.append(card);

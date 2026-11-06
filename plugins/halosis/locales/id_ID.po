@@ -1501,3 +1501,15 @@ msgstr "Siap Ditutup"
 
 msgid "This role does not manage rules."
 msgstr "Peran ini tidak mengelola aturan."
+
+msgid "The conversation has ended. You can read it again in Conversation history."
+msgstr "Percakapan diakhiri. Anda dapat membacanya lagi di Riwayat percakapan."
+
+msgid "Ended without a report"
+msgstr "Berakhir tanpa laporan"
+
+msgid "HaloSIS: sync knowledge candidates from solved tickets"
+msgstr "HaloSIS: sinkron kandidat pengetahuan dari tiket selesai"
+
+msgid "%d new knowledge candidates."
+msgstr "%d kandidat pengetahuan baru."

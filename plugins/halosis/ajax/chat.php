@@ -96,6 +96,17 @@ switch ($action) {
             : ['ok' => false, 'message' => $error]);
         return;
 
+    case 'decline':
+        if ($chat === null) {
+            $respond(404, ['ok' => false, 'message' => __('Conversation not found.', 'halosis')]);
+            return;
+        }
+        $error = Chatbot::decline($chat);
+        $respond($error === null ? 200 : 422, $error === null
+            ? ['ok' => true, 'message' => __('The conversation has ended. You can read it again in Conversation history.', 'halosis')]
+            : ['ok' => false, 'message' => $error]);
+        return;
+
     case 'ticket':
         if ($chat === null) {
             $respond(404, ['ok' => false, 'message' => __('Conversation not found.', 'halosis')]);

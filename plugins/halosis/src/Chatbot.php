@@ -473,6 +473,18 @@ final class Chatbot
     }
 
     /**
+     * UC-01 6b: pegawai tidak ingin membuat laporan. Percakapan diakhiri tanpa rating; riwayatnya tetap tersimpan.
+     */
+    public static function decline(Chat $chat): ?string
+    {
+        if (!$chat->isOpen()) {
+            return __('This conversation has ended. Start a new one.', 'halosis');
+        }
+        $chat->update(['id' => $chat->getID(), 'status' => Chat::STATUS_RESOLVED]);
+        return null;
+    }
+
+    /**
      * Buat tiket dari percakapan, atas nama & dengan hak pengguna yang sedang login.
      *
      * @return array{ok: bool, message?: string, ticket_id?: int, url?: string}

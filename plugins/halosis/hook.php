@@ -7,7 +7,9 @@
  * yang sudah ada tidak diubah dan yang baru ditambahkan.
  */
 
+use GlpiPlugin\Halosis\Candidate;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\FormCatalog;
 use GlpiPlugin\Halosis\KnowledgeIndex;
 use GlpiPlugin\Halosis\LoginPage;
 use GlpiPlugin\Halosis\PatternDetector;
@@ -229,6 +231,8 @@ function plugin_halosis_install(): bool
     Config::install();
     Profile::install();
     // Katalog layanan awal ke indeks AI (BR-03); layanan mati → dilewati, tersinkron saat kategori/form berubah
+    // UC-03: label form katalog bawaan dalam Bahasa Indonesia & Judul wajib (sebelum sinkron katalog ke indeks AI)
+    FormCatalog::localize();
     KnowledgeIndex::syncServiceCatalog();
 
     // Deteksi pola insiden tiap 15 menit (tidak menimpa jadwal yang sudah diubah admin)
@@ -239,6 +243,11 @@ function plugin_halosis_install(): bool
     // NFR-03: saran triase yang terlewat karena AI sempat mati dicoba lagi tiap 15 menit
     CronTask::register(TriageRetry::class, TriageRetry::CRON_NAME, 15 * MINUTE_TIMESTAMP, [
         'comment' => 'HaloSIS: coba ulang saran triase yang terlewat',
+        'mode'    => CronTask::MODE_EXTERNAL,
+    ]);
+    // UC-06 langkah 7: solusi tiket selesai menjadi kandidat tiap jam, tanpa menunggu halaman Kandidat dibuka
+    CronTask::register(Candidate::class, Candidate::CRON_NAME, HOUR_TIMESTAMP, [
+        'comment' => 'HaloSIS: sinkron kandidat pengetahuan',
         'mode'    => CronTask::MODE_EXTERNAL,
     ]);
     // E19: pengingat progres harian untuk tiket tanpa tindak lanjut + notifikasi bawaannya
