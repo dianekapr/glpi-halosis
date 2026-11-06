@@ -154,8 +154,10 @@ def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) ->
     os.replace(tmp_vectors, index_dir / 'vectors.npy')
 
 
-def cari(query: str, k: int = 5, index_dir: Path | None = None) -> list[dict]:
+def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str, ...] | None = None) -> list[dict]:
     """Cari k sumber paling mirip → [{potongan, skor, sumber, jenis_sumber, judul, solusi?}].
+
+    jenis: batasi ke jenis_sumber tertentu (/chat: hanya sumber tersetujui); None = semua (/cari petugas).
 
     Satu hasil per sumber (potongan terbaik); artikel/tiket yang dipecah tidak memenuhi daftar dengan dirinya sendiri.
     `solusi` = solusi tiket utuh bila potongannya hasil pemecahan (kolom ada di indeks baru).
@@ -163,9 +165,13 @@ def cari(query: str, k: int = 5, index_dir: Path | None = None) -> list[dict]:
     chunks, vectors = load_index(index_dir)
     q = embed([str(privacy.mask_text(query))], 'query')[0]
     scores = vectors @ q
+    if jenis is not None:
+        scores = np.where(chunks['jenis_sumber'].isin(jenis).to_numpy(), scores, -np.inf)
     has_solution = 'solusi' in chunks
     results, seen = [], set()
     for i in np.argsort(scores)[::-1]:
+        if scores[i] == -np.inf:
+            break  # sisanya di luar jenis yang diminta
         source = chunks.at[i, 'sumber']
         if source in seen:
             continue

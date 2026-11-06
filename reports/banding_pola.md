@@ -10,6 +10,8 @@ Tanggal: 31 Okt 2026. Hanya angka; teks tiket tidak ditampilkan.
 - Tidak ada label "pola" manual, jadi kualitas didekati dengan **kemurnian tim**: porsi anggota kelompok yang
   ditangani tim yang sama (kelompok yang benar satu masalah biasanya satu tim).
 
+**Catatan 6 Nov 2026:** metode rata-rata rakus, jadi hasilnya bergantung urutan tiket. Baris *rata-rata* di bawah (7 kelompok, 22 tiket) berasal dari urutan non-waktu; pada urutan waktu seperti produksi, set yang sama memberi 8 kelompok, 25 tiket, kemurnian 0,917 (`ai/scripts/gerbang_pola.py`). Dari 30 urutan acak: 13 memberi 7/22, 17 memberi 8/25. DBSCAN tidak terpengaruh. Keduanya lolos gerbang pola.
+
 ## Hasil (minimal 3 tiket per kelompok)
 
 | Metode | Kelompok | Tiket terkelompok | Kemurnian tim | Waktu (84 blok) |

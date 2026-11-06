@@ -2,6 +2,7 @@
 ai/models/triage.metrics.json (berkas pendamping; dibaca halosis-ai, T32). Set uji = train_triage.py (Jul–Ags 2026).
 
 Pakai: .venv/bin/python ai/scripts/model_metrics.py
+Hanya tambah kurva ambang ke metrik tercatat (nilai lain tetap, cadangan dulu): ... model_metrics.py --kurva
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import numpy as np
 from sklearn.metrics import f1_score, recall_score
 
 sys.path[:0] = [str(Path(__file__).resolve().parents[1]), str(Path(__file__).resolve().parent)]
+from halosis_ai import quality  # noqa: E402
 import train_triage as tt  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,7 +43,7 @@ def compute(model, df) -> dict:
         'ambang': float(model.threshold), 'akurasi_yakin': round(float(correct[confident].mean()), 4),
         'cakupan_yakin': round(float(confident.mean()), 4),
         'tim_besar': len(big), 'recall_tim_besar_min': round(float(recalls.min()), 4),
-        'recall_lainnya': round(other, 4),
+        'recall_lainnya': round(other, 4), 'kurva_ambang': quality.threshold_curve(s['confidence'], correct),
     }
 
 
@@ -50,9 +52,19 @@ def write(metrics: dict) -> None:
 
 
 def main() -> None:
-    metrics = {**compute(joblib.load(MODEL), tt.load()), 'dihitung_ulang_tanpa_latih': True}
+    computed = compute(joblib.load(MODEL), tt.load())
+    if '--kurva' in sys.argv:
+        recorded = json.loads(MODEL.with_suffix('.metrics.json').read_text(encoding='utf-8'))
+        folder = quality.backup_artifacts(MODEL.parent, ROOT / 'backup')
+        write({**recorded, 'kurva_ambang': computed['kurva_ambang']})
+        print(f'Cadangan: {folder.relative_to(ROOT)}. Tercatat akurasi_yakin {recorded["akurasi_yakin"]}, cakupan '
+              f'{recorded["cakupan_yakin"]}; hitung ulang {computed["akurasi_yakin"]}, {computed["cakupan_yakin"]}')
+        for percent in (40, 50, 60, 65, 70, 75, 80, 90, 95, 99):
+            print(percent, computed['kurva_ambang'][str(percent)])
+        return
+    metrics = {**computed, 'dihitung_ulang_tanpa_latih': True}
     write(metrics)
-    print(json.dumps(metrics, ensure_ascii=False))
+    print(json.dumps({k: v for k, v in metrics.items() if k != 'kurva_ambang'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

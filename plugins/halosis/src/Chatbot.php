@@ -147,7 +147,7 @@ final class Chatbot
             ];
         }
 
-        // Layanan AI HaloSIS lebih dulu (KB + solusi tiket lama); mati/gagal → pencarian KB lokal di bawah
+        // Layanan AI HaloSIS lebih dulu (artikel KB terbit + katalog layanan); mati/gagal → pencarian KB lokal di bawah
         $reply ??= null;
         if (!isset($reply) && Service::isConfigured()) {
             try {

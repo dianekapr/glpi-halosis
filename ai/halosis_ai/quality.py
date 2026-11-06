@@ -6,9 +6,12 @@ TIDAK lolos, kecuali syarat banding versi sebelumnya (hanya berlaku bila versi s
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
+import shutil
+from datetime import datetime
 from pathlib import Path
 
 # Syarat lulus (tata_kelola_ai.md §2): bisa diketatkan lewat environment layanan
@@ -21,6 +24,14 @@ MIN_PRECISION_LOW = float(os.environ.get('HALOSIS_GATE_MIN_PRECISION_LOW', '0.75
 MIN_GAIN_MEDIUM = float(os.environ.get('HALOSIS_GATE_MIN_GAIN_MEDIUM', '0.03'))     # akurasi > pembanding + 3 poin
 MIN_SUPPORT = int(os.environ.get('HALOSIS_GATE_MIN_SUPPORT', '30'))                # tiket di atas ambang
 URGENCY_CLASSES = ('Low', 'Medium')
+MAX_THRESHOLD_SPREAD = float(os.environ.get('HALOSIS_GATE_MAX_THRESHOLD_SPREAD', '0.10'))  # antarlipatan luar; lebih = "tidak stabil"
+# Pola insiden (peringatan saja, tidak memblokir), diuji pada 666 INC Jul–Ags seperti reports/banding_pola.md
+MIN_PATTERN_PURITY = float(os.environ.get('HALOSIS_GATE_MIN_PATTERN_PURITY', '0.85'))
+MIN_PATTERN_GROUPS = int(os.environ.get('HALOSIS_GATE_MIN_PATTERN_GROUPS', '5'))
+# Titik ambang triase dengan bukti di bawah ini tidak boleh dianggap lolos
+MIN_POINT_COVERAGE = float(os.environ.get('HALOSIS_GATE_MIN_POINT_COVERAGE', '0.10'))
+MIN_POINT_TICKETS = int(os.environ.get('HALOSIS_GATE_MIN_POINT_TICKETS', '100'))
+NOT_ENOUGH_DATA = 'data tidak cukup'
 
 
 def wilson(successes: int, n: int, z: float = 1.96) -> tuple[float, float] | None:
@@ -52,6 +63,49 @@ def urgency_class_check(kelas: str, m: dict) -> tuple[bool | None, str]:
     return ok, f'Medium: akurasi {accuracy} ({n} tiket) tidak > pembanding {base} + {MIN_GAIN_MEDIUM}'
 
 
+def backup_artifacts(models_dir: Path, backup_root: Path) -> Path:
+    """Salin semua artefak aktif ke backup/model-<waktu>/ dan catat sha256 tiap salinan di MANIFEST.txt."""
+    folder = backup_root / f'model-{datetime.now():%Y%m%d-%H%M%S}'
+    folder.mkdir(parents=True)
+    lines = []
+    for path in sorted(p for p in models_dir.iterdir() if p.is_file()):
+        copy = Path(shutil.copy2(path, folder / path.name))
+        lines.append(f'{hashlib.sha256(copy.read_bytes()).hexdigest()}  {path.name}')
+    (folder / 'MANIFEST.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    return folder
+
+
+def threshold_curve(confidence, correct) -> dict:
+    """Akurasi & cakupan per 1 poin ambang pada set uji triase → `kurva_ambang` (dibaca triage_point)."""
+    curve = {}
+    for percent in range(101):
+        chosen = confidence >= percent / 100
+        tickets = int(chosen.sum())
+        curve[str(percent)] = {'akurasi': round(float(correct[chosen].mean()), 4) if tickets else None,
+                               'cakupan': round(float(chosen.mean()), 4), 'tiket': tickets}
+    return curve
+
+
+def threshold_spread(per_fold: list[dict]) -> dict:
+    """Stabilitas ambang urgensi antarlipatan luar (skema B). per_fold: [{'Low': t, 'Medium': t}, …]. Rentang >
+    MAX_THRESHOLD_SPREAD → kelas masuk `tidak_stabil`; hanya penanda, tidak mengubah status lolos."""
+    spread = {k: round(max(f[k] for f in per_fold) - min(f[k] for f in per_fold), 4) for k in URGENCY_CLASSES}
+    return {'rentang_ambang': spread, 'tidak_stabil': [k for k, v in spread.items() if v > MAX_THRESHOLD_SPREAD]}
+
+
+def triage_point(metrics: dict, threshold: float) -> tuple[bool | str | None, str]:
+    """Syarat akurasi pada ambang triase aktif (0–1) dari `kurva_ambang` {'70': {akurasi, cakupan, tiket}, …}.
+    Cakupan < MIN_POINT_COVERAGE atau < MIN_POINT_TICKETS tiket → NOT_ENOUGH_DATA (bukan lolos). None = tidak tercatat."""
+    point = (metrics.get('kurva_ambang') or {}).get(str(round(threshold * 100)))
+    if not point:
+        return None, ''
+    accuracy, coverage, tickets = point.get('akurasi'), point['cakupan'], point['tiket']
+    if coverage < MIN_POINT_COVERAGE or tickets < MIN_POINT_TICKETS or accuracy is None:
+        return NOT_ENOUGH_DATA, (f'ambang {threshold}: {NOT_ENOUGH_DATA} (cakupan {coverage}, {tickets} tiket; minimal '
+                                 f'{MIN_POINT_COVERAGE} dan {MIN_POINT_TICKETS} tiket)')
+    return accuracy >= MIN_ACC_CONFIDENT, f'akurasi pada ambang {threshold} = {accuracy} < {MIN_ACC_CONFIDENT}'
+
+
 def load_metrics(model_path: Path, artifact) -> dict:
     """Metrik dari berkas pendamping (triase, urgensi) atau dari artefak (dict `metrics` / atribut `metadata`)."""
     side = model_path.with_suffix('.metrics.json')
@@ -62,16 +116,18 @@ def load_metrics(model_path: Path, artifact) -> dict:
     return dict(getattr(artifact, 'metadata', {}) or {})
 
 
-def check(kind: str, metrics: dict) -> dict:
-    """Status lolos per model. kind: triase (syarat tata kelola penuh) | jenis (F1 makro harus unggul pembanding
+def check(kind: str, metrics: dict, threshold: float | None = None) -> dict:
+    """Status lolos per model. kind: triase (syarat tata kelola penuh; threshold = ambang aktif 0–1, None = ambang
+    tercatat di metrik) | pola (peringatan saja, `memblokir` selalu False) | jenis (F1 makro harus unggul pembanding
     kelas mayoritas dan, bila tercatat, tidak turun > MAX_DROP dari versi aktif) | urgensi (per kelas Low/Medium,
     urgency_class_check; model lolos bila ≥ 1 kelas lolos, hanya kelas di `kelas_lolos` yang boleh disarankan)."""
     reasons, checks = [], {}
 
     def need(name: str, ok, detail: str):
-        checks[name] = 'tidak tercatat' if ok is None else ('lolos' if ok else 'gagal')
+        checks[name] = ok if ok == NOT_ENOUGH_DATA else (
+            'tidak tercatat' if ok is None else ('lolos' if ok else 'gagal'))
         if ok is not True:
-            reasons.append(detail if ok is False else f'{name} tidak tercatat')
+            reasons.append(f'{name} tidak tercatat' if ok is None else detail)
 
     def get(key):
         value = metrics.get(key)
@@ -80,7 +136,11 @@ def check(kind: str, metrics: dict) -> dict:
     if kind == 'triase':
         top1, acc, recall = get('top1'), get('akurasi_yakin'), get('recall_tim_besar_min')
         need('top1', None if top1 is None else top1 >= MIN_TOP1, f'Top-1 {top1} < {MIN_TOP1}')
-        need('akurasi_yakin', None if acc is None else acc >= MIN_ACC_CONFIDENT, f'akurasi pada ambang {acc} < {MIN_ACC_CONFIDENT}')
+        if threshold is None:
+            need('akurasi_yakin', None if acc is None else acc >= MIN_ACC_CONFIDENT,
+                 f'akurasi pada ambang {acc} < {MIN_ACC_CONFIDENT}')
+        else:
+            need('akurasi_yakin', *triage_point(metrics, threshold))
         need('recall_tim_besar', None if recall is None else recall >= MIN_RECALL_BIG_TEAM,
              f'recall tim besar terendah {recall} < {MIN_RECALL_BIG_TEAM}')
         previous = metrics.get('versi_sebelumnya') or {}
@@ -99,7 +159,17 @@ def check(kind: str, metrics: dict) -> dict:
             else:
                 reasons.append(detail)
         return {'lolos': bool(passed), 'kelas_lolos': passed, 'alasan': reasons, 'syarat': checks,
+                'skema': metrics.get('skema'), 'tidak_stabil': metrics.get('tidak_stabil') or [],
                 'versi': metrics.get('versi'), 'tanggal': metrics.get('tanggal')}
+    elif kind == 'pola':
+        purity, groups = get('kemurnian_tim'), get('kelompok')
+        need('kemurnian_tim', None if purity is None else purity >= MIN_PATTERN_PURITY,
+             f'kemurnian tim {purity} < {MIN_PATTERN_PURITY}')
+        need('kelompok', None if groups is None else groups >= MIN_PATTERN_GROUPS,
+             f'kelompok {groups} < {MIN_PATTERN_GROUPS}')
+        return {'lolos': not reasons, 'memblokir': False, 'alasan': reasons, 'syarat': checks,
+                'tiket_terkelompok': metrics.get('tiket_terkelompok'), 'parameter': metrics.get('parameter'),
+                'tanggal': metrics.get('tanggal')}
     else:
         f1, base = get('f1_makro'), get('f1_makro_pembanding')
         need('f1_makro_vs_pembanding', None if f1 is None or base is None else f1 > base,

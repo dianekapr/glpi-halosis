@@ -235,6 +235,7 @@ final class PatternDetector extends CommonDBTM
                 'tiket'         => array_map(static fn ($t) => [
                     'id' => $t['id'], 'judul' => $t['name'], 'deskripsi' => $t['content'], 'waktu' => $t['date'],
                 ], array_values($tickets)),
+                'ambang'        => (float) Config::get('pattern_threshold'),
                 'min_anggota'   => $min,
                 'jendela_menit' => $window,
                 'metode'        => Config::get('pattern_method') === 'dbscan' ? 'dbscan' : 'rata',

@@ -126,6 +126,9 @@
                     {{ fields.dropdownArrayField('pattern_method', config.pattern_method, pattern_methods, __('Semantic method', 'halosis'), field_opts|merge({
                         'add_field_html': self.hint(__('Used when the HaloSIS AI service is running. DBSCAN uses the two settings below; see reports/banding_pola.md.', 'halosis')),
                     })) }}
+                    {{ fields.textField('pattern_threshold', config.pattern_threshold, __('Average similarity threshold', 'halosis'), field_opts|merge({
+                        'add_field_html': self.hint(__('Used by the average method. The pattern gate checks these active settings when you save.', 'halosis')),
+                    })) }}
                     {{ fields.textField('pattern_eps', config.pattern_eps, __('DBSCAN eps (cosine distance)', 'halosis'), field_opts|merge({
                         'add_field_html': self.hint(__('Default 0.50 for centred e5 vectors (the PoC used 0.25 with MiniLM).', 'halosis')),
                     })) }}

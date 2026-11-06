@@ -154,9 +154,11 @@ docker compose up -d                            # agar artikel KB GLPI ikut teri
 .venv/bin/python ai/scripts/build_index.py      # → ai/index/chunks.parquet + vectors.npy
 ```
 
-- Sumber: artikel KB GLPI yang terbit (punya target visibilitas) + `qa_pairs` (masalah + solusi tiket) + potongan
+- Sumber: artikel KB GLPI yang terbit (FAQ atau punya target visibilitas; lewat REST API GLPI, `GLPI_API_*` di `.env.example`, API mati → exit 1 tanpa menulis indeks) + `qa_pairs` (masalah + solusi tiket) + potongan
   katalog layanan dari indeks sebelumnya (agar tidak hilang sampai GLPI mengirim ulang katalog).
   Semua teks disamarkan ulang dan dipindai pola data pribadi sebelum di-embed.
+- Set uji gerbang pola: `.venv/bin/python ai/scripts/gerbang_pola.py` → `ai/index/pola_uji.npz` (angka saja, dipakai `POST /gerbang`).
+- `/chat` hanya memakai artikel KB terbit + katalog layanan; potongan tiket hanya untuk `/cari` (petugas) dan `/kandidat` (`reports/banding_solusi.md`).
 - Potongan tiket (`search.ticket_chunks`): solusi > 220 kata dipecah, teks masalah diulang di tiap potongan; kolom
   `masalah`/`solusi` menyimpan teks utuh (jawaban ekstraktif & `/kandidat`). Penggabungan solusi identik tersedia
   (`DEDUP` di `build_index.py`, `jumlah_tiket`) tetapi **mati**: Top-1 turun 1,96 poin

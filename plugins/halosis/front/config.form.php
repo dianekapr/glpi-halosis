@@ -25,6 +25,9 @@ if (isset($_POST['update'])) {
     }
     if ($errors === []) {
         Session::addMessageAfterRedirect(__s('HaloSIS configuration saved.', 'halosis'));
+        foreach (Config::gateWarnings() as $warning) {
+            Session::addMessageAfterRedirect(htmlescape($warning), false, WARNING);
+        }
     }
     Html::back();
 }

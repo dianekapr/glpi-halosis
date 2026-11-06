@@ -379,6 +379,7 @@ final class Triage
     private static function suggestService(Ticket $ticket, array $context): array
     {
         $response = Service::post('/triage', [
+            'ambang' => Config::getTriageThreshold() / 100,
             'judul'     => Privacy::mask((string) $ticket->fields['name'])['text'],
             'deskripsi' => Privacy::mask(self::plainText($ticket->fields['content']))['text'],
             'jenis'     => (int) $ticket->fields['type'] === Ticket::DEMAND_TYPE ? 'REQ' : 'INC',
