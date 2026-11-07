@@ -59,3 +59,12 @@
 - Tujuan menu di komponen sidebar diubah: TT (6) → TT-03/04/05; MJ (12, lewat 1 komponen, 3 instance) → MJ-04/05.
 - Verifikasi: reaction lintas Section peran = 0 selain Alur Demo → peran, Login → beranda, dan "Keluar" → 00 Login (sudah ada sejak awal); menggantung 0; Alur Demo 29/29 terjangkau dari 01 Login; total reaction 2012. Section Usulan sempat mewarisi 6 reaction dari komponen yang diubah → dilepas (0 keluar).
 - Catatan: frame duplikat ditaruh di kanan state tiap Section (Section 03 dan 05 diperlebar); belum dicek visual per elemen (2 tangkapan layar saja).
+
+
+## Pembaruan tahap 6 (layar chatbot Pegawai)
+- Sebelum: Navbar Tanya HaloSIS → PG-01 dan Laporan saya → PG-02 (salah, tidak ada layar chat/daftar tiket di Section 01). Sesudah: → PG-00 dan PG-06 (7 frame baru, lihat peta_wiring_figma.md tahap 6).
+- Verifikasi akhir (dibaca dari reaction nyata, setelah ikon/self-link/state): total reaction 2107; menggantung 0; self-link 0 di seluruh file; lintas peran 0 (kecuali Login → beranda dan Keluar → 00 Login); Section Usulan keluar 0; Alur Demo 29/29 terjangkau dari 01 Login (tidak diubah). Section 01: 25 frame, tak terjangkau hanya PG-05 (mockup HP), PG-S11, PG-S12 (kedua state hanya dipicu PG-05, dinamai "(tidak dipakai)").
+- Koreksi di tengah jalan: mengubah tujuan komponen Navbar membuat 20 instance di Section Usulan mewarisi sambungan baru; sudah dikosongkan lagi.
+- Cek visual: PG-00/S20..S24/PG-06 (navbar 56 px tidak menutupi konten), S20 dan TT-01 setelah ikon dipulihkan; tangkapan di logs/tahap6_shots.
+- Catatan jujur: pemicu PG-S06 (dropdown Lokasi PG-04) pemetaan kasar karena S06 memuat opsi Subdit dan opsi dampak sekaligus. Label "Dari Pusat Bantuan" normal untuk LLM none (lihat peta_wiring tahap 6). Garis bawah menu aktif PG-01..04 sudah diperbaiki.
+- Data uji: 15 baris percakapan chat budi hasil tangkapan di database dihapus; tidak ada tiket dibuat; skrip tangkap dihapus; tidak ada commit.
