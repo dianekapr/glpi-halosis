@@ -475,11 +475,11 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 | Primary Actor | AI Engine |
 | Use-Case Type | Detail, Real |
 | Stakeholders and Interests | **Pegawai BPS:** ingin jawaban relevan dan dapat ditelusuri sumbernya.<br>**Operator dan Tim Teknis:** ingin referensi solusi tanpa pencarian manual.<br>**Security/Tata Kelola:** ingin data pribadi terlindungi dan setiap pencarian tercatat. |
-| Brief Description | AI Engine mencari artikel dan tiket lama yang paling relevan berdasarkan makna, lalu mengembalikan hasil beserta skor dan sumber. |
+| Brief Description | AI Engine mencari sumber yang paling relevan berdasarkan makna, lalu mengembalikan hasil beserta skor dan sumber. Jawaban untuk pegawai hanya bersumber dari artikel KB terbit dan katalog layanan; tiket lama hanya dipakai untuk pencarian petugas. |
 | Trigger | Pegawai, Operator, atau Tim Teknis membutuhkan referensi solusi. Dipanggil dari **Tanya HaloSIS** (UC-01) atau **Cari Pengetahuan**. |
 | Type | External |
 | Relationships | **Association:** AI Engine<br>**Include:** –<br>**Extend:** –<br>**Generalization:** – |
-| Pre-kondisi | Artikel terbit dan tiket historis sudah diindeks; permintaan berasal dari pengguna atau proses yang terautentikasi. |
+| Pre-kondisi | Artikel terbit, katalog layanan, dan tiket historis sudah diindeks; permintaan berasal dari pengguna atau proses yang terautentikasi. |
 | Post-kondisi | Hasil, skor, dan sumber dikembalikan ke pemanggil; waktu proses tercatat. |
 | Halaman | **Tanya HaloSIS**, **Cari Pengetahuan** |
 | Keterkaitan | FR-03; NFR-06, NFR-07, NFR-09, NFR-12; BR-03, BR-04, BR-08 |
@@ -488,14 +488,14 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 1. Pegawai mengirim pertanyaan dari halaman **Tanya HaloSIS** dan sistem meneruskannya ke AI Engine.
 2. AI Engine menyamarkan data pribadi sekali lagi.
-3. AI Engine mengubah pertanyaan menjadi vektor dan membandingkannya dengan indeks gabungan artikel dan tiket lama.
+3. AI Engine mengubah pertanyaan menjadi vektor dan membandingkannya dengan indeks artikel KB terbit dan katalog layanan. Tiket lama tidak dipakai untuk jawaban pegawai.
 4. AI Engine memberi skor pada setiap potongan dan mengurutkan hasil.
 5. AI Engine mengambil hasil yang memenuhi ambang dan menyusun jawaban beserta sumber.
 6. AI Engine mencatat waktu proses dan mengembalikan hasil ke halaman **Tanya HaloSIS**.
 
 **Subflows**
 
-- **S-1 Pencarian oleh petugas.** Operator atau Tim Teknis membuka **Cari pengetahuan**, mengetik uraian di kotak "Jelaskan masalahnya, misalnya FASIH tidak dapat sinkronisasi", dan mengklik **Cari**. Sistem menampilkan semua hasil dengan lencana **Artikel**, **Katalog layanan**, atau **Tiket serupa …**, nilai **Relevansi x%**, serta pertanyaan "Apakah ini membantu?" dengan tombol **Membantu** dan **Tidak membantu**.
+- **S-1 Pencarian oleh petugas.** Operator atau Tim Teknis membuka **Cari pengetahuan**, mengetik uraian di kotak "Jelaskan masalahnya, misalnya FASIH tidak dapat sinkronisasi", dan mengklik **Cari**. Pencarian petugas juga mencakup tiket lama. Sistem menampilkan semua hasil dengan lencana **Artikel**, **Katalog layanan**, atau **Tiket serupa …**, nilai **Relevansi x%**, serta pertanyaan "Apakah ini membantu?" dengan tombol **Membantu** dan **Tidak membantu**.
 
 **Alternate/Exceptional Flows**
 
@@ -574,7 +574,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 1. Sistem mengirim judul, deskripsi, dan jenis tiket baru ke AI Engine.
 2. AI Engine memprediksi tiga tim teratas beserta keyakinan, mencari tiket lama yang mirip, dan menyusun penjelasan.
 3. Sistem memetakan tim teratas ke **Grup** dan **Kategori**. Bila selisih dua kandidat teratas kurang dari 5 poin, sistem memilih tim dengan tiket aktif lebih sedikit.
-4. Sistem menentukan **Dampak** dan **Urgensi**, lalu menghitung **Prioritas**.
+4. Sistem menentukan **Urgensi** dari aturan kata kunci dan **Dampak** dari urgensi ditambah sinyal (tiket serupa atau layanan kritis), lalu menghitung **Prioritas**. Model urgensi tidak dipakai karena belum lolos uji kualitas; Operator memvalidasi nilainya.
 5. Sistem mendapati **Keyakinan** mencapai ambang, sehingga saran diberi tanda **Disarankan · keyakinan mencapai ambang**.
 6. Sistem menyimpan saran dan menampilkan panel **Saran AI** berlabel **Menunggu keputusan** di detail tiket.
 
@@ -794,7 +794,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 2. Sistem menampilkan halaman **Kandidat Pengetahuan**, berisi kandidat dari sinkron terjadwal setiap jam dan sinkron saat halaman dibuka, dengan tab **Menunggu**, **Dijadikan artikel**, **Diabaikan**, dan **Perlu ditinjau**.
 3. Knowledge Manager membaca **Masalah**, **Solusi**, dan **Contoh tiket** pada kartu kandidat.
 4. Knowledge Manager mengklik **Jadikan artikel**.
-5. Sistem menampilkan "Draf artikel dibuat. Tinjau, lalu terbitkan agar dapat dilihat." dan tautan **Buka draf artikel**.
+5. Sistem menyusun draf dari templat berisi **Masalah**, **Solusi**, dan tiket sumber, lalu menampilkan "Draf artikel dibuat. Tinjau, lalu terbitkan agar dapat dilihat." dan tautan **Buka draf artikel**.
 6. Knowledge Manager membuka draf, mengklik **Sunting**, memperbaiki judul, isi, dan **Katalog layanan**, lalu mengklik **Simpan**.
 7. Knowledge Manager menerbitkan artikel lewat **Tindakan lain** > **Tambahkan ke Tanya Jawab (FAQ)**, atau menambah target baca lewat **Bagikan**.
 8. Sistem menampilkan "Indeks pencarian diperbarui." dan AI Engine mengganti isi artikel pada indeks.
@@ -813,11 +813,12 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **3b. Tidak ada kandidat dan artikel belum ada.** Jalankan S-2.
 - **4a. Kandidat tidak layak.** Knowledge Manager mengklik **Abaikan**, mengisi **Alasan pengabaian**, lalu mengklik **Abaikan kandidat**. Sistem menampilkan "Kandidat diabaikan." Alasan kurang dari 5 karakter menghasilkan "Tuliskan alasan minimal 5 karakter."
 - **4b. Kandidat sudah diputuskan pengguna lain.** Sistem menampilkan "Kandidat ini sudah diputuskan."
+- **5a. Penyusun draf AI (LLM) diaktifkan.** AI Engine menyusun ulang masalah dan solusi menjadi artikel berbahasa formal (judul, gejala, langkah penyelesaian) hanya dari teks sumber, dengan sitasi tiket sumber dan tanda "Disusun AI, wajib ditinjau Knowledge Manager". Bila LLM gagal atau tidak tersedia, draf memakai templat seperti langkah 5. Alur lanjut ke langkah 6.
 - **7a. Artikel belum layak terbit.** Draf dibiarkan tanpa target dan tidak muncul pada pencarian. Daftar artikel menandainya "Item ini belum diterbitkan".
 - **8a. Pembaruan indeks gagal.** Sistem menampilkan "Gagal memperbarui indeks pencarian; indeks sebelumnya tetap dipakai."
 - **S-1a. Tanggal tinjau tidak valid.** Sistem menampilkan "Pilih tanggal tinjau setelah hari ini."
 
-**Implementasi.** `KandidatController`, `Candidate::cronKnowledgeCandidates()`, `KnowledgeCandidates::sync()`, `::makeArticle()`, `::ignore()`, `::dueForReview()`, `::setReviewDate()`, `KnowledgeIndex`; `ajax/kandidat.php`; `GET /kandidat`, `POST /reindex/artikel`; tabel `glpi_plugin_halosis_candidates`, `glpi_plugin_halosis_kb_reviews`, `glpi_knowbaseitems`.
+**Implementasi.** `KandidatController`, `Candidate::cronKnowledgeCandidates()`, `KnowledgeCandidates::sync()`, `::makeArticle()`, `::aiDraft()`, `::ignore()`, `::dueForReview()`, `::setReviewDate()`, `KnowledgeIndex`; `ajax/kandidat.php`; `GET /kandidat`, `POST /kandidat/draf`, `POST /reindex/artikel`; tabel `glpi_plugin_halosis_candidates`, `glpi_plugin_halosis_kb_reviews`, `glpi_knowbaseitems`.
 
 ### B.10 UC-10 Mengonfigurasi Platform ITSM
 
@@ -887,10 +888,11 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **Jalur baru (†):** Operator dapat mencatat tiket atas nama pegawai dan menutup tiket yang tidak direspons pegawai.
 - **UC-01:** bila pencarian utama gagal, sistem beralih ke pencarian kata kunci tanpa pemberitahuan.
 - **UC-03:** tiket dari konsultasi hanya dapat disunting judulnya, tanpa lampiran. Tiket tanpa rekomendasi tidak diberi penanda khusus.
-- **UC-04:** tim diprediksi lebih dulu, lalu kategori diturunkan dari tim. Tiket serupa berasal dari model triase, bukan UC-02.
+- **UC-02:** jawaban asisten untuk pegawai hanya memakai artikel KB terbit dan katalog layanan; tiket lama hanya dipakai pada Cari pengetahuan petugas.
+- **UC-04:** tim diprediksi lebih dulu, lalu kategori diturunkan dari tim. Tiket serupa berasal dari model triase, bukan UC-02. Urgensi ditentukan aturan kata kunci karena model urgensi belum lolos uji kualitas.
 - **UC-05:** bahan evaluasi masih digabungkan manual ke data latih, dan tiket dapat diproses tanpa keputusan atas rekomendasi.
 - **UC-06:** status proses berlaku sejak penugasan, dan referensi dicari sendiri lewat Cari pengetahuan.
 - **UC-07:** daftar tiket menampilkan batas waktu, dan penilaian diberikan lewat survei setelah tiket ditutup.
 - **UC-08:** filter layanan, tim, dan periode hanya tersedia di Kinerja AI.
-- **UC-09:** artikel terbit bila menjadi FAQ atau memiliki target baca, arsip berarti mencabut target, dan kolom kata kunci tidak ada.
+- **UC-09:** artikel terbit bila menjadi FAQ atau memiliki target baca, arsip berarti mencabut target, dan kolom kata kunci tidak ada. Draf dapat disusun AI (opsional) dan tetap wajib ditinjau Knowledge Manager.
 - **UC-10:** pratinjau bersifat opsional, konflik aturan tidak diperiksa, dan pemberitahuan berupa Catatan untuk Administrator.
