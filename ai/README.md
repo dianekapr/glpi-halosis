@@ -198,3 +198,16 @@ curl http://localhost:8001/health              # dari laptop; GLPI memakai http:
   jika pengguna boleh melihat artikelnya (jika tidak, jatuh ke pencarian KB lokal).
 - Layanan mati / timeout / URL kosong → kembali ke mode sebelumnya (dummy atau AI penyedia), dicatat di
   `files/_log/halosis.log`; tiket tetap tersimpan.
+
+## Konfigurasi model (env) & LLM lokal (Ollama)
+
+Pindah ke server AI BPS cukup mengubah env di `.env` (lihat `.env.example`): `EMBEDDING_PROVIDER/BASE_URL/MODEL/API_KEY`
+(`local` bawaan = e5 lokal; `openai` = `/v1/embeddings`, awalan `query:`/`passage:` tetap) dan `LLM_PROVIDER/BASE_URL/MODEL/API_KEY`
+(`none` bawaan = ekstraktif). Bila model/penyedia/dimensi embedding berubah, layanan menolak indeks lama
+("bangun ulang indeks"): jalankan ulang `ai/scripts/build_index.py` (menulis `ai/index/meta.json`).
+
+LLM lokal (RAG grounded: hanya artikel KB terbit + katalog layanan, sitasi sumber, konteks kosong/tak relevan = ditolak):
+- Docker: `docker compose --profile llm up -d ollama && docker compose exec ollama ollama pull qwen2.5:3b`, lalu
+  `LLM_PROVIDER=openai`, `LLM_BASE_URL=http://ollama:11434/v1`, `LLM_MODEL=qwen2.5:3b`.
+- Mac (Docker tanpa GPU): pakai Ollama native, `LLM_BASE_URL=http://host.docker.internal:11434/v1`.
+- Uji 3 pertanyaan: `LLM_PROVIDER=openai LLM_BASE_URL=http://localhost:11434/v1 LLM_MODEL=qwen2.5:3b .venv/bin/python ai/scripts/uji_llm.py > logs/uji_llm.log 2>&1`

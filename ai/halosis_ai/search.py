@@ -9,7 +9,9 @@ potongan artikel itu diganti/dihapus di memori, lalu indeks ditulis atomik (file
 from __future__ import annotations
 
 import html
+import json
 import os
+import urllib.request
 import re
 import threading
 from functools import lru_cache
@@ -20,7 +22,8 @@ import pandas as pd
 
 from . import privacy
 
-MODEL_NAME = 'intfloat/multilingual-e5-base'
+LOCAL_MODEL = 'intfloat/multilingual-e5-base'
+MODEL_NAME = LOCAL_MODEL  # nama model lokal bawaan; konfigurasi aktif: model_name()
 INDEX_DIR = Path(__file__).resolve().parents[1] / 'index'
 MAX_WORDS = 220  # panjang potongan (kata); artikel KB panjang dipecah
 
@@ -79,15 +82,70 @@ def ticket_chunks(qa: pd.DataFrame, dedup: bool = True) -> pd.DataFrame:
                                        'tiket'])
 
 
+class IndexMismatch(RuntimeError):
+    """Indeks dibangun dengan model/dimensi lain dari konfigurasi aktif."""
+
+
+def provider() -> str:
+    """EMBEDDING_PROVIDER = local (bawaan) | openai (endpoint /v1/embeddings)."""
+    return 'openai' if os.environ.get('EMBEDDING_PROVIDER', '').strip().lower() == 'openai' else 'local'
+
+
+def model_name() -> str:
+    return os.environ.get('EMBEDDING_MODEL') or LOCAL_MODEL
+
+
+def signature() -> dict:
+    return {'provider': provider(), 'model': model_name()}
+
+
+def check_compatible(chunks_len: int, vectors: np.ndarray, index_dir: Path) -> None:
+    """Tolak indeks lama bila model/penyedia/dimensi berbeda dari konfigurasi aktif."""
+    meta_path = index_dir / 'meta.json'
+    # Indeks tanpa meta.json = dibangun sebelum fitur ini, dengan e5 lokal bawaan
+    meta = json.loads(meta_path.read_text()) if meta_path.exists() else {'provider': 'local', 'model': LOCAL_MODEL}
+    if (meta['provider'], meta['model']) != (signature()['provider'], signature()['model']):
+        raise IndexMismatch(f'Indeks dibangun dengan {meta["provider"]}:{meta["model"]} tetapi konfigurasi aktif '
+                            f'{provider()}:{model_name()}: bangun ulang indeks (ai/scripts/build_index.py).')
+    if meta.get('dim') and vectors.shape[1] != meta['dim']:
+        raise IndexMismatch(f'Dimensi indeks {vectors.shape[1]} != {meta["dim"]}: bangun ulang indeks.')
+    if len(vectors) != chunks_len:
+        raise IndexMismatch('Jumlah vektor tidak cocok dengan potongan: bangun ulang indeks.')
+
+
+def write_meta(index_dir: Path, dim: int) -> None:
+    (index_dir / 'meta.json').write_text(json.dumps({**signature(), 'dim': int(dim)}))
+
+
 @lru_cache(maxsize=1)
 def encoder():
     from sentence_transformers import SentenceTransformer  # impor berat, hanya saat dipakai
-    return SentenceTransformer(MODEL_NAME)
+    return SentenceTransformer(LOCAL_MODEL)
+
+
+def _remote_embed(prefixed: list[str]) -> np.ndarray:
+    base = os.environ.get('EMBEDDING_BASE_URL', '').rstrip('/')
+    if not base or not os.environ.get('EMBEDDING_MODEL'):
+        raise RuntimeError('EMBEDDING_BASE_URL dan EMBEDDING_MODEL wajib untuk EMBEDDING_PROVIDER=openai')
+    headers = {'Content-Type': 'application/json'}
+    if os.environ.get('EMBEDDING_API_KEY'):
+        headers['Authorization'] = f'Bearer {os.environ["EMBEDDING_API_KEY"]}'
+    out = []
+    for i in range(0, len(prefixed), 32):
+        body = json.dumps({'model': model_name(), 'input': prefixed[i:i + 32]}).encode()
+        req = urllib.request.Request(f'{base}/embeddings', data=body, headers=headers)
+        with urllib.request.urlopen(req, timeout=120) as r:  # noqa: S310 (URL dari konfigurasi admin)
+            data = sorted(json.load(r)['data'], key=lambda d: d['index'])
+        out.extend(d['embedding'] for d in data)
+    vectors = np.asarray(out, dtype=np.float32)
+    return vectors / np.maximum(np.linalg.norm(vectors, axis=1, keepdims=True), 1e-12)
 
 
 def embed(texts: list[str], kind: str) -> np.ndarray:
-    """E5 memakai awalan 'query: ' untuk pertanyaan dan 'passage: ' untuk dokumen."""
+    """E5 memakai awalan 'query: ' untuk pertanyaan dan 'passage: ' untuk dokumen (lokal maupun remote)."""
     prefixed = [f'{kind}: {t}' for t in texts]
+    if provider() == 'openai':
+        return _remote_embed(prefixed)
     return encoder().encode(prefixed, batch_size=32, normalize_embeddings=True, show_progress_bar=len(texts) > 100)\
         .astype(np.float32)
 
@@ -97,8 +155,16 @@ def load_index(index_dir: Path | None = None) -> tuple[pd.DataFrame, np.ndarray]
     if index_dir not in _indexes:
         with _lock:
             if index_dir not in _indexes:
-                _indexes[index_dir] = (pd.read_parquet(index_dir / 'chunks.parquet'), np.load(index_dir / 'vectors.npy'))
+                chunks, vectors = pd.read_parquet(index_dir / 'chunks.parquet'), np.load(index_dir / 'vectors.npy')
+                check_compatible(len(chunks), vectors, index_dir)
+                _indexes[index_dir] = (chunks, vectors)
     return _indexes[index_dir]
+
+
+def _read_checked(index_dir: Path) -> tuple[pd.DataFrame, np.ndarray]:
+    chunks, vectors = pd.read_parquet(index_dir / 'chunks.parquet'), np.load(index_dir / 'vectors.npy')
+    check_compatible(len(chunks), vectors, index_dir)
+    return chunks, vectors
 
 
 def update_article(kb_id: int, title: str, answer_html: str, remove: bool = False,
@@ -111,8 +177,7 @@ def update_article(kb_id: int, title: str, answer_html: str, remove: bool = Fals
     new = None if remove else article_chunks(kb_id, title, answer_html)
     new_vectors = embed(new['teks'].tolist(), 'passage') if new is not None and len(new) else None
     with _lock:
-        chunks, vectors = _indexes.get(index_dir) or (pd.read_parquet(index_dir / 'chunks.parquet'),
-                                                      np.load(index_dir / 'vectors.npy'))
+        chunks, vectors = _indexes.get(index_dir) or _read_checked(index_dir)
         keep = (chunks['sumber'] != f'KB-{kb_id}').to_numpy()
         chunks, vectors = chunks[keep].reset_index(drop=True), vectors[keep]
         if new_vectors is not None:
@@ -133,8 +198,7 @@ def replace_services(items: list[dict], index_dir: Path | None = None) -> int:
     } for item in items], columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
     new_vectors = embed(new['teks'].tolist(), 'passage') if len(new) else None
     with _lock:
-        chunks, vectors = _indexes.get(index_dir) or (pd.read_parquet(index_dir / 'chunks.parquet'),
-                                                      np.load(index_dir / 'vectors.npy'))
+        chunks, vectors = _indexes.get(index_dir) or _read_checked(index_dir)
         keep = (chunks['jenis_sumber'] != 'layanan').to_numpy()
         chunks, vectors = chunks[keep].reset_index(drop=True), vectors[keep]
         if new_vectors is not None:
@@ -152,6 +216,7 @@ def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) ->
         np.save(f, vectors)
     os.replace(tmp_chunks, index_dir / 'chunks.parquet')
     os.replace(tmp_vectors, index_dir / 'vectors.npy')
+    write_meta(index_dir, vectors.shape[1])
 
 
 def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str, ...] | None = None) -> list[dict]:

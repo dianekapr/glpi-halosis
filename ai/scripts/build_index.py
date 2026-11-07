@@ -27,7 +27,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from halosis_ai import privacy  # noqa: E402
-from halosis_ai.search import INDEX_DIR, MODEL_NAME, article_chunks, embed, ticket_chunks  # noqa: E402
+from halosis_ai.search import INDEX_DIR, article_chunks, embed, model_name, ticket_chunks, write_meta  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 QA = ROOT / 'data/processed/qa_pairs.parquet'
@@ -128,7 +128,8 @@ def main() -> None:
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     chunks.to_parquet(INDEX_DIR / 'chunks.parquet', index=False)
     np.save(INDEX_DIR / 'vectors.npy', vectors)
-    print(f'Model embedding : {MODEL_NAME} (dimensi {vectors.shape[1]})')
+    write_meta(INDEX_DIR, vectors.shape[1])
+    print(f'Model embedding : {model_name()} (dimensi {vectors.shape[1]})')
     print(f'Potongan KB     : {len(kb)} dari {kb["sumber"].nunique()} artikel')
     print(f'Potongan tiket  : {len(qa)} dari {int(qa.drop_duplicates("sumber")["jumlah_tiket"].sum())} tiket '
           f'({qa["sumber"].nunique()} sumber, {int((qa.groupby("sumber").size() > 1).sum())} dipecah > 220 kata)')
