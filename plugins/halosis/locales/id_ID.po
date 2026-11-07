@@ -1501,3 +1501,30 @@ msgstr "Siap Ditutup"
 
 msgid "This role does not manage rules."
 msgstr "Peran ini tidak mengelola aturan."
+
+msgid "The conversation has ended. You can read it again in Conversation history."
+msgstr "Percakapan diakhiri. Anda dapat membacanya lagi di Riwayat percakapan."
+
+msgid "Ended without a report"
+msgstr "Berakhir tanpa laporan"
+
+msgid "HaloSIS: sync knowledge candidates from solved tickets"
+msgstr "HaloSIS: sinkron kandidat pengetahuan dari tiket selesai"
+
+msgid "%d new knowledge candidates."
+msgstr "%d kandidat pengetahuan baru."
+
+msgid "Average similarity threshold"
+msgstr "Ambang rata-rata kemiripan"
+
+msgid "Used by the average method. The pattern gate checks these active settings when you save."
+msgstr "Dipakai metode rata-rata. Gerbang pola memeriksa pengaturan aktif ini saat disimpan."
+
+msgid "The AI quality gates could not be checked."
+msgstr "Gerbang kualitas AI tidak dapat diperiksa."
+
+msgid "Triage gate at the active threshold: %s"
+msgstr "Gerbang triase pada ambang aktif: %s"
+
+msgid "Pattern gate (warning only): %s"
+msgstr "Gerbang pola (peringatan saja): %s"

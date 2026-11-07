@@ -154,9 +154,11 @@ docker compose up -d                            # agar artikel KB GLPI ikut teri
 .venv/bin/python ai/scripts/build_index.py      # → ai/index/chunks.parquet + vectors.npy
 ```
 
-- Sumber: artikel KB GLPI yang terbit (punya target visibilitas) + `qa_pairs` (masalah + solusi tiket) + potongan
+- Sumber: artikel KB GLPI yang terbit (FAQ atau punya target visibilitas; lewat REST API GLPI, `GLPI_API_*` di `.env.example`, API mati → exit 1 tanpa menulis indeks) + `qa_pairs` (masalah + solusi tiket) + potongan
   katalog layanan dari indeks sebelumnya (agar tidak hilang sampai GLPI mengirim ulang katalog).
   Semua teks disamarkan ulang dan dipindai pola data pribadi sebelum di-embed.
+- Set uji gerbang pola: `.venv/bin/python ai/scripts/gerbang_pola.py` → `ai/index/pola_uji.npz` (angka saja, dipakai `POST /gerbang`).
+- `/chat` hanya memakai artikel KB terbit + katalog layanan; potongan tiket hanya untuk `/cari` (petugas) dan `/kandidat` (`reports/banding_solusi.md`).
 - Potongan tiket (`search.ticket_chunks`): solusi > 220 kata dipecah, teks masalah diulang di tiap potongan; kolom
   `masalah`/`solusi` menyimpan teks utuh (jawaban ekstraktif & `/kandidat`). Penggabungan solusi identik tersedia
   (`DEDUP` di `build_index.py`, `jumlah_tiket`) tetapi **mati**: Top-1 turun 1,96 poin
@@ -196,3 +198,16 @@ curl http://localhost:8001/health              # dari laptop; GLPI memakai http:
   jika pengguna boleh melihat artikelnya (jika tidak, jatuh ke pencarian KB lokal).
 - Layanan mati / timeout / URL kosong → kembali ke mode sebelumnya (dummy atau AI penyedia), dicatat di
   `files/_log/halosis.log`; tiket tetap tersimpan.
+
+## Konfigurasi model (env) & LLM lokal (Ollama)
+
+Pindah ke server AI BPS cukup mengubah env di `.env` (lihat `.env.example`): `EMBEDDING_PROVIDER/BASE_URL/MODEL/API_KEY`
+(`local` bawaan = e5 lokal; `openai` = `/v1/embeddings`, awalan `query:`/`passage:` tetap) dan `LLM_PROVIDER/BASE_URL/MODEL/API_KEY`
+(`none` bawaan = ekstraktif). Bila model/penyedia/dimensi embedding berubah, layanan menolak indeks lama
+("bangun ulang indeks"): jalankan ulang `ai/scripts/build_index.py` (menulis `ai/index/meta.json`).
+
+LLM lokal (RAG grounded: hanya artikel KB terbit + katalog layanan, sitasi sumber, konteks kosong/tak relevan = ditolak):
+- Docker: `docker compose --profile llm up -d ollama && docker compose exec ollama ollama pull qwen2.5:3b`, lalu
+  `LLM_PROVIDER=openai`, `LLM_BASE_URL=http://ollama:11434/v1`, `LLM_MODEL=qwen2.5:3b`.
+- Mac (Docker tanpa GPU): pakai Ollama native, `LLM_BASE_URL=http://host.docker.internal:11434/v1`.
+- Uji 3 pertanyaan: `LLM_PROVIDER=openai LLM_BASE_URL=http://localhost:11434/v1 LLM_MODEL=qwen2.5:3b .venv/bin/python ai/scripts/uji_llm.py > logs/uji_llm.log 2>&1`

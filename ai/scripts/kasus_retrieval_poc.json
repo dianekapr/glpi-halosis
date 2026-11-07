@@ -1,0 +1,4 @@
+{
+  "catatan": "Isian tim untuk C.7 retrieval. Dokumen hal. 53 tidak memuat teks 8 kasus PoC. Satu kasus: {\"pertanyaan\": \"...\", \"sumber_benar\": [\"KB-12\"]}. sumber_benar memakai nama sumber di indeks aktif (KB-<id> atau LAYANAN-<id>).",
+  "kasus": []
+}

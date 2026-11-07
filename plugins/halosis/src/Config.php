@@ -4,6 +4,9 @@ namespace GlpiPlugin\Halosis;
 
 use Config as CoreConfig;
 use GLPIKey;
+use GlpiPlugin\Halosis\Ai\AiException;
+use GlpiPlugin\Halosis\Ai\Service;
+use Toolbox;
 
 /**
  * Konfigurasi plugin HaloSIS, disimpan di glpi_configs dengan konteks "plugin:halosis".
@@ -40,6 +43,7 @@ final class Config
         'pattern_group_id'    => 0,
         // Metode semantik di /pola: average (rakus rata-rata kemiripan, bawaan) atau dbscan (PoC hal. 56)
         'pattern_method'      => 'average',
+        'pattern_threshold'   => '0.50',
         'pattern_eps'         => '0.50',
         'pattern_min_samples' => 3,
         // FR-04: permintaan layanan (REQ) ikut dikelompokkan menjadi pola; bawaan mati (PoC hal. 56: pola dari INC)
@@ -204,6 +208,41 @@ final class Config
         return array_slice(array_values(array_unique($items)), 0, 20);
     }
 
+    /**
+     * Gerbang pada nilai aktif (tata_kelola_ai.md §2) → pesan peringatan; pola tidak pernah memblokir.
+     *
+     * @return string[]
+     */
+    public static function gateWarnings(): array
+    {
+        if (!Service::isConfigured()) {
+            return [];
+        }
+        try {
+            $gates = Service::post('/gerbang', [
+                'ambang_triase' => self::getTriageThreshold() / 100,
+                'ambang'        => (float) self::get('pattern_threshold'),
+                'min_anggota'   => max(2, (int) self::get('pattern_min_tickets')),
+                'jendela_menit' => max(15, (int) self::get('pattern_window')),
+                'metode'        => self::get('pattern_method') === 'dbscan' ? 'dbscan' : 'rata',
+                'eps'           => (float) self::get('pattern_eps'),
+                'min_sampel'    => (int) self::get('pattern_min_samples'),
+            ]);
+        } catch (AiException $e) {
+            Toolbox::logInFile('halosis', 'Pemeriksaan gerbang AI gagal: ' . $e->getMessage() . "\n", true);
+            return [__('The AI quality gates could not be checked.', 'halosis')];
+        }
+        Toolbox::logInFile('halosis', 'Gerbang AI: ' . json_encode($gates, JSON_UNESCAPED_UNICODE) . "\n", true);
+
+        $warnings = [];
+        foreach (['triase' => __('Triage gate at the active threshold: %s', 'halosis'), 'pola' => __('Pattern gate (warning only): %s', 'halosis')] as $gate => $message) {
+            if (($gates[$gate]['lolos'] ?? false) !== true) {
+                $warnings[] = sprintf($message, implode('; ', (array) ($gates[$gate]['alasan'] ?? [])));
+            }
+        }
+        return $warnings;
+    }
+
     public static function getLowThreshold(): int
     {
         return min((int) self::get('ai_threshold_low'), self::getTriageThreshold());
@@ -266,6 +305,7 @@ final class Config
         $group_id = (int) ($input['pattern_group_id'] ?? 0);
         $values['pattern_group_id'] = $group_id > 0 && (new \Group())->getFromDB($group_id) ? $group_id : 0;
         $values['pattern_method'] = in_array($input['pattern_method'] ?? '', ['average', 'dbscan'], true) ? $input['pattern_method'] : 'average';
+        $values['pattern_threshold'] = number_format(max(0.05, min(0.95, (float) str_replace(',', '.', (string) ($input['pattern_threshold'] ?? self::DEFAULTS['pattern_threshold'])))), 2, '.', '');
         $values['pattern_eps'] = number_format(max(0.05, min(1.5, (float) str_replace(',', '.', (string) ($input['pattern_eps'] ?? self::DEFAULTS['pattern_eps'])))), 2, '.', '');
         $values['pattern_min_samples'] = max(2, min(50, (int) ($input['pattern_min_samples'] ?? self::DEFAULTS['pattern_min_samples'])));
         $values['pattern_include_requests'] = (int) !empty($input['pattern_include_requests']);

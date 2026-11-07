@@ -155,22 +155,37 @@ Panel Saran AI menampilkan "Jenis disarankan" hanya bila saran berbeda dari jeni
 <!-- urgensi:mulai -->
 ## Saran urgensi insiden (BR-05, 2.1.4 Urgency/Impact/Priority)
 
-Versi `urgensi-tfidf-tim-lr-20261101` · `ai/scripts/train_urgensi.py` · artefak `ai/models/urgensi.joblib` + `urgensi.metrics.json` (di-ignore git). Label = kolom `urgency` history versi baru (insiden Medium vs Low). Dampak = urgensi pada 99,74% insiden dan prioritas = matriks keduanya, jadi satu model; model prioritas lama (proksi tier SLA) dihapus.
+**Tidak lolos dalam kondisi nyata (tim prediksi): model urgensi tidak dipakai.** Kandidat `urgensi-tfidf-timpred-lr-20261106` gagal gerbang; artefak `urgensi-tfidf-tim-lr-20261101` disimpan hanya untuk rollback, dan urgensi kembali ke aturan kata kunci + validasi Operator (cadangan: `backup/model-20261106-200051`). `/triage` mengirim `urgensi_saran` kosong · `ai/scripts/train_urgensi.py` · label = kolom `urgency` history (insiden Medium vs Low). Insiden berlabel Medium / Low: 2.200 / 508; validasi silang bertingkat 5 lipatan luar × 5 lipatan dalam, tim prediksi out-of-fold (seed 42).
 
-Insiden berlabel Medium / Low: 2.200 / 508; validasi silang 5 lipatan bertingkat (seed 42); LR berbobot kelas seimbang → P(Low). **Ambang per kelas** dipilih otomatis dari P(Low) validasi silang (bukan satu ambang keyakinan):
+### Skema A vs B
 
-| Kelas | Aturan | Hasil validasi silang | Pembanding | Gerbang |
-| --- | --- | --- | --- | --- |
-| Low (Rendah) | P(Low) ≥ 0,90 | presisi **78,79%** (Wilson 95% 62,25%–89,32%), recall 5,12%, 33 tiket | proporsi Low 18,76% | **lolos** |
-| Medium (Sedang) | P(Low) ≤ 0,45 | akurasi **84,30%**, cakupan 76,70% insiden (2.077) | proporsi Medium 81,24% | **lolos** |
-| Di antaranya | – | 22,08% insiden | – | aturan kata kunci |
+Saat dipakai, tim berasal dari saran triase, jadi **skema B adalah gerbang** dan skema A hanya pembanding. Ambang dipilih di lipatan dalam dan metrik dari data uji luar yang tidak ikut memilih ambang.
 
-Syarat (quality.urgency_class_check): Low presisi ≥ 75,00%, batas bawah Wilson > pembanding, ≥ 30 tiket (ambang terendah yang lolos = recall terbesar); Medium akurasi > pembanding + 3 poin, ≥ 30 tiket (ambang tertinggi yang lolos = cakupan terbesar). Kisi ambang 0,05.
+| Skema | Presisi Low | Recall Low | Tiket Low | Akurasi Medium | Cakupan Medium | Tiket Medium | Peran |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
+| A: tim aktual | 70,83% (Wilson 50,83%–85,09%) | 3,35% | 24 | 84,87% | 64,70% | 1.752 | pembanding |
+| B: tim prediksi OOF | 50,00% (Wilson 26,80%–73,20%) | 1,38% | 14 | 84,11% | 48,12% | 1.303 | gerbang |
 
-**Keterbatasan cakupan Low:** hanya 5,12% insiden Low dikenali model; sisanya tetap dari aturan kata kunci. Tanpa ambang per kelas (argmax 0,5): akurasi 74,30%, F1 makro 57,97% vs pembanding selalu Medium 81,24%.
+Pembanding proporsi: Low 18,76%, Medium 81,24%. Gerbang B: Low **tidak lolos** (tidak disarankan), Medium **tidak lolos** (tidak disarankan).
 
-Tidak dimodelkan (tetap aturan + sinyal): (kosong) 57, High 12 insiden; permintaan (REQ).
-Catatan label: 81,24% insiden berlabel Medium; sebagian besar kemungkinan nilai bawaan formulir, bukan penilaian petugas, sehingga batas atas akurasi model terbatas.
+### Ambang per lipatan luar (skema B)
 
-Panel Saran AI menampilkan "Urgensi disarankan: Rendah/Sedang (keyakinan)" hanya bila kelas itu lolos gerbang dan P(Low) melewati ambangnya (keyakinan = P(Low) untuk Rendah, 1 − P(Low) untuk Sedang); selain itu urgensi dari aturan kata kunci. Dampak = urgensi, naik satu tingkat bila ≥ 3 tiket serupa dalam 60 menit atau layanan kritis (konfigurasi). Operator tetap memutuskan.
+| Lipatan | Ambang Low | Ambang Medium | Lolos di lipatan dalam |
+| ---: | ---: | ---: | --- |
+| 1 | 0,95 | 0,10 | Medium |
+| 2 | 0,95 | 0,45 | Medium |
+| 3 | 0,85 | 0,50 | Low, Medium |
+| 4 | 0,95 | 0,05 | – |
+| 5 | 0,95 | 0,40 | Medium |
+| **Median** | **0,95** | **0,40** | |
+
+Rentang antarlipatan: Low 0,10, Medium 0,45 (batas 0,10). Stabilitas: **tidak stabil (Medium)**.
+
+Model tim skema B tanpa kalibrasi (C=3, tanpa bobot kelas, seperti model triase aktif; disetujui 6 Nov 2026): hanya tim teratas yang dipakai dan kalibrasi melipatgandakan waktu latih, sehingga pilihan tim bisa sedikit berbeda dari model triase terkalibrasi.
+
+Syarat: Low presisi ≥ 75,00%, batas bawah Wilson > pembanding, ≥ 30 tiket; Medium akurasi > pembanding + 3 poin, ≥ 30 tiket. Tanpa ambang per kelas (argmax 0,5, skema B): akurasi 73,60%, F1 makro 56,92% vs selalu Medium 81,24%.
+
+Tidak dimodelkan (tetap aturan + sinyal): (kosong) 57, High 12 insiden; permintaan (REQ). 81,24% insiden berlabel Medium; sebagian besar kemungkinan nilai bawaan formulir.
+
+Panel Saran AI menampilkan urgensi hanya bila kelasnya lolos gerbang dan P(Low) melewati ambangnya; selain itu urgensi dari aturan kata kunci. Operator tetap memutuskan.
 <!-- urgensi:selesai -->

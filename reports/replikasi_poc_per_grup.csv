@@ -1,0 +1,632 @@
+cakupan,metode,grup,tiket_uji,presisi,recall,f1
+56 grup,TF-IDF k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Operator Pusat,86,0.15,0.1744,0.1613
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.125,0.3333,0.1818
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,0.875,0.7778,0.8235
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.6667,0.7523,0.7069
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.6761,0.6761,0.6761
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi KipApp,28,0.6667,0.7143,0.6897
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.25,0.25,0.25
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Simpeg Online,10,0.5714,0.4,0.4706
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Back Office Selindo (BOS),42,0.8571,0.5714,0.6857
+56 grup,TF-IDF k-NN,Technical Layanan Counseling Center,1,0.5,1.0,0.6667
+56 grup,TF-IDF k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.6667,0.4737,0.5538
+56 grup,TF-IDF k-NN,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan INDAH Data Platform,2,0.5,0.5,0.5
+56 grup,TF-IDF k-NN,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.3333,0.1667,0.2222
+56 grup,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.1667,0.2,0.1818
+56 grup,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2857,0.1667,0.2105
+56 grup,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.3333,0.3333,0.3333
+56 grup,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.3636,0.4211,0.3902
+56 grup,TF-IDF k-NN,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7143,0.8065,0.7576
+56 grup,TF-IDF k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6154,0.4,0.4848
+56 grup,TF-IDF k-NN,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6154,0.8,0.6957
+56 grup,TF-IDF k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+56 grup,TF-IDF k-NN,Technical Layanan Meeting Online,46,0.913,0.913,0.913
+56 grup,TF-IDF k-NN,Technical Layanan Pengelolaan E-Sign,69,0.8636,0.8261,0.8444
+56 grup,TF-IDF k-NN,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Pengujian Aplikasi,17,0.3889,0.4118,0.4
+56 grup,TF-IDF k-NN,Technical Layanan Perangkat Lunak COTS,34,0.7742,0.7059,0.7385
+56 grup,TF-IDF k-NN,Technical Layanan Perangkat TI End User,81,0.8415,0.8519,0.8466
+56 grup,TF-IDF k-NN,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan Presensi,43,0.6667,0.7907,0.7234
+56 grup,TF-IDF k-NN,Technical Layanan SEKAR,3,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan SOBAT,24,0.75,0.75,0.75
+56 grup,TF-IDF k-NN,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,TF-IDF k-NN,Technical Layanan SiPecut,213,0.8775,0.8404,0.8585
+56 grup,TF-IDF k-NN,Technical Layanan Siimut,7,0.75,0.8571,0.8
+56 grup,TF-IDF k-NN,Technical Layanan TK Online,2,0.0,0.0,0.0
+56 grup,TF-IDF LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+56 grup,TF-IDF LR,Operator Pusat,86,0.1633,0.093,0.1185
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.1111,0.2
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Email,218,0.7055,0.8899,0.787
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.6935,0.8498,0.7637
+56 grup,TF-IDF LR,Technical Layanan Aplikasi KipApp,28,0.8125,0.9286,0.8667
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.5,0.0833,0.1429
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Back Office Selindo (BOS),42,1.0,0.5238,0.6875
+56 grup,TF-IDF LR,Technical Layanan Counseling Center,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.6585,0.7105,0.6835
+56 grup,TF-IDF LR,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5714,0.3333,0.4211
+56 grup,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4286,0.7895,0.5556
+56 grup,TF-IDF LR,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Insiden Keamanan Informasi,31,0.8276,0.7742,0.8
+56 grup,TF-IDF LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.9,0.45,0.6
+56 grup,TF-IDF LR,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.875,0.7,0.7778
+56 grup,TF-IDF LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Meeting Online,46,1.0,1.0,1.0
+56 grup,TF-IDF LR,Technical Layanan Pengelolaan E-Sign,69,0.9559,0.942,0.9489
+56 grup,TF-IDF LR,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Pengujian Aplikasi,17,0.8333,0.2941,0.4348
+56 grup,TF-IDF LR,Technical Layanan Perangkat Lunak COTS,34,1.0,0.6765,0.807
+56 grup,TF-IDF LR,Technical Layanan Perangkat TI End User,81,0.8837,0.9383,0.9102
+56 grup,TF-IDF LR,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan Presensi,43,0.7321,0.9535,0.8283
+56 grup,TF-IDF LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan SOBAT,24,0.8,0.8333,0.8163
+56 grup,TF-IDF LR,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan SiPecut,213,0.8406,0.9906,0.9095
+56 grup,TF-IDF LR,Technical Layanan Siimut,7,0.0,0.0,0.0
+56 grup,TF-IDF LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.5,0.2,0.2857
+56 grup,MiniLM k-NN,Operator Pusat,86,0.1515,0.1744,0.1622
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.1429,0.3333,0.2
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.25,0.3333,0.2857
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,0.75,0.6667,0.7059
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.6733,0.7752,0.7207
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7358,0.7324,0.7341
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi KipApp,28,0.5676,0.75,0.6462
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.5,0.5,0.5
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi SINERGI,0,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Simpeg Online,10,0.6,0.3,0.4
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Back Office Selindo (BOS),42,0.6923,0.4286,0.5294
+56 grup,MiniLM k-NN,Technical Layanan Counseling Center,1,0.5,1.0,0.6667
+56 grup,MiniLM k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.5833,0.3684,0.4516
+56 grup,MiniLM k-NN,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan INDAH Data Platform,2,1.0,0.5,0.6667
+56 grup,MiniLM k-NN,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,1.0,0.3333,0.5
+56 grup,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.2857,0.4,0.3333
+56 grup,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2857,0.3333,0.3077
+56 grup,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+56 grup,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.55,0.5789,0.5641
+56 grup,MiniLM k-NN,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7647,0.8387,0.8
+56 grup,MiniLM k-NN,"Technical Layanan Kompilasi, Pemrosesan, dan Tabulasi Data Pengolahan",0,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.5909,0.65,0.619
+56 grup,MiniLM k-NN,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.6,0.6316
+56 grup,MiniLM k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+56 grup,MiniLM k-NN,Technical Layanan Meeting Online,46,0.9348,0.9348,0.9348
+56 grup,MiniLM k-NN,Technical Layanan Pengelolaan E-Sign,69,0.9167,0.7971,0.8527
+56 grup,MiniLM k-NN,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Pengujian Aplikasi,17,0.7333,0.6471,0.6875
+56 grup,MiniLM k-NN,Technical Layanan Perangkat Lunak COTS,34,0.96,0.7059,0.8136
+56 grup,MiniLM k-NN,Technical Layanan Perangkat TI End User,81,0.8974,0.8642,0.8805
+56 grup,MiniLM k-NN,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan Presensi,43,0.6042,0.6744,0.6374
+56 grup,MiniLM k-NN,Technical Layanan SEKAR,3,0.3333,0.3333,0.3333
+56 grup,MiniLM k-NN,Technical Layanan SOBAT,24,0.6957,0.6667,0.6809
+56 grup,MiniLM k-NN,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,MiniLM k-NN,Technical Layanan SiPecut,213,0.8318,0.8357,0.8337
+56 grup,MiniLM k-NN,Technical Layanan Siimut,7,0.5,0.5714,0.5333
+56 grup,MiniLM k-NN,Technical Layanan TK Online,2,0.0,0.0,0.0
+56 grup,MiniLM LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+56 grup,MiniLM LR,Operator Pusat,86,0.2,0.0698,0.1034
+56 grup,MiniLM LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.5,0.3333,0.4
+56 grup,MiniLM LR,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.3333,0.5
+56 grup,MiniLM LR,Technical Layanan Aplikasi Jaringan - Email,218,0.7132,0.867,0.7826
+56 grup,MiniLM LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7184,0.8263,0.7686
+56 grup,MiniLM LR,Technical Layanan Aplikasi KipApp,28,0.6216,0.8214,0.7077
+56 grup,MiniLM LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.4,0.1667,0.2353
+56 grup,MiniLM LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Back Office Selindo (BOS),42,0.7143,0.4762,0.5714
+56 grup,MiniLM LR,Technical Layanan Counseling Center,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.5385,0.5526,0.5455
+56 grup,MiniLM LR,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2727,0.25,0.2609
+56 grup,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+56 grup,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.35,0.7368,0.4746
+56 grup,MiniLM LR,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Insiden Keamanan Informasi,31,0.7742,0.7742,0.7742
+56 grup,MiniLM LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.7222,0.65,0.6842
+56 grup,MiniLM LR,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6,0.6,0.6
+56 grup,MiniLM LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Meeting Online,46,1.0,1.0,1.0
+56 grup,MiniLM LR,Technical Layanan Pengelolaan E-Sign,69,0.9032,0.8116,0.855
+56 grup,MiniLM LR,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Pengujian Aplikasi,17,0.8889,0.4706,0.6154
+56 grup,MiniLM LR,Technical Layanan Perangkat Lunak COTS,34,0.9615,0.7353,0.8333
+56 grup,MiniLM LR,Technical Layanan Perangkat TI End User,81,0.8222,0.9136,0.8655
+56 grup,MiniLM LR,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan Presensi,43,0.5606,0.8605,0.6789
+56 grup,MiniLM LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan SOBAT,24,0.5385,0.5833,0.56
+56 grup,MiniLM LR,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,MiniLM LR,Technical Layanan SiPecut,213,0.8403,0.939,0.8869
+56 grup,MiniLM LR,Technical Layanan Siimut,7,0.5,0.2857,0.3636
+56 grup,MiniLM LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+56 grup,e5 k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.5,0.2,0.2857
+56 grup,e5 k-NN,Operator Pusat,86,0.1284,0.1628,0.1436
+56 grup,e5 k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.3333,0.3333,0.3333
+56 grup,e5 k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.3333,0.5
+56 grup,e5 k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.6564,0.7798,0.7128
+56 grup,e5 k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7222,0.7324,0.7273
+56 grup,e5 k-NN,Technical Layanan Aplikasi KipApp,28,0.625,0.8929,0.7353
+56 grup,e5 k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.35,0.5833,0.4375
+56 grup,e5 k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Aplikasi Simpeg Online,10,1.0,0.5,0.6667
+56 grup,e5 k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Back Office Selindo (BOS),42,0.8438,0.6429,0.7297
+56 grup,e5 k-NN,Technical Layanan Counseling Center,1,0.5,1.0,0.6667
+56 grup,e5 k-NN,Technical Layanan Data,0,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.6957,0.4211,0.5246
+56 grup,e5 k-NN,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan INDAH Data Platform,2,1.0,0.5,0.6667
+56 grup,e5 k-NN,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.0714,0.0833,0.0769
+56 grup,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+56 grup,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4,0.4211,0.4103
+56 grup,e5 k-NN,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7353,0.8065,0.7692
+56 grup,e5 k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.5556,0.5,0.5263
+56 grup,e5 k-NN,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.6,0.6316
+56 grup,e5 k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+56 grup,e5 k-NN,Technical Layanan Meeting Online,46,0.95,0.8261,0.8837
+56 grup,e5 k-NN,Technical Layanan Pengelolaan E-Sign,69,0.9016,0.7971,0.8462
+56 grup,e5 k-NN,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Pengujian Aplikasi,17,0.7692,0.5882,0.6667
+56 grup,e5 k-NN,Technical Layanan Perangkat Lunak COTS,34,0.875,0.6176,0.7241
+56 grup,e5 k-NN,Technical Layanan Perangkat TI End User,81,0.9351,0.8889,0.9114
+56 grup,e5 k-NN,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan Presensi,43,0.6964,0.907,0.7879
+56 grup,e5 k-NN,Technical Layanan SEKAR,3,0.5,0.3333,0.4
+56 grup,e5 k-NN,Technical Layanan SOBAT,24,0.6154,0.6667,0.64
+56 grup,e5 k-NN,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,e5 k-NN,Technical Layanan SiPecut,213,0.8872,0.8122,0.848
+56 grup,e5 k-NN,Technical Layanan Siimut,7,0.7778,1.0,0.875
+56 grup,e5 k-NN,Technical Layanan TK Online,2,1.0,0.5,0.6667
+56 grup,e5 LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+56 grup,e5 LR,Operator Pusat,86,0.1739,0.093,0.1212
+56 grup,e5 LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Jaringan - Drive,9,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Jaringan - Email,218,0.6259,0.844,0.7188
+56 grup,e5 LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.656,0.8685,0.7475
+56 grup,e5 LR,Technical Layanan Aplikasi KipApp,28,0.6486,0.8571,0.7385
+56 grup,e5 LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Back Office Selindo (BOS),42,0.95,0.4524,0.6129
+56 grup,e5 LR,Technical Layanan Counseling Center,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.6857,0.6316,0.6575
+56 grup,e5 LR,Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4483,0.6842,0.5417
+56 grup,e5 LR,Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Insiden Keamanan Informasi,31,0.7568,0.9032,0.8235
+56 grup,e5 LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.8571,0.3,0.4444
+56 grup,e5 LR,Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Meeting Online,46,0.9783,0.9783,0.9783
+56 grup,e5 LR,Technical Layanan Pengelolaan E-Sign,69,0.8986,0.8986,0.8986
+56 grup,e5 LR,Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Pengujian Aplikasi,17,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Perangkat Lunak COTS,34,1.0,0.3529,0.5217
+56 grup,e5 LR,Technical Layanan Perangkat TI End User,81,0.8043,0.9136,0.8555
+56 grup,e5 LR,Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan Presensi,43,0.6167,0.8605,0.7184
+56 grup,e5 LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan SOBAT,24,0.7273,0.6667,0.6957
+56 grup,e5 LR,Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan SiPecut,213,0.8531,0.9812,0.9127
+56 grup,e5 LR,Technical Layanan Siimut,7,0.0,0.0,0.0
+56 grup,e5 LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Operator Pusat,86,0.16,0.186,0.172
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.125,0.3333,0.1818
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,0.875,0.7778,0.8235
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.668,0.7569,0.7097
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.6761,0.6761,0.6761
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi KipApp,28,0.6667,0.7143,0.6897
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.2727,0.25,0.2609
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Simpeg Online,10,0.5714,0.4,0.4706
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Back Office Selindo (BOS),42,0.8889,0.5714,0.6957
+39 grup terbesar,TF-IDF k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.6667,0.4737,0.5538
+39 grup terbesar,TF-IDF k-NN,Technical Layanan INDAH Data Platform,2,0.5,0.5,0.5
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.3333,0.1667,0.2222
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.2,0.2,0.2
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2857,0.1667,0.2105
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.3333,0.3333,0.3333
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4,0.4211,0.4103
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7143,0.8065,0.7576
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6154,0.4,0.4848
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.8,0.7273
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Meeting Online,46,0.913,0.913,0.913
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Pengelolaan E-Sign,69,0.8769,0.8261,0.8507
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Pengujian Aplikasi,17,0.3889,0.4118,0.4
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Perangkat Lunak COTS,34,0.7742,0.7059,0.7385
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Perangkat TI End User,81,0.8415,0.8519,0.8466
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Presensi,43,0.6667,0.7907,0.7234
+39 grup terbesar,TF-IDF k-NN,Technical Layanan SEKAR,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF k-NN,Technical Layanan SOBAT,24,0.75,0.75,0.75
+39 grup terbesar,TF-IDF k-NN,Technical Layanan SiPecut,213,0.8775,0.8404,0.8585
+39 grup terbesar,TF-IDF k-NN,Technical Layanan Siimut,7,0.75,0.8571,0.8
+39 grup terbesar,TF-IDF k-NN,Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Operator Pusat,86,0.1739,0.093,0.1212
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.1111,0.2
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Email,218,0.7132,0.8899,0.7918
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.6962,0.8498,0.7653
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi KipApp,28,0.8125,0.9286,0.8667
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.5,0.0833,0.1429
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Back Office Selindo (BOS),42,1.0,0.5238,0.6875
+39 grup terbesar,TF-IDF LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.675,0.7105,0.6923
+39 grup terbesar,TF-IDF LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5714,0.3333,0.4211
+39 grup terbesar,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4412,0.7895,0.566
+39 grup terbesar,TF-IDF LR,Technical Layanan Insiden Keamanan Informasi,31,0.8276,0.7742,0.8
+39 grup terbesar,TF-IDF LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.9,0.45,0.6
+39 grup terbesar,TF-IDF LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.875,0.7,0.7778
+39 grup terbesar,TF-IDF LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Meeting Online,46,1.0,1.0,1.0
+39 grup terbesar,TF-IDF LR,Technical Layanan Pengelolaan E-Sign,69,0.9701,0.942,0.9559
+39 grup terbesar,TF-IDF LR,Technical Layanan Pengujian Aplikasi,17,0.8333,0.2941,0.4348
+39 grup terbesar,TF-IDF LR,Technical Layanan Perangkat Lunak COTS,34,1.0,0.6765,0.807
+39 grup terbesar,TF-IDF LR,Technical Layanan Perangkat TI End User,81,0.8837,0.9383,0.9102
+39 grup terbesar,TF-IDF LR,Technical Layanan Presensi,43,0.7321,0.9535,0.8283
+39 grup terbesar,TF-IDF LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan SOBAT,24,0.8,0.8333,0.8163
+39 grup terbesar,TF-IDF LR,Technical Layanan SiPecut,213,0.8406,0.9906,0.9095
+39 grup terbesar,TF-IDF LR,Technical Layanan Siimut,7,0.0,0.0,0.0
+39 grup terbesar,TF-IDF LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.5,0.2,0.2857
+39 grup terbesar,MiniLM k-NN,Operator Pusat,86,0.1546,0.1744,0.1639
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.1429,0.3333,0.2
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.25,0.3333,0.2857
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,0.75,0.6667,0.7059
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.676,0.7752,0.7222
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7358,0.7324,0.7341
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi KipApp,28,0.5676,0.75,0.6462
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.5,0.5,0.5
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Simpeg Online,10,0.6,0.3,0.4
+39 grup terbesar,MiniLM k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,MiniLM k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM k-NN,Technical Layanan Back Office Selindo (BOS),42,0.6923,0.4286,0.5294
+39 grup terbesar,MiniLM k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.56,0.3684,0.4444
+39 grup terbesar,MiniLM k-NN,Technical Layanan INDAH Data Platform,2,1.0,0.5,0.6667
+39 grup terbesar,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,1.0,0.3333,0.5
+39 grup terbesar,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.2857,0.4,0.3333
+39 grup terbesar,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2857,0.3333,0.3077
+39 grup terbesar,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+39 grup terbesar,MiniLM k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.6,0.6316,0.6154
+39 grup terbesar,MiniLM k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7647,0.8387,0.8
+39 grup terbesar,MiniLM k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.5909,0.65,0.619
+39 grup terbesar,MiniLM k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.6,0.6316
+39 grup terbesar,MiniLM k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+39 grup terbesar,MiniLM k-NN,Technical Layanan Meeting Online,46,0.9556,0.9348,0.9451
+39 grup terbesar,MiniLM k-NN,Technical Layanan Pengelolaan E-Sign,69,0.9167,0.7971,0.8527
+39 grup terbesar,MiniLM k-NN,Technical Layanan Pengujian Aplikasi,17,0.7333,0.6471,0.6875
+39 grup terbesar,MiniLM k-NN,Technical Layanan Perangkat Lunak COTS,34,0.96,0.7059,0.8136
+39 grup terbesar,MiniLM k-NN,Technical Layanan Perangkat TI End User,81,0.8974,0.8642,0.8805
+39 grup terbesar,MiniLM k-NN,Technical Layanan Presensi,43,0.6304,0.6744,0.6517
+39 grup terbesar,MiniLM k-NN,Technical Layanan SEKAR,3,0.3333,0.3333,0.3333
+39 grup terbesar,MiniLM k-NN,Technical Layanan SOBAT,24,0.6957,0.6667,0.6809
+39 grup terbesar,MiniLM k-NN,Technical Layanan SiPecut,213,0.8279,0.8357,0.8318
+39 grup terbesar,MiniLM k-NN,Technical Layanan Siimut,7,0.5,0.5714,0.5333
+39 grup terbesar,MiniLM k-NN,Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Operator Pusat,86,0.2069,0.0698,0.1043
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.5,0.3333,0.4
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.3333,0.5
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Jaringan - Email,218,0.7159,0.867,0.7842
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7184,0.8263,0.7686
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi KipApp,28,0.6216,0.8214,0.7077
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.5,0.1667,0.25
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Back Office Selindo (BOS),42,0.7143,0.4762,0.5714
+39 grup terbesar,MiniLM LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.5676,0.5526,0.56
+39 grup terbesar,MiniLM LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.2727,0.25,0.2609
+39 grup terbesar,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+39 grup terbesar,MiniLM LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.3684,0.7368,0.4912
+39 grup terbesar,MiniLM LR,Technical Layanan Insiden Keamanan Informasi,31,0.8,0.7742,0.7869
+39 grup terbesar,MiniLM LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.7222,0.65,0.6842
+39 grup terbesar,MiniLM LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6,0.6,0.6
+39 grup terbesar,MiniLM LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan Meeting Online,46,1.0,1.0,1.0
+39 grup terbesar,MiniLM LR,Technical Layanan Pengelolaan E-Sign,69,0.9032,0.8116,0.855
+39 grup terbesar,MiniLM LR,Technical Layanan Pengujian Aplikasi,17,0.8889,0.4706,0.6154
+39 grup terbesar,MiniLM LR,Technical Layanan Perangkat Lunak COTS,34,0.9615,0.7353,0.8333
+39 grup terbesar,MiniLM LR,Technical Layanan Perangkat TI End User,81,0.8222,0.9136,0.8655
+39 grup terbesar,MiniLM LR,Technical Layanan Presensi,43,0.5692,0.8605,0.6852
+39 grup terbesar,MiniLM LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+39 grup terbesar,MiniLM LR,Technical Layanan SOBAT,24,0.5385,0.5833,0.56
+39 grup terbesar,MiniLM LR,Technical Layanan SiPecut,213,0.8439,0.939,0.8889
+39 grup terbesar,MiniLM LR,Technical Layanan Siimut,7,0.5,0.2857,0.3636
+39 grup terbesar,MiniLM LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.5,0.2,0.2857
+39 grup terbesar,e5 k-NN,Operator Pusat,86,0.1308,0.1628,0.1451
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.3333,0.3333,0.3333
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Jaringan - Drive,9,1.0,0.3333,0.5
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Jaringan - Email,218,0.6564,0.7798,0.7128
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.7222,0.7324,0.7273
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi KipApp,28,0.625,0.8929,0.7353
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.35,0.5833,0.4375
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Simpeg Online,10,1.0,0.5,0.6667
+39 grup terbesar,e5 k-NN,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Back Office Selindo (BOS),42,0.8438,0.6429,0.7297
+39 grup terbesar,e5 k-NN,Technical Layanan Data,0,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan FASIH Moda CAWI CAPI,38,0.7273,0.4211,0.5333
+39 grup terbesar,e5 k-NN,Technical Layanan INDAH Data Platform,2,1.0,0.5,0.6667
+39 grup terbesar,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.0714,0.0833,0.0769
+39 grup terbesar,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.5,0.3333,0.4
+39 grup terbesar,e5 k-NN,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4211,0.4211,0.4211
+39 grup terbesar,e5 k-NN,Technical Layanan Insiden Keamanan Informasi,31,0.7812,0.8065,0.7937
+39 grup terbesar,e5 k-NN,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.5,0.5,0.5
+39 grup terbesar,e5 k-NN,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.75,0.6,0.6667
+39 grup terbesar,e5 k-NN,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,e5 k-NN,Technical Layanan MANIA,4,1.0,0.75,0.8571
+39 grup terbesar,e5 k-NN,Technical Layanan Meeting Online,46,0.95,0.8261,0.8837
+39 grup terbesar,e5 k-NN,Technical Layanan Pengelolaan E-Sign,69,0.9167,0.7971,0.8527
+39 grup terbesar,e5 k-NN,Technical Layanan Pengujian Aplikasi,17,0.7692,0.5882,0.6667
+39 grup terbesar,e5 k-NN,Technical Layanan Perangkat Lunak COTS,34,0.875,0.6176,0.7241
+39 grup terbesar,e5 k-NN,Technical Layanan Perangkat TI End User,81,0.9351,0.8889,0.9114
+39 grup terbesar,e5 k-NN,Technical Layanan Presensi,43,0.6964,0.907,0.7879
+39 grup terbesar,e5 k-NN,Technical Layanan SEKAR,3,0.5,0.3333,0.4
+39 grup terbesar,e5 k-NN,Technical Layanan SOBAT,24,0.6154,0.6667,0.64
+39 grup terbesar,e5 k-NN,Technical Layanan SiPecut,213,0.8872,0.8122,0.848
+39 grup terbesar,e5 k-NN,Technical Layanan Siimut,7,0.7778,1.0,0.875
+39 grup terbesar,e5 k-NN,Technical Layanan TK Online,2,1.0,0.5,0.6667
+39 grup terbesar,e5 LR,Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Operator Pusat,86,0.1905,0.093,0.125
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Jaringan - Drive,9,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Jaringan - Email,218,0.6323,0.844,0.723
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.656,0.8685,0.7475
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi KipApp,28,0.6486,0.8571,0.7385
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Back Office Selindo (BOS),42,0.95,0.4524,0.6129
+39 grup terbesar,e5 LR,Technical Layanan FASIH Moda CAWI CAPI,38,0.7059,0.6316,0.6667
+39 grup terbesar,e5 LR,Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.4483,0.6842,0.5417
+39 grup terbesar,e5 LR,Technical Layanan Insiden Keamanan Informasi,31,0.7568,0.9032,0.8235
+39 grup terbesar,e5 LR,Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.8571,0.3,0.4444
+39 grup terbesar,e5 LR,Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan MANIA,4,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Meeting Online,46,0.9783,0.9783,0.9783
+39 grup terbesar,e5 LR,Technical Layanan Pengelolaan E-Sign,69,0.9118,0.8986,0.9051
+39 grup terbesar,e5 LR,Technical Layanan Pengujian Aplikasi,17,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan Perangkat Lunak COTS,34,1.0,0.3529,0.5217
+39 grup terbesar,e5 LR,Technical Layanan Perangkat TI End User,81,0.8043,0.9136,0.8555
+39 grup terbesar,e5 LR,Technical Layanan Presensi,43,0.6167,0.8605,0.7184
+39 grup terbesar,e5 LR,Technical Layanan SEKAR,3,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan SOBAT,24,0.7273,0.6667,0.6957
+39 grup terbesar,e5 LR,Technical Layanan SiPecut,213,0.8566,0.9812,0.9147
+39 grup terbesar,e5 LR,Technical Layanan Siimut,7,0.0,0.0,0.0
+39 grup terbesar,e5 LR,Technical Layanan TK Online,2,0.0,0.0,0.0
+56 grup,HaloSIS (label gabungan),Lainnya,75,0.5514,0.7867,0.6484
+56 grup,HaloSIS (label gabungan),Operator Pusat,86,0.2667,0.0465,0.0792
+56 grup,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Email,218,0.817,0.8807,0.8477
+56 grup,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.8357,0.8357,0.8357
+56 grup,HaloSIS (label gabungan),Technical Layanan Aplikasi KipApp,28,0.8667,0.9286,0.8966
+56 grup,HaloSIS (label gabungan),Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.6,0.25,0.3529
+56 grup,HaloSIS (label gabungan),Technical Layanan Back Office Selindo (BOS),42,0.9697,0.7619,0.8533
+56 grup,HaloSIS (label gabungan),Technical Layanan FASIH Moda CAWI CAPI,38,0.8276,0.6316,0.7164
+56 grup,HaloSIS (label gabungan),Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5,0.3333,0.4
+56 grup,HaloSIS (label gabungan),Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.6296,0.8947,0.7391
+56 grup,HaloSIS (label gabungan),Technical Layanan Insiden Keamanan Informasi,31,0.75,0.871,0.806
+56 grup,HaloSIS (label gabungan),Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6818,0.75,0.7143
+56 grup,HaloSIS (label gabungan),Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.8,0.7273
+56 grup,HaloSIS (label gabungan),Technical Layanan Meeting Online,46,1.0,1.0,1.0
+56 grup,HaloSIS (label gabungan),Technical Layanan Pengelolaan E-Sign,69,0.9444,0.9855,0.9645
+56 grup,HaloSIS (label gabungan),Technical Layanan Pengujian Aplikasi,17,0.9444,1.0,0.9714
+56 grup,HaloSIS (label gabungan),Technical Layanan Perangkat Lunak COTS,34,1.0,0.7941,0.8852
+56 grup,HaloSIS (label gabungan),Technical Layanan Perangkat TI End User,81,0.9176,0.963,0.9398
+56 grup,HaloSIS (label gabungan),Technical Layanan Presensi,43,0.7636,0.9767,0.8571
+56 grup,HaloSIS (label gabungan),Technical Layanan SOBAT,24,0.7857,0.9167,0.8462
+56 grup,HaloSIS (label gabungan),Technical Layanan SiPecut,213,0.9048,0.9812,0.9414
+56 grup,HaloSIS (label asli),Lainnya,0,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Operator Pusat,86,0.2667,0.0465,0.0792
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Drive,9,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Email,218,0.817,0.8807,0.8477
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.8357,0.8357,0.8357
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi KipApp,28,0.8667,0.9286,0.8966
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.6,0.25,0.3529
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Aplikasi iPLAN dan MasterPlan,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Back Office Selindo (BOS),42,0.9697,0.7619,0.8533
+56 grup,HaloSIS (label asli),Technical Layanan Counseling Center,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan FASIH Moda CAWI CAPI,38,0.8276,0.6316,0.7164
+56 grup,HaloSIS (label asli),Technical Layanan HALOBPS,2,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan IPAS (Integrated Processing & Analysis System),1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5,0.3333,0.4
+56 grup,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.6296,0.8947,0.7391
+56 grup,HaloSIS (label asli),Technical Layanan Insan Statistik Teladan,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Insiden Keamanan Informasi,31,0.75,0.871,0.806
+56 grup,HaloSIS (label asli),Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6818,0.75,0.7143
+56 grup,HaloSIS (label asli),Technical Layanan Koneksi Jaringan - Ekstranet BPS,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.6667,0.8,0.7273
+56 grup,HaloSIS (label asli),Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan MANIA,4,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Meeting Online,46,1.0,1.0,1.0
+56 grup,HaloSIS (label asli),Technical Layanan Pengelolaan E-Sign,69,0.9444,0.9855,0.9645
+56 grup,HaloSIS (label asli),Technical Layanan Pengolahan Data Besar dan/atau Data Administratif,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Pengujian Aplikasi,17,0.9444,1.0,0.9714
+56 grup,HaloSIS (label asli),Technical Layanan Perangkat Lunak COTS,34,1.0,0.7941,0.8852
+56 grup,HaloSIS (label asli),Technical Layanan Perangkat TI End User,81,0.9176,0.963,0.9398
+56 grup,HaloSIS (label asli),Technical Layanan Permintaan Data Sensus/Survei,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan Presensi,43,0.7636,0.9767,0.8571
+56 grup,HaloSIS (label asli),Technical Layanan SEKAR,3,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan SOBAT,24,0.7857,0.9167,0.8462
+56 grup,HaloSIS (label asli),Technical Layanan Scrapping Data,1,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan SiPecut,213,0.9048,0.9812,0.9414
+56 grup,HaloSIS (label asli),Technical Layanan Siimut,7,0.0,0.0,0.0
+56 grup,HaloSIS (label asli),Technical Layanan TK Online,2,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label gabungan),Lainnya,65,0.5294,0.8308,0.6467
+39 grup terbesar,HaloSIS (label gabungan),Operator Pusat,86,0.3077,0.0465,0.0808
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Email,218,0.817,0.8807,0.8477
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.8357,0.8357,0.8357
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Aplikasi KipApp,28,0.8667,0.9286,0.8966
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.6,0.25,0.3529
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Back Office Selindo (BOS),42,0.9697,0.7619,0.8533
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan FASIH Moda CAWI CAPI,38,0.8276,0.6316,0.7164
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5,0.3333,0.4
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.6538,0.8947,0.7556
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Insiden Keamanan Informasi,31,0.75,0.871,0.806
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6818,0.75,0.7143
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.7273,0.8,0.7619
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Meeting Online,46,1.0,1.0,1.0
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Pengelolaan E-Sign,69,0.9577,0.9855,0.9714
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Pengujian Aplikasi,17,0.9444,1.0,0.9714
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Perangkat Lunak COTS,34,1.0,0.7941,0.8852
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Perangkat TI End User,81,0.9176,0.963,0.9398
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan Presensi,43,0.7636,0.9767,0.8571
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan SOBAT,24,0.7857,0.9167,0.8462
+39 grup terbesar,HaloSIS (label gabungan),Technical Layanan SiPecut,213,0.9048,0.9812,0.9414
+39 grup terbesar,HaloSIS (label asli),Lainnya,0,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Layanan Aplikasi Pendataan Digital Sensus/Survei (Moda CAPI dan atau CAWI),5,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Operator Pusat,86,0.3077,0.0465,0.0808
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Community,3,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Devops & Code Repository,3,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Drive,9,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Email,218,0.817,0.8807,0.8477
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Jaringan - Single Sign On (SSO),213,0.8357,0.8357,0.8357
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi KipApp,28,0.8667,0.9286,0.8966
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Monitoring/Dashboard Sensus/Survei,12,0.6,0.25,0.3529
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Sensus/Survei Moda PAPI,1,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Simpeg Online,10,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Aplikasi Uji Kompetensi,1,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Arsitektur SPBE,2,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Back Office Selindo (BOS),42,0.9697,0.7619,0.8533
+39 grup terbesar,HaloSIS (label asli),Technical Layanan FASIH Moda CAWI CAPI,38,0.8276,0.6316,0.7164
+39 grup terbesar,HaloSIS (label asli),Technical Layanan INDAH Data Platform,2,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Container Hosting,6,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Database Hosting,5,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Server Hosting,12,0.5,0.3333,0.4
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Storage Hosting,3,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Infrastruktur & Platform Jaringan - Website Hosting,19,0.6538,0.8947,0.7556
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Insiden Keamanan Informasi,31,0.75,0.871,0.806
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Koneksi Jaringan -  SSLVPN,20,0.6818,0.75,0.7143
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Koneksi Jaringan - LAN BPS Pusat,10,0.7273,0.8,0.7619
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Koneksi Jaringan - WAN BPS Pusat,2,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan MANIA,4,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Meeting Online,46,1.0,1.0,1.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Pengelolaan E-Sign,69,0.9577,0.9855,0.9714
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Pengujian Aplikasi,17,0.9444,1.0,0.9714
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Perangkat Lunak COTS,34,1.0,0.7941,0.8852
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Perangkat TI End User,81,0.9176,0.963,0.9398
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Presensi,43,0.7636,0.9767,0.8571
+39 grup terbesar,HaloSIS (label asli),Technical Layanan SEKAR,3,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan SOBAT,24,0.7857,0.9167,0.8462
+39 grup terbesar,HaloSIS (label asli),Technical Layanan SiPecut,213,0.9048,0.9812,0.9414
+39 grup terbesar,HaloSIS (label asli),Technical Layanan Siimut,7,0.0,0.0,0.0
+39 grup terbesar,HaloSIS (label asli),Technical Layanan TK Online,2,0.0,0.0,0.0

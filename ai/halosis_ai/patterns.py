@@ -18,6 +18,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import numpy as np
+import pandas as pd
 
 DEFAULT_THRESHOLD = 0.50
 DEFAULT_MIN_MEMBERS = 3
@@ -97,6 +98,34 @@ def group_dbscan(tickets: list[dict], vectors: np.ndarray, eps: float = DEFAULT_
             'skor_rata': round(float(pair_mean.mean()), 4),
         })
     return sorted(result, key=lambda c: len(c['ids']), reverse=True)
+
+def replay(times: list[str], vectors: np.ndarray, teams: np.ndarray, metode: str = 'rata',
+           threshold: float = DEFAULT_THRESHOLD, eps: float = DEFAULT_EPS, min_samples: int | None = None,
+           min_members: int = DEFAULT_MIN_MEMBERS, window_minutes: int = DEFAULT_WINDOW_MINUTES) -> dict:
+    """Putar ulang deteksi pola per blok sepanjang jendela (gerbang pola, set reports/banding_pola.md).
+
+    vectors sudah dipusatkan; kemurnian tim = rata-rata per kelompok dari porsi anggota tim terbanyak."""
+    stamps = pd.to_datetime(pd.Series(times), errors='coerce')
+    blocks = stamps.dt.floor(f'{window_minutes}min')
+    groups, members, purities = 0, 0, []
+    used = 0
+    for _, rows in blocks.groupby(blocks).groups.items():
+        index = list(rows)
+        if len(index) < min_members:
+            continue
+        used += 1
+        tickets = [{'id': i, 'judul': '', 'waktu': str(times[i])} for i in index]
+        if metode == 'dbscan':
+            found = group_dbscan(tickets, vectors[index], eps, min_samples or min_members, min_members, window_minutes)
+        else:
+            found = group(tickets, vectors[index], threshold, min_members, window_minutes)
+        for cluster in found:
+            counts = np.unique(teams[cluster['ids']], return_counts=True)[1]
+            purities.append(counts.max() / len(cluster['ids']))
+            groups += 1
+            members += len(cluster['ids'])
+    return {'kelompok': groups, 'tiket_terkelompok': members, 'blok': used,
+            'kemurnian_tim': round(float(np.mean(purities)), 3) if purities else None}
 
 
 def _parse(value) -> datetime | None:

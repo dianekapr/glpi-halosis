@@ -662,7 +662,9 @@ final class Stats
             'WHERE'  => ['date_creation' => ['>=', $start->format('Y-m-d H:i:s')]],
         ]) as $row) {
             $counts['total']++;
-            if (isset($counts[$row['status']])) {
+            // Percakapan yang diakhiri "Tidak, terima kasih" (resolved tanpa rating) bukan "terbantu"
+            $declined = $row['status'] === Chat::STATUS_RESOLVED && $row['rating'] === null;
+            if (!$declined && isset($counts[$row['status']])) {
                 $counts[$row['status']]++;
             }
             if ($row['rating'] !== null) {

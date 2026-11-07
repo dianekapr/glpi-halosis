@@ -147,7 +147,7 @@ final class Chatbot
             ];
         }
 
-        // Layanan AI HaloSIS lebih dulu (KB + solusi tiket lama); mati/gagal → pencarian KB lokal di bawah
+        // Layanan AI HaloSIS lebih dulu (artikel KB terbit + katalog layanan); mati/gagal → pencarian KB lokal di bawah
         $reply ??= null;
         if (!isset($reply) && Service::isConfigured()) {
             try {
@@ -469,6 +469,18 @@ final class Chatbot
             return __('Choose a rating from 1 to 5.', 'halosis');
         }
         $chat->update(['id' => $chat->getID(), 'status' => Chat::STATUS_RESOLVED, 'rating' => $rating]);
+        return null;
+    }
+
+    /**
+     * UC-01 6b: pegawai tidak ingin membuat laporan. Percakapan diakhiri tanpa rating; riwayatnya tetap tersimpan.
+     */
+    public static function decline(Chat $chat): ?string
+    {
+        if (!$chat->isOpen()) {
+            return __('This conversation has ended. Start a new one.', 'halosis');
+        }
+        $chat->update(['id' => $chat->getID(), 'status' => Chat::STATUS_RESOLVED]);
         return null;
     }
 

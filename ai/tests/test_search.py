@@ -39,3 +39,13 @@ def test_cari_satu_hasil_per_sumber_dengan_solusi_utuh(tmp_path, monkeypatch):
     hasil = search.cari('email', k=2, index_dir=tmp_path)
     assert [h['sumber'] for h in hasil] == ['T-001', 'T-002']
     assert hasil[0]['solusi'] == 'b1 b2'
+
+
+def test_cari_filter_jenis_sumber(tmp_path, monkeypatch):
+    """A.1: filter jenis (/chat) menyingkirkan potongan tiket walau skornya tertinggi; tanpa filter tetap ikut."""
+    pd.DataFrame({'sumber': ['T-1', 'KB-1'], 'jenis_sumber': ['tiket', 'kb'], 'judul': ['a', 'b'], 'teks': ['a', 'b']})\
+        .to_parquet(tmp_path / 'chunks.parquet')
+    np.save(tmp_path / 'vectors.npy', np.array([[1.0, 0.0], [0.6, 0.8]], dtype=np.float32))
+    monkeypatch.setattr(search, 'embed', lambda texts, kind: np.array([[1.0, 0.0]], dtype=np.float32))
+    assert [h['sumber'] for h in search.cari('x', k=2, index_dir=tmp_path)] == ['T-1', 'KB-1']
+    assert [h['sumber'] for h in search.cari('x', k=2, index_dir=tmp_path, jenis=('kb', 'layanan'))] == ['KB-1']

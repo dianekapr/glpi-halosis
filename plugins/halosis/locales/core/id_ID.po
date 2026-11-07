@@ -709,3 +709,34 @@ msgstr "struktur lengkap"
 
 msgid "Setup"
 msgstr "Pengaturan"
+
+# Form katalog layanan & halaman artikel (GLPI 12)
+msgid "Submit"
+msgstr "Kirim"
+
+msgid "Required"
+msgstr "Wajib"
+
+msgid "Form submitted"
+msgstr "Formulir terkirim"
+
+msgid "Your form has been submitted successfully."
+msgstr "Formulir Anda berhasil dikirim."
+
+msgid "Go back to service catalog"
+msgstr "Kembali ke katalog layanan"
+
+msgid "Take me home"
+msgstr "Kembali ke beranda"
+
+msgid "See my tickets"
+msgstr "Lihat laporan saya"
+
+msgid "Add to FAQ"
+msgstr "Tambahkan ke Tanya Jawab (FAQ)"
+
+msgid "Share"
+msgstr "Bagikan"
+
+msgid "Untitled article"
+msgstr "Artikel tanpa judul"

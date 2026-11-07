@@ -10,6 +10,8 @@ Tanggal: 31 Okt 2026. Hanya angka; teks tiket tidak ditampilkan.
 - Tidak ada label "pola" manual, jadi kualitas didekati dengan **kemurnian tim**: porsi anggota kelompok yang
   ditangani tim yang sama (kelompok yang benar satu masalah biasanya satu tim).
 
+**Catatan 6 Nov 2026:** metode rata-rata rakus, jadi hasilnya bergantung urutan tiket. Baris *rata-rata* di bawah (7 kelompok, 22 tiket) berasal dari urutan non-waktu; pada urutan waktu seperti produksi, set yang sama memberi 8 kelompok, 25 tiket, kemurnian 0,917 (`ai/scripts/gerbang_pola.py`). Dari 30 urutan acak: 13 memberi 7/22, 17 memberi 8/25. DBSCAN tidak terpengaruh. Keduanya lolos gerbang pola.
+
 ## Hasil (minimal 3 tiket per kelompok)
 
 | Metode | Kelompok | Tiket terkelompok | Kemurnian tim | Waktu (84 blok) |
@@ -31,3 +33,24 @@ Tanggal: 31 Okt 2026. Hanya angka; teks tiket tidak ditampilkan.
   dengan rata-rata 3,8 insiden per blok berisi, min 5 hampir tidak pernah membentuk kelompok di jendela 60 menit.
 - Keterbatasan: kemurnian tim adalah proksi, bukan penilaian manusia; data history jarang memiliki lonjakan nyata
   (rata-rata 3,8 insiden per blok berisi), sehingga jumlah kelompok kecil di kedua metode.
+
+<!-- reproduksi:mulai -->
+## Reproduksi (C.8)
+
+`ai/scripts/banding_pola.py`: 666 insiden, 84 blok berisi ≥ 3 insiden.
+
+| Metode | Laporan: kelompok / tiket / kemurnian | Reproduksi | Waktu (ms) |
+| --- | --- | --- | --- |
+| Rata-rata ≥ 0,50, urutan waktu | 8 / 25 / 0,917 (catatan 6 Nov) | 8 / 25 / 0,917 | 9 |
+| DBSCAN eps 0,50, min_samples 3 | 8 / 25 / 0,917 | 8 / 25 / 0,917 | 44 |
+| DBSCAN eps 0,40, min_samples 3 | 3 / 10 / 0,889 | 3 / 10 / 0,889 | 33 |
+
+Sebaran 30 urutan acak metode rata-rata (acuan laporan: 13× 7/22, 17× 8/25):
+
+| Kelompok / tiket | Jumlah urutan |
+| --- | --- |
+| 8 / 25 | 19 |
+| 7 / 22 | 11 |
+
+**Selisih wajar.** Baris 7/22 di tabel awal berasal dari urutan non-waktu, jadi pembanding yang benar adalah baris urutan waktu. Benih acak uji awal tidak tercatat, sehingga sebaran urutan acak bisa bergeser tanpa mengubah kesimpulan. Waktu bergantung beban mesin. Vektor sama selama `pola_uji.npz` dan indeks aktif tidak dibangun ulang.
+<!-- reproduksi:selesai -->

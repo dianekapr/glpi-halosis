@@ -18,7 +18,8 @@ class FakeTriage:
 
 
 def client(monkeypatch, hits, tmp_log=None):
-    monkeypatch.setattr(service.search, 'cari', lambda q, k=3: hits)
+    monkeypatch.setattr(service.search, 'cari', lambda q, k=3, jenis=None: [
+        h for h in hits if jenis is None or h['jenis_sumber'] in jenis])
     monkeypatch.setattr(service, 'LATENCY_LOG', tmp_log or Path('/dev/null'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     service.state.clear()
@@ -40,12 +41,25 @@ def test_chat_skor_rendah_belum_ditemukan(monkeypatch):
 
 
 def test_chat_ekstraktif_tanpa_key(monkeypatch):
-    hit = {'potongan': 'Masalah: email penuh Solusi: hapus lampiran besar', 'skor': 0.9, 'sumber': 'T1',
-           'jenis_sumber': 'tiket', 'judul': 'Email penuh'}
-    c = client(monkeypatch, [hit, {**hit, 'sumber': 'T2'}])
+    hit = {'potongan': 'Email penuh. Hapus lampiran besar', 'skor': 0.9, 'sumber': 'KB-1',
+           'jenis_sumber': 'kb', 'judul': 'Email penuh'}
+    c = client(monkeypatch, [hit, {**hit, 'sumber': 'KB-2'}])
     r = c.post('/chat', json={'pertanyaan': 'email penuh'}).json()
     assert r['ditemukan'] and r['mode'] == 'ekstraktif'
-    assert 'hapus lampiran besar' in r['jawaban'] and [s['sumber'] for s in r['sumber']] == ['T1']
+    assert 'Hapus lampiran besar' in r['jawaban'] and [s['sumber'] for s in r['sumber']] == ['KB-1']
+
+
+def test_chat_tidak_memakai_solusi_tiket(monkeypatch):
+    """A.1: skor tiket setinggi apa pun tidak dijawabkan ke pegawai; petugas (/cari) tetap melihatnya."""
+    tiket = {'potongan': 'Masalah: vpn Solusi: rahasia-tiket', 'skor': 0.99, 'sumber': 'T1', 'jenis_sumber': 'tiket',
+             'judul': 'VPN', 'solusi': 'rahasia-tiket'}
+    layanan = {'potongan': 'Layanan VPN.', 'skor': 0.9, 'sumber': 'LAYANAN-C1', 'jenis_sumber': 'layanan', 'judul': 'VPN'}
+    c = client(monkeypatch, [tiket])
+    r = c.post('/chat', json={'pertanyaan': 'vpn putus'}).json()
+    assert r['ditemukan'] is False and 'rahasia-tiket' not in str(r)
+    r = client(monkeypatch, [tiket, layanan]).post('/chat', json={'pertanyaan': 'vpn putus'}).json()
+    assert r['ditemukan'] and [s['sumber'] for s in r['sumber']] == ['LAYANAN-C1'] and 'rahasia-tiket' not in r['jawaban']
+    assert client(monkeypatch, [tiket]).post('/cari', json={'q': 'vpn'}).json()['hasil'][0]['sumber'] == 'T1'
 
 
 def test_log_latensi_tanpa_teks(monkeypatch, tmp_path):
@@ -79,10 +93,10 @@ def test_cari_semantik_agent(monkeypatch):
     seen = {}
     hits = [{'potongan': 'Solusi: reset', 'skor': 0.71, 'sumber': 'KB1', 'jenis_sumber': 'kb', 'judul': 'Reset SSO'}]
     c = client(monkeypatch, hits)
-    monkeypatch.setattr(service.search, 'cari', lambda q, k=3: seen.update(q=q, k=k) or hits)
+    monkeypatch.setattr(service.search, 'cari', lambda q, k=3, jenis=None: seen.update(q=q, k=k, jenis=jenis) or hits)
     r = c.post('/cari', json={'q': 'sso budi@contoh.go.id', 'k': 5})
     assert r.status_code == 200 and r.json()['hasil'][0]['sumber'] == 'KB1'
-    assert seen['k'] == 5 and 'budi@contoh.go.id' not in seen['q']  # disamarkan sebelum dicari
+    assert seen['jenis'] is None and seen['k'] == 5 and 'budi@contoh.go.id' not in seen['q']  # disamarkan sebelum dicari
 
 
 def test_chat_keyakinan_sedang_menawarkan_pilihan(monkeypatch):

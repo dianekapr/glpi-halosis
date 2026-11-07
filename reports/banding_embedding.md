@@ -37,3 +37,25 @@ kueri: Top-1 72,50% / Top-3 89,06% / MRR 0,8115 (aturan lama pada ekspor baru 73
   vektor dipusatkan) dikalibrasi khusus e5 dan tidak bisa dipakai langsung untuk MiniLM.
 - Keterbatasan: relevansi berdasarkan kesamaan tim, bukan penilaian manusia atas solusi; angka ini membandingkan
   model secara relatif, bukan mengukur kualitas jawaban chatbot.
+
+<!-- reproduksi:mulai -->
+## Reproduksi (C.8)
+
+`ai/scripts/banding_embedding.py`. Baris *ekspor lama* dibangun dari kode `bb32006` di folder sementara.
+
+| Set | Model | Korpus | Kueri | Top-1 | Top-3 | MRR | Indeks (dtk) | Per kueri (ms) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Ekspor lama + aturan lama | MiniLM | 3.332 | 906 | 67,99% | 83,55% | 0,7650 | 12,9 | 1,9 |
+| Ekspor lama + aturan lama | e5 | 3.332 | 906 | 72,74% | 89,62% | 0,8144 | 72,3 | 11,8 |
+| Ekspor aktif | MiniLM | 3.324 | 905 | 68,29% | 83,76% | 0,7636 | 15,0 | 3,4 |
+| Ekspor aktif | e5 | 3.324 | 905 | 71,93% | 88,29% | 0,8073 | 109,1 | 12,4 |
+
+Angka laporan awal (31 Okt 2026):
+
+| Model | Top-1 | Top-3 | MRR |
+| --- | --- | --- | --- |
+| MiniLM | 67,99% | 83,55% | 0,7650 |
+| e5 | 72,74% | 89,62% | 0,8144 |
+
+**Selisih wajar.** Baris ekspor lama diharapkan sama atau hanya berbeda kecil, karena versi sentence-transformers/torch dan perangkat bisa mengubah digit akhir vektor. Waktu proses bergantung beban mesin. Bentuk teks korpus mengikuti deskripsi laporan, bukan skrip aslinya yang tidak tersimpan. Baris ekspor aktif berbeda karena korpus, kueri, dan aturan solusinya berbeda, jadi bukan selisih model.
+<!-- reproduksi:selesai -->

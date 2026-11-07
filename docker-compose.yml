@@ -41,6 +41,14 @@ services:
     environment:
       # Opsional: isi ANTHROPIC_API_KEY di .env agar jawaban chat dirangkum Claude; kosong = ekstraktif
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
       HALOSIS_CHAT_MIN_SCORE: ${HALOSIS_CHAT_MIN_SCORE:-0.83}
       # Skor di antara ini dan CHAT_MIN_SCORE → tawarkan judul artikel "Maksud Anda…?" (tanpa jawaban)
       HALOSIS_CHAT_SUGGEST_MIN_SCORE: ${HALOSIS_CHAT_SUGGEST_MIN_SCORE:-0.78}
@@ -59,6 +67,17 @@ services:
       # Log latensi per permintaan (NFR-12); laporan: ai/scripts/latency_report.py
       - ./ai/logs:/app/logs
       - hf_cache:/cache/huggingface
+
+  # LLM lokal opsional (profile llm): docker compose --profile llm up -d ollama
+  # Model TIDAK diunduh otomatis: docker compose exec ollama ollama pull qwen2.5:3b
+  # lalu .env: LLM_PROVIDER=openai LLM_BASE_URL=http://ollama:11434/v1 LLM_MODEL=qwen2.5:3b
+  # Mac (Docker tanpa GPU): pakai Ollama native, LLM_BASE_URL=http://host.docker.internal:11434/v1
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["llm"]
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
 
   # SSO lokal pengganti SSO BPS: GLPI memeriksa username & password ke Keycloak dari form login HaloSIS
   # (tanpa halaman login kedua). Realm "halosis" + akun uji diimpor dari keycloak/halosis-realm.json saat
@@ -144,4 +163,5 @@ volumes:
   keycloak_data:
   caddy_data:
   prometheus_data:
+  ollama_data:
   grafana_data:

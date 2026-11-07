@@ -124,8 +124,8 @@ Bila service `halosis-ai` di docker-compose hidup, plugin memakainya **lebih dul
 
 - **Saran triase** dari model yang dilatih dari history tiket (model tercatat `triase-tfidf-lr-<tanggal>`),
   dengan top-3 tim dan nomor tiket lama yang mirip di penjelasan. Tim history dipetakan ke kategori/grup GLPI.
-- **Chatbot** mencari di artikel KB + solusi tiket lama (embedding lokal); sumber tiket tampil
-  "Tiket serupa <nomor>".
+- **Chatbot** hanya menjawab dari artikel KB terbit + katalog layanan (embedding lokal). Solusi tiket lama hanya untuk
+  "Cari pengetahuan" (petugas) dan Kandidat Knowledge.
 - Layanan mati → chatbot & pencarian memakai mode demo / kata kunci; **triase** tidak memakai aturan demo: tiket
   tersimpan tanpa saran (UC-04 1a), lalu tombol *Buat saran AI* atau tugas `TriageRetry` mencoba lagi (penyedia AI
   eksternal tetap dicoba bila dikonfigurasi). Cara membangun model & indeks:
