@@ -318,10 +318,12 @@ def run_pattern(sample: int | None) -> None:
 
 def load_cases(chunks: pd.DataFrame) -> list[dict]:
     cases = json.loads(CASES.read_text(encoding='utf-8')).get('kasus', [])
-    known = set(chunks['sumber'])
+    known = set(chunks['judul']) | set(chunks['sumber'])  # sumber_benar boleh judul artikel atau kode sumber
     for n, case in enumerate(cases, 1):
         if not str(case.get('pertanyaan') or '').strip() or not case.get('sumber_benar'):
             raise SystemExit(f'Kasus {n}: "pertanyaan" dan "sumber_benar" wajib diisi ({CASES.name})')
+        if isinstance(case['sumber_benar'], str):
+            case['sumber_benar'] = [case['sumber_benar']]
         absent = set(case['sumber_benar']) - known
         if absent:
             raise SystemExit(f'Kasus {n}: sumber tidak ada di korpus: {sorted(absent)}')
@@ -343,6 +345,9 @@ def run_retrieval(sample: int | None) -> None:
         write_section('retrieval', f'## Retrieval terkendali (BR-04)\n\n**Menunggu kasus.** Dokumen hal. 53 hanya memberi '
                       f'hasil, bukan teks 8 kasusnya. Tim mengisi `ai/scripts/{CASES.name}` lalu menjalankan ulang bagian ini.')
         return
+    title_to_source = dict(zip(corpus['judul'], corpus['sumber']))
+    for c in cases:
+        c['sumber_benar'] = [title_to_source.get(w, w) for w in c['sumber_benar']]
     sources = corpus['sumber'].to_numpy()
     questions = [str(privacy.mask_text(c['pertanyaan'])) for c in cases]
     models = {'MiniLM': (minilm(questions) @ minilm(corpus['teks'].tolist()).T),
@@ -356,7 +361,7 @@ def run_retrieval(sample: int | None) -> None:
     note = '' if len(cases) == 8 else f' **Berkas berisi {len(cases)} kasus, bukan 8.**'
     write_section('retrieval', '\n'.join([
         '## Retrieval terkendali (BR-04)', '',
-        f'{len(cases)} kasus dari `ai/scripts/{CASES.name}`.{note} Korpus: {num(corpus["sumber"].nunique())} sumber KB terbit + '
+        f'{len(cases)} kasus real dari KB HaloSIS existing, pertanyaan disusun tim (bukan kasus PoC asli), dari `ai/scripts/{CASES.name}`.{note} Korpus: {num(corpus["sumber"].nunique())} sumber KB terbit + '
         'katalog layanan pada indeks aktif, bukan korpus Zammad PoC. Acuan dokumen: Top-1 100%, Top-3 100%, MRR 1,0000, '
         'dan dokumen menegaskan angka itu hanya berlaku pada PoC terkendali.', '',
         table(['Model', 'Top-1', 'Top-3', 'MRR'], rows), '',
