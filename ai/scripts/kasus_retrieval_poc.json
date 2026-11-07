@@ -1,4 +1,13 @@
 {
-  "catatan": "Isian tim untuk C.7 retrieval. Dokumen hal. 53 tidak memuat teks 8 kasus PoC. Satu kasus: {\"pertanyaan\": \"...\", \"sumber_benar\": [\"KB-12\"]}. sumber_benar memakai nama sumber di indeks aktif (KB-<id> atau LAYANAN-<id>).",
-  "kasus": []
+  "sumber": "Kasus real: artikel dari KB HaloSIS existing BPS (dikirim tim, 7 Nov 2026); pertanyaan disusun ulang dengan gaya pegawai, tidak menyalin judul artikel.",
+  "kasus": [
+    {"id": "K1", "pertanyaan": "Monitor komputer saya tidak menyala sama sekali, lampunya juga mati", "sumber_benar": "Monitor pada PC mati total"},
+    {"id": "K2", "pertanyaan": "Laptop dinas saya tiba-tiba tidak bisa dinyalakan, harus bagaimana?", "sumber_benar": "Laptop mati total"},
+    {"id": "K3", "pertanyaan": "Saya mau mengganti alamat email BPS karena namanya salah, caranya bagaimana?", "sumber_benar": "Pengajuan pergantian nama (username) email."},
+    {"id": "K4", "pertanyaan": "Email yang saya kirim ke rekan di @bps.go.id tidak pernah sampai", "sumber_benar": "Email yang dikirimkan ke domain @bps.go.id tidak sampai."},
+    {"id": "K5", "pertanyaan": "Kenapa saya tidak bisa masuk ke Community BPS?", "sumber_benar": "Tidak bisa login ke community"},
+    {"id": "K6", "pertanyaan": "Laptop saya tidak bisa tersambung ke wifi kantor padahal yang lain bisa", "sumber_benar": "Gagal koneksi ke wi-fi tertentu"},
+    {"id": "K7", "pertanyaan": "Nama saya tidak muncul di Community dan unit kerja saya masih yang lama", "sumber_benar": "Pegawai tidak ada di community / unit kerja pegawai tidak update"},
+    {"id": "K8", "pertanyaan": "Internet di kantor sering putus-nyambung terus", "sumber_benar": "WAN menggunakan setting DHCP dan seringkali mati hidup"}
+  ]
 }
