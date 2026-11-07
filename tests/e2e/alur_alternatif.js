@@ -4,10 +4,10 @@
 //
 //   cd tests/e2e && npm install && node alur_alternatif.js        # butuh docker compose hidup & browser Playwright
 //
-// Alur: UC-01 4a / UC-02 5a (solusi tidak ditemukan → tawaran laporan), UC-03 4a (judul < 5 karakter ditolak),
+// Alur: UC-01 4a / UC-02 5a (solusi tidak ditemukan → tawaran laporan), UC-02 mode pilihan (tawaran laporan tetap ada), UC-03 4a (judul < 5 karakter ditolak),
 // UC-04 1a (layanan AI berhenti → tiket tersimpan tanpa saran, tombol "Buat saran AI"; layanan dinyalakan lagi),
 // UC-05 S-2 (Tolak, alasan wajib), UC-05 S-1 (Ubah, alasan wajib), UC-06 2a (Kembalikan ke operator),
-// UC-06 S-1 (status Menunggu), UC-07 5a (Refuse → tiket dibuka kembali), UC-09 5a (Jadikan artikel → draf tanpa target).
+// UC-06 S-1 (status Menunggu), UC-07 5a (Refuse → tiket dibuka kembali), UC-09 5a (Jadikan artikel → draf tanpa target; LLM_PROVIDER=none → templat).
 // UC-04 1a menghentikan container halosis-ai sebentar (docker compose stop/start).
 const { chromium } = require('playwright-core');
 const { execSync } = require('child_process');
@@ -123,8 +123,22 @@ async function cleanup(a) {
       if (await fresh.isVisible().catch(() => false)) { await fresh.click(); await p.waitForTimeout(1500); }
       await p.getByText('Laporkan masalah').first().click(); await p.waitForTimeout(500);
       const input = p.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
-      await input.fill('Kursi kantor saya patah'); await input.press('Enter'); await p.waitForTimeout(6000);
+      await input.fill('Cuaca di Bali besok pagi'); await input.press('Enter');  // mode tidak-ditemukan
+      await p.locator('.hc-source').or(p.getByRole('button', { name: /Ya, buat laporan/ })).first().waitFor({ timeout: 30000 }).catch(() => {});
       const ok = await p.locator('.hc-source').count() === 0 && await p.getByRole('button', { name: /Ya, buat laporan/ }).count() > 0;
+      await p.context().close(); return ok;
+    });
+
+    await run('UC-02 mode pilihan: tombol "Ya, buat laporan" tetap tersedia', async () => {
+      const p = await login(browser, 'budi');
+      const fresh = p.getByRole('button', { name: /Percakapan baru|New conversation/ }).first();
+      if (await fresh.isVisible().catch(() => false)) { await fresh.click(); await p.waitForTimeout(1500); }
+      await p.getByText('Laporkan masalah').first().click(); await p.waitForTimeout(500);
+      const input = p.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
+      await input.fill('Kursi kantor saya patah'); await input.press('Enter');
+      const offer = p.getByRole('button', { name: /Ya, buat laporan/ }).first();
+      await offer.waitFor({ timeout: 30000 }).catch(() => {});
+      const ok = await offer.isVisible();
       await p.context().close(); return ok;
     });
 
@@ -266,6 +280,16 @@ async function cleanup(a) {
                                 + (SELECT COUNT(*) FROM glpi_groups_knowbaseitems WHERE knowbaseitems_id = ${article})
                                 + (SELECT COUNT(*) FROM glpi_knowbaseitems_users WHERE knowbaseitems_id = ${article});`);
       return targets === '0';
+    });
+
+    await run('UC-09 5a LLM_PROVIDER=none → draf memakai templat, tanpa label AI', async () => {
+      const r = await fetch('http://localhost:8001/kandidat/draf', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ judul: 'Uji', masalah: 'Data uji otomatis', solusi: 'Data uji otomatis', sumber: [] }) });
+      if (!r.ok || (await r.json()).draf !== null) return false;
+      const article = articles.at(-1)?.[1];
+      if (!article) return false;
+      const answer = sql(`SELECT answer FROM glpi_knowbaseitems WHERE id = ${article};`);
+      return /Draf dari Kandidat|Draft from Knowledge candidates/i.test(answer) && !answer.includes('Disusun AI');
     });
   } finally {
     await cleanup(a);

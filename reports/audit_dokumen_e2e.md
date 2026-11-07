@@ -7,6 +7,12 @@ CRC card & class diagram (§7), sequence & state machine (§8), dan batas scope 
 
 Status: ✅ sesuai · 🟡 sebagian · ❌ belum · 🔍 perlu dicek di kode (README tidak menyebut) · ⚪ di luar prototipe.
 
+**Pembaruan 7 Nov 2026 (perbaikan AI, masih 1.0.0):** LLM lokal kini tersedia lewat env dan profile `llm`. Draf artikel
+"Kandidat → artikel" disusun LLM bila `LLM_PROVIDER≠none`, dengan fallback templat. Gate AKHIR lolos: pytest 83,
+`php -l` 6 file, e2e `alur_alternatif.js` 11/11, `fitur_penutup.js` 6/6, `revisi_t4.js` 5/5, snapshot. E2E diulang karena image
+`halosis-ai` belum dibangun ulang setelah commit B (`/kandidat/draf` 404). Kalimat uji UC-01 4a / UC-02 5a diganti karena kalimat
+lama kini masuk mode `pilihan`; assert tidak diubah. Rincian: `reports/dokumentasi_ai.md` §5.4 dan `reports/matriks_uji_br.md`.
+
 **Pembaruan akhir 31 Okt 2026 (plugin 1.0.0):** §8 baru memetakan bab analisis & kelayakan: T21–T32 (11 ✅,
 2 ✅ dokumen), risiko R1–R4 & risiko organisasi → mitigasi, KPI tabel 1.3 → tempat ukur, syarat 2.1.2–2.1.6 &
 Skenario 2.
@@ -64,7 +70,7 @@ CRC card, dan state machine, bukan fitur besar yang hilang.
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | **SLA respons (TTO)** selain penyelesaian: `KebijakanSLA.targetRespons`; baseline Response 42,62% dipakai sebagai KPI | 114, 162 | **SLA resmi BPS dari history** (kolom `response_sla_name`: "SLA Incident Response 15Minutes" / "BPS-SLA Request Response 15Minutes", 6.655 tiket) → SLA *time to own* **15 menit** semua tiket (`config/sla_layanan.json`, `setup_sla_alerts.py`); kolom "Waktu untuk mengambil alih" di daftar Operator | ✅ | — | — |
 | T2 | **Kebijakan confidence 3 tingkat** (tinggi/sedang/rendah): tinggi = Top-1 default; sedang = Top-3 + review; rendah = manual | 100 | **Diperbaiki:** ambang kedua `ai_threshold_low` 40% (`plugins/halosis/src/Config.php:36`, Pengaturan AI); `Suggestion::getConfidenceLevel()` (`plugins/halosis/src/Suggestion.php:74`) → panel "Disarankan" / "Pilih dari 3 kandidat" / "Perlu penilaian manual" (`plugins/halosis/templates/triase_panel.html.twig`) | ✅ | — | — |
-| T3 | **Chatbot confidence sedang** → jawaban terbatas / pertanyaan klarifikasi / opsi lanjutan | 100 | **Diperbaiki (31 Okt):** skor 0,78–0,83 (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`, `ai/service/app.py:46`, `:258`) → tidak menjawab, ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`plugins/halosis/src/Chatbot.php:337`); tes `test_chat_keyakinan_sedang_menawarkan_pilihan` | ✅ | Jarang muncul selama KB sedikit (± 6 artikel vs ribuan potongan tiket) | — |
+| T3 | **Chatbot confidence sedang** → jawaban terbatas / pertanyaan klarifikasi / opsi lanjutan | 100 | **Diperbaiki (31 Okt):** skor 0,78–0,83 (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`, `ai/service/app.py:56`, `:372`) → tidak menjawab, ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`plugins/halosis/src/Chatbot.php:337`); tes `test_chat_keyakinan_sedang_menawarkan_pilihan` | ✅ | Tidak lagi jarang: pada 35 sumber (18 artikel KB + 17 katalog layanan), 31,38% tiket nyata Jul–Ags masuk `pilihan` (`kalibrasi_ambang.md`) | — |
 | T4 | **Triase merekomendasikan jenis REQ/INC** | 97, 100, 104 | **Diperbaiki (31 Okt):** klasifier ringan TF-IDF + LR dari kolom `ticket_type` history (`ai/scripts/train_jenis.py`, artefak `ai/models/jenis.joblib`): model `jenis-tfidf-lr-20261031` (history versi baru, uji Jul–Ags 1.559 tiket): akurasi 68,25% (pembanding 57,28%), F1 makro 67,52% (pembanding 36,42%), keyakinan ≥ 70% → akurasi 83,96% pada 40,80% tiket (84,17% / 40,92% = model sebelumnya, historis); panel menampilkan "Jenis disarankan" hanya bila berbeda dari jenis tiket & yakin (`plugins/halosis/src/TriagePanel.php` `typeHint`); tanpa artefak → diam | ✅ | Operator tetap memutuskan (ubah jenis di form tiket) | — |
 | T5 | **Rekomendasi tim memperhitungkan beban kerja tim** (`hitungBebanKerja()`) | 133, 179 | **Diperbaiki (31 Okt):** 3 kandidat tim disimpan per saran (`suggestions.candidates`, `plugins/halosis/src/Triage.php:281`); panel menampilkan tiket aktif per kandidat → grup GLPI (`plugins/halosis/src/TriagePanel.php:90`, `:112`); ranking dari model, kecuali **seri** (selisih < 5 poin): kandidat 2 dengan beban lebih ringan disarankan + alasan di panel (1 Nov, `Triage::workloadTiebreak`) | ✅ | — | — |
 | T6 | **Peninjauan berkala artikel** (`tanggalTinjauBerikut`, "artikel yang jatuh tempo ditinjau" muncul di daftar KM) | 139–140, 167, 192 | **Diperbaiki:** tab "Perlu ditinjau" di Kandidat knowledge = artikel terbit dengan `date_mod` > `kb_review_months` (bawaan 6) (`plugins/halosis/src/KnowledgeCandidates.php:161`, `plugins/halosis/src/Config.php:42`) | ✅ | — | — |
@@ -123,7 +129,7 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 | --- | --- | --- | --- |
 | BP-13 Feedback/Rating | Feedback dipakai untuk evaluasi layanan, **evaluasi AI**, perbaikan knowledge | ✅ | Dashboard: artikel paling sering dinilai tidak membantu (chat jadi laporan / rating ≤ 2 + penilaian agent KR-07) (`plugins/halosis/src/Stats.php:292`) |
 | BP-17 Reporting | Dashboard: volume, SLA, **response**, resolution, assignment, rekomendasi AI, acceptance, override, deteksi pola, governance | ✅ | SLA respons (T1) di daftar & Statistik GLPI; dashboard plugin: pola terdeteksi vs dikonfirmasi vs ditutup (`plugins/halosis/src/Stats.php:264`) |
-| BP-19 AI Model Mgmt | Evaluasi → approval → rilis → monitoring → **drift / hallucination monitoring** → revalidasi | ✅ | Proses di `tata_kelola_ai.md`; indikator drift = % Ubah+Tolak per bulan (6 bulan) di dashboard (`plugins/halosis/src/Stats.php:235`); halusinasi: jawaban ekstraktif (tanpa generasi bebas) |
+| BP-19 AI Model Mgmt | Evaluasi → approval → rilis → monitoring → **drift / hallucination monitoring** → revalidasi | ✅ | Proses di `tata_kelola_ai.md`; indikator drift = % Ubah+Tolak per bulan (6 bulan) di dashboard (`plugins/halosis/src/Stats.php:235`); halusinasi: bawaan ekstraktif (tanpa generasi bebas); LLM opsional dan grounded, tinjauan KM wajib untuk draf artikel |
 | BP-21 Incident Trend Analysis | Analisis semantik + temporal **kontinu** | ✅ | Jendela 60 menit (cron 15 menit) + **tren pola per minggu per topik, 12 minggu** di dashboard (`plugins/halosis/src/Stats.php:293`) |
 | BP-25 AI Infrastructure | GPU, model serving, vector DB, monitoring | ⚪ | `/metrics` + profile `monitoring` (Prometheus + Grafana, 31 Okt) ✅; uji beban Peak/Stress layanan AI ✅; GPU & vector DB layanan di luar prototipe |
 
@@ -131,7 +137,7 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 
 | Aturan dokumen | Hal. | Status | Catatan |
 | --- | --- | --- | --- |
-| **AI tidak boleh mengakses/menulis langsung database GLPI** ("AI direct write ke database core ITSM" di luar scope) | 8, 96 | ✅ | Container `halosis-ai` hanya punya `ANTHROPIC_API_KEY` & `HALOSIS_CHAT_MIN_SCORE` + volume model/indeks/log (`docker-compose.yml:41-54`); tanpa kredensial DB. Data masuk lewat API dari plugin |
+| **AI tidak boleh mengakses/menulis langsung database GLPI** ("AI direct write ke database core ITSM" di luar scope) | 8, 96 | ✅ | Env container `halosis-ai` hanya `ANTHROPIC_API_KEY`, `EMBEDDING_*`, `LLM_*`, dan `HALOSIS_*`, ditambah volume model/indeks/log (`docker-compose.yml`); tetap tanpa kredensial DB (`logs/akses_db.log`). Data masuk lewat REST API GLPI dan dorongan plugin |
 | **Tanpa GenAI publik eksternal tanpa batas untuk data internal BPS** | 8 | ✅ | Claude = GenAI eksternal, **nonaktif secara bawaan**, data disamarkan; **didokumentasikan** di README: mengaktifkan butuh persetujuan tata kelola BPS; alternatif LLM lokal (Ollama) |
 | Tanpa routing otomatis penuh tanpa HITL | 8 | ✅ | Semua saran menunggu keputusan Operator |
 | Tanpa tindakan pemulihan otomatis dari pola | 5, 8 | ✅ | Pola hanya Problem + peringatan |
@@ -150,8 +156,8 @@ knowledge → closure; pola insiden; admin; operasi GLPI + AI).
 
 ## 7. Rekomendasi urutan kerja
 
-Semua butir T1–T20 sudah ✅ (31 Okt). Sisa opsional di luar audit ini: LLM lokal (profile `llm`, Ollama + Qwen2.5 3B)
-sebagai perangkum grounded, pratinjau dampak untuk aturan SLA/kategori, dan uji di lingkungan BPS.
+Semua butir T1–T20 sudah ✅ (31 Okt). LLM lokal (profile `llm`, Ollama + Qwen2.5 3B) sudah tersedia per 7 Nov. Sisa opsional di
+luar audit ini: pratinjau dampak untuk aturan SLA/kategori dan uji di lingkungan BPS.
 
 ## 8. Bab analisis & kelayakan (§1.3–1.6, §2.1–2.4, §5.1–5.2)
 
@@ -170,9 +176,9 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | T27 | Uji upgrade platform | 2.4.2 | GLPI 12.0.0 → 12.0.1 di lingkungan terpisah dari snapshot: migrasi otomatis, skema OK, plugin 1.0.0 Enabled, data utuh (`reports/uji_upgrade.md`) | ✅ |
 | T28 | Pemisahan dev/staging/produksi, pilot, parallel run, cutover, hypercare | 2.1.5, WBS 5–7 | `reports/rencana_implementasi.md` | ✅ (dok.) |
 | T29 | Pelatihan per peran | WBS 6.3, 7.3 | `reports/panduan_peran.md` | ✅ (dok.) |
-| T30 | Self-service dimulai dari Email, SSO, SiPecut (48,2% tiket) | 5.1 Outcome | FAQ ketiga layanan (9 artikel KB terindeks; SiPecut ditambah 2) | ✅ |
+| T30 | Self-service dimulai dari Email, SSO, SiPecut (48,2% tiket) | 5.1 Outcome | FAQ ketiga layanan; indeks kini memuat 18 artikel KB terbit dan 17 katalog layanan (35 sumber) | ✅ |
 | T31 | Pertanyaan di luar layanan TI | wawancara Operator | Chatbot mengarahkan ke Kepegawaian/Keuangan/Umum tanpa tawaran laporan | ✅ |
-| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang memeriksa **semua** syarat `tata_kelola_ai.md` dari metrik tersimpan (`ai/halosis_ai/quality.py`): triase (dilatih ulang dari history versi baru) Top-1 0,7588 ≥ 0,68, akurasi pada ambang 0,8835 ≥ 0,85, tidak turun dari model aktif pada set uji sama (0,7447) → dipakai; jenis F1 makro > pembanding (0,6752 > 0,3642) dan tidak turun > 2 poin dari versi aktif; urgensi **per kelas** pada ambangnya (Low presisi ≥ 0,75 + Wilson bawah > proporsi Low + ≥ 30 tiket; Medium akurasi > pembanding + 0,03): Low 0,7879, Medium 0,8430 > 0,8424 → kedua kelas lolos, kelas yang gagal tidak disarankan. Latih ulang hanya mengganti artefak bila lolos. `/health` → status per model; panel "belum lolos uji kualitas" | ✅ |
+| T32 | Model harus lolos uji sebelum dipakai (pre-kondisi UC-04) | 2.1.4 | Gerbang memeriksa **semua** syarat `tata_kelola_ai.md` dari metrik tersimpan (`ai/halosis_ai/quality.py`): triase (dilatih ulang dari history versi baru) Top-1 0,7588 ≥ 0,68, akurasi pada ambang 0,8835 ≥ 0,85, tidak turun dari model aktif pada set uji sama (0,7447) → dipakai; jenis F1 makro > pembanding (0,6752 > 0,3642) dan tidak turun > 2 poin dari versi aktif; urgensi **per kelas** dinilai dengan skema B, tim prediksi (Low presisi ≥ 0,75 + Wilson bawah > proporsi Low + ≥ 30 tiket; Medium akurasi > pembanding + 0,03, ambang stabil): Low 0,50 dari 14 tiket, Medium 0,8411 tidak > 0,8424 dan ambang tidak stabil → tidak ada kelas lolos, model nonaktif, panel memakai aturan kata kunci + validasi Operator. Latih ulang hanya mengganti artefak bila lolos. `/health` → status per model; panel "belum lolos uji kualitas" | ✅ |
 
 ### 8.2 Risiko R1–R4 (Tabel 1.4) & risiko organisasi (Tabel 2.21) → mitigasi di sistem
 
@@ -207,7 +213,7 @@ Ditambahkan 31 Okt 2026. Label T28–T29 diberikan di sini untuk dua butir dokum
 | --- | --- | --- |
 | 2.1.2 Arsitektur: ITSM + layanan AI terpisah ber-API | ✅ | GLPI + plugin + `halosis-ai` (FastAPI) |
 | 2.1.3 Data: profiling, cleansing, masking | ✅ | `prepare_data.py`, `reconcile.py`, `eda.md` |
-| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 tidak lolos dalam kondisi nyata (tim prediksi) | Model tim & jenis lolos gerbang (`/health`); **model urgensi insiden gagal gerbang skema B (6 Nov): tidak dipakai, urgensi dari aturan kata kunci + validasi Operator** (`reports/triase.md`). Keterangan berikut riwayat tim aktual, tidak berlaku lagi: **History versi baru memuat urgensi/dampak/prioritas**; dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya, jadi satu model urgensi (Medium vs Low) dengan **ambang per kelas** (1 Nov): Rendah bila P(Low) ≥ 0,90 (presisi 78,79%, recall 5,12%), Sedang bila P(Low) ≤ 0,45 (akurasi 84,30% vs 81,24%, cakupan 76,70%), kedua kelas lolos gerbang per kelas. **Keterbatasan:** 81% Medium kemungkinan nilai bawaan formulir; Rendah hanya ± 5% insiden Low, sisanya aturan. Dampak = urgensi + sinyal (tiket serupa / layanan kritis), prioritas = matriks GLPI; Operator memvalidasi (Terima/Ubah) |
+| 2.1.4 AI/ML: uji akurasi sebelum pakai; prioritas P1, urgensi P2 dengan validasi | 🟡 tidak lolos dalam kondisi nyata (tim prediksi) | Model tim & jenis lolos gerbang (`/health`); **model urgensi insiden gagal gerbang skema B (6 Nov): tidak dipakai, urgensi dari aturan kata kunci + validasi Operator** (`reports/triase.md`). **History versi baru memuat urgensi/dampak/prioritas**; dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya. **Keterbatasan:** 81% Medium kemungkinan nilai bawaan formulir. Dampak = urgensi + sinyal (tiket serupa / layanan kritis), prioritas = matriks GLPI; Operator memvalidasi (Terima/Ubah). Historis 1 Nov: dengan tim aktual, Rendah presisi 78,79% dan Sedang akurasi 84,30%, kedua kelas lolos gerbang per kelas. |
 | 2.1.5 Integrasi: SSO, data historis, notifikasi, monitoring, pemisahan lingkungan, uji beban | 🟡 | SSO Keycloak lokal ✅, migrasi sampel ✅, notifikasi ✅, monitoring profile ✅, uji beban ✅ (laptop); SSO BPS & lingkungan staging/produksi = rencana (`rencana_implementasi.md`) |
 | 2.1.6 Infrastruktur: VM/OpenShift, sizing | ⚪ | Docker lokal; sizing dari uji beban (AI ±8,7 core pada 200 VU) |
 | Skenario 2: kandidat platform & fit-gap BR-01..08 | ✅ | GLPI 12 + plugin; audit BR/FR/UC (`audit_kelengkapan.md`) |

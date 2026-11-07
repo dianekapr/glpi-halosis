@@ -4,13 +4,13 @@ Dihasilkan `ai/scripts/kalibrasi_ambang.py`, 07-11-2026. Tidak mengubah ambang a
 
 ## Chat: 0,78 / 0,83
 
-`/chat` menjawab bila skor ≥ 0,83, menawarkan artikel KB bila skor KB ≥ 0,78, selain itu menolak. Skor e5 atas 26 sumber KB terbit + katalog layanan pada indeks aktif.
+`/chat` menjawab bila skor ≥ 0,83, menawarkan artikel KB bila skor KB ≥ 0,78, selain itu menolak. Skor e5 atas 35 sumber KB terbit + katalog layanan pada indeks aktif.
 
 | Set proksi | Kueri | Dijawab | Pilihan | Ditolak | Median skor |
 | --- | --- | --- | --- | --- | --- |
-| Judul sumber (harus terjawab) | 26 | 100,00% | 0,00% | 0,00% | 0,9144 |
-| Rekaan tak terjawab (harus ditolak) | 24 | 0,00% | 33,33% | 66,67% | 0,7744 |
-| Masalah tiket Jul–Ags (sebaran nyata) | 905 | 60,22% | 39,34% | 0,44% | 0,8353 |
+| Judul sumber (harus terjawab) | 35 | 100,00% | 0,00% | 0,00% | 0,8889 |
+| Rekaan tak terjawab (harus ditolak) | 24 | 0,00% | 37,50% | 62,50% | 0,7787 |
+| Masalah tiket Jul–Ags (sebaran nyata) | 905 | 68,51% | 31,38% | 0,11% | 0,8394 |
 
 Porsi kueri yang dijawab bila ambang atas diubah:
 
@@ -18,13 +18,13 @@ Porsi kueri yang dijawab bila ambang atas diubah:
 | --- | --- | --- | --- |
 | 0,74 | 100,00% | 87,50% | 100,00% |
 | 0,76 | 100,00% | 66,67% | 100,00% |
-| 0,78 | 100,00% | 45,83% | 100,00% |
-| 0,80 | 100,00% | 20,83% | 97,79% |
-| 0,82 | 100,00% | 8,33% | 77,24% |
-| 0,83 | 100,00% | 0,00% | 60,22% |
-| 0,84 | 100,00% | 0,00% | 39,45% |
-| 0,86 | 88,46% | 0,00% | 10,61% |
-| 0,88 | 73,08% | 0,00% | 0,77% |
+| 0,78 | 100,00% | 50,00% | 100,00% |
+| 0,80 | 100,00% | 25,00% | 99,12% |
+| 0,82 | 100,00% | 8,33% | 83,20% |
+| 0,83 | 100,00% | 0,00% | 68,51% |
+| 0,84 | 100,00% | 0,00% | 49,17% |
+| 0,86 | 74,29% | 0,00% | 18,56% |
+| 0,88 | 57,14% | 0,00% | 2,65% |
 
 Pada 0,83: 0,00% kueri rekaan tak terjawab lolos ke jawaban, dan 0,00% judul sumber gagal terjawab.
 

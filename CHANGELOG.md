@@ -68,6 +68,12 @@ jalankan `plugin:install --force` + `plugin:activate` (README › C3). Rincian a
 - Konsistensi: eskalasi SLA = Ticket Recall tanpa mengubah prioritas; tim teratas "Lainnya" selalu penilaian manual;
   kategori contoh "Server Hosting" untuk SLA pemenuhan 14 hari.
 - Diuji pada GLPI 12.0.1 (`reports/uji_upgrade.md`); dokumen `rencana_implementasi.md`, `panduan_peran.md`.
+- **Perbaikan AI (7 Nov 2026, masih 1.0.0):** gerbang urgensi skema B (urgensi nonaktif karena tidak lolos), ambang pola &
+  triase aktif di Pengaturan AI; penyedia embedding/LLM lewat env, profile `llm`, RAG grounded hanya dari KB terbit & katalog
+  layanan; `build_index.py` lewat REST API; rekonstruksi PoC, banding embedding & pola, kalibrasi ambang, matriks uji BR;
+  retrieval 8 kasus KB HaloSIS, impor 9 artikel; draf artikel disusun LLM (fallback templat, wajib ditinjau KM). Setelah
+  memperbarui, bangun ulang layanan AI: `docker compose up -d --build halosis-ai`. E2E bertambah: draf templat saat LLM
+  none dan tawaran laporan pada mode `pilihan`.
 
 ## 0.10.0 — 31 Okt 2026
 - **Jenis disarankan (T4):** `/triage` mengembalikan saran REQ/INC bila `ai/models/jenis.joblib` ada; panel
