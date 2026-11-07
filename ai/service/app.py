@@ -468,6 +468,19 @@ def cari(req: SearchRequest) -> dict:
                        'jenis_sumber': h['jenis_sumber']} for h in hits]}
 
 
+class DraftRequest(BaseModel):
+    judul: str = Field(default='', max_length=500)
+    masalah: str = Field(default='', max_length=4000)
+    solusi: str = Field(default='', max_length=6000)
+    sumber: list[str] = Field(default_factory=list, max_length=20, description='Tiket sumber untuk sitasi')
+
+
+@app.post('/kandidat/draf')
+def kandidat_draf(req: DraftRequest) -> dict:
+    """Draf artikel KB dari kandidat lewat LLM; `draf` null bila LLM none/gagal (PHP memakai templat lama)."""
+    return {'draf': llm.draft_article(req.judul, req.masalah, req.solusi, req.sumber)}
+
+
 @app.get('/kandidat')
 def kandidat(min: int = 5, limit: int = 20) -> dict:
     """Solusi yang sering berulang di history tiket, untuk dikurasi Knowledge Manager (UC-09)."""

@@ -253,7 +253,8 @@ final class KnowledgeCandidates
         $source = $candidate->fields['source'] === Candidate::SOURCE_TICKET
             ? sprintf(__('Source: solution of ticket #%d.', 'halosis'), $candidate->fields['tickets_id'])
             : sprintf(__('Source: recurring solution in %d historical tickets (AI index).', 'halosis'), $candidate->fields['occurrences']);
-        $answer = sprintf(
+        $ai     = self::aiDraft($candidate, $source);
+        $answer = $ai['html'] ?? sprintf(
             '<h3>%s</h3><p>%s</p><h3>%s</h3><p>%s</p><p><em>%s %s</em></p>',
             htmlescape(__('Problem', 'halosis')),
             nl2br(htmlescape((string) $candidate->fields['problem'])),
@@ -266,7 +267,7 @@ final class KnowledgeCandidates
         // Tanpa target visibilitas = draf (belum terbit); Knowledge Manager menerbitkan setelah meninjau
         $article = new KnowbaseItem();
         $article_id = $article->add([
-            'name'     => $candidate->fields['title'] ?: __('Knowledge candidate', 'halosis'),
+            'name'     => ($ai['title'] ?? '') ?: ($candidate->fields['title'] ?: __('Knowledge candidate', 'halosis')),
             'answer'   => $answer,
             'is_faq'   => 0,
             'users_id' => Session::getLoginUserID(),
@@ -283,6 +284,44 @@ final class KnowledgeCandidates
             'date_decision'    => $_SESSION['glpi_currenttime'],
         ]);
         return ['ok' => true, 'url' => KnowbaseItem::getFormURLWithID($article_id)];
+    }
+
+    /**
+     * Draf berbahasa formal dari layanan halosis-ai (LLM): judul + HTML. null = LLM none/gagal → pakai templat lama.
+     */
+    private static function aiDraft(Candidate $candidate, string $source): ?array
+    {
+        if (!Service::isConfigured()) {
+            return null;
+        }
+        $refs = $candidate->fields['source'] === Candidate::SOURCE_TICKET
+            ? ['#' . (int) $candidate->fields['tickets_id']]
+            : array_values(array_filter(array_map('trim', explode(',', (string) $candidate->fields['examples']))));
+        try {
+            $data = Service::post('/kandidat/draf', [
+                'judul'   => (string) $candidate->fields['title'],
+                'masalah' => (string) $candidate->fields['problem'],
+                'solusi'  => (string) $candidate->fields['solution'],
+                'sumber'  => $refs,
+            ]);
+        } catch (AiException $e) {
+            Toolbox::logInFile('halosis', 'Draf artikel AI gagal, memakai templat. ' . $e->getMessage() . "\n", true);
+            return null;
+        }
+        $draft = $data['draf'] ?? null;
+        if (!is_array($draft) || empty($draft['gejala']) || empty($draft['langkah'])) {
+            return null;
+        }
+        $html = sprintf(
+            '<h3>%s</h3><p>%s</p><h3>%s</h3><p>%s</p><p><em>%s</em></p><p><em>%s</em></p>',
+            htmlescape(__('Symptoms', 'halosis')),
+            nl2br(htmlescape((string) $draft['gejala'])),
+            htmlescape(__('Resolution steps', 'halosis')),
+            nl2br(htmlescape((string) $draft['langkah'])),
+            htmlescape($source),
+            htmlescape('Disusun AI, wajib ditinjau Knowledge Manager'),
+        );
+        return ['title' => mb_substr(Privacy::mask((string) ($draft['judul'] ?? ''))['text'], 0, 255), 'html' => $html];
     }
 
     /**
