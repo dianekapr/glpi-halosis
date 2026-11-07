@@ -34,8 +34,12 @@ Pengelola AI = 1–2 orang yang melatih ulang model (`ai/README.md`); di prototi
 | 6. Pantau 2 minggu | Rasio Ubah/Tolak di dashboard Kinerja AI dibanding versi lama | Dashboard Kinerja AI |
 | 7. Rollback | Bila rasio Ubah+Tolak naik > 10 poin atau ada keluhan routing berulang: pasang kembali file versi sebelumnya (simpan minimal 2 versi terakhir di luar repo) | Catatan di tabel §5 |
 
+**Status urgensi insiden (7 Nov 2026): tidak dipakai.** Model gagal gerbang skema B, tanpa kelas yang lolos: Low presisi 50,00%
+dari 14 tiket, Medium 84,11% tidak melampaui 84,24% dan ambangnya tidak stabil (rentang 0,45). Panel memakai aturan kata kunci
+dan validasi Operator. Artefak disimpan untuk rollback (`ai/models/urgensi.metrics.json`, §5).
+
 **Kelas gabungan "Lainnya" dikecualikan dari syarat recall tim besar.** "Lainnya" menggabungkan tim dengan < 30
-tiket latih (21 kelas → 1 kelas gabungan); kelas ini bukan tim tujuan sehingga recall-nya (0,335 pada uji Jul–Ags)
+tiket latih (21 kelas → 1 kelas gabungan); kelas ini bukan tim tujuan sehingga recall-nya (0,4319 pada uji Jul–Ags)
 tidak mengukur ketepatan routing ke tim nyata, dan menggabungkannya ke syarat akan menolak model hanya karena tim kecil
 memang tidak dipelajari. Gantinya: setiap saran dengan tim teratas "Lainnya" **selalu** berstatus *Perlu penilaian
 manual* (`triage_model.py`, plugin `Triage.php`; tes `test_lainnya_selalu_penilaian_manual`), dan recall "Lainnya"
@@ -57,9 +61,9 @@ tetap bisa ditelusuri ke model yang menghasilkannya.
 | Sumber | Masuk indeks | Pemilik | Aturan |
 | --- | --- | --- | --- |
 | Artikel KB yang terbit / FAQ | Otomatis saat terbit, dihapus saat ditarik (`/reindex/artikel`) | Knowledge Manager | Hanya artikel terbit; draf tidak diindeks |
-| Solusi tiket historis | Dibangun ulang manual (`build_index.py`) | Pengelola AI | Wajib lewat penyamaran PII; data mentah tidak pernah masuk repo |
+| Solusi tiket historis | Dibangun ulang manual (`build_index.py`) | Pengelola AI | Wajib lewat penyamaran PII; data mentah tidak pernah masuk repo. Hanya untuk petugas (`/cari`), tidak dipakai `/chat` |
 | Kandidat knowledge | Tidak diindeks sampai diterbitkan sebagai artikel | Knowledge Manager | Kurasi manusia (Jadikan artikel / Abaikan + alasan) |
-| SOP & service catalog | Belum (rencana lanjut) | Knowledge Manager | — |
+| SOP & service catalog | Ya. Katalog layanan lewat `/reindex/layanan`; SOP sebagai artikel KB terbit | Knowledge Manager | Sumber tersetujui `/chat` bersama artikel KB terbit |
 
 Artikel yang terbukti salah: Knowledge Manager menarik artikel → indeks terhapus otomatis → catat di §5.
 Artikel terbit yang tidak diubah > `kb_review_months` (bawaan 6 bulan) muncul di tab **Perlu ditinjau** halaman
@@ -96,6 +100,8 @@ artikel ditempatkan di kategori KB domainnya, sehingga pemilik domain (tabel di 
 | 6 Nov 2026 | Gerbang | urgensi tim aktual → skema B; triase ambang tetap 70% → ambang aktif + syarat data cukup; pola: belum ada → peringatan | `reports/usulan_gerbang_a.md` + tambahan persetujuan: stabilitas ambang ≤ 0,10, min. 5 kelompok, cakupan ≥ 10% & ≥ 100 tiket | Tim proyek | Tim proyek |
 | 6 Nov 2026 | Rilis model / gerbang | urgensi `urgensi-tfidf-tim-lr-20261101` aktif → **tidak dipakai**, aturan kata kunci + validasi Operator | Skema B gagal, tidak lolos dalam kondisi nyata (tim prediksi): Low presisi 50,00% dari 14 tiket; Medium 84,11% tidak > 84,24%; Medium tidak stabil (rentang ambang 0,45). Skema A: 70,83% / 84,87%. Bukti `reports/triase.md`, `logs/train_urgensi.log`; artefak disimpan untuk rollback | Tim proyek | Tim proyek |
 | 6 Nov 2026 | Ambang / gerbang | ambang rata-rata pola tetap 0,50 → `pattern_threshold` di Pengaturan AI; `triage.metrics.json` + kurva ambang (nilai lain tetap); gerbang dinilai pada nilai aktif (`POST /gerbang`, peringatan saat menyimpan) | Set pola `ai/scripts/gerbang_pola.py`: bawaan 8 kelompok, 25 tiket, kemurnian 0,917 → lolos. Triase 70% → 88,35%, 790 tiket → lolos | Tim proyek | Tim proyek |
+| 7 Nov 2026 | Sumber | 26 → 35 sumber `/chat` (impor 9 artikel KB); ambang chat 0,83 / 0,78 tetap | Kalibrasi ulang 35 sumber: rekaan 0,00% dijawab, 37,50% pilihan; judul sumber 100,00% dijawab. Bukti `reports/kalibrasi_ambang.md`, `logs/c9_kalibrasi_ulang.log` | Tim proyek | Tim proyek |
+| 7 Nov 2026 | Fitur | LLM opsional lewat env, bawaan `none`; draf artikel disusun LLM dengan fallback templat | Peninjauan KM wajib karena model kecil bisa menambah frasa di luar sumber. Bukti `logs/uji_llm.log`, `logs/draf_llm.log`, `reports/dokumentasi_ai.md` §5.4–5.5 | Tim proyek | Tim proyek |
 | | | | | | |
 
 ## 6. Audit berkala (bulanan)

@@ -218,7 +218,7 @@ langkahnya ada di [Pemasangan manual](#pemasangan-manual-yang-dijalankan-scripts
   | Kebutuhan | Yang diperlukan |
   | --- | --- |
   | Menjalankan & menguji GLPI + plugin | Tidak perlu data apa pun. `seed_halosis.py` mengisi data contoh; tanpa model AI, plugin otomatis memakai **mode demo** |
-  | **Menguji end-to-end dengan AI sungguhan** (saran triase dari model, chatbot dari solusi tiket lama) | Folder `ai/models/` dan `ai/index/` dari pemilik repo. **Tidak perlu file Excel** |
+  | **Menguji end-to-end dengan AI sungguhan** (saran triase dari model, chatbot dari artikel KB terbit & katalog layanan) | Folder `ai/models/` dan `ai/index/` dari pemilik repo. **Tidak perlu file Excel** |
   | Melatih ulang model dari Excel | Hanya 1–2 orang yang mengurus AI; ikuti [`ai/README.md`](ai/README.md) |
 
   Cara memasangnya ada di bagian **C2** di bawah.
@@ -310,7 +310,7 @@ dan memanggil layanan lewat nama `halosis-ai`.
 
 **6. Uji cepat**
 - Login `budi` / `halosis` → langsung di **Tanya HaloSIS** dengan kartu *Ajukan permintaan* & *Laporkan masalah*.
-- Klik **Laporkan masalah** → tanya *"kuota email saya penuh"* → jawaban punya sumber **"Tiket serupa …"**
+- Klik **Laporkan masalah** → tanya *"kuota email saya penuh"* → jawaban punya sumber artikel KB atau layanan
   (tanpa model: jawaban dari artikel FAQ saja).
 - Login `budi` → tanya *"resep nasi goreng"* → asisten menjawab belum menemukan jawaban.
 - Buat tiket *"tidak bisa login SSO"* → login `rina` → buka tiketnya → panel **Saran AI** menyebut model
@@ -900,6 +900,51 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 **Tidak ada di GLPI** (tetap dibangun sendiri di HaloSIS): chatbot AI, saran triase + keyakinan,
 alur Terima/Ubah/Tolak saran AI, deteksi pola otomatis, kandidat knowledge, dan dashboard kinerja AI.
 
+## Konfigurasi model AI (env & profile `llm`)
+
+Bawaannya tidak memakai LLM: chatbot mengutip sumber (ekstraktif), dan draf artikel memakai templat. Semua pengaturan ada di
+`.env` (contoh: `.env.example`).
+
+| Env | Isi |
+| --- | --- |
+| `EMBEDDING_PROVIDER` | `local` (bawaan, e5 lokal) atau `openai` (endpoint `/v1/embeddings`). Ada juga `EMBEDDING_BASE_URL`, `EMBEDDING_MODEL`, `EMBEDDING_API_KEY` |
+| `LLM_PROVIDER` | `none`, `openai` (server kompatibel OpenAI, termasuk Ollama), atau `anthropic` |
+| `LLM_BASE_URL`, `LLM_MODEL` | Alamat dan nama model. Untuk `anthropic`, `LLM_BASE_URL` tidak perlu |
+| `LLM_API_KEY` | Boleh kosong untuk Ollama |
+
+Bila `LLM_PROVIDER` kosong dan `ANTHROPIC_API_KEY` terisi, layanan memakai Anthropic. Tulis `LLM_PROVIDER=none` agar pasti nonaktif.
+
+**Ollama di Docker (profile `llm`):**
+
+```bash
+docker compose --profile llm up -d ollama
+docker compose exec ollama ollama pull qwen2.5:3b
+```
+
+Lalu isi `.env`:
+
+```bash
+LLM_PROVIDER=openai
+LLM_BASE_URL=http://ollama:11434/v1
+LLM_MODEL=qwen2.5:3b
+```
+
+**Ollama native di Mac:** Docker di Mac tidak memakai GPU, jadi jalankan Ollama di host.
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+Isi `.env` seperti di atas, tetapi dengan `LLM_BASE_URL=http://host.docker.internal:11434/v1`.
+
+**Menerapkan perubahan:** jalankan `docker compose up -d halosis-ai` setelah mengubah `.env`. Setelah kode `ai/` berubah, jalankan
+`docker compose up -d --build halosis-ai`, karena kode layanan ada di dalam image.
+
+Bila model, penyedia, atau dimensi embedding berubah, layanan menolak indeks lama. Bangun ulang dengan `ai/scripts/build_index.py`.
+
+Dengan LLM aktif, draf artikel diberi label "Disusun AI, wajib ditinjau Knowledge Manager". Model kecil bisa menambah frasa di
+luar sumber, jadi peninjauan KM wajib. Untuk penerapan di BPS, lihat [`reports/dokumentasi_ai.md`](reports/dokumentasi_ai.md) §5.5.
+
 ## Keputusan desain & keterbatasan
 
 Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
@@ -908,7 +953,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Area | Dokumen / PoC | Implementasi | Alasan | Rencana lanjut |
 | --- | --- | --- | --- | --- |
 | Embedding | `paraphrase-multilingual-MiniLM-L12-v2` | `intfloat/multilingual-e5-base` | Dibandingkan pada set uji yang sama ([`reports/banding_embedding.md`](reports/banding_embedding.md)): e5 Top-1 72,74% / MRR 0,8144 vs MiniLM 67,99% / 0,7650 (ekspor lama, 906 kueri); lokal & gratis. Angka indeks aktif (ekspor baru, 1.069 kueri, aturan solusi baru) di baris *Sumber knowledge*: set berbeda, tidak dibandingkan langsung | — |
-| LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Tanpa LLM: jawaban **ekstraktif** dari artikel/tiket; Claude opsional | Tanpa API berbayar & tanpa GPU; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Ollama + Qwen2.5 3B sebagai perangkum opsional |
+| LLM jawaban | Qwen2.5 3B via Ollama (RAG) | Bawaan **ekstraktif** dari artikel KB terbit dan katalog layanan. Opsional lewat env: server kompatibel OpenAI atau Anthropic (lihat *Konfigurasi model AI*) | Tanpa API berbayar dan tanpa GPU secara bawaan; dokumen sendiri memilih RAG *grounded* karena risiko halusinasi | Server LLM internal BPS atau model terbuka di server BPS; cloud hanya dengan penyamaran + izin BPS |
 | Vector DB | Layanan vector database | Indeks file (`ai/index/*.parquet`, `vectors.npy`), kosinus di memori; artikel KB diperbarui inkremental (`POST /reindex/artikel`) | Cukup untuk ribuan potongan, nol infrastruktur tambahan | pgvector/Qdrant bila korpus membesar |
 | Deteksi pola | Embedding + DBSCAN (eps 0,25; min 5), similarity 0,70, jendela 1 jam | Semantik: `POST /pola` (embedding e5 dipusatkan, rata-rata kemiripan ≥ 0,50, jendela 60 menit, min. 3 tiket (sesuai PoC)); fallback kata kunci bila layanan AI mati; metode dicatat di Problem | Skala kosinus e5 berbeda dari MiniLM (tiket tak terkait pun ±0,85), jadi vektor dipusatkan dan ambang dikalibrasi ulang. **DBSCAN tersedia sebagai opsi** (Pengaturan AI, eps 0,50, min_samples 3; PoC eps 0,25 / min 5): eps 0,25 PoC untuk MiniLM tanpa pemusatan, pada e5 dipusatkan jarak tiket bertopik sama ± 0,4 → 0,50; min 3 mengikuti aturan PoC "minimal 3 insiden" dalam jendela 1 jam (min 5 jarang tercapai: rata-rata 3,8 insiden per blok berisi); pada 666 insiden hasilnya setara, bawaan tetap rata-rata kemiripan karena lebih cepat & tanpa efek rantai ([`reports/banding_pola.md`](reports/banding_pola.md)); tren 12 minggu di dashboard | — |
 | Routing triase | 39 assignment group | 21 kelas (tim < 30 tiket latih → "Lainnya"); dilatih ulang dari history versi baru: Top-1 75,88% / Top-3 94,87% (model lama pada set uji sama 74,47% / 93,01%) → lolos gerbang, dipakai | Kelas kecil tidak bisa dipelajari andal | Latih ulang berkala; tim kecil/baru tetap manual |
@@ -916,7 +961,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Claude (perangkum opsional) | Batas scope hal. 8: tanpa GenAI publik eksternal tanpa batas untuk data internal BPS | Claude via API = **GenAI eksternal**: **nonaktif secara bawaan** (`ANTHROPIC_API_KEY` kosong). Judul & isi tiket, pertanyaan, riwayat chat, dan artikel disamarkan sebelum dikirim (`Triage::aiPrompt`, `Chatbot::aiPrompt`, jaring pengaman terakhir `Client::outgoingPrompt`; tes container `php plugins/halosis/tools/test_ai_masking.php`) | Mengaktifkannya **butuh persetujuan tata kelola AI BPS** (`reports/tata_kelola_ai.md`) | Alternatif sesuai dokumen: LLM lokal (Ollama + Qwen2.5 3B) |
 | Log retrieval (T16) | Log audit berisi kueri, sumber, skor (hal. 145, 177) | `ai/logs/latency.jsonl` hanya angka (latensi, jumlah hasil); **teks kueri tidak disimpan** | NFR-06 (privasi): kueri pegawai bisa memuat data pribadi; sumber jawaban tetap tercatat di transkrip chat (sudah disamarkan) | Simpan kueri tersamar + id sumber + skor bila tata kelola menyetujui |
 | Arsip & tag artikel (T7) | Status "Diarsipkan", kata kunci/tag (hal. 140, 167) | **Tidak terbit = arsip**: artikel tanpa target visibilitas & bukan FAQ dikeluarkan dari indeks AI tetapi tetap tersimpan di GLPI; **kategori KB = tag** | Fitur bawaan GLPI sudah setara; tanpa ubah kode inti (NFR-10) | — |
-| Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | History versi baru memuat `urgency`/`impact`/`priority`: dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya, jadi **satu model urgensi insiden** Medium vs Low (`ai/scripts/train_urgensi.py`: TF-IDF teks tersamar + nama tim, LR seimbang → P(Low), validasi silang 5 lipatan) dengan **ambang per kelas** dipilih otomatis: **Rendah** bila P(Low) ≥ 0,90 (presisi 78,79%, Wilson 95% 62,25–89,32%, vs proporsi Low 18,76%; recall 5,12%, 33 tiket), **Sedang** bila P(Low) ≤ 0,45 (akurasi 84,30% vs pembanding 81,24%, cakupan 76,70%), di antaranya aturan kata kunci; gerbang per kelas (kedua kelas lolos, `urgensi.metrics.json`). Panel "Urgensi disarankan: Rendah/Sedang (keyakinan)" hanya bila kelasnya lolos & di atas ambangnya. **Keterbatasan:** Rendah hanya mengenali ± 5% insiden Low (sisanya aturan); Sedang lolos tipis (syarat > 84,24%). Dampak = urgensi, **naik 1 tingkat** bila ≥ 3 tiket serupa dalam 60 menit / Problem pola terbuka atau kategori layanan kritis (`critical_services`, bawaan SSO, Email, Jaringan); panel menampilkan alasannya. Prioritas = matriks GLPI. High/Critical (21 tiket) & REQ (hampir semua Medium): aturan kata kunci (kata utuh, negasi "tidak mendesak") + sinyal. Model prioritas lama (proksi tier SLA, F1 = pembanding) dihapus; satu ambang keyakinan 70% versi 31 Okt (Low tidak pernah tertangkap) diganti | 81% insiden berlabel Medium, kemungkinan besar **nilai bawaan formulir**, bukan penilaian petugas → batas atas model rendah; dokumen menempatkan urgensi P2 dengan validasi manusia | Rekam urgensi/dampak final Operator (Terima/Ubah) sebagai label yang lebih bersih → latih ulang; gerbang `/health` mencegah model lemah dipakai |
+| Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | **Status 7 Nov 2026: model urgensi tidak dipakai karena gagal gerbang skema B; panel memakai aturan kata kunci + validasi Operator.** Riwayat sebelum keputusan itu: history versi baru memuat `urgency`/`impact`/`priority`: dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya, jadi **satu model urgensi insiden** Medium vs Low (`ai/scripts/train_urgensi.py`: TF-IDF teks tersamar + nama tim, LR seimbang → P(Low), validasi silang 5 lipatan) dengan **ambang per kelas** dipilih otomatis: **Rendah** bila P(Low) ≥ 0,90 (presisi 78,79%, Wilson 95% 62,25–89,32%, vs proporsi Low 18,76%; recall 5,12%, 33 tiket), **Sedang** bila P(Low) ≤ 0,45 (akurasi 84,30% vs pembanding 81,24%, cakupan 76,70%), di antaranya aturan kata kunci; gerbang per kelas (kedua kelas lolos, `urgensi.metrics.json`). Panel "Urgensi disarankan: Rendah/Sedang (keyakinan)" hanya bila kelasnya lolos & di atas ambangnya. **Keterbatasan:** Rendah hanya mengenali ± 5% insiden Low (sisanya aturan); Sedang lolos tipis (syarat > 84,24%). Dampak = urgensi, **naik 1 tingkat** bila ≥ 3 tiket serupa dalam 60 menit / Problem pola terbuka atau kategori layanan kritis (`critical_services`, bawaan SSO, Email, Jaringan); panel menampilkan alasannya. Prioritas = matriks GLPI. High/Critical (21 tiket) & REQ (hampir semua Medium): aturan kata kunci (kata utuh, negasi "tidak mendesak") + sinyal. Model prioritas lama (proksi tier SLA, F1 = pembanding) dihapus; satu ambang keyakinan 70% versi 31 Okt (Low tidak pernah tertangkap) diganti | 81% insiden berlabel Medium, kemungkinan besar **nilai bawaan formulir**, bukan penilaian petugas → batas atas model rendah; dokumen menempatkan urgensi P2 dengan validasi manusia | Rekam urgensi/dampak final Operator (Terima/Ubah) sebagai label yang lebih bersih → latih ulang; gerbang `/health` mencegah model lemah dipakai |
 | Sumber knowledge dari history (AI-4, UC-09) | Masalah → solusi dari tiket selesai | Solusi = pesan terakhir ≤ `resolved` + 5 menit yang bukan dari pemohon (pesan terakhir dicek lewat `last_conversation_user_id`), lolos penyaring template & ≥ 5 kata; cadangan `close_notes` → `resolution` bila bukan template. Solusi > 220 kata dipecah (masalah diulang di tiap potongan). Uji retrieval ekspor baru, 1.069 kueri Jul–Ags ([`reports/banding_solusi.md`](reports/banding_solusi.md); set berbeda dari banding embedding 906 kueri ekspor lama): Top-1 72,50% / Top-3 89,06% / MRR 0,8115 vs aturan lama 73,15% / 89,43% / 0,8163 → dalam toleransi 1 poin, dipakai. **Dedup solusi identik tidak dipakai** (Top-1 −1,96 poin) | Pesan setelah tiket diselesaikan (terima kasih, tiket dibuka lagi) bukan solusi; petugas sering menulis solusi 1–3 menit setelah menekan "selesai", jadi toleransi 5 menit (bukan 1) | Penilaian manual mutu solusi pada sampel; dedup dinilai ulang bila ada label relevansi manusia |
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`, dilatih ulang dari history versi baru, F1 makro 67,52% vs 67,50% model lama → lolos): akurasi 68,25%, ≥ 70% yakin → 83,96%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
 | Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
