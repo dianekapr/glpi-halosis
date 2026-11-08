@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // testdata: buat/hapus tiket uji (data rekaan) agar state aplikasi bisa ditangkap, lalu DIKEMBALIKAN.
 //   node tools/figma/testdata.js create <pemohon> "<judul>" [isi]   → mencetak id tiket (dicatat di logs/figma_testdata.json)
+//   (env ASSIGN=<akun> → tiket langsung ditugaskan ke akun itu, mis. andi untuk Section 03)
 //   node tools/figma/testdata.js cleanup                            → hapus semua tiket yang dicatat + saran/keputusan/antrean notifikasinya
 const { execSync } = require('child_process');
 const fs = require('fs'), path = require('path');
@@ -23,7 +24,7 @@ const read = () => fs.existsSync(LOG) ? JSON.parse(fs.readFileSync(LOG)) : { tic
   const st = read(); const a = await api();
   if (cmd === 'create') {
     if (!st.before) st.before = { tickets: +sql('SELECT COUNT(*) FROM glpi_tickets;'), chats: +sql('SELECT COUNT(*) FROM glpi_plugin_halosis_chats;') };
-    const r = await a.call('POST', 'Ticket', { input: { name: title, content: content || `${title}. Data uji otomatis.`, type: 1, _users_id_requester: a.users[who] } });
+    const r = await a.call('POST', 'Ticket', { input: { name: title, content: content || `${title}. Data uji otomatis.`, type: 1, _users_id_requester: a.users[who], ...(process.env.ASSIGN ? { _users_id_assign: a.users[process.env.ASSIGN] } : {}) } });
     st.tickets.push(r.id); fs.writeFileSync(LOG, JSON.stringify(st)); console.log(r.id);
   } else if (cmd === 'cleanup') {
     if (st.tickets.length) {

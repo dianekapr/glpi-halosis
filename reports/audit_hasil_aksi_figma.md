@@ -89,13 +89,15 @@ Tambahan 2026-11-08 (Section 02, diuji dengan alat tools/figma/): akun rina, tik
 
 ## 03 Tim Teknis
 
-| frame | elemen | masalah | jenis | bukti singkat |
-|---|---|---|---|---|
-| TT-01 Panel hanya-baca | Kembalikan ke Operator | Tombol tak punya reaction → TT-02 tak terjangkau; aplikasi: form alasan lalu "Tiket dikembalikan ke antrean validasi Operator." | TIDAK-TERSAMBUNG | TT-01 rx hanya Semua/BS/waktu→TT-S01 |
-| TT-02 Modal Kembalikan | alasan | Figma: pilihan alasan + catatan; aplikasi: kolom "Alasan (wajib)" teks bebas | KONTEN | act andi:Kembalikan (buka) |
-| TT-S05 | Kembalikan | Figma "Tiket dikembalikan ke Operator"; aplikasi "Tiket dikembalikan ke antrean validasi Operator." | HASIL | act andi:Kembalikan (kirim) |
-| TT-03 / TT-04 / TT-05 | baris tabel, Cari, Masalah | Semua reaction → TT-S01 "Fitur menu (demo)"; aplikasi: baris membuka tiket/masalah, Cari bekerja | TIDAK-TERSAMBUNG | rx →TT-S01 |
-| TT-01, TT-03 | tabel/detail | Teks keluar batas frame: TT-01=30, TT-03=49 | TATA-LETAK | out of bounds |
+| frame | elemen | masalah | jenis | bukti singkat | status |
+|---|---|---|---|---|---|
+| TT-01 Panel hanya-baca | Kembalikan ke Operator | Tombol tak punya reaction → TT-02 tak terjangkau; aplikasi: form alasan lalu "Tiket dikembalikan ke antrean validasi Operator." | TIDAK-TERSAMBUNG | TT-01 rx hanya Semua/BS/waktu→TT-S01 | ✅ 2026-11-08: TT-01 ditangkap ulang (andi, 1440 px, sidebar «Sidebar · Tim Teknis»); «Kembalikan ke Operator (salah tim)» → TT-02 |
+| TT-02 Modal Kembalikan | alasan | Figma: pilihan alasan + catatan; aplikasi: kolom "Alasan (wajib)" teks bebas | KONTEN | act andi:Kembalikan (buka) | ✅ TT-02 = tangkapan asli (satu kolom «Alasan (wajib)»); tombol «Kembalikan ke Operator» → TT-R1 |
+| TT-S05 | Kembalikan | Figma "Tiket dikembalikan ke Operator"; aplikasi "Tiket dikembalikan ke antrean validasi Operator." | HASIL | act andi:Kembalikan (kirim) | ✅ TT-R1 (hasil) = tangkapan asli setelah kirim (halaman tiket dimuat ulang, panel isi kosong karena tiket sudah lepas dari andi; sama dengan Alur Demo 10-R2); TT-S05 dan TT-S04 (dropdown yatim) dihapus |
+| TT-03 / TT-04 / TT-05 | baris tabel, Cari, Masalah | Semua reaction → TT-S01 "Fitur menu (demo)"; aplikasi: baris membuka tiket/masalah, Cari bekerja | TIDAK-TERSAMBUNG | rx →TT-S01 | ✅ TT-03: 38 elemen baris (ID+judul+ikon, pola baris) → TT-R2 detail tiket; TT-04: 8 elemen baris → TT-R3 detail Masalah; Cari TT-04 → TT-R4 (hasil cari Masalah «SSO»); Cari TT-05 → TT-R5 (hasil cari pengetahuan). ⏭ paginasi «1»/«2» TT-03 tetap → TT-S01 (di luar cakupan) |
+| TT-01, TT-03 | tabel/detail | Teks keluar batas frame: TT-01=30, TT-03=49 | TATA-LETAK | out of bounds | ⏭ ter-clip/scroll dibiarkan; cek visual TT-02 & TT-R3: tumpang tindih terlihat 0 |
+
+Perbaikan 2026-11-08 (Section 03, alat tools/figma/, akun andi, tiket uji 1360 ditugaskan ke andi; testdata.js kini mendukung env ASSIGN): frame hasil baru TT-R1..R5 di baris bawah (y=1700), sidebar = instance «Sidebar · Tim Teknis»; baris state digeser +300 px; Section 03 diperbesar dan Section 04–06 + Usulan digeser +3026 px agar tak tumpang tindih. TT-R2 = tiket 42, TT-R3 = Masalah 1 (hanya-baca). figma_verify: Section 03 lintas peran 0, menggantung 0, self-link 0 (197 reaction; self-link sidebar TT-01 dibersihkan); Section 01 & 02 tetap 0/0/0; Alur Demo 01→12 utuh. Catatan: Section «01 Pegawai» (49:5) sempat tertelan ke Alur Demo; dikembalikan ke level halaman (0, 3400). Data uji: tiket 1360 + reassignment/saran/followup/notifikasi dibuat lalu dihapus; 15 tabel DB sama persis sebelum/sesudah (tiket 70, chat 30). Log: logs/tt_counts_sebelum.txt, logs/tt_counts_sesudah.txt.
 
 ## 04 Knowledge Manager
 
