@@ -54,32 +54,38 @@ Perbaikan 2026-11-07: frame hasil asli ditangkap dari aplikasi (Section Alur Dem
 
 ## 01 Pegawai
 
-| frame | elemen | masalah | jenis | bukti singkat |
-|---|---|---|---|---|
-| PG-S21 / PG-S22 | Tidak, terima kasih | Figma: kembali ke PG-00 (chat kosong); aplikasi: kartu tutup, percakapan tetap terbuka (tetap di chat) | TUJUAN | act budi:chat "Tidak, terima kasih": url tetap /Chat, tidak ada teks baru |
-| PG-04 Form Laporkan masalah | Kirim | Figma: notifikasi "Laporan terkirim. Tiket #1295 dibuat"; aplikasi: pindah ke halaman tiket dengan pesan "Item successfully updated: Laporkan Masalah" (Inggris) | HASIL | act budi:form kirim dengan judul |
-| PG-04 Form Laporkan masalah | Kirim tanpa Judul | Tak ada frame galat wajib isi; aplikasi menampilkan "This field is mandatory" (Inggris) | STATE-HILANG | act budi:form kirim tanpa judul |
-| PG-03 Buat laporan | Ajukan Permintaan | Figma: notifikasi "luar cakupan prototype"; aplikasi membuka /Form/Render/2 (formulir berfungsi) | TIDAK-TERSAMBUNG | PG-03 rx →PG-S13; visit budi:form permintaan |
-| PG-06 Laporan saya | baris tiket, Cari, Muat ulang | Semua reaction → PG-S13 "luar cakupan"; aplikasi: baris membuka detail tiket, Cari menyaring | TIDAK-TERSAMBUNG | PG-06 rx semua →PG-S13 |
-| PG-01 Pusat bantuan (FAQ) | artikel FAQ | Figma: notifikasi "Membuka artikel sumber (demo)"; aplikasi membuka isi artikel (helpdesk.faq.php?id=…) | HASIL | PG-01 rx artikel→PG-S03 |
-| PG-S11, PG-S12 | — | Frame "tidak dipakai" masih ada (S11 duplikat DM-S02) | LAIN | nama frame berisi "(tidak dipakai)" |
-| PG-05 Chat di HP | — | Tampilan HP tak diuji di aplikasi | LAIN | tidak diuji |
-| PG-00 / PG-S20 dll | kolom input | Placeholder "Tulis kendala Anda…" tidak muncul sebagai teks halaman (kemungkinan atribut placeholder, bukan beda) | LAIN | teks tidak terbaca innerText; tidak dinilai |
+| frame | elemen | masalah | jenis | bukti singkat | status |
+|---|---|---|---|---|---|
+| PG-S21 / PG-S22 | Tidak, terima kasih | Figma: kembali ke PG-00 (chat kosong); aplikasi: kartu tutup, percakapan tetap terbuka (tetap di chat) | TUJUAN | act budi:chat "Tidak, terima kasih": url tetap /Chat, tidak ada teks baru | ✅ 2026-11-08: "Tidak, terima kasih" → PG-R06 / PG-R07 (chat yang sama, kartu tutup, hasil asli) |
+| PG-04 Form Laporkan masalah | Kirim | Figma: notifikasi "Laporan terkirim. Tiket #1295 dibuat"; aplikasi: pindah ke halaman tiket dengan pesan "Item successfully updated: Laporkan Masalah" (Inggris) | HASIL | act budi:form kirim dengan judul | ✅ 2026-11-08: Kirim → PG-R03 (halaman tiket, pesan Inggris GLPI apa adanya) |
+| PG-04 Form Laporkan masalah | Kirim tanpa Judul | Tak ada frame galat wajib isi; aplikasi menampilkan "This field is mandatory" (Inggris) | STATE-HILANG | act budi:form kirim tanpa judul | ✅ 2026-11-08: PG-R02 galat wajib isi (dipicu dari kolom Judul PG-04, karena Kirim sudah menuju PG-R03) |
+| PG-03 Buat laporan | Ajukan Permintaan | Figma: notifikasi "luar cakupan prototype"; aplikasi membuka /Form/Render/2 (formulir berfungsi) | TIDAK-TERSAMBUNG | PG-03 rx →PG-S13; visit budi:form permintaan | ✅ 2026-11-08: Ajukan Permintaan → PG-R04 (form permintaan hasil asli) |
+| PG-06 Laporan saya | baris tiket, Cari, Muat ulang | Semua reaction → PG-S13 "luar cakupan"; aplikasi: baris membuka detail tiket, Cari menyaring | TIDAK-TERSAMBUNG | PG-06 rx semua →PG-S13 | ✅ 2026-11-08: baris tiket (ID+judul, pola baris) → PG-R05; Cari/Muat ulang/paginasi tetap → PG-S13 (⏭ di luar cakupan prototype) |
+| PG-01 Pusat bantuan (FAQ) | artikel FAQ | Figma: notifikasi "Membuka artikel sumber (demo)"; aplikasi membuka isi artikel (helpdesk.faq.php?id=…) | HASIL | PG-01 rx artikel→PG-S03 | ✅ 2026-11-08: 17 tautan artikel (pola daftar) → PG-R01 isi artikel |
+| PG-S11, PG-S12 | — | Frame "tidak dipakai" masih ada (S11 duplikat DM-S02) | LAIN | nama frame berisi "(tidak dipakai)" | ⏭ dipertahankan: masih ada reaction masuk dari PG-05 (HP, tidak disentuh) |
+| PG-05 Chat di HP | — | Tampilan HP tak diuji di aplikasi | LAIN | tidak diuji | ⏭ tampilan HP (PG-05) tidak disentuh (keputusan) |
+| PG-00 / PG-S20 dll | kolom input | Placeholder "Tulis kendala Anda…" tidak muncul sebagai teks halaman (kemungkinan atribut placeholder, bukan beda) | LAIN | teks tidak terbaca innerText; tidak dinilai | ⏭ baris LAIN "tidak dinilai" dilewati (keputusan) |
+
+Status Section 01 (2026-11-08): baris ⏳ selesai (✅/⏭). figma_verify Section 01 & 02: lintas peran 0, menggantung 0, self-link 0; Alur Demo 01→12 utuh. Frame hasil baru PG-R01..R07 di Section 01; PG-06 ditangkap ulang + navbar Pegawai.
 
 ## 02 Operator
 
-| frame | elemen | masalah | jenis | bukti singkat |
-|---|---|---|---|---|
-| OP-03 Panel Saran AI | "Pilih dari 3 kandidat" + "Terapkan kandidat terpilih" | Aplikasi tidak punya pemilih 3 kandidat kategori; menampilkan satu saran (Keyakinan 75%, "Disarankan · keyakinan mencapai ambang 70%") dengan tombol Terima/Ubah/Tolak | KONTEN | app: rina:detail tiket + saran AI; Figma OP-03 |
-| OP-04 Panel "Perlu penilaian manual" | Simpan penilaian / Kembali ke saran AI | Figma: ambang 60% ("38%, di bawah ambang 60%") dan formulir Kategori/Prioritas/Grup/Catatan; aplikasi: "ambang 40%", tanpa formulir/tombol Simpan penilaian (triase lewat Tolak & form tiket) | KONTEN | app tiket 1340: "Perlu penilaian manual · keyakinan di bawah ambang 40%" |
-| OP-S12 | Simpan penilaian | Notifikasi "Penilaian manual disimpan, tiket diteruskan" tak punya padanan di aplikasi | HASIL | tak ada tombol Simpan penilaian di app |
-| OP-05 Modal Tolak | alasan | Figma: pilihan alasan (Kategori tidak sesuai / Solusi tidak relevan / Sumber artikel usang / Lainnya) + Catatan opsional; aplikasi: satu kolom "Alasan (wajib)" teks bebas | KONTEN | act rina:Tolak (buka): "Alasan (wajib)", "Tolak & triase manual" |
-| OP-S13 | Tolak saran | Figma: "Saran AI ditolak, alasan tersimpan"; aplikasi: "Saran AI ditolak. Silakan triase tiket secara manual." | HASIL | act rina:Tolak saran (kirim) |
-| OP-02 Semua tiket | Cari | Figma: notifikasi "Halaman daftar tiket diganti"; aplikasi: pencarian GLPI sungguhan | HASIL | OP-02 rx Cari→OP-S07 |
-| OP-07 Pola insiden | baris pola | Figma: baris → OP-04 (panel penilaian manual tiket); aplikasi: baris membuka Masalah (pola), bukan panel AI | TUJUAN | OP-07 rx Pola insiden…→OP-04 |
-| OP-09 Siap ditutup | Tutup / Tutup yang dipilih | Hasil klik tidak diuji; Figma → OP-S19 "Tidak ada tiket siap ditutup" | LAIN | tidak diuji (mengubah tiket nyata) |
-| OP-S14, S16, S18 | — | Notifikasi "Filter status SLA", "Tiket induk dibuat…", "Filter kategori pengetahuan" tak punya padanan aksi di aplikasi | STATE-HILANG | tak ditemukan aksi sepadan |
-| OP-02, OP-06 | kolom tabel | Teks keluar batas frame: OP-02=31, OP-06=49 | TATA-LETAK | out of bounds |
+| frame | elemen | masalah | jenis | bukti singkat | status |
+|---|---|---|---|---|---|
+| OP-03 Panel Saran AI | "Pilih dari 3 kandidat" + "Terapkan kandidat terpilih" | Aplikasi tidak punya pemilih 3 kandidat kategori; menampilkan satu saran (Keyakinan 75%, "Disarankan · keyakinan mencapai ambang 70%") dengan tombol Terima/Ubah/Tolak | KONTEN | app: rina:detail tiket + saran AI; Figma OP-03 | ✅ ditangkap ulang dari app (rina, 1440 px): satu saran 82%, «Disarankan · keyakinan mencapai ambang 70%», Terima/Ubah/Tolak; tanpa pemilih 3 kandidat. Terima→OP-S09, Tolak→OP-05. «Ubah» → OP-R4 (lihat tambahan 2026-11-08) |
+| OP-04 Panel "Perlu penilaian manual" | Simpan penilaian / Kembali ke saran AI | Figma: ambang 60% ("38%, di bawah ambang 60%") dan formulir Kategori/Prioritas/Grup/Catatan; aplikasi: "ambang 40%", tanpa formulir/tombol Simpan penilaian (triase lewat Tolak & form tiket) | KONTEN | app tiket 1340: "Perlu penilaian manual · keyakinan di bawah ambang 40%" | ✅ ditangkap ulang: «Perlu penilaian manual · keyakinan di bawah ambang 40%», tanpa formulir; Tolak→OP-05 |
+| OP-S12 | Simpan penilaian | Notifikasi "Penilaian manual disimpan, tiket diteruskan" tak punya padanan di aplikasi | HASIL | tak ada tombol Simpan penilaian di app | ✅ OP-S12 dihapus (tak ada aksinya); reaction ke sana ikut hilang |
+| OP-05 Modal Tolak | alasan | Figma: pilihan alasan (Kategori tidak sesuai / Solusi tidak relevan / Sumber artikel usang / Lainnya) + Catatan opsional; aplikasi: satu kolom "Alasan (wajib)" teks bebas | KONTEN | act rina:Tolak (buka): "Alasan (wajib)", "Tolak & triase manual" | ✅ modal = satu kolom «Alasan (wajib)» + «Tolak & triase manual» (salinan form asli); tombol kirim → OP-R1 |
+| OP-S13 | Tolak saran | Figma: "Saran AI ditolak, alasan tersimpan"; aplikasi: "Saran AI ditolak. Silakan triase tiket secara manual." | HASIL | act rina:Tolak saran (kirim) | ✅ OP-R1 (hasil) «Saran AI ditolak. Silakan triase tiket secara manual.»; OP-S13 dihapus |
+| OP-02 Semua tiket | Cari | Figma: notifikasi "Halaman daftar tiket diganti"; aplikasi: pencarian GLPI sungguhan | HASIL | OP-02 rx Cari→OP-S07 | ✅ OP-R2 (hasil) daftar tiket hasil pencarian GLPI; Cari→OP-R2; OP-S07 dihapus |
+| OP-07 Pola insiden | baris pola | Figma: baris → OP-04 (panel penilaian manual tiket); aplikasi: baris membuka Masalah (pola), bukan panel AI | TUJUAN | OP-07 rx Pola insiden…→OP-04 | ✅ OP-R3 (hasil) layar Masalah «Pola insiden: …»; 8 reaction baris/tautan → OP-R3 (bukan OP-04) |
+| OP-09 Siap ditutup | Tutup / Tutup yang dipilih | Hasil klik tidak diuji; Figma → OP-S19 "Tidak ada tiket siap ditutup" | LAIN | tidak diuji (mengubah tiket nyata) | ⏭ baris LAIN: Tutup tidak dijalankan pada tiket nyata |
+| OP-S14, S16, S18 | — | Notifikasi "Filter status SLA", "Tiket induk dibuat…", "Filter kategori pengetahuan" tak punya padanan aksi di aplikasi | STATE-HILANG | tak ditemukan aksi sepadan | ✅ OP-S14, S16, S18 dihapus (tanpa aksi padanan, tanpa reaction masuk); OP-S08/S10/S11 (dropdown desain lama) ikut dihapus karena yatim |
+| OP-02, OP-06 | kolom tabel | Teks keluar batas frame: OP-02=31, OP-06=49 | TATA-LETAK | out of bounds | ⏭ dicek: OP-02 31 & OP-06 49 teks keluar batas semuanya ter-clip/scroll; teks terlihat bertumpuk 0 |
+
+Perbaikan 2026-11-07 (Section 02): OP-03/04/05 diisi ulang dari tangkapan app (ID frame, nama, posisi tetap; sidebar = komponen «Sidebar · Operator» varian Antrean validasi; ikon SVG; OP-03/04 kini 1440×1109 agar tombol Terima/Ubah/Tolak tidak ter-clip). Frame hasil baru di baris bawah (y=2300): OP-R1, OP-R2, OP-R3. Baris state digeser +200 px. Verifikasi Section 02: menggantung 0, self-link 0, lintas peran 0 (satu-satunya tujuan di luar section = «Keluar» OP-S02 → Login, memang logout). Alur Demo: 01→12 utuh; tambahan: label/tombol «Terima» 07 → 07-R1 → 09, «Terapkan perubahan» 08 → 08-R1 → 09 (klik di mana saja pada frame hasil); label «Terima» sebelumnya menimpa tombol dan langsung ke 09. Tidak bisa dimunculkan: «Ubah» di OP-03 (modal Ubah hanya ada di Alur Demo 08). Teks Inggris GLPI ditangkap apa adanya. Data uji: 4 tiket (1354–1357) + saran/keputusan/antrean notifikasinya dibuat lalu dihapus; DB kembali 70 tiket / 30 chat. Layar: logs/op_ss1_OP03.png (sebelum perbaikan tinggi), logs/op_ss2_OP05.png, logs/op_ss3_OP03_final.png.
+
+Tambahan 2026-11-08 (Section 02, diuji dengan alat tools/figma/): akun rina, tiket uji 1358, 1440 px, ikon SVG Tabler, sidebar = instance «Sidebar · Operator» varian Antrean validasi. **OP-R4 (hasil)** (frame `232:4526`, 4670,2300) = form «Ubah» terbuka di panel Saran AI (Urgensi + «Alasan (wajib)» terisi, tombol «Terapkan perubahan»); **OP-R5 (hasil)** (`234:4526`, 6210,2300) = hasil «Terapkan perubahan»: lencana «Diubah», «Diubah oleh Wulandari Rina…», «Alasan: …», pesan «Nilai yang diubah diterapkan ke tiket.» (teks apa adanya). Alur: OP-03 «Ubah» → OP-R4 → «Terapkan perubahan» → OP-R5. Verifikasi Section 02: lintas peran 0, menggantung 0, self-link 0 (296 reaction); Alur Demo 01→12 semua terjangkau. Data uji: tiket 1358 + saran/keputusan dibuat lalu dihapus; DB kembali 70 tiket / 30 chat. Layar: logs/op_ss4_ubah_0.png, logs/op_ss4_ubah_1.png (+ logs/pg_ss1_pg00.png dari uji awal).
 
 ## 03 Tim Teknis
 
