@@ -436,10 +436,30 @@ def run_chat(sample: int | None) -> None:
 
 # --- Lembar penilaian relevansi -------------------------------------------------------------------------------------
 
-def excerpt(value: object) -> str:
+def mask_full(value: object) -> str:
+    """Tersamarkan, spasi dirapikan, TANPA dipotong."""
     text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', ' ', str(privacy.mask_text(clean(value))))
     text = re.sub(r'\d{9,}', '[ANGKA]', text)  # NIP lama/nomor HP tanpa kata kunci lolos dari mask_text
-    return ' '.join(text.split())[:EXCERPT]
+    return ' '.join(text.split())
+
+
+def excerpt(value: object) -> str:
+    return mask_full(value)[:EXCERPT]
+
+
+def hasil_utuh(value: object) -> tuple[str, bool]:
+    """'Masalah: …' dipotong ≤EXCERPT, 'Solusi: …' UTUH. Kembalikan (teks, apakah format lama (potong 300) memotongnya)."""
+    full = mask_full(value)
+    old_truncated = len(full) > EXCERPT
+    head, sep, tail = full.partition(' Solusi: ')
+    if not sep:
+        return full, old_truncated  # tanpa bagian Solusi: tampilkan utuh
+    return f'{head[:EXCERPT]} Solusi: {tail}', old_truncated
+
+
+def row_height(texts_widths: list[tuple[str, int]]) -> float:
+    lines = max(max(1, -(-len(t) // max(w - 2, 1))) for t, w in texts_widths)
+    return min(15.0 * lines + 2, 409.0)  # batas tinggi baris Excel 409 pt
 
 
 def pick_queries(count: int) -> pd.DataFrame:
@@ -463,43 +483,54 @@ def run_relevance(sample: int | None) -> None:
         known = chunks[chunks['tiket'].notna()].drop_duplicates('sumber')
         members = {s: set(str(t).split(',')) for s, t in zip(known['sumber'], known['tiket'])}
     queries = pick_queries(max(sample // 10, 2) if sample else RELEVANCE_QUERIES)
-    book = Workbook()
-    sheet = book.active
-    sheet.title = 'Penilaian'
-    headers = ['kueri', 'teks_kueri', 'peringkat', 'sumber', 'jenis_sumber', 'skor', 'hasil', 'nilai_0_2', 'catatan']
-    sheet.append(headers)
+    headers = ['kueri', 'teks_kueri', 'peringkat', 'sumber', 'jenis_sumber', 'skor', 'hasil', 'nilai_0_2', 'catatan',
+               'teks_sebelumnya_terpotong']  # kolom nilai tetap H agar nilai lama bisa disalin-tempel
+    rows = []
     for n, row in enumerate(queries.itertuples(), 1):
         text = excerpt(row.masalah)
         hits = search.cari(text, k=RELEVANCE_RESULTS + 15)
         own = str(row.ticket_number)
         hits = [h for h in hits if h['sumber'] != own and own not in members.get(h['sumber'], ())][:RELEVANCE_RESULTS]
         for rank, hit in enumerate(hits, 1):
-            sheet.append([f'Q{n:02d}', text if rank == 1 else None, rank, hit['sumber'], hit['jenis_sumber'], hit['skor'],
-                          excerpt(hit['potongan']), None, None])
-    for line in sheet.iter_rows(min_row=2):
-        for cell in line:
-            if isinstance(cell.value, str):
-                cell.data_type = 's'  # teks berawalan "=" tetap teks, bukan rumus
-                cell.alignment = Alignment(wrap_text=True, vertical='top')
-    for cell in sheet[1]:
-        cell.font = Font(bold=True)
-    for column, width in zip('ABCDEFGHI', (7, 50, 9, 14, 12, 8, 70, 10, 24)):
-        sheet.column_dimensions[column].width = width
-    sheet.freeze_panes = 'A2'
-    rule = DataValidation(type='whole', operator='between', formula1='0', formula2='2', allow_blank=True,
-                          showErrorMessage=True, error='Isi 0, 1, atau 2')
-    sheet.add_data_validation(rule)
-    rule.add(f'H2:H{max(sheet.max_row, 2)}')
-    guide = book.create_sheet('Petunjuk')
+            hasil, cut = hasil_utuh(hit['potongan'])
+            rows.append([f'Q{n:02d}', text if rank == 1 else None, rank, hit['sumber'], hit['jenis_sumber'], hit['skor'],
+                         hasil, None, None, 'ya' if cut else 'tidak'])
+    widths = dict(zip('ABCDEFGHIJ', (7, 50, 9, 14, 12, 8, 70, 10, 24, 14)))
+    book = Workbook()
+    guide = book.active
+    guide.title = 'Petunjuk'
     for line in (('Nilai', 'Arti'), (0, 'Tidak relevan: tidak membantu menyelesaikan masalah kueri'),
                  (1, 'Sebagian relevan: topik sama, tetapi solusi tidak langsung menjawab'),
                  (2, 'Relevan: solusi dapat dipakai langsung untuk masalah kueri'),
-                 ('Catatan', 'Teks sudah disamarkan otomatis. Bila masih terlihat data pribadi, tandai di kolom catatan.')):
+                 ('Catatan', 'Teks sudah disamarkan otomatis. Bila masih terlihat data pribadi, tandai di kolom catatan.'),
+                 ('Kolom hasil', '"Masalah" dipotong maks. 300 karakter; "Solusi" ditampilkan utuh.'),
+                 ('teks_sebelumnya_terpotong', 'ya = versi lama lembar ini memotong teks 300 karakter (bagian Solusi bisa hilang).')):
         guide.append(line)
     guide.column_dimensions['B'].width = 80
+    for name in ('Penilai A', 'Penilai B', 'Penilai C'):
+        sheet = book.create_sheet(name)
+        sheet.append(headers)
+        for values in rows:
+            sheet.append(values)
+        for line in sheet.iter_rows(min_row=2):
+            for cell in line:
+                if isinstance(cell.value, str):
+                    cell.data_type = 's'  # teks berawalan "=" tetap teks, bukan rumus
+                cell.alignment = Alignment(wrap_text=True, vertical='top')
+            sheet.row_dimensions[line[0].row].height = row_height(
+                [(str(line[1].value or ''), 50), (str(line[6].value or ''), 70)])
+        for cell in sheet[1]:
+            cell.font = Font(bold=True)
+        for column, width in widths.items():
+            sheet.column_dimensions[column].width = width
+        sheet.freeze_panes = 'A2'
+        rule = DataValidation(type='whole', operator='between', formula1='0', formula2='2', allow_blank=True,
+                              showErrorMessage=True, error='Isi 0, 1, atau 2')
+        sheet.add_data_validation(rule)
+        rule.add(f'H2:H{max(sheet.max_row, 2)}')
     target = OUT / 'penilaian_relevansi.xlsx'
     book.save(target)
-    print(f'[relevansi] {len(queries)} kueri, {sheet.max_row - 1} baris → {target}')
+    print(f'[relevansi] {len(queries)} kueri, {len(rows)} baris → {target}')
 
 
 def main() -> None:

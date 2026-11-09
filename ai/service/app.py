@@ -224,6 +224,13 @@ class ServiceCatalogReindexRequest(BaseModel):
     layanan: list[ServiceItem] = Field(max_length=500)
 
 
+INDEX_MISMATCH_WARNING = 'indeks tidak cocok dengan basis pengetahuan, bangun ulang indeks'
+
+
+class IndexMismatchRequest(BaseModel):
+    sumber: str = Field(pattern=r'^KB-\d+$', max_length=30)
+
+
 class ArticleReindexRequest(BaseModel):
     id: int = Field(gt=0)
     judul: str = Field(default='', max_length=500)
@@ -282,6 +289,8 @@ def health() -> dict:
                            if kind == 'triase' or state.get(kind) is not None},
         'pencarian': bool(state.get('search')), 'model_embedding': search.model_name(), 'penyedia_embedding': search.provider(),
         'generasi': llm.provider() if llm.provider() != 'none' else 'ekstraktif', 'model_llm': llm.model_name(),
+        'peringatan': [INDEX_MISMATCH_WARNING] if state.get('index_mismatch') else [],
+        'indeks_tidak_cocok': sorted(state.get('index_mismatch', ())),
     }
 
 
@@ -421,6 +430,14 @@ def gates(req: GateRequest) -> dict:
             'urgensi': quality_gate('urgensi')}
 
 
+@app.post('/indeks/tidak-cocok')
+def index_mismatch(req: IndexMismatchRequest) -> dict:
+    """Plugin melapor: judul potongan KB-<id> di indeks ≠ judul artikel GLPI untuk ID itu (indeks dibangun di basis lain)."""
+    state.setdefault('index_mismatch', set()).add(req.sumber)
+    log.warning('%s (%s)', INDEX_MISMATCH_WARNING, req.sumber)
+    return {'ok': True, 'jumlah': len(state['index_mismatch'])}
+
+
 @app.post('/reindex/artikel')
 def reindex_article(req: ArticleReindexRequest) -> dict:
     """Artikel KB terbit → ganti potongannya; dihapus/tidak terbit → hapus potongannya. Tiket historis tetap."""
@@ -432,6 +449,7 @@ def reindex_article(req: ArticleReindexRequest) -> dict:
     except OSError as e:
         log.error('Indeks gagal ditulis: %s', type(e).__name__)
         raise HTTPException(500, 'Indeks gagal ditulis; indeks lama tetap dipakai') from e
+    state.get('index_mismatch', set()).discard(f'KB-{req.id}')  # potongan artikel ini sudah diganti dari GLPI
     _, vectors = search.load_index()
     state['corpus_mean'] = vectors.mean(axis=0)
     record_latency('reindex', total_ms=ms_since(start), aksi=req.aksi, potongan=count)

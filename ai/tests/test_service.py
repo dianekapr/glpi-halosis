@@ -208,3 +208,21 @@ def test_urgensi_ambang_per_kelas(monkeypatch):
     artifact['metrics'] = {'f1_makro': 0.58, 'f1_makro_pembanding': 0.448}
     assert saran() is None
 
+
+
+def test_indeks_tidak_cocok_muncul_di_health(monkeypatch):
+    c = client(monkeypatch, [])
+    monkeypatch.setattr(service, 'quality_gate', lambda *a, **k: {})
+    assert c.get('/health').json()['peringatan'] == []
+    assert c.post('/indeks/tidak-cocok', json={'sumber': 'KB-7'}).json()['jumlah'] == 1
+    assert c.post('/indeks/tidak-cocok', json={'sumber': 'bukan-kb'}).status_code == 422
+    health = c.get('/health').json()
+    assert health['peringatan'] == [service.INDEX_MISMATCH_WARNING] and health['indeks_tidak_cocok'] == ['KB-7']
+
+
+def test_chat_sumber_membawa_judul_potongan_yang_sama_dengan_jawaban(monkeypatch):
+    hit = {'potongan': 'Reset lewat portal SSO', 'skor': 0.9, 'sumber': 'KB-5', 'jenis_sumber': 'kb',
+           'judul': 'Mengatur ulang kata sandi SSO BPS'}
+    r = client(monkeypatch, [hit]).post('/chat', json={'pertanyaan': 'lupa sandi sso'}).json()
+    assert 'Mengatur ulang kata sandi SSO BPS' in r['jawaban']
+    assert r['sumber'][0]['judul'] == 'Mengatur ulang kata sandi SSO BPS'
