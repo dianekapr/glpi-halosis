@@ -18,6 +18,12 @@ keycloak_volume() {
     --format '{{range .Mounts}}{{if eq .Destination "/opt/keycloak/data"}}{{.Name}}{{end}}{{end}}'
 }
 
+# Path host untuk bind mount docker: di Git Bash/MSYS pakai bentuk Windows (C:/...) dan matikan konversi path otomatis.
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) host_path() { (cd "$1" && pwd -W); }; export MSYS_NO_PATHCONV=1 ;;
+  *) host_path() { (cd "$1" && pwd); } ;;
+esac
+
 simpan() {
   local dir="$BACKUP_DIR/demo-$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$dir"
@@ -25,11 +31,16 @@ simpan() {
   mysql_in_db 'mysqldump --single-transaction --routines --no-tablespaces -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" 2>/dev/null' \
     | gzip > "$dir/glpi.sql.gz"
   echo "2/4 Salin indeks AI…"
+  mkdir -p ai/index
   cp -R ai/index "$dir/ai-index"
   echo "3/4 Arsip data Keycloak (Keycloak berhenti ±20 detik)…"
-  local vol; vol=$(keycloak_volume)
+  local vol hd; vol=$(keycloak_volume); hd=$(host_path "$dir")
   docker compose stop keycloak >/dev/null
-  docker run --rm -v "$vol":/data:ro -v "$PWD/$dir":/backup alpine:3.22 tar czf /backup/keycloak-data.tgz -C /data .
+  if ! docker run --rm -v "$vol":/data:ro -v "$hd":/backup alpine:3.22 sh -c 'tar czf /backup/keycloak-data.tgz -C /data . && test -s /backup/keycloak-data.tgz'; then
+    docker compose start keycloak >/dev/null
+    echo "GAGAL: arsip Keycloak tidak terbentuk (folder host tidak terbaca container: $hd). Keycloak tidak diubah." >&2
+    exit 1
+  fi
   docker compose start keycloak >/dev/null
   echo "4/4 Ringkasan"
   mysql_in_db 'mysql -N -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT COUNT(*) FROM glpi_tickets" 2>/dev/null' \
@@ -48,10 +59,15 @@ pulihkan() {
   echo "2/5 Muat dump…"
   gunzip -c "$dir/glpi.sql.gz" | docker compose exec -T db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" 2>/dev/null'
   echo "3/5 Pulihkan data Keycloak (Keycloak berhenti ±20 detik)…"
-  local vol; vol=$(keycloak_volume)
+  local vol hd; vol=$(keycloak_volume); hd=$(host_path "$dir")
   docker compose stop keycloak >/dev/null
-  docker run --rm -v "$vol":/data -v "$PWD/$dir":/backup:ro alpine:3.22 \
-    sh -c 'find /data -mindepth 1 -delete && tar xzf /backup/keycloak-data.tgz -C /data'
+  # Cek arsip terbaca dari DALAM container sebelum menghapus /data; bila gagal, Keycloak tidak diubah.
+  if ! docker run --rm -v "$vol":/data -v "$hd":/backup:ro alpine:3.22 \
+    sh -c 'test -s /backup/keycloak-data.tgz && tar tzf /backup/keycloak-data.tgz >/dev/null && find /data -mindepth 1 -delete && tar xzf /backup/keycloak-data.tgz -C /data'; then
+    docker compose start keycloak >/dev/null
+    echo "GAGAL: /backup/keycloak-data.tgz tidak terbaca di container (folder host: $hd). Data Keycloak tidak diubah." >&2
+    exit 1
+  fi
   docker compose start keycloak >/dev/null
   echo "4/5 Kosongkan cache GLPI"
   docker compose exec -T glpi php bin/console cache:clear --allow-superuser >/dev/null
