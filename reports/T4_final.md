@@ -440,7 +440,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 2. Sistem menampilkan sapaan "Halo …! Apa yang Anda butuhkan hari ini?", kartu **Ajukan permintaan** dan **Laporkan masalah**, serta contoh di bawah **Coba tanyakan:**.
 3. Pegawai mengetik kendala di kotak **Tulis kendala Anda…** atau memilih salah satu contoh, lalu mengklik ikon **Kirim** atau menekan Enter.
 4. Sistem mencatat percakapan, menyamarkan data pribadi, dan mencari jawaban (include UC-02).
-5. Sistem menampilkan jawaban berlabel **Dijawab oleh AI** beserta tautan sumber, disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**.
+5. Sistem menampilkan jawaban berlabel **Dari Pusat Bantuan** (kutipan langsung dari artikel; berlabel **Dijawab oleh AI** bila penyusun jawaban LLM diaktifkan) beserta tautan sumber, disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**.
 6. Pegawai mencoba solusi tersebut.
 7. Pegawai mengklik **Masalah terselesaikan**.
 8. Sistem menampilkan "Seberapa membantu asisten ini?" dengan bintang 1–5, lalu pegawai memilih satu bintang.
@@ -455,7 +455,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **3a. Pesan kosong.** Sistem menampilkan "Silakan ketik pertanyaan."
 - **3b. Percakapan sudah terlalu panjang.** Sistem menampilkan "Percakapan terlalu panjang. Buat laporan atau mulai percakapan baru."
 - **3c. Percakapan sudah berakhir.** Sistem menampilkan "Percakapan ini sudah selesai. Mulai percakapan baru untuk bertanya lagi."
-- **4a. Layanan AI gagal menjawab.** Sistem mencari dengan kata kunci di artikel, lalu menampilkan jawaban berlabel **Dari Pusat Bantuan**. Bila kosong, alur lanjut ke 5a.
+- **4a. Layanan AI gagal menjawab.** Sistem mencari dengan kata kunci di artikel, lalu menampilkan hasilnya dengan label **Dari Pusat Bantuan**. Bila kosong, alur lanjut ke 5a.
 - **4b. Permintaan ke server gagal.** Sistem menampilkan "Asisten sedang tidak tersedia. Anda tetap dapat membuat laporan." beserta kartu laporan.
 - **5a. Solusi tidak ditemukan.** Sistem menampilkan "Maaf, saya belum menemukan jawabannya di Pusat Bantuan…" dan kartu "Saya belum menemukan jawabannya. Apakah Anda ingin saya buatkan laporan…" dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**. **Ya, buat laporan** melanjutkan ke UC-03 S-1. **Tidak, terima kasih** hanya menutup kartu, dan pegawai tetap dapat bertanya lagi.
 - **5b. Keyakinan jawaban sedang.** Sistem menampilkan "Apakah yang Anda maksud salah satu artikel berikut?…" dengan tautan artikel.

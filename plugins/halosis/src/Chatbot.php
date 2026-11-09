@@ -214,6 +214,14 @@ final class Chatbot
         return $model !== null && $model !== '' && $model !== self::DEMO_MODEL && !str_ends_with($model, self::EXTRACTIVE_SUFFIX);
     }
 
+    /** Judul indeks (sudah tersamar) vs judul artikel GLPI: abaikan huruf besar/kecil, tanda baca, dan penyamaran. */
+    public static function sameTitle(string $indexTitle, string $glpiTitle): bool
+    {
+        $norm = static fn (string $t): string => preg_replace('/[^\p{L}\p{N}]+/u', '', mb_strtolower($t)) ?? '';
+        $a = $norm($indexTitle);
+        return $a !== '' && ($a === $norm($glpiTitle) || $a === $norm(Privacy::mask($glpiTitle)['text']));
+    }
+
     /**
      * Jawaban dari layanan AI HaloSIS. Null jika layanan mengutip artikel KB yang tidak boleh dilihat
      * pengguna ini (supaya pemanggil kembali ke pencarian KB lokal yang menghormati hak akses).
@@ -242,7 +250,20 @@ final class Chatbot
                 if (!$item->getFromDB((int) $m[1]) || !$item->canViewItem()) {
                     return null;
                 }
-                $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
+                // Chip memakai judul potongan yang sama dengan jawaban. Bila judul di indeks ≠ judul artikel GLPI untuk ID ini,
+                // indeks dibangun di basis lain: jangan tampilkan tautan yang salah, laporkan ke layanan AI (/health).
+                $indexTitle = (string) ($source['judul'] ?? '');
+                if (!self::sameTitle($indexTitle, (string) $item->fields['name'])) {
+                    Toolbox::logInFile('halosis', sprintf("Chatbot: indeks tidak cocok dengan basis pengetahuan, bangun ulang indeks (%s)\n", $ref), true);
+                    try {
+                        Service::post('/indeks/tidak-cocok', ['sumber' => $ref]);
+                    } catch (\Throwable $e) {
+                        // pelaporan opsional; jawaban tetap dikirim tanpa tautan
+                    }
+                    $sources[] = ['id' => 0, 'name' => $indexTitle !== '' ? $indexTitle : $ref, 'url' => ''];
+                    continue;
+                }
+                $sources[] = ['id' => $item->getID(), 'name' => $indexTitle, 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
             } elseif (($url = KnowledgeIndex::serviceUrl($ref)) !== null) {
                 // Katalog layanan (BR-03): arahkan ke form / katalog layanan
                 $sources[] = ['id' => 0, 'name' => (string) ($source['judul'] ?? $ref), 'url' => $url];
@@ -401,7 +422,8 @@ final class Chatbot
         $sources = [];
         foreach ($choices as $choice) {
             $item = new \KnowbaseItem();
-            if (preg_match('/^KB-(\d+)$/', (string) ($choice['sumber'] ?? ''), $m) && $item->getFromDB((int) $m[1]) && $item->canViewItem()) {
+            if (preg_match('/^KB-(\d+)$/', (string) ($choice['sumber'] ?? ''), $m) && $item->getFromDB((int) $m[1]) && $item->canViewItem()
+                && self::sameTitle((string) ($choice['judul'] ?? ''), (string) $item->fields['name'])) {
                 $sources[] = ['id' => $item->getID(), 'name' => (string) $item->fields['name'], 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
             }
         }

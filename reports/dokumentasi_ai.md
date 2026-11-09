@@ -29,28 +29,29 @@ Rujukan ditulis `file:baris`, relatif dari folder proyek. Rujukan di §1–3 dan
 flowchart TD
     A["History tiket<br/>Excel ekspor ESTIM, 220 kolom"] --> B["Persiapan data<br/>prepare_data.py"]
     B --> C["tickets_clean.parquet<br/>teks tersamar, tanda tidak lengkap"]
-    B --> D["qa_pairs.parquet<br/>masalah dan solusi"]
+    B --> D["qa_pairs.parquet<br/>masalah dan solusi tiket"]
 
     C --> E["Pelatihan<br/>train_triage, train_jenis, train_urgensi"]
-    E --> F["Model + metrik<br/>ai/models"]
+    E --> F["Model + metrik<br/>ai/models (urgensi gagal gerbang, nonaktif)"]
     D --> G["Bangun indeks<br/>build_index.py"]
-    KB["Artikel KB GLPI"] --> G
+    KB["Artikel KB terbit + katalog layanan<br/>lewat REST API GLPI"] --> G
     G --> H["Indeks pencarian<br/>ai/index"]
 
     F --> I["Layanan halosis-ai<br/>/triage /chat /cari /pola /kandidat /reindex"]
     H --> I
-    Q["Gerbang kualitas<br/>quality.py"] --> I
+    Q["Gerbang kualitas<br/>quality.py, ambang aktif"] --> I
+    LLM["LLM opsional<br/>Ollama / server BPS, bawaan mati"] -.-> I
 
     I <--> J["Plugin HaloSIS di GLPI<br/>lewat HTTP"]
     J --> K["Panel Saran AI<br/>tiket baru"]
-    J --> L["Chatbot Tanya HaloSIS<br/>Pegawai"]
-    J --> M["Cari knowledge<br/>Petugas"]
+    J --> L["Chatbot Tanya HaloSIS<br/>Pegawai: hanya KB + katalog"]
+    J --> M["Cari pengetahuan<br/>Petugas: KB + solusi tiket"]
     J --> N["Problem pola insiden<br/>tugas tiap 15 menit"]
-    J --> O["Kandidat knowledge<br/>Knowledge Manager"]
+    J --> O["Kandidat pengetahuan<br/>Knowledge Manager"]
 
     K --> P["Keputusan petugas<br/>Terima, Ubah, Tolak + alasan"]
     N --> P2["Operator menindaklanjuti"]
-    O --> P3["Jadikan draf artikel atau Abaikan"]
+    O --> P3["Draf artikel (templat atau disusun AI)<br/>wajib ditinjau KM, atau Abaikan"]
     P --> R["Log keputusan dan riwayat tiket"]
     R -. "ekspor koreksi manual" .-> E
 ```
