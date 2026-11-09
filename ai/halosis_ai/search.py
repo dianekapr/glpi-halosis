@@ -41,10 +41,14 @@ def chunk(text: str) -> list[str]:
     return [' '.join(words[i:i + MAX_WORDS]) for i in range(0, max(len(words), 1), MAX_WORDS)]
 
 
-def article_chunks(kb_id: int, title: str, answer_html: str) -> pd.DataFrame:
-    """Potongan satu artikel KB (tersamar), format sama dengan build_index.py."""
+def article_chunks(kb_id: int, title: str, answer_html: str, chat: bool = True) -> pd.DataFrame:
+    """Potongan satu artikel KB (tersamar), format sama dengan build_index.py.
+
+    chat=True  → jenis_sumber 'kb' (FAQ yang bertarget = terlihat pegawai; dipakai /chat dan /cari);
+    chat=False → 'kb_internal' (terbit tetapi bukan FAQ untuk pegawai; hanya /cari petugas, tidak pernah ke /chat).
+    """
     title = str(privacy.mask_text(title))
-    rows = [{'sumber': f'KB-{kb_id}', 'jenis_sumber': 'kb', 'judul': title, 'teks': f'{title}. {part}'}
+    rows = [{'sumber': f'KB-{kb_id}', 'jenis_sumber': 'kb' if chat else 'kb_internal', 'judul': title, 'teks': f'{title}. {part}'}
             for part in chunk(str(privacy.mask_text(strip_html(answer_html))))]
     return pd.DataFrame(rows, columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
 
@@ -168,13 +172,13 @@ def _read_checked(index_dir: Path) -> tuple[pd.DataFrame, np.ndarray]:
 
 
 def update_article(kb_id: int, title: str, answer_html: str, remove: bool = False,
-                   index_dir: Path | None = None) -> int:
+                   index_dir: Path | None = None, chat: bool = True) -> int:
     """Ganti (atau hapus bila remove) potongan artikel KB-<kb_id>; potongan tiket historis tidak disentuh.
 
     Kembalikan jumlah potongan artikel di indeks setelah pembaruan.
     """
     index_dir = index_dir or INDEX_DIR
-    new = None if remove else article_chunks(kb_id, title, answer_html)
+    new = None if remove else article_chunks(kb_id, title, answer_html, chat)
     new_vectors = embed(new['teks'].tolist(), 'passage') if new is not None and len(new) else None
     with _lock:
         chunks, vectors = _indexes.get(index_dir) or _read_checked(index_dir)

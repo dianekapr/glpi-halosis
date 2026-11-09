@@ -361,7 +361,7 @@ def run_retrieval(sample: int | None) -> None:
     note = '' if len(cases) == 8 else f' **Berkas berisi {len(cases)} kasus, bukan 8.**'
     write_section('retrieval', '\n'.join([
         '## Retrieval terkendali (BR-04)', '',
-        f'{len(cases)} kasus real dari KB HaloSIS existing, pertanyaan disusun tim (bukan kasus PoC asli), dari `ai/scripts/{CASES.name}`.{note} Korpus: {num(corpus["sumber"].nunique())} sumber KB terbit + '
+        f'{len(cases)} kasus real dari KB HaloSIS existing, pertanyaan disusun tim (bukan kasus PoC asli), dari `ai/scripts/{CASES.name}`.{note} Korpus: {num(corpus["sumber"].nunique())} sumber (artikel KB yang terlihat pegawai: FAQ + bertarget) + '
         'katalog layanan pada indeks aktif, bukan korpus Zammad PoC. Acuan dokumen: Top-1 100%, Top-3 100%, MRR 1,0000, '
         'dan dokumen menegaskan angka itu hanya berlaku pada PoC terkendali.', '',
         table(['Model', 'Top-1', 'Top-3', 'MRR'], rows), '',
@@ -425,7 +425,7 @@ def run_chat(sample: int | None) -> None:
                     excerpts.append(f'- {label}, P{n}: {" ".join(text.split())[:200]}')
     write_section('chat', '\n'.join([
         '## Ekstraktif vs Qwen grounded (BR-06)', '',
-        'Lewat `/chat` nyata, sumber hanya KB terbit + katalog layanan. Pertanyaan rekaan; P1 dari dokumen hal. 55.', '',
+        'Lewat `/chat` nyata, sumber hanya artikel KB yang terlihat pegawai (FAQ + bertarget) + katalog layanan. Pertanyaan rekaan; P1 dari dokumen hal. 55.', '',
         '\n'.join(f'- P{n}: {q}' for n, (q, _) in enumerate(questions, 1)), '',
         table(['Mode uji', 'No', 'Harapan', 'Mode /chat', 'Sesuai', 'Skor', 'Ada sumber', 'Kata dari sumber', 'Detik'], rows), '',
         f'Tidak sesuai harapan: {failed} dari {len(rows)}. Kolom *Kata dari sumber* indikator kasar; menilai halusinasi '

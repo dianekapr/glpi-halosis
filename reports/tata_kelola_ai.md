@@ -60,10 +60,13 @@ tetap bisa ditelusuri ke model yang menghasilkannya.
 
 | Sumber | Masuk indeks | Pemilik | Aturan |
 | --- | --- | --- | --- |
-| Artikel KB yang terbit / FAQ | Otomatis saat terbit, dihapus saat ditarik (`/reindex/artikel`) | Knowledge Manager | Hanya artikel terbit; draf tidak diindeks |
+| Artikel KB yang terbit | Otomatis saat terbit/berubah target/FAQ, dihapus saat ditarik (`/reindex/artikel`, hook `KnowledgeIndex`) | Knowledge Manager | Hanya artikel terbit; draf tidak diindeks. **`/chat` (pegawai) = artikel yang terlihat pegawai di Tanya Jawab (FAQ): is_faq=1 DAN bertarget.** Artikel internal (non-FAQ) atau FAQ tanpa target hanya masuk Cari pengetahuan petugas (`/cari`, `jenis_sumber kb_internal`) |
 | Solusi tiket historis | Dibangun ulang manual (`build_index.py`) | Pengelola AI | Wajib lewat penyamaran PII; data mentah tidak pernah masuk repo. Hanya untuk petugas (`/cari`), tidak dipakai `/chat` |
 | Kandidat knowledge | Tidak diindeks sampai diterbitkan sebagai artikel | Knowledge Manager | Kurasi manusia (Jadikan artikel / Abaikan + alasan) |
-| SOP & service catalog | Ya. Katalog layanan lewat `/reindex/layanan`; SOP sebagai artikel KB terbit | Knowledge Manager | Sumber tersetujui `/chat` bersama artikel KB terbit |
+| SOP & service catalog | Ya. Katalog layanan lewat `/reindex/layanan`; SOP sebagai artikel KB terbit | Knowledge Manager | Sumber tersetujui `/chat` bersama artikel FAQ bertarget |
+
+Akses artikel internal (non-FAQ): hanya **Tim Teknis** (dan Knowledge Manager) lewat `/cari`; **Operator** memakai FAQ + solusi tiket
+(hak profil Operator sengaja tidak diubah; keputusan 9 Nov 2026).
 
 Artikel yang terbukti salah: Knowledge Manager menarik artikel → indeks terhapus otomatis → catat di §5.
 Artikel terbit yang tidak diubah > `kb_review_months` (bawaan 6 bulan) muncul di tab **Perlu ditinjau** halaman
@@ -102,6 +105,7 @@ artikel ditempatkan di kategori KB domainnya, sehingga pemilik domain (tabel di 
 | 6 Nov 2026 | Ambang / gerbang | ambang rata-rata pola tetap 0,50 → `pattern_threshold` di Pengaturan AI; `triage.metrics.json` + kurva ambang (nilai lain tetap); gerbang dinilai pada nilai aktif (`POST /gerbang`, peringatan saat menyimpan) | Set pola `ai/scripts/gerbang_pola.py`: bawaan 8 kelompok, 25 tiket, kemurnian 0,917 → lolos. Triase 70% → 88,35%, 790 tiket → lolos | Tim proyek | Tim proyek |
 | 7 Nov 2026 | Sumber | 26 → 35 sumber `/chat` (impor 9 artikel KB); ambang chat 0,83 / 0,78 tetap | Kalibrasi ulang 35 sumber: rekaan 0,00% dijawab, 37,50% pilihan; judul sumber 100,00% dijawab. Bukti `reports/kalibrasi_ambang.md`, `logs/c9_kalibrasi_ulang.log` | Tim proyek | Tim proyek |
 | 7 Nov 2026 | Fitur | LLM opsional lewat env, bawaan `none`; draf artikel disusun LLM dengan fallback templat | Peninjauan KM wajib karena model kecil bisa menambah frasa di luar sumber. Bukti `logs/uji_llm.log`, `logs/draf_llm.log`, `reports/dokumentasi_ai.md` §5.4–5.5 | Tim proyek | Tim proyek |
+| 9 Nov 2026 | Sumber | Sumber `/chat` = artikel FAQ **dan** bertarget (sebelumnya: FAQ **atau** bertarget): 18 → 17 sumber KB (+17 layanan = 34); KB-5 (internal) keluar dari `/chat`, tetap di `/cari`; KB-31–39 (FAQ hasil impor) diberi target Entity seperti KB-2..15; plugin tidak lagi jatuh ke pencarian KB lokal saat sumber tidak terlihat (dikecualikan + ditanya ulang dengan ambang sama); ambang 0,83 / 0,78 tetap | Kalibrasi ulang 34 sumber: rekaan 0,00% dijawab (62,50% ditolak, 37,50% pilihan); judul sumber 100,00% dijawab. Bukti `reports/kalibrasi_ambang.md`, `logs/kb_inventaris_sebelum.md`, `logs/kb_inventaris_sesudah.md` | Tim proyek | Tim proyek |
 | | | | | | |
 
 ## 6. Audit berkala (bulanan)

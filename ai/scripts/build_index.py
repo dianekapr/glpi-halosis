@@ -1,7 +1,9 @@
 """AI-4: bangun indeks pencarian dari artikel KB GLPI yang terbit + qa_pairs → ai/index/.
 
 - KB  : diambil lewat REST API GLPI (bukan koneksi DB) — artikel FAQ atau yang punya target visibilitas
-        (entitas/profil/grup/pengguna) dianggap terbit, sama dengan KnowledgeIndex::isPublished. API tidak bisa
+        (entitas/profil/grup/pengguna) dianggap terbit (/cari petugas), sama dengan KnowledgeIndex::isPublished.
+        Sumber /chat pegawai = FAQ DAN bertarget (terlihat pegawai di Tanya Jawab), sama dengan
+        KnowledgeIndex::isChatSource; terbit lainnya diberi jenis_sumber 'kb_internal' (hanya /cari). API tidak bisa
         dipakai → berhenti dengan pesan jelas & exit code 1, indeks lama tidak disentuh (tidak ada fallback).
 - QA  : data/processed/qa_pairs.parquet (sudah disamarkan): "masalah" + "solusi" per tiket selesai; solusi > 220 kata
         dipecah, masalah diulang di tiap potongan (search.ticket_chunks). Penggabungan solusi identik (DEDUP) tersedia
@@ -74,11 +76,17 @@ def fetch_articles(session: requests.Session, base: str) -> list[dict]:
         start += PAGE
 
 
-def is_published(session: requests.Session, base: str, article: dict) -> bool:
-    if article.get('is_faq'):
-        return True
+def has_target(session: requests.Session, base: str, article: dict) -> bool:
     return any(_check(session.get(f'{base}/KnowbaseItem/{article["id"]}/{target}', timeout=TIMEOUT),
                       f'target visibilitas {target}').json() for target in KB_TARGETS)
+
+
+def classify(session: requests.Session, base: str, article: dict) -> str | None:
+    """'chat' = FAQ DAN bertarget (terlihat pegawai); 'cari' = terbit tetapi internal; None = belum terbit."""
+    targeted = has_target(session, base, article)
+    if article.get('is_faq') and targeted:
+        return 'chat'
+    return 'cari' if article.get('is_faq') or targeted else None
 
 
 def load_kb() -> pd.DataFrame:
@@ -86,14 +94,14 @@ def load_kb() -> pd.DataFrame:
     try:
         session = api_session(base)
         try:
-            published = [a for a in fetch_articles(session, base) if is_published(session, base, a)]
+            published = [(a, kind) for a in fetch_articles(session, base) if (kind := classify(session, base, a))]
         finally:
             session.get(f'{base}/killSession', timeout=TIMEOUT)
     except (requests.RequestException, ApiError, KeyError, ValueError) as e:
         detail = str(e) if isinstance(e, ApiError) else type(e).__name__
         raise SystemExit(f'GAGAL: artikel KB tidak bisa diambil dari REST API GLPI ({base}): {detail}. Indeks tidak '
                          'ditulis. Pastikan GLPI berjalan, API aktif, dan kredensial GLPI_API_* benar.') from e
-    chunks = [article_chunks(int(a['id']), str(a['name']), str(a['answer'])) for a in published]
+    chunks = [article_chunks(int(a['id']), str(a['name']), str(a['answer']), chat=kind == 'chat') for a, kind in published]
     if not chunks:
         return pd.DataFrame(columns=['sumber', 'jenis_sumber', 'judul', 'teks'])
     return pd.concat(chunks, ignore_index=True)
@@ -115,7 +123,8 @@ def load_services() -> pd.DataFrame:
 def main() -> None:
     kb = load_kb()  # lebih dulu: API mati → berhenti sebelum embedding
     if '--cek-kb' in sys.argv:
-        print(f'REST API OK. Potongan KB: {len(kb)} dari {kb["sumber"].nunique()} artikel terbit. Indeks tidak ditulis.')
+        print(f'REST API OK. Potongan KB: {len(kb)} dari {kb["sumber"].nunique()} artikel terbit '
+              f'({kb.loc[kb["jenis_sumber"] == "kb", "sumber"].nunique()} sumber /chat). Indeks tidak ditulis.')
         return
     qa, services = load_qa(), load_services()
     chunks = pd.concat([kb, qa, services], ignore_index=True)
@@ -130,7 +139,9 @@ def main() -> None:
     np.save(INDEX_DIR / 'vectors.npy', vectors)
     write_meta(INDEX_DIR, vectors.shape[1])
     print(f'Model embedding : {model_name()} (dimensi {vectors.shape[1]})')
-    print(f'Potongan KB     : {len(kb)} dari {kb["sumber"].nunique()} artikel')
+    print(f'Potongan KB     : {len(kb)} dari {kb["sumber"].nunique()} artikel '
+          f'({kb.loc[kb["jenis_sumber"] == "kb", "sumber"].nunique()} sumber /chat, '
+          f'{kb.loc[kb["jenis_sumber"] == "kb_internal", "sumber"].nunique()} internal)')
     print(f'Potongan tiket  : {len(qa)} dari {int(qa.drop_duplicates("sumber")["jumlah_tiket"].sum())} tiket '
           f'({qa["sumber"].nunique()} sumber, {int((qa.groupby("sumber").size() > 1).sum())} dipecah > 220 kata)')
     print(f'Potongan layanan: {len(services)} (dibawa dari indeks sebelumnya)')

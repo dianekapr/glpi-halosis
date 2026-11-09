@@ -12,9 +12,9 @@ Bukti "uji skenario" merujuk ke uji end-to-end 12 langkah yang lolos (tiket #55 
 sini dan baris yang diselaraskan 7 Nov (UC-04, §5 LLM, §8, Kesimpulan, P3 #15). Status ✅ di audit ini berarti fitur ada dan
 berjalan, sedangkan "Sebagian" di `matriks_uji_br.md` berarti bukti uji vs PoC belum setara.
 
-- BR-04: 8 kasus real dari KB HaloSIS, MiniLM Top-1 75%, e5 62,5% (n=8). e5 tetap dipilih dari uji 905 kueri. Kasus PoC asli tidak tersedia.
+- BR-04: 8 kasus real dari KB HaloSIS (34 sumber), MiniLM Top-1 75%, e5 62,5% (n=8; tidak berubah setelah aturan sumber 9 Nov). e5 tetap dipilih dari uji 905 kueri. Kasus PoC asli tidak tersedia.
 - BR-05: tetap 🟡. Urgensi nonaktif karena gagal gerbang skema B; panel memakai aturan kata kunci dan validasi Operator. Pada split PoC, baris "label asli" Top-1 78,47% vs k-NN 67,67–68,88%, F1 makro 40,62% vs 45,45–50,16%.
-- BR-06: `/chat` hanya memakai KB terbit dan katalog layanan, bukan solusi tiket. Keluhan non-TI bisa masuk mode `pilihan`, tanpa jawaban langsung dan dengan tawaran laporan.
+- BR-06: `/chat` hanya memakai artikel KB yang terlihat pegawai di Tanya Jawab (FAQ + target) dan katalog layanan (KB internal hanya di `/cari`), bukan solusi tiket. Keluhan non-TI bisa masuk mode `pilihan`, tanpa jawaban langsung dan dengan tawaran laporan.
 - Arsitektur: layanan AI tidak mengakses DB GLPI (`logs/akses_db.log`).
 - Status per BR: `reports/matriks_uji_br.md`. Keterbatasan dan rekomendasi: `reports/dokumentasi_ai.md` §5.4–5.5.
 

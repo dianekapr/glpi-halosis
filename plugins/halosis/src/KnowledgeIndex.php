@@ -21,7 +21,10 @@ use Toolbox;
  * visibilitasnya, potongan artikel itu di indeks pencarian layanan AI diperbarui (POST /reindex/artikel).
  *
  * Artikel dianggap terbit bila FAQ atau punya target visibilitas (entitas/profil/grup/pengguna), sama dengan
- * ai/scripts/build_index.py. Kegagalan hanya dicatat: penyimpanan artikel di GLPI tetap berjalan.
+ * ai/scripts/build_index.py → masuk indeks "Cari pengetahuan" petugas (/cari). Sumber chatbot pegawai (/chat) lebih
+ * sempit: FAQ DAN bertarget (isChatSource) = artikel yang juga tampil & bisa dibuka pegawai di Tanya Jawab (FAQ);
+ * artikel terbit lainnya (internal) dikirim dengan chat=false sehingga hanya ditemukan /cari.
+ * Kegagalan hanya dicatat: penyimpanan artikel di GLPI tetap berjalan.
  */
 final class KnowledgeIndex
 {
@@ -117,7 +120,24 @@ final class KnowledgeIndex
             self::send($kb_id, '', '', 'hapus');
             return;
         }
-        self::send($kb_id, (string) $article->fields['name'], (string) $article->fields['answer'], self::isPublished($article) ? 'simpan' : 'hapus');
+        self::send(
+            $kb_id,
+            (string) $article->fields['name'],
+            (string) $article->fields['answer'],
+            self::isPublished($article) ? 'simpan' : 'hapus',
+            self::isChatSource($article)
+        );
+    }
+
+    /**
+     * Sumber chatbot pegawai: terbit, FAQ, dan bertarget. FAQ tanpa target tidak terlihat pegawai; artikel bertarget
+     * yang bukan FAQ (internal) tidak tampil di Tanya Jawab. Keduanya hanya boleh muncul di Cari pengetahuan (petugas).
+     */
+    public static function isChatSource(KnowbaseItem $article): bool
+    {
+        return empty($article->fields['is_deleted'])
+            && !empty($article->fields['is_faq'])
+            && self::hasTarget((int) $article->getID());
     }
 
     public static function isPublished(KnowbaseItem $article): bool
@@ -136,13 +156,13 @@ final class KnowledgeIndex
         return false;
     }
 
-    private static function send(int $kb_id, string $title, string $answer, string $action): void
+    private static function send(int $kb_id, string $title, string $answer, string $action, bool $chat = true): void
     {
         if (!Service::isConfigured()) {
             return;
         }
         try {
-            Service::post('/reindex/artikel', ['id' => $kb_id, 'judul' => $title, 'isi' => $answer, 'aksi' => $action]);
+            Service::post('/reindex/artikel', ['id' => $kb_id, 'judul' => $title, 'isi' => $answer, 'aksi' => $action, 'chat' => $chat]);
             Session::addMessageAfterRedirect(__s('Search index updated.', 'halosis'));
         } catch (AiException $e) {
             // Tidak menggagalkan penyimpanan artikel; layanan AI tetap memakai indeks lama

@@ -4,7 +4,7 @@
 - POST /chat   {pertanyaan, riwayat}     → {ditemukan, jawaban, sumber, mode, pilihan?}
 - POST /reindex/layanan {layanan: [{id, nama, deskripsi}]} → katalog layanan masuk indeks (jenis_sumber 'layanan')
 - POST /pola   {tiket[], ambang, min_anggota, jendela_menit} → {kelompok: [{ids, judul_wakil, skor_rata}]}
-- POST /reindex/artikel {id, judul, isi, aksi} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
+- POST /reindex/artikel {id, judul, isi, aksi, chat} → perbarui potongan satu artikel KB di indeks (UC-09 langkah 7)
 - POST /cari   {q, k}                    → artikel KB & tiket historis paling relevan (pencarian semantik agent, FR-03)
 - GET  /metrics                          → metrik Prometheus (jumlah permintaan, durasi, ukuran indeks)
 - GET  /health                           → status model & indeks
@@ -14,8 +14,9 @@ HALOSIS_LATENCY_LOG (default ai/logs/latency.jsonl). Isinya hanya angka, mode, d
 
 Semua input pengguna disamarkan (privacy.mask_text) sebelum diproses. Jawaban chat dirangkum Claude HANYA
 jika ANTHROPIC_API_KEY ada di environment; tanpa key → jawaban ekstraktif (potongan teratas apa adanya).
-/chat hanya menjawab dari sumber tersetujui (CHAT_SOURCES: artikel KB terbit + katalog layanan); solusi tiket mentah
-hanya untuk /cari (petugas) dan /kandidat.
+/chat hanya menjawab dari sumber tersetujui (CHAT_SOURCES: artikel KB yang terlihat pegawai di Tanya Jawab = FAQ DAN
+bertarget, + katalog layanan); artikel internal (jenis_sumber 'kb_internal') dan solusi tiket mentah hanya untuk /cari
+(petugas) dan /kandidat.
 
 Jalankan lokal (dari folder induk proyek):
     .venv/bin/uvicorn --app-dir ai service.app:app --port 8000
@@ -233,6 +234,7 @@ class IndexMismatchRequest(BaseModel):
 
 class ArticleReindexRequest(BaseModel):
     id: int = Field(gt=0)
+    chat: bool = Field(default=True, description='Sumber /chat (FAQ bertarget); False = hanya /cari petugas')
     judul: str = Field(default='', max_length=500)
     isi: str = Field(default='', max_length=200000, description='Isi artikel (HTML GLPI)')
     aksi: Literal['simpan', 'hapus']
@@ -246,6 +248,8 @@ class SearchRequest(BaseModel):
 class ChatRequest(BaseModel):
     pertanyaan: str = Field(min_length=1, max_length=2000)
     riwayat: list[ChatTurn] = Field(default_factory=list, max_length=20)
+    kecualikan: list[str] = Field(default_factory=list, max_length=50, description=(
+        'Sumber (KB-<id>) yang tidak boleh dikutip untuk pengguna ini; hit pengganti tetap harus lolos ambang yang sama'))
 
 
 def normalize_type(jenis: str) -> str:
@@ -371,7 +375,9 @@ def chat(req: ChatRequest) -> dict:
         raise HTTPException(503, 'Indeks pencarian belum tersedia')
     start = time.perf_counter()
     question = str(privacy.mask_text(req.pertanyaan))
-    found = search.cari(question, k=CHAT_CHOICE_POOL, jenis=CHAT_SOURCES)
+    excluded = set(req.kecualikan)
+    found = [h for h in search.cari(question, k=CHAT_CHOICE_POOL + len(excluded), jenis=CHAT_SOURCES)
+             if h['sumber'] not in excluded]
     retrieval_ms = ms_since(start)
     top_score = round(float(found[0]['skor']), 4) if found else None
     hits = [h for h in found[:CHAT_TOP_K] if h['skor'] >= CHAT_MIN_SCORE]
@@ -445,7 +451,7 @@ def reindex_article(req: ArticleReindexRequest) -> dict:
         raise HTTPException(503, 'Indeks pencarian belum tersedia')
     start = time.perf_counter()
     try:
-        count = search.update_article(req.id, req.judul, req.isi, remove=req.aksi == 'hapus')
+        count = search.update_article(req.id, req.judul, req.isi, remove=req.aksi == 'hapus', chat=req.chat)
     except OSError as e:
         log.error('Indeks gagal ditulis: %s', type(e).__name__)
         raise HTTPException(500, 'Indeks gagal ditulis; indeks lama tetap dipakai') from e
