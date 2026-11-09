@@ -22,10 +22,12 @@ class Reply:
 
 
 class FakeSession:
-    """FAQ #1 terbit; #2 terbit lewat target entitas; #3 tanpa target = belum terbit."""
+    """#1 FAQ tanpa target (terbit, tapi tidak terlihat pegawai); #2 bertarget bukan FAQ (internal); #3 belum terbit;
+    #4 FAQ + bertarget = satu-satunya sumber /chat."""
     articles = [{'id': 1, 'name': 'A', 'answer': '&lt;p&gt;satu&lt;/p&gt;', 'is_faq': 1},
                 {'id': 2, 'name': 'B', 'answer': 'dua', 'is_faq': 0},
-                {'id': 3, 'name': 'C', 'answer': 'tiga', 'is_faq': 0}]
+                {'id': 3, 'name': 'C', 'answer': 'tiga', 'is_faq': 0},
+                {'id': 4, 'name': 'D', 'answer': 'empat', 'is_faq': 1}]
 
     def __init__(self):
         self.headers = {}
@@ -37,13 +39,16 @@ class FakeSession:
             return Reply({})
         if url.endswith('/KnowbaseItem'):
             return Reply(self.articles)
-        return Reply([{'id': 9}] if '/2/Entity_KnowbaseItem' in url else [])
+        return Reply([{'id': 9}] if ('/2/Entity_KnowbaseItem' in url or '/4/Entity_KnowbaseItem' in url) else [])
 
 
 def test_kb_terbit_dari_api(monkeypatch):
     monkeypatch.setattr(build_index.requests, 'Session', FakeSession)
     kb = build_index.load_kb()
-    assert sorted(kb['sumber'].unique()) == ['KB-1', 'KB-2'] and set(kb['jenis_sumber']) == {'kb'}
+    assert sorted(kb['sumber'].unique()) == ['KB-1', 'KB-2', 'KB-4']
+    # sumber /chat = FAQ DAN bertarget; terbit lainnya hanya untuk /cari
+    assert dict(kb.drop_duplicates('sumber').set_index('sumber')['jenis_sumber']) == {
+        'KB-1': 'kb_internal', 'KB-2': 'kb_internal', 'KB-4': 'kb'}
     assert '<p>' not in kb['teks'].iloc[0]
 
 

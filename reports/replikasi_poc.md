@@ -121,19 +121,19 @@ Dibuat 07-11-2026.
 <!-- retrieval:mulai -->
 ## Retrieval terkendali (BR-04)
 
-8 kasus real dari KB HaloSIS existing, pertanyaan disusun tim (bukan kasus PoC asli), dari `ai/scripts/kasus_retrieval_poc.json`. Korpus: 35 sumber KB terbit + katalog layanan pada indeks aktif, bukan korpus Zammad PoC. Acuan dokumen: Top-1 100%, Top-3 100%, MRR 1,0000, dan dokumen menegaskan angka itu hanya berlaku pada PoC terkendali.
+8 kasus real dari KB HaloSIS existing, pertanyaan disusun tim (bukan kasus PoC asli), dari `ai/scripts/kasus_retrieval_poc.json`. Korpus: 34 sumber (artikel KB yang terlihat pegawai: FAQ + bertarget) + katalog layanan pada indeks aktif, bukan korpus Zammad PoC. Acuan dokumen: Top-1 100%, Top-3 100%, MRR 1,0000, dan dokumen menegaskan angka itu hanya berlaku pada PoC terkendali.
 
 | Model | Top-1 | Top-3 | MRR |
 | --- | --- | --- | --- |
-| MiniLM | 75,00% | 87,50% | 0,8203 |
+| MiniLM | 75,00% | 87,50% | 0,8208 |
 | e5 | 62,50% | 87,50% | 0,7614 |
 
 Peringkat sumber benar per kasus:
 
 | Model | K1 | K2 | K3 | K4 | K5 | K6 | K7 | K8 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MiniLM | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 16 |
+| MiniLM | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 15 |
 | e5 | 1 | 1 | 2 | 1 | 1 | 2 | 1 | 11 |
 
-Dibuat 07-11-2026.
+Dibuat 09-11-2026.
 <!-- retrieval:selesai -->

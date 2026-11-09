@@ -34,7 +34,7 @@ flowchart TD
     C --> E["Pelatihan<br/>train_triage, train_jenis, train_urgensi"]
     E --> F["Model + metrik<br/>ai/models (urgensi gagal gerbang, nonaktif)"]
     D --> G["Bangun indeks<br/>build_index.py"]
-    KB["Artikel KB terbit + katalog layanan<br/>lewat REST API GLPI"] --> G
+    KB["Artikel KB yang terlihat pegawai (FAQ + target) + katalog layanan<br/>lewat REST API GLPI"] --> G
     G --> H["Indeks pencarian<br/>ai/index"]
 
     F --> I["Layanan halosis-ai<br/>/triage /chat /cari /pola /kandidat /reindex"]
@@ -293,8 +293,11 @@ terlihat lebih baik dari kondisi pemakaian. Sebanyak 81,24% label bernilai Mediu
 **Tujuan.** Menjawab pegawai sebelum tiket dibuat (`/chat`) dan membantu petugas mencari solusi lama (`/cari`).
 
 **Input.** Pertanyaan yang sudah disamarkan. Indeks memuat artikel KB terbit, solusi tiket lama, dan katalog layanan
-(`ai/scripts/build_index.py:3-9`). `/chat` hanya memakai artikel KB terbit dan katalog layanan (`ai/service/app.py:59`). Solusi tiket
-lama hanya untuk petugas lewat `/cari`.
+(`ai/scripts/build_index.py`). `/chat` hanya memakai artikel KB yang terlihat pegawai di Tanya Jawab (FAQ: is_faq=1 DAN bertarget) dan katalog layanan (`CHAT_SOURCES`, `ai/service/app.py:59`);
+artikel terbit lainnya (internal/non-FAQ, mis. KB-5) diberi `jenis_sumber = kb_internal` dan hanya ditemukan petugas di `/cari`, bersama
+solusi tiket lama. Aturan yang sama dipakai `build_index.py` dan `KnowledgeIndex::isChatSource` (reindex per artikel).
+Hak profil tidak diubah: artikel internal (non-FAQ) hanya terbaca **Tim Teknis** lewat `/cari`; **Operator** hanya dapat membuka FAQ, sehingga
+hasil `/cari`-nya terdiri dari artikel FAQ + solusi tiket (KB-5 tidak muncul untuk rina; muncul untuk andi/fajar, diuji 9 Nov).
 
 **Langkah pemodelan.**
 
@@ -323,13 +326,13 @@ tim yang sama.
 | e5, ekspor aktif (905 kueri) | 71,93% | 88,29% | 0,8073 | `reports/banding_embedding.md` (Reproduksi) |
 | MiniLM PoC, set sama (905 kueri) | 68,29% | 83,76% | 0,7636 | `reports/banding_embedding.md` (Reproduksi) |
 | 8 kasus real KB HaloSIS, e5 | 62,50% | 87,50% | 0,7614 | `reports/replikasi_poc.md` (Retrieval) |
-| 8 kasus real KB HaloSIS, MiniLM | 75,00% | 87,50% | 0,8203 | `reports/replikasi_poc.md` (Retrieval) |
+| 8 kasus real KB HaloSIS, MiniLM | 75,00% | 87,50% | 0,8208 | `reports/replikasi_poc.md` (Retrieval) |
 
-Kalibrasi ambang chat pada 35 sumber (`reports/kalibrasi_ambang.md`):
+Kalibrasi ambang chat pada 34 sumber (17 artikel KB + 17 layanan) (`reports/kalibrasi_ambang.md`):
 
 | Set proksi | Kueri | Dijawab | Pilihan | Ditolak |
 | --- | ---: | ---: | ---: | ---: |
-| Judul sumber (harus terjawab) | 35 | 100,00% | 0,00% | 0,00% |
+| Judul sumber (harus terjawab) | 34 | 100,00% | 0,00% | 0,00% |
 | Rekaan tak terjawab (harus ditolak) | 24 | 0,00% | 37,50% | 62,50% |
 | Masalah tiket Jul–Ags (sebaran nyata) | 905 | 68,51% | 31,38% | 0,11% |
 
@@ -461,9 +464,9 @@ Arti tanda pada kolom **Bukti uji**:
 | # | Butir | Dokumen (hal.) | Implementasi | Status | Alasan | Bukti uji |
 | --- | --- | --- | --- | --- | --- | --- |
 | 11 | Model embedding | `paraphrase-multilingual-MiniLM-L12-v2` (53, 56) | `intfloat/multilingual-e5-base` | Beda | Lebih baik di ketiga metrik pada 905 kueri ekspor aktif (Top-1 71,93 vs 68,29%, Top-3 88,29 vs 83,76%, MRR 0,8073 vs 0,7636); biayanya pengodean lebih lambat | ✓ `reports/banding_embedding.md` (Reproduksi), `ai/scripts/banding_embedding.py` |
-| 12 | Uji retrieval terkendali | 8 kasus: TF-IDF dan embedding sama-sama 100%, MRR 1,0 (53) | 8 kasus real dari KB HaloSIS existing: MiniLM Top-1 75%, Top-3 87,5%, MRR 0,8203; e5 62,5%, 87,5%, 0,7614 | Beda kasus | Teks 8 kasus PoC tidak ada di dokumen. n=8: 1 kasus = 12,5 poin. e5 tetap dipilih dari uji 905 kueri | ⚠ `reports/replikasi_poc.md` (Retrieval), `ai/scripts/kasus_retrieval_poc.json` |
+| 12 | Uji retrieval terkendali | 8 kasus: TF-IDF dan embedding sama-sama 100%, MRR 1,0 (53) | 8 kasus real dari KB HaloSIS existing: MiniLM Top-1 75%, Top-3 87,5%, MRR 0,8208; e5 62,5%, 87,5%, 0,7614 | Beda kasus | Teks 8 kasus PoC tidak ada di dokumen. n=8: 1 kasus = 12,5 poin. e5 tetap dipilih dari uji 905 kueri | ⚠ `reports/replikasi_poc.md` (Retrieval), `ai/scripts/kasus_retrieval_poc.json` |
 | 13 | LLM | Qwen2.5 3B lewat Ollama (53, 55) | Bawaan `LLM_PROVIDER=none` (ekstraktif). Opsional lewat env: server kompatibel OpenAI (termasuk Ollama, profile `llm`) atau Anthropic. Demo: `qwen2.5:3b` lokal | Sama, opsional | Tanpa data keluar dan tanpa GPU secara bawaan; kutipan tidak bisa berhalusinasi | ⚠ `reports/replikasi_poc.md` (Ekstraktif vs Qwen), `logs/uji_llm.log`, `logs/draf_llm.log`. Hanya 10 uji pertanyaan |
-| 14 | Grounding dan fallback | RAG + grounding + fallback + HITL; ada uji unknown-answer (55–56) | Sumber hanya KB terbit + katalog layanan. Di bawah ambang tidak menjawab, mode pilihan, tawaran laporan | Sama | – | ✓ `reports/kalibrasi_ambang.md`, `tests/e2e/alur_alternatif.js`, `ai/tests/test_service.py`. Keterbatasan: §5.4 no. 8 |
+| 14 | Grounding dan fallback | RAG + grounding + fallback + HITL; ada uji unknown-answer (55–56) | Sumber hanya artikel KB yang terlihat pegawai (FAQ + target) + katalog layanan. Di bawah ambang tidak menjawab, mode pilihan, tawaran laporan | Sama | – | ✓ `reports/kalibrasi_ambang.md`, `tests/e2e/alur_alternatif.js`, `ai/tests/test_service.py`. Keterbatasan: §5.4 no. 8 |
 | 15 | Similarity E2E | 0,8592 pada satu pertanyaan (55) | Ambang 0,83 untuk e5 | Tidak sebanding | Skala kosinus MiniLM dan e5 berbeda (`reports/banding_embedding.md:36`) | – |
 
 ### 4.3 Deteksi pola insiden
@@ -553,11 +556,11 @@ Status per 7 Nov 2026, setelah bagian A, B, dan C.
 | --- | --- | --- | --- |
 | 1 | Urgensi dievaluasi dengan tim akhir, tetapi dipakai dengan tim saran AI | **Selesai.** Gerbang memakai skema B (tim prediksi out-of-fold). Urgensi gagal gerbang, jadi dinonaktifkan | `reports/usulan_gerbang_a.md`, `reports/tata_kelola_ai.md:96-97`, `ai/service/app.py:308` |
 | 2 | Ambang urgensi dipilih dan dilaporkan pada prediksi yang sama | **Selesai.** Ambang dipilih di lipatan dalam | `reports/usulan_gerbang_a.md`, `logs/a3a4_metrik.log` |
-| 3 | Chatbot mengutip solusi tiket lama yang belum ditinjau | **Selesai.** `/chat` hanya memakai KB terbit dan katalog layanan | `ai/service/app.py:59`, `:365`, `reports/banding_solusi.md` |
+| 3 | Chatbot mengutip solusi tiket lama yang belum ditinjau | **Selesai.** `/chat` hanya memakai artikel KB yang terlihat pegawai (FAQ + target) dan katalog layanan; 9 Nov: KB internal dikeluarkan, FAQ hasil impor diberi target, plugin tidak lagi jatuh ke pencarian lokal saat sumber disaring | `ai/service/app.py:59`, `:365`, `reports/banding_solusi.md` |
 | 4 | Skrip `banding_embedding.md` dan `banding_pola.md` tidak ada di repo | **Selesai.** Kedua uji dapat diulang | `ai/scripts/banding_embedding.py`, `ai/scripts/banding_pola.py` |
 | 5 | Perubahan triase tidak pernah dibandingkan pada set yang sama dengan PoC | **Selesai,** sebagai rekonstruksi | `reports/replikasi_poc.md` (Triase) |
 | 6 | `build_index.py` membaca DB GLPI langsung | **Selesai.** Kini lewat REST API | `ai/scripts/build_index.py:85`, `logs/akses_db.log` |
-| 7 | Ambang chat tanpa laporan kalibrasi | **Sebagian.** Laporan ada, pada 35 sumber, tetapi ambang belum boleh dinyatakan terkalibrasi sebelum penilaian tim dan UAT | `reports/kalibrasi_ambang.md` |
+| 7 | Ambang chat tanpa laporan kalibrasi | **Sebagian.** Laporan ada, pada 34 sumber, tetapi ambang belum boleh dinyatakan terkalibrasi sebelum penilaian tim dan UAT | `reports/kalibrasi_ambang.md` |
 | 8 | Ambang pola tidak bisa diubah dari Pengaturan AI | **Selesai** | `plugins/halosis/src/PatternDetector.php:238`, `logs/a4_pola_set.log` |
 | 9 | Model triase dilatih Jan–Jun dan diuji Jul–Ags | **Bukan kekurangan.** Ini split waktu yang disengaja agar uji meniru pemakaian nyata. Pelatihan ulang mengikuti §6 | `ai/scripts/train_triage.py:134-138`, `reports/triase.md:27` |
 | 10 | `tata_kelola_ai.md` tertinggal: recall "Lainnya" 0,335 dan SOP "belum" | **Selesai.** Recall 0,4319, SOP dan katalog layanan terindeks, status urgensi dicatat | `reports/tata_kelola_ai.md`, `ai/models/triage.metrics.json` |
@@ -573,7 +576,7 @@ Status per 7 Nov 2026, setelah bagian A, B, dan C.
 5. **Draf artikel "Kandidat → artikel" disusun LLM** lewat `halosis-ai` bila `LLM_PROVIDER≠none`, dengan fallback templat dan label "Disusun AI, wajib ditinjau Knowledge Manager". Uji `qwen2.5:3b` menunjukkan model kecil bisa menambah frasa di luar sumber, jadi peninjauan KM wajib.
 6. **Layanan AI tidak mengakses DB GLPI.** Jalur data hanya REST API, dorongan plugin, dan volume model/indeks (`logs/akses_db.log`).
 7. **Urgensi tetap nonaktif** karena gagal gerbang skema B. Ini bukti tata kelola berjalan: panel memakai aturan kata kunci dan validasi Operator (`reports/tata_kelola_ai.md:97`).
-8. **Keluhan non-TI bisa masuk mode `pilihan`.** Contoh "Kursi kantor saya patah": tiga artikel KB bersaing pada skor 0,7899, 0,7872, dan 0,7820, sedikit di atas ambang 0,78. Ini konsisten dengan kalibrasi pada 35 sumber: 37,50% pertanyaan rekaan masuk `pilihan`, 0% dijawab. Jawaban langsung tetap tidak diberikan dan tawaran laporan tetap ada (`tests/e2e/alur_alternatif.js`). Margin ambang tipis: pada 0,82, 8,33% rekaan sudah dijawab (`reports/kalibrasi_ambang.md`).
+8. **Keluhan non-TI bisa masuk mode `pilihan`.** Contoh "Kursi kantor saya patah": tiga artikel KB bersaing pada skor 0,7899, 0,7872, dan 0,7820, sedikit di atas ambang 0,78. Ini konsisten dengan kalibrasi pada 34 sumber: 37,50% pertanyaan rekaan masuk `pilihan`, 0% dijawab. Jawaban langsung tetap tidak diberikan dan tawaran laporan tetap ada (`tests/e2e/alur_alternatif.js`). Margin ambang tipis: pada 0,82, 8,33% rekaan sudah dijawab (`reports/kalibrasi_ambang.md`).
 9. **E2E AKHIR diulang.** Putaran pertama berjalan pada image `halosis-ai` yang belum dibangun ulang setelah commit B, sehingga `/kandidat/draf` menjawab 404. Hasil yang berlaku berasal dari image baru. Kalimat uji UC-01 4a / UC-02 5a juga diganti ke "Cuaca di Bali besok pagi" (mode `tidak-ditemukan`, skor teratas 0,7819 dari sumber non-KB) karena kalimat lama kini masuk mode `pilihan`. Assert tidak diubah.
 
 ### 5.5 Rekomendasi penerapan LLM di BPS

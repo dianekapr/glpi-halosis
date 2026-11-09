@@ -85,3 +85,34 @@ def test_katalog_layanan_diindeks_dan_diganti(monkeypatch, tmp_path):
     assert saved['sumber'].tolist() == ['T1', 'LAYANAN-C7']
     assert client.post('/reindex/layanan', json={'layanan': [{'id': 'X1', 'nama': 'x'}]}).status_code == 422
 
+
+
+def test_artikel_internal_hanya_untuk_cari(monkeypatch, tmp_path):
+    """chat=false → jenis 'kb_internal': ditemukan /cari (semua jenis), TIDAK dijawab /chat; chat=true memindahkannya."""
+    monkeypatch.setattr(search, 'embed', fake_embed)
+    monkeypatch.setattr(search, 'INDEX_DIR', tmp_path)
+    search._indexes.clear()
+    history = pd.DataFrame([{'sumber': 'T1', 'jenis_sumber': 'tiket', 'judul': 'Email penuh',
+                             'teks': 'Masalah: email penuh Solusi: hapus lampiran besar'}])
+    history.to_parquet(tmp_path / 'chunks.parquet', index=False)
+    np.save(tmp_path / 'vectors.npy', fake_embed(history['teks'].tolist(), 'passage'))
+    monkeypatch.setattr(service, 'LATENCY_LOG', tmp_path / 'latency.jsonl')
+    monkeypatch.setattr(service, 'CHAT_MIN_SCORE', 0.5)
+    monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
+    service.state.clear()
+    service.state['search'] = True
+    client = TestClient(service.app)
+    ask = lambda: client.post('/chat', json={'pertanyaan': 'restart sinkronisasi fasih'}).json()  # noqa: E731
+    body = {'id': 7, 'judul': 'Restart sinkronisasi FASIH', 'isi': '<p>Jalankan restart layanan sinkronisasi FASIH.</p>',
+            'aksi': 'simpan'}
+
+    client.post('/reindex/artikel', json={**body, 'chat': False})
+    assert ask()['ditemukan'] is False
+    assert [h['jenis_sumber'] for h in search.cari('restart sinkronisasi fasih', k=1)] == ['kb_internal']
+    assert client.post('/cari', json={'q': 'restart sinkronisasi fasih', 'k': 1}).json()['hasil'][0]['sumber'] == 'KB-7'
+
+    client.post('/reindex/artikel', json={**body, 'chat': True})  # jadi FAQ bertarget → terlihat pegawai
+    assert ask()['sumber'][0]['sumber'] == 'KB-7'
+    client.post('/reindex/artikel', json={**body, 'chat': False})  # FAQ dicabut / target dihapus → keluar dari /chat
+    assert ask()['ditemukan'] is False
+    assert sorted(pd.read_parquet(tmp_path / 'chunks.parquet')['sumber']) == ['KB-7', 'T1']  # tetap di /cari

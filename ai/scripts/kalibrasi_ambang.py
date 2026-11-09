@@ -89,7 +89,7 @@ def chat_section(sample: int | None) -> str:
     return '\n'.join([
         '## Chat: 0,78 / 0,83', '',
         '`/chat` menjawab bila skor ≥ 0,83, menawarkan artikel KB bila skor KB ≥ 0,78, selain itu menolak. Skor e5 atas '
-        f'{num(len(sources))} sumber KB terbit + katalog layanan pada indeks aktif.', '',
+        f'{num(len(sources))} sumber (artikel KB yang terlihat pegawai di Tanya Jawab = FAQ + bertarget, dan katalog layanan) pada indeks aktif.', '',
         table(['Set proksi', 'Kueri', 'Dijawab', 'Pilihan', 'Ditolak', 'Median skor'], active), '',
         'Porsi kueri yang dijawab bila ambang atas diubah:', '',
         table(['Ambang atas', *names], grid), '',

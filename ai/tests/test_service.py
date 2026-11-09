@@ -111,6 +111,20 @@ def test_chat_keyakinan_sedang_menawarkan_pilihan(monkeypatch):
     assert body['sumber'] == []  # tidak mengarang jawaban
 
 
+def test_chat_kecualikan_sumber_tetap_kena_ambang(monkeypatch):
+    """Plugin membuang sumber yang tidak terlihat pengguna: pengganti hanya sah bila skornya sendiri ≥ ambang."""
+    kb = {'potongan': 'langkah', 'jenis_sumber': 'kb'}
+    hits = [{**kb, 'skor': 0.95, 'sumber': 'KB-9', 'judul': 'Tersembunyi'},
+            {**kb, 'skor': 0.84, 'sumber': 'KB-2', 'judul': 'Cukup relevan'},
+            {**kb, 'skor': 0.70, 'sumber': 'KB-6', 'judul': 'Kurang relevan'}]
+    c = client(monkeypatch, hits)
+    ask = lambda **k: c.post('/chat', json={'pertanyaan': 'x', 'riwayat': [], **k}).json()  # noqa: E731
+    assert ask()['sumber'][0]['sumber'] == 'KB-9'
+    assert ask(kecualikan=['KB-9'])['sumber'][0]['sumber'] == 'KB-2'  # pengganti lolos ambang yang sama
+    body = ask(kecualikan=['KB-9', 'KB-2'])  # sisanya di bawah ambang → tidak ditemukan, bukan KB-6
+    assert body['ditemukan'] is False and body['sumber'] == []
+
+
 class FakeJenis:
     classes_ = ['INC', 'REQ']
 

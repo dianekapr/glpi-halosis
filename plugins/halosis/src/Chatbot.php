@@ -26,6 +26,8 @@ final class Chatbot
 {
     public const MAX_MESSAGE_LENGTH = 1000;
     public const DEMO_MODEL = 'demo-extractive-v1';
+    /** Batas sumber yang dikecualikan per pertanyaan sebelum menyerah (tidak ditemukan) */
+    private const MAX_EXCLUDED = 5;
     /**
      * T31 (wawancara Operator): topik non-TI → unit yang menangani. Hanya berlaku bila pertanyaan tidak memuat kata
      * kunci TI (OUT_OF_SCOPE_IT), mis. "aplikasi SIMPEG error" tetap dijawab sebagai masalah TI.
@@ -214,6 +216,28 @@ final class Chatbot
         return $model !== null && $model !== '' && $model !== self::DEMO_MODEL && !str_ends_with($model, self::EXTRACTIVE_SUFFIX);
     }
 
+    /**
+     * Sumber KB dari layanan AI yang tidak ada / tidak boleh dilihat pengguna ini.
+     *
+     * @param array<int, array<string, mixed>> $sources
+     *
+     * @return string[] referensi KB-<id>
+     */
+    private static function hiddenSources(array $sources): array
+    {
+        $hidden = [];
+        foreach ($sources as $source) {
+            $ref = (string) ($source['sumber'] ?? '');
+            if (preg_match('/^KB-(\d+)$/', $ref, $m)) {
+                $item = new \KnowbaseItem();
+                if (!$item->getFromDB((int) $m[1]) || !$item->canViewItem()) {
+                    $hidden[] = $ref;
+                }
+            }
+        }
+        return $hidden;
+    }
+
     /** Judul indeks (sudah tersamar) vs judul artikel GLPI: abaikan huruf besar/kecil, tanda baca, dan penyamaran. */
     public static function sameTitle(string $indexTitle, string $glpiTitle): bool
     {
@@ -223,8 +247,10 @@ final class Chatbot
     }
 
     /**
-     * Jawaban dari layanan AI HaloSIS. Null jika layanan mengutip artikel KB yang tidak boleh dilihat
-     * pengguna ini (supaya pemanggil kembali ke pencarian KB lokal yang menghormati hak akses).
+     * Jawaban dari layanan AI HaloSIS. Sumber /chat sudah dibatasi di indeks ke artikel yang terlihat pegawai
+     * (FAQ + bertarget). Bila tetap ada artikel yang tidak boleh dilihat pengguna ini (jendela tayang, target
+     * pengguna/grup, dll.), sumber itu DIKECUALIKAN dan layanan AI ditanya ulang: hit pengganti harus lolos ambang
+     * skor yang sama di layanan. Tidak ada lagi jatuh ke pencarian KB lokal yang bisa memilih artikel kurang relevan.
      *
      * @param array<int, array<string, mixed>> $messages Transkrip sebelumnya (sudah tersamar)
      */
@@ -237,9 +263,17 @@ final class Chatbot
                 'teks'  => mb_substr((string) ($message['text'] ?? ''), 0, 4000),
             ];
         }
-        $data = Service::post('/chat', ['pertanyaan' => $question, 'riwayat' => $history]);
-        if (empty($data['ditemukan'])) {
-            return self::choices((array) ($data['pilihan'] ?? [])) ?? self::notFound();
+        $excluded = [];
+        do {
+            $data = Service::post('/chat', ['pertanyaan' => $question, 'riwayat' => $history, 'kecualikan' => $excluded]);
+            if (empty($data['ditemukan'])) {
+                return self::choices((array) ($data['pilihan'] ?? [])) ?? self::notFound();
+            }
+            $hidden = self::hiddenSources((array) ($data['sumber'] ?? []));
+            $excluded = array_values(array_unique(array_merge($excluded, $hidden)));
+        } while ($hidden !== [] && count($excluded) <= self::MAX_EXCLUDED);
+        if ($hidden !== []) {
+            return self::notFound();
         }
 
         $sources = [];
@@ -247,9 +281,7 @@ final class Chatbot
             $ref = (string) ($source['sumber'] ?? '');
             if (preg_match('/^KB-(\d+)$/', $ref, $m)) {
                 $item = new \KnowbaseItem();
-                if (!$item->getFromDB((int) $m[1]) || !$item->canViewItem()) {
-                    return null;
-                }
+                $item->getFromDB((int) $m[1]);
                 // Chip memakai judul potongan yang sama dengan jawaban. Bila judul di indeks ≠ judul artikel GLPI untuk ID ini,
                 // indeks dibangun di basis lain: jangan tampilkan tautan yang salah, laporkan ke layanan AI (/health).
                 $indexTitle = (string) ($source['judul'] ?? '');

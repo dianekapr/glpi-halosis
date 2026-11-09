@@ -475,7 +475,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 | Primary Actor | AI Engine |
 | Use-Case Type | Detail, Real |
 | Stakeholders and Interests | **Pegawai BPS:** ingin jawaban relevan dan dapat ditelusuri sumbernya.<br>**Operator dan Tim Teknis:** ingin referensi solusi tanpa pencarian manual.<br>**Security/Tata Kelola:** ingin data pribadi terlindungi dan setiap pencarian tercatat. |
-| Brief Description | AI Engine mencari sumber yang paling relevan berdasarkan makna, lalu mengembalikan hasil beserta skor dan sumber. Jawaban untuk pegawai hanya bersumber dari artikel KB terbit dan katalog layanan; tiket lama hanya dipakai untuk pencarian petugas. |
+| Brief Description | AI Engine mencari sumber yang paling relevan berdasarkan makna, lalu mengembalikan hasil beserta skor dan sumber. Jawaban untuk pegawai hanya bersumber dari artikel KB yang terlihat pegawai di Tanya Jawab (FAQ) dan katalog layanan; tiket lama hanya dipakai untuk pencarian petugas. |
 | Trigger | Pegawai, Operator, atau Tim Teknis membutuhkan referensi solusi. Dipanggil dari **Tanya HaloSIS** (UC-01) atau **Cari Pengetahuan**. |
 | Type | External |
 | Relationships | **Association:** AI Engine<br>**Include:** –<br>**Extend:** –<br>**Generalization:** – |
@@ -488,7 +488,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 1. Pegawai mengirim pertanyaan dari halaman **Tanya HaloSIS** dan sistem meneruskannya ke AI Engine.
 2. AI Engine menyamarkan data pribadi sekali lagi.
-3. AI Engine mengubah pertanyaan menjadi vektor dan membandingkannya dengan indeks artikel KB terbit dan katalog layanan. Tiket lama tidak dipakai untuk jawaban pegawai.
+3. AI Engine mengubah pertanyaan menjadi vektor dan membandingkannya dengan indeks artikel KB yang terlihat pegawai di Tanya Jawab (FAQ) dan katalog layanan. Tiket lama tidak dipakai untuk jawaban pegawai.
 4. AI Engine memberi skor pada setiap potongan dan mengurutkan hasil.
 5. AI Engine mengambil hasil yang memenuhi ambang dan menyusun jawaban beserta sumber.
 6. AI Engine mencatat waktu proses dan mengembalikan hasil ke halaman **Tanya HaloSIS**.
@@ -888,7 +888,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **Jalur baru (†):** Operator dapat mencatat tiket atas nama pegawai dan menutup tiket yang tidak direspons pegawai.
 - **UC-01:** bila pencarian utama gagal, sistem beralih ke pencarian kata kunci tanpa pemberitahuan.
 - **UC-03:** tiket dari konsultasi hanya dapat disunting judulnya, tanpa lampiran. Tiket tanpa rekomendasi tidak diberi penanda khusus.
-- **UC-02:** jawaban asisten untuk pegawai hanya memakai artikel KB terbit dan katalog layanan; tiket lama hanya dipakai pada Cari pengetahuan petugas.
+- **UC-02:** jawaban asisten untuk pegawai hanya memakai artikel KB yang terlihat pegawai di Tanya Jawab (FAQ) dan katalog layanan; tiket lama hanya dipakai pada Cari pengetahuan petugas.
 - **UC-04:** tim diprediksi lebih dulu, lalu kategori diturunkan dari tim. Tiket serupa berasal dari model triase, bukan UC-02. Urgensi ditentukan aturan kata kunci karena model urgensi belum lolos uji kualitas.
 - **UC-05:** bahan evaluasi masih digabungkan manual ke data latih, dan tiket dapat diproses tanpa keputusan atas rekomendasi.
 - **UC-06:** status proses berlaku sejak penugasan, dan referensi dicari sendiri lewat Cari pengetahuan.
