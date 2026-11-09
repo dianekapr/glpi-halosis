@@ -129,7 +129,9 @@ Dibuat 07-11-2026.
 | e5 | 62,50% | 87,50% | 0,7614 |
 | e5 + urutan /chat | 75,00% | 87,50% | 0,8239 |
 
-`e5 + urutan /chat`: peringkat e5 setelah aturan /chat (artikel KB yang lolos ambang 0,83 di depan katalog layanan, `search.utamakan_kb`).
+`e5 + urutan /chat`: peringkat e5 setelah aturan urutan /chat: artikel KB didahulukan bila lolos ambang, katalog jadi tautan layanan (ambang 0,83, `search.utamakan_kb`). e5 mentah tetap 62,50% / 0,7614.
+
+Catatan jujur: n=8, jadi kenaikan Top-1 62,50 → 75,00% = 1 kasus (K6, peringkat 2 → 1). Aturan ini dipicu kasus "Lupa kata sandi SSO" (katalog layanan mengalahkan artikel KB), yang bukan bagian dari 8 kasus; angka ini bukan bukti umum keunggulan aturan.
 
 Peringkat sumber benar per kasus:
 

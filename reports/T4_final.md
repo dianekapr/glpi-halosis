@@ -440,7 +440,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 2. Sistem menampilkan sapaan "Halo …! Apa yang Anda butuhkan hari ini?", kartu **Ajukan permintaan** dan **Laporkan masalah**, serta contoh di bawah **Coba tanyakan:**.
 3. Pegawai mengetik kendala di kotak **Tulis kendala Anda…** atau memilih salah satu contoh, lalu mengklik ikon **Kirim** atau menekan Enter.
 4. Sistem mencatat percakapan, menyamarkan data pribadi, dan mencari jawaban (include UC-02).
-5. Sistem menampilkan jawaban berlabel **Dari Pusat Bantuan** (kutipan langsung dari artikel; berlabel **Dijawab oleh AI** bila penyusun jawaban LLM diaktifkan) beserta tautan sumber, disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**.
+5. Sistem menampilkan jawaban berlabel **Dari Pusat Bantuan** (kutipan langsung dari artikel; berlabel **Dijawab oleh AI** bila penyusun jawaban LLM diaktifkan) beserta tautan sumber yang membuka isi artikel. Bila katalog layanan juga relevan, sistem menambahkan tautan **Ajukan lewat layanan** yang membuka form layanan tersebut. Jawaban disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**.
 6. Pegawai mencoba solusi tersebut.
 7. Pegawai mengklik **Masalah terselesaikan**.
 8. Sistem menampilkan "Seberapa membantu asisten ini?" dengan bintang 1–5, lalu pegawai memilih satu bintang.
@@ -452,6 +452,8 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 - **1a. Fitur chat dimatikan.** Halaman menampilkan **Asisten Sedang Tidak Tersedia**, "Laporkan kendala Anda dan petugas akan membantu.", tombol **Buat laporan**, dan tautan **Tanya Jawab (FAQ)**.
 - **1b. Pegawai tanpa hak asisten.** Sistem menampilkan "Asisten tidak tersedia untuk akun Anda."
+- **2a. Pegawai mengklik kartu Laporkan masalah.** Kotak **Tulis kendala Anda…** difokuskan dan disorot, lalu asisten menampilkan "Ceritakan masalah yang Anda alami. Saya carikan solusinya dulu; bila belum selesai, saya buatkan laporan." Tiket tidak dibuat. Alur lanjut ke langkah 3.
+- **2b. Pegawai mengklik kartu Ajukan permintaan.** Sistem membuka form **Ajukan Permintaan** (UC-03 langkah 3).
 - **3a. Pesan kosong.** Sistem menampilkan "Silakan ketik pertanyaan."
 - **3b. Percakapan sudah terlalu panjang.** Sistem menampilkan "Percakapan terlalu panjang. Buat laporan atau mulai percakapan baru."
 - **3c. Percakapan sudah berakhir.** Sistem menampilkan "Percakapan ini sudah selesai. Mulai percakapan baru untuk bertanya lagi."
@@ -490,7 +492,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 2. AI Engine menyamarkan data pribadi sekali lagi.
 3. AI Engine mengubah pertanyaan menjadi vektor dan membandingkannya dengan indeks artikel KB yang terlihat pegawai di Tanya Jawab (FAQ) dan katalog layanan. Tiket lama tidak dipakai untuk jawaban pegawai.
 4. AI Engine memberi skor pada setiap potongan dan mengurutkan hasil.
-5. AI Engine mengambil hasil yang memenuhi ambang dan menyusun jawaban beserta sumber.
+5. AI Engine mengambil hasil yang memenuhi ambang dan menyusun jawaban beserta sumber. Bila artikel KB dan katalog layanan sama-sama lolos ambang, artikel KB didahulukan dan katalog layanan dikembalikan sebagai tautan layanan.
 6. AI Engine mencatat waktu proses dan mengembalikan hasil ke halaman **Tanya HaloSIS**.
 
 **Subflows**
