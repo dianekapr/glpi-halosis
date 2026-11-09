@@ -115,8 +115,13 @@
                     if (!s.url) {
                         return el('span', 'hc-source', [icon('ticket'), s.name]);
                     }
-                    const a = el('a', 'hc-source', [icon('book-2'), s.name]);
+                    // Katalog layanan → form layanan itu; artikel KB → isi artikel. Tab yang sama.
+                    const service = s.kind === 'service';
+                    const a = el('a', `hc-source${service ? ' hc-source-service' : ''}`,
+                        service ? [icon('clipboard-plus'), `${t.apply_service}: ${s.name}`] : [icon('book-2'), s.name]);
                     a.href = s.url;
+                    a.target = '_self';
+                    a.dataset.chatSource = service ? 'service' : 'kb';
                     return a;
                 })));
             }
@@ -385,13 +390,28 @@
         }
 
         root.addEventListener('click', (event) => {
-            const b = event.target.closest('[data-chat-toggle], [data-chat-new], [data-chat-suggest], [data-chat-focus]');
+            const b = event.target.closest('[data-chat-toggle], [data-chat-new], [data-chat-suggest], [data-chat-focus], [data-chat-request]');
             if (!b || !root.contains(b)) {
                 return;
             }
             if (b.matches('[data-chat-focus]')) {
-                // Pilihan "Laporkan masalah": ceritakan masalahnya ke asisten dulu
+                // Pilihan "Laporkan masalah": ceritakan masalahnya ke asisten dulu (bukan langsung membuat tiket)
+                if (!thread.querySelector('[data-chat-report-prompt]')) {
+                    const col = assistantMessage(t.report_prompt, { found: true });
+                    col.closest('.hc-row').setAttribute('data-chat-report-prompt', '');
+                }
                 input.focus();
+                form.classList.remove('hc-flash');
+                void form.offsetWidth;
+                form.classList.add('hc-flash');
+            } else if (b.matches('[data-chat-request]')) {
+                // Pilihan "Ajukan permintaan": tautan ke form katalog; beri tanda bahwa klik diterima
+                b.classList.add('hc-loading');
+                b.setAttribute('aria-busy', 'true');
+                const label = b.querySelector('.hc-intent-text span');
+                if (label) {
+                    label.textContent = t.opening_request;
+                }
             } else if (b.matches('[data-chat-toggle]')) {
                 toggle($('.hc-panel').hidden);
             } else if (b.matches('[data-chat-new]')) {

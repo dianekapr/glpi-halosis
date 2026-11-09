@@ -716,6 +716,22 @@ html:has(> head > meta[http-equiv="refresh"][content*="/plugins/halosis/Chat"]) 
     line-height: 1.45;
 }
 
+.hc-intent-card.hc-loading {
+    border-color: var(--halosis-secondary);
+    opacity: 0.8;
+    cursor: progress;
+}
+
+/* Kotak tulis disorot sesaat setelah "Laporkan masalah" diklik */
+.hc-form.hc-flash {
+    animation: hc-flash 1.6s ease-out;
+}
+
+@keyframes hc-flash {
+    0%, 60% { box-shadow: 0 0 0 3px var(--halosis-secondary); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
 /* Setelah pegawai mulai bercerita, pilihan tidak dibutuhkan lagi */
 .hc-started .hc-intent {
     display: none;

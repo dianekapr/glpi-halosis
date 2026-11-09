@@ -82,6 +82,15 @@ final class Chatbot
      */
     public static function getRequestFormUrl(): string
     {
+        $id = self::findFormId(Ticket::DEMAND_TYPE);
+        return $id !== null ? Html::getPrefixedUrl('/Form/Render/' . $id) : ServiceCatalog::getSearchURL();
+    }
+
+    /**
+     * Form katalog aktif pertama yang tujuan tiketnya bertipe $type (Ticket::DEMAND_TYPE / Ticket::INCIDENT_TYPE).
+     */
+    public static function findFormId(int $type): ?int
+    {
         global $DB;
 
         $forms = Form::getTable();
@@ -100,18 +109,18 @@ final class Chatbot
         ]);
         foreach ($iterator as $row) {
             $config = json_decode((string) $row['config'], true)[RequestTypeField::getKey()] ?? [];
-            if ((int) ($config[RequestTypeFieldConfig::SPECIFIC_REQUEST_TYPE] ?? 0) === Ticket::DEMAND_TYPE) {
-                return Html::getPrefixedUrl('/Form/Render/' . $row['id']);
+            if ((int) ($config[RequestTypeFieldConfig::SPECIFIC_REQUEST_TYPE] ?? 0) === $type) {
+                return (int) $row['id'];
             }
         }
-        return ServiceCatalog::getSearchURL();
+        return null;
     }
 
     /**
      * Jawab pertanyaan pegawai dan simpan ke transkrip.
      *
      * @return array{ok: bool, message?: string, chat_id?: int, answer?: string, found?: bool,
-     *               sources?: array<int, array{id: int, name: string, url: string}>, masked?: bool}
+     *               sources?: array<int, array{id: int, name: string, url: string, kind?: string}>, masked?: bool}
      */
     public static function ask(?Chat $chat, string $text): array
     {
@@ -297,8 +306,8 @@ final class Chatbot
                 }
                 $sources[] = ['id' => $item->getID(), 'name' => $indexTitle, 'url' => \KnowbaseItem::getFormURLWithID($item->getID())];
             } elseif (($url = KnowledgeIndex::serviceUrl($ref)) !== null) {
-                // Katalog layanan (BR-03): arahkan ke form / katalog layanan
-                $sources[] = ['id' => 0, 'name' => (string) ($source['judul'] ?? $ref), 'url' => $url];
+                // Katalog layanan (BR-03): langsung ke form layanan itu; widget memberi label "Ajukan lewat layanan"
+                $sources[] = ['id' => 0, 'name' => (string) ($source['judul'] ?? $ref), 'url' => $url, 'kind' => 'service'];
             } else {
                 // Tiket history tidak ada di GLPI ini: tampilkan nomornya saja, tanpa tautan
                 $sources[] = ['id' => 0, 'name' => sprintf(__('Similar ticket %s', 'halosis'), $ref), 'url' => ''];

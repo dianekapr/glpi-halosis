@@ -223,6 +223,22 @@ def _write_atomic(index_dir: Path, chunks: pd.DataFrame, vectors: np.ndarray) ->
     write_meta(index_dir, vectors.shape[1])
 
 
+def utamakan_kb(hits: list[dict], ambang: float) -> list[dict]:
+    """Urutan /chat: artikel KB yang lolos ambang di depan katalog layanan (stabil, urutan skor dipertahankan).
+
+    Katalog layanan hanya menyebut nama layanan; bila artikel KB yang menjelaskan caranya juga lolos ambang, jawaban
+    diambil dari artikel dan layanan menjadi tautan tambahan ("Ajukan lewat layanan")."""
+    return sorted(hits, key=lambda h: not (h['jenis_sumber'] == 'kb' and h['skor'] >= ambang))
+
+
+def tanpa_judul(text: str, title: str) -> str:
+    """Teks potongan diawali "<judul>." (article_chunks / replace_services); buang agar jawaban tidak mengulang judul."""
+    head = title.strip().rstrip('.')
+    if head and text.startswith(head):
+        return text[len(head):].lstrip('.').strip()
+    return text
+
+
 def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str, ...] | None = None) -> list[dict]:
     """Cari k sumber paling mirip → [{potongan, skor, sumber, jenis_sumber, judul, solusi?}].
 

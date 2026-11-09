@@ -54,6 +54,7 @@ QA = ROOT / 'data/processed/qa_pairs.parquet'
 ACTIVE_MODEL = ROOT / 'ai/models/triage.joblib'
 CASES = Path(__file__).resolve().parent / 'kasus_retrieval_poc.json'
 MINILM = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
+CHAT_MIN_SCORE = float(os.environ.get('HALOSIS_CHAT_MIN_SCORE', '0.83'))  # = ai/service/app.py
 
 SEED, TEST_SIZE, TOP_GROUPS = 42, 0.20, 39
 EPS, MIN_SAMPLES = 0.25, 5
@@ -330,8 +331,13 @@ def load_cases(chunks: pd.DataFrame) -> list[dict]:
     return cases
 
 
-def source_ranks(scores: np.ndarray, sources: np.ndarray, wanted: list[str]) -> int | None:
+def source_ranks(scores: np.ndarray, sources: np.ndarray, wanted: list[str], kinds: np.ndarray | None = None,
+                 ambang: float | None = None) -> int | None:
     best = pd.Series(scores).groupby(sources).max().sort_values(ascending=False, kind='stable')
+    if kinds is not None:  # urutan /chat: KB yang lolos ambang di depan layanan (search.utamakan_kb)
+        kind = pd.Series(kinds, index=sources).groupby(level=0).first()
+        order = search.utamakan_kb([{'sumber': s, 'skor': v, 'jenis_sumber': kind[s]} for s, v in best.items()], ambang)
+        best = pd.Series([h['skor'] for h in order], index=[h['sumber'] for h in order])
     hits = np.flatnonzero(best.index.isin(wanted))
     return int(hits[0]) + 1 if len(hits) else None
 
@@ -352,9 +358,11 @@ def run_retrieval(sample: int | None) -> None:
     questions = [str(privacy.mask_text(c['pertanyaan'])) for c in cases]
     models = {'MiniLM': (minilm(questions) @ minilm(corpus['teks'].tolist()).T),
               'e5': (search.embed(questions, 'query') @ vectors[approved].T)}
+    kinds = corpus['jenis_sumber'].to_numpy()
     rows, details = [], []
-    for name, scores in models.items():
-        ranks = [source_ranks(scores[i], sources, c['sumber_benar']) for i, c in enumerate(cases)]
+    variants = [(name, scores, None) for name, scores in models.items()] + [('e5 + urutan /chat', models['e5'], kinds)]
+    for name, scores, kind in variants:
+        ranks = [source_ranks(scores[i], sources, c['sumber_benar'], kind, CHAT_MIN_SCORE) for i, c in enumerate(cases)]
         rr = [1 / r if r else 0.0 for r in ranks]
         rows.append([name, f(np.mean([r == 1 for r in ranks])), f(np.mean([bool(r) and r <= 3 for r in ranks])), num(float(np.mean(rr)), 4)])
         details.append([name] + [str(r or '–') for r in ranks])
@@ -365,6 +373,8 @@ def run_retrieval(sample: int | None) -> None:
         'katalog layanan pada indeks aktif, bukan korpus Zammad PoC. Acuan dokumen: Top-1 100%, Top-3 100%, MRR 1,0000, '
         'dan dokumen menegaskan angka itu hanya berlaku pada PoC terkendali.', '',
         table(['Model', 'Top-1', 'Top-3', 'MRR'], rows), '',
+        '`e5 + urutan /chat`: peringkat e5 setelah aturan /chat (artikel KB yang lolos ambang '
+        f'{num(CHAT_MIN_SCORE, 2)} di depan katalog layanan, `search.utamakan_kb`).', '',
         'Peringkat sumber benar per kasus:', '',
         table(['Model'] + [f'K{i}' for i in range(1, len(cases) + 1)], details),
     ]))

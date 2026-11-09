@@ -127,6 +127,9 @@ Dibuat 07-11-2026.
 | --- | --- | --- | --- |
 | MiniLM | 75,00% | 87,50% | 0,8208 |
 | e5 | 62,50% | 87,50% | 0,7614 |
+| e5 + urutan /chat | 75,00% | 87,50% | 0,8239 |
+
+`e5 + urutan /chat`: peringkat e5 setelah aturan /chat (artikel KB yang lolos ambang 0,83 di depan katalog layanan, `search.utamakan_kb`).
 
 Peringkat sumber benar per kasus:
 
@@ -134,6 +137,7 @@ Peringkat sumber benar per kasus:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | MiniLM | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 15 |
 | e5 | 1 | 1 | 2 | 1 | 1 | 2 | 1 | 11 |
+| e5 + urutan /chat | 1 | 1 | 2 | 1 | 1 | 1 | 1 | 11 |
 
 Dibuat 09-11-2026.
 <!-- retrieval:selesai -->

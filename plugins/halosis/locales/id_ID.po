@@ -1528,3 +1528,12 @@ msgstr "Gerbang triase pada ambang aktif: %s"
 
 msgid "Pattern gate (warning only): %s"
 msgstr "Gerbang pola (peringatan saja): %s"
+
+msgid "Tell me the problem you are facing, I will look for a solution first. If it is still not solved, I will create a report for you."
+msgstr "Ceritakan masalah yang Anda alami. Saya carikan solusinya dulu; bila belum selesai, saya buatkan laporan."
+
+msgid "Opening the service request form…"
+msgstr "Membuka formulir permintaan layanan…"
+
+msgid "Apply through the service"
+msgstr "Ajukan lewat layanan"

@@ -24,3 +24,4 @@ Catatan:
 - Navbar Pegawai: pakai `figma_navbar.js` (garis aktif = override warna Rectangle oranye/putih; komponen 88:3 tanpa varian). Peringatan: halaman daftar tiket berubah bila data bertambah — baris yang bergeser dari halaman 1 membuat reaction lama tidak cocok (bukan galat alat).
 - Ikon FontAwesome (bila ada) belum ditangani; hanya Tabler (`ti ti-*`).
 - Pakai skill `figma-use` + `figma-generate-design` (nama di `skillNames`) saat memanggil `use_figma`.
+- Langkah baru: `steps/tt_kembalikan.js` (tunggu pesan «dikembalikan…», id 2 = TT-R1, id 3 = 10-R2), `steps/km_kandidat.js` (tab + «Jadikan artikel»; MENGUBAH data → pulihkan dengan `logs/f2_km_pulih.sh <id artikel>`), `steps/mj_kinerja.js` (?weeks=4/12 + tabel), `steps/ad_reauth.js` (ReAuth + Pratinjau SLA). Catatan: `capture.js` memakai `route.fetch()` yang mengikuti redirect → URL tak berubah ke /ReAuth/Prompt; deteksi lewat isi halaman. Perintah dalam loop zsh: jangan pakai `set -- $p` (tak memecah kata).

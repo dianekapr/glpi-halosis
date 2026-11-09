@@ -240,3 +240,19 @@ def test_chat_sumber_membawa_judul_potongan_yang_sama_dengan_jawaban(monkeypatch
     r = client(monkeypatch, [hit]).post('/chat', json={'pertanyaan': 'lupa sandi sso'}).json()
     assert 'Mengatur ulang kata sandi SSO BPS' in r['jawaban']
     assert r['sumber'][0]['judul'] == 'Mengatur ulang kata sandi SSO BPS'
+
+
+def test_chat_artikel_kb_didahulukan_dari_layanan(monkeypatch):
+    """Lupa kata sandi SSO: layanan skor sedikit lebih tinggi, tetapi artikel KB yang lolos ambang menjawab;
+    layanan ikut sebagai tautan tambahan dan judul tidak diulang di jawaban."""
+    layanan = {'potongan': 'Layanan Akun & Akses > SSO / Login.', 'skor': 0.8351, 'sumber': 'LAYANAN-C2',
+               'jenis_sumber': 'layanan', 'judul': 'Akun & Akses > SSO / Login'}
+    kb = {'potongan': 'Akun SSO terkunci. Tunggu 15 menit, lalu gunakan Lupa password.', 'skor': 0.8326,
+          'sumber': 'KB-15', 'jenis_sumber': 'kb', 'judul': 'Akun SSO terkunci'}
+    r = client(monkeypatch, [layanan, kb]).post('/chat', json={'pertanyaan': 'Lupa kata sandi SSO'}).json()
+    assert [s['sumber'] for s in r['sumber']] == ['KB-15', 'LAYANAN-C2']
+    assert r['jawaban'] == 'Berdasarkan artikel "Akun SSO terkunci":\nTunggu 15 menit, lalu gunakan Lupa password.'
+    # Tanpa KB yang lolos ambang: layanan menjawab, tanpa kalimat "Layanan <nama>." yang mengulang
+    r = client(monkeypatch, [layanan, {**kb, 'skor': 0.80}]).post('/chat', json={'pertanyaan': 'sso'}).json()
+    assert [s['sumber'] for s in r['sumber']] == ['LAYANAN-C2']
+    assert r['jawaban'] == 'Permintaan ini bisa diajukan lewat layanan "Akun & Akses > SSO / Login" di katalog layanan.'
