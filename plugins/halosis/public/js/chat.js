@@ -258,11 +258,11 @@
         };
 
         /** Pasang aksi sesuai jenis jawaban terakhir */
-        const attachActions = (col, found) => {
+        const attachActions = (col, found, hasChoices = false) => {
             if (ended) {
                 return;
             }
-            found ? helpfulActions(col) : offerCard(col, t.offer_notfound);
+            found ? helpfulActions(col) : offerCard(col, hasChoices ? t.offer_choices : t.offer_notfound);
         };
 
         // ---- Alur percakapan ------------------------------------------------------------------
@@ -330,7 +330,7 @@
             // Di luar layanan TI (T31): tanpa tombol bantu & tanpa tawaran laporan
             const col = assistantMessage(res.answer, res);
             if (!res.out_of_scope) {
-                attachActions(col, res.found);
+                attachActions(col, res.found, (res.sources || []).length > 0);
             }
             input.focus();
         };
@@ -353,12 +353,14 @@
                 root.classList.add('hc-started');
                 let lastCol = null;
                 let lastFound = true;
+                let lastChoices = false;
                 res.messages.forEach((m) => {
                     if (m.role === 'user') {
                         userMessage(m.text);
                     } else {
                         lastCol = assistantMessage(m.text, m);
                         lastFound = m.found;
+                        lastChoices = (m.sources || []).length > 0;
                         if (m.out_of_scope) {
                             lastCol = null; // di luar layanan TI: tanpa tombol bantu / tawaran laporan
                         }
@@ -367,7 +369,7 @@
                 if (res.status !== 'open') {
                     end(t.ended);
                 } else if (lastCol) {
-                    attachActions(lastCol, lastFound);
+                    attachActions(lastCol, lastFound, lastChoices);
                 }
             } else {
                 reset(false);

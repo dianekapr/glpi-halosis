@@ -740,3 +740,144 @@ msgstr "Bagikan"
 
 msgid "Untitled article"
 msgstr "Artikel tanpa judul"
+
+msgid "Problems to be processed"
+msgstr "Masalah yang perlu diproses"
+
+msgid "Problems on pending status"
+msgstr "Masalah berstatus tertunda"
+
+msgid "Your problems in progress"
+msgstr "Masalah Anda yang sedang berjalan"
+
+msgid "Under observation"
+msgstr "Dalam pengamatan"
+
+msgid "Created problems"
+msgstr "Masalah yang dibuat"
+
+msgid "Created tickets"
+msgstr "Tiket yang dibuat"
+
+msgid "Created changes"
+msgstr "Perubahan yang dibuat"
+
+msgid "Tickets on pending status"
+msgstr "Tiket berstatus tertunda"
+
+msgid "Your observed tickets"
+msgstr "Tiket yang Anda amati"
+
+msgid "Your tickets to approve"
+msgstr "Tiket Anda yang perlu disetujui"
+
+msgid "Your tickets having rejected approval status"
+msgstr "Tiket Anda dengan persetujuan ditolak"
+
+msgid "Your tickets having rejected solution"
+msgstr "Tiket Anda dengan solusi ditolak"
+
+msgid "Your changes to approve"
+msgstr "Perubahan Anda yang perlu disetujui"
+
+msgid "Tickets waiting for your approval"
+msgstr "Tiket menunggu persetujuan Anda"
+
+msgid "Tickets waiting for approval"
+msgstr "Tiket menunggu persetujuan"
+
+msgid "New tickets"
+msgstr "Tiket baru"
+
+msgid "Tickets times (in hours)"
+msgstr "Waktu tiket (jam)"
+
+msgid "Tickets summary"
+msgstr "Ringkasan tiket"
+
+msgid "Number of tickets by month"
+msgstr "Jumlah tiket per bulan"
+
+msgid "Number of tickets by category and entity"
+msgstr "Jumlah tiket per kategori dan entitas"
+
+msgid "Number of tickets by SLA status and technician"
+msgstr "Jumlah tiket per status SLA dan teknisi"
+
+msgid "Number of tickets by SLA status and technician group"
+msgstr "Jumlah tiket per status SLA dan grup teknisi"
+
+msgid "Tickets by SLA status and by technician"
+msgstr "Tiket per status SLA dan teknisi"
+
+msgid "Tickets by SLA status and by technician group"
+msgstr "Tiket per status SLA dan grup teknisi"
+
+msgid "Number of tickets by status"
+msgstr "Jumlah tiket per status"
+
+msgid "Number of opened and solved tickets by group"
+msgstr "Jumlah tiket dibuka dan diselesaikan per grup"
+
+msgid "Top ticket's requester groups"
+msgstr "Grup pemohon tiket teratas"
+
+msgid "Top ticket's assignees"
+msgstr "Penerima tugas tiket teratas"
+
+msgid "Top ticket's assignee groups"
+msgstr "Grup penerima tugas tiket teratas"
+
+msgid "Top ticket's locations"
+msgstr "Lokasi tiket teratas"
+
+msgid "Late own and resolve"
+msgstr "Terlambat diambil dan diselesaikan"
+
+msgid "Late resolve"
+msgstr "Terlambat diselesaikan"
+
+msgid "Late own"
+msgstr "Terlambat diambil"
+
+msgid "On time"
+msgstr "Tepat waktu"
+
+msgid "Time to close"
+msgstr "Waktu untuk menutup"
+
+msgid "To approve"
+msgstr "Perlu disetujui"
+
+msgid "No data found"
+msgstr "Data tidak ditemukan"
+
+msgid "Central"
+msgstr "Beranda"
+
+msgid "Mini tickets dashboard"
+msgstr "Dasbor mini tiket"
+
+msgid "View data"
+msgstr "Lihat data"
+
+msgid "Data view"
+msgstr "Tampilan data"
+
+msgid "Save as image"
+msgstr "Simpan sebagai gambar"
+
+msgid "Bars"
+msgstr "Batang"
+
+msgid "Pie"
+msgstr "Pai"
+
+msgid "Donut"
+msgstr "Donat"
+
+msgid "Big number"
+msgstr "Angka besar"
+
+msgid "Summary numbers"
+msgstr "Ringkasan angka"

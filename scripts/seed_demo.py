@@ -3,6 +3,7 @@
 Pakai:  python scripts/seed_demo.py rencana            # hanya cetak jumlah per jenis, tanpa menulis apa pun
         python scripts/seed_demo.py buat               # buat data (idempoten: berhenti bila [DEMO] sudah ada)
         python scripts/seed_demo.py buat --ulang       # hapus dulu lalu buat ulang
+        python scripts/seed_demo.py agenda           # hanya agenda: tugas minggu ini + catatan publik [DEMO]
         python scripts/seed_demo.py hapus              # hapus SEMUA data [DEMO] (tiket, Problem, saran, keputusan, chat, pola)
 Syarat: API GLPI aktif, seed_halosis.py sudah jalan, layanan AI hidup (hook triase membuat saran saat tiket dibuat),
         container glpi berjalan (langkah plugin dijalankan lewat `docker compose exec`, memakai kelas plugin).
@@ -44,9 +45,65 @@ def demo_ids():
 
 def hapus():
     ids = demo_ids()
+    agenda_hapus()
     print(plugin('hapus'))  # saran, keputusan, penugasan ulang, chat, pola + Problem [DEMO]
     if ids: api('DELETE', 'Ticket', data=json.dumps({'input': [{'id': i} for i in ids], 'force_purge': True}))
     print(f'dihapus: {len(ids)} tiket')
+
+# --- Agenda dasbor: TicketTask berjadwal minggu ini ("Rencana Anda") + Catatan/Reminder publik (semua profil) [DEMO] ---
+# REST API, kecuali pemilik Reminder pribadi (UPDATE users_id terbatas, lihat agenda_buat).
+PROFIL_CATATAN = ['Pegawai', 'Manajemen', 'Operator', 'Tim Teknis', 'Supervisor', 'Knowledge Manager', 'Administrator']
+CATATAN_PUBLIK = [('Jadwal pemeliharaan server', 'Pemeliharaan server aplikasi dijadwalkan akhir pekan ini pukul 22.00-24.00; layanan dapat terputus sebentar.'),
+                  ('Pembaruan FASIH', 'FASIH versi terbaru dirilis pekan ini; muat ulang aplikasi dan laporkan kendala lewat HaloSIS.')]
+RENCANA = {'andi': 4, 'fajar': 3, 'rina': 1}  # jumlah tugas berjadwal minggu ini per akun (andi & fajar 3-4, rina 1-2)
+
+def agenda_hapus():
+    n = 0
+    for t in api('GET', 'TicketTask', params={'range': '0-999'}):
+        if str(t.get('content', '')).find(TAG) >= 0:
+            api('DELETE', f'TicketTask/{t["id"]}', params={'force_purge': 1}); n += 1
+    m = 0
+    for r in api('GET', 'Reminder', params={'range': '0-999'}):
+        if r['name'].startswith(TAG):
+            api('DELETE', f'Reminder/{r["id"]}', params={'force_purge': 1}); m += 1
+    print(f'agenda dihapus: {n} tugas, {m} catatan;', plugin('hapus_pengingat').strip())
+
+def agenda_buat():
+    U = {u['name']: u['id'] for u in api('GET', 'User', params={'range': '0-99'})}
+    PR = {p['name']: p['id'] for p in api('GET', 'Profile', params={'range': '0-100'})}
+    buka = [t['id'] for t in api('GET', 'Ticket', params={'range': '0-999', 'searchText[name]': TAG})
+            if t['name'].startswith(TAG) and t['status'] in (1, 2, 3, 4)]
+    if not buka: sys.exit('Tidak ada tiket [DEMO] terbuka untuk dijadwalkan.')
+    hari_ini = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    senin = hari_ini - timedelta(days=hari_ini.weekday())
+    rnd = random.Random(SEED + 1)
+    for nama, n in RENCANA.items():
+        slot = rnd.sample([(d, h) for d in range(0, 5) for h in (9, 11, 14, 15)], n)
+        for d, h in sorted(slot):
+            mulai = senin + timedelta(days=d, hours=h)
+            api('POST', 'TicketTask', data=json.dumps({'input': {
+                'tickets_id': rnd.choice(buka), 'content': f'{TAG} Tindak lanjut terjadwal (rencana kerja minggu ini).',
+                'users_id_tech': U[nama], 'state': 1, 'actiontime': 3600,
+                'begin': mulai.strftime('%Y-%m-%d %H:%M:%S'), 'end': (mulai + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')}}))
+    for judul, isi in CATATAN_PUBLIK:
+        rid = api('POST', 'Reminder', data=json.dumps({'input': {'name': f'{TAG} {judul}', 'text': f'<p>{TAG} {isi}</p>',
+              'begin_view_date': senin.strftime('%Y-%m-%d %H:%M:%S'), 'end_view_date': (senin + timedelta(days=21)).strftime('%Y-%m-%d %H:%M:%S')}}))['id']
+        for pr in PROFIL_CATATAN:
+            api('POST', 'Profile_Reminder', data=json.dumps({'input': {'reminders_id': rid, 'profiles_id': PR[pr], 'entities_id': 0, 'is_recursive': 1}}))
+    # Reminder pribadi: 1 per akun. REST membuatnya atas nama akun sesi (glpi); pemilik dipindah lewat satu UPDATE kolom users_id
+    # ber-WHERE ketat (id + nama "[DEMO]%") di langkah plugin `pemilik`. ID dicetak untuk catatan.
+    PRIBADI = {'budi': 'Cek kuota penyimpanan email', 'rina': 'Tinjau antrean validasi pukul 15.00', 'andi': 'Siapkan catatan serah terima shift',
+               'lina': 'Tinjau artikel yang perlu diperbarui', 'sri': 'Siapkan bahan rapat evaluasi layanan', 'dimas': 'Periksa cadangan harian'}
+    pasangan = []
+    for akun, judul in PRIBADI.items():
+        rid = api('POST', 'Reminder', data=json.dumps({'input': {'name': f'{TAG} Pengingat pribadi: {judul}', 'text': f'<p>{TAG} {judul}.</p>'}}))['id']
+        pasangan.append(f'{rid}:{akun}')
+    print(plugin('pemilik', ','.join(pasangan)).strip())
+    print(f'agenda dibuat: {sum(RENCANA.values())} tugas minggu ini, {len(CATATAN_PUBLIK)} catatan publik, {len(PRIBADI)} pengingat pribadi')
+
+if mode == 'agenda':  # hanya bagian agenda (idempoten: hapus agenda lama dulu)
+    agenda_hapus(); agenda_buat(); sys.exit()
+if mode == 'agenda-hapus': agenda_hapus(); sys.exit()
 
 if mode == 'hapus': hapus(); sys.exit()
 if demo_ids():
@@ -108,4 +165,5 @@ print(plugin('survei', str(JUMLAH['survei_terisi'])))  # survei diisi lewat DB l
 print(plugin('keputusan'))  # Triage::decide (terima 70 / ubah 15 / tolak 15 %), sebagai rina
 print(plugin('chat', str(JUMLAH['chat']), str(JUMLAH['rating_chat'])))  # status/rating bervariasi + article_uses
 if '--mundurkan-tanggal' in sys.argv: print(plugin('mundurkan'))  # satu UPDATE terbatas pada baris [DEMO]
+agenda_buat()
 print('selesai (target):', JUMLAH)
