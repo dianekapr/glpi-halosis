@@ -362,11 +362,15 @@ def triage(req: TriageRequest) -> dict:
 
 
 def extractive(hit: dict) -> str:
-    text = hit['potongan']
-    title = hit['judul'].strip().split('\n', 1)[0][:80].rstrip()
+    # Potongan diawali judul ("<judul>." / "Layanan <nama>."): buang agar kalimat tidak ganda
+    name = hit['judul'].strip()
+    text = search.tanpa_judul(search.tanpa_judul(hit['potongan'], f'Layanan {name}'), name)
+    title = name.split('\n', 1)[0][:80].rstrip()
     if hit['jenis_sumber'] == 'layanan':
-        return f'Permintaan ini bisa diajukan lewat layanan "{title}" di katalog layanan.\n{text}'
-    return f'Berdasarkan artikel "{title}":\n{text}'
+        lead = f'Permintaan ini bisa diajukan lewat layanan "{title}" di katalog layanan.'
+    else:
+        lead = f'Berdasarkan artikel "{title}":'
+    return f'{lead}\n{text}' if text else lead
 
 
 @app.post('/chat')
@@ -380,7 +384,8 @@ def chat(req: ChatRequest) -> dict:
              if h['sumber'] not in excluded]
     retrieval_ms = ms_since(start)
     top_score = round(float(found[0]['skor']), 4) if found else None
-    hits = [h for h in found[:CHAT_TOP_K] if h['skor'] >= CHAT_MIN_SCORE]
+    # Artikel KB yang lolos ambang menjawab lebih dulu; katalog layanan jadi tautan tambahan
+    hits = search.utamakan_kb([h for h in found[:CHAT_TOP_K] if h['skor'] >= CHAT_MIN_SCORE], CHAT_MIN_SCORE)
     if not hits:
         choices = list({h['sumber']: {'sumber': h['sumber'], 'judul': h['judul'], 'skor': h['skor']}
                         for h in found if h['jenis_sumber'] == 'kb' and h['skor'] >= CHAT_SUGGEST_MIN_SCORE}.values())
@@ -397,7 +402,9 @@ def chat(req: ChatRequest) -> dict:
         return {'ditemukan': False, 'jawaban': NOT_FOUND, 'sumber': [], 'mode': 'tidak-ditemukan', 'pilihan': []}
     mode = llm.provider() if answer else 'ekstraktif'
     if answer is None:
-        hits = hits[:1]  # ekstraktif: hanya solusi teratas
+        # ekstraktif: hanya sumber teratas; bila itu artikel KB, layanan yang juga lolos ambang ikut sebagai tautan
+        services = [h for h in hits[1:] if h['jenis_sumber'] == 'layanan'] if hits[0]['jenis_sumber'] == 'kb' else []
+        hits = hits[:1] + services[:1]
         answer = extractive(hits[0])
     record_latency('chat', retrieval_ms=retrieval_ms, generation_ms=ms_since(generation_start) if mode != 'ekstraktif' else None,
                    total_ms=ms_since(start), skor_teratas=top_score, mode=mode)

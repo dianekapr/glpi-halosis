@@ -84,14 +84,51 @@ final class KnowledgeIndex
     }
 
     /**
-     * URL untuk sumber LAYANAN-<C|F><id> dari layanan AI: form katalog, atau katalog layanan untuk kategori.
+     * URL untuk sumber LAYANAN-<C|F><id> dari layanan AI: form katalog, atau untuk kategori: form permintaan
+     * (kategori permintaan) / form laporan masalah (kategori insiden saja) dengan pertanyaan kategori sudah terisi
+     * lewat parameter URL GLPI (?<uuid pertanyaan>=<id kategori>). Tidak ada form yang cocok → katalog layanan.
      */
     public static function serviceUrl(string $ref): ?string
     {
         if (preg_match('/^LAYANAN-F(\d+)$/', $ref, $m)) {
             return \Html::getPrefixedUrl('/Form/Render/' . $m[1]);
         }
-        return str_starts_with($ref, 'LAYANAN-C') ? ServiceCatalog::getSearchURL() : null;
+        if (!preg_match('/^LAYANAN-C(\d+)$/', $ref, $m)) {
+            return null;
+        }
+        $category = ITILCategory::getById((int) $m[1]);
+        if ($category instanceof ITILCategory) {
+            $type = !empty($category->fields['is_request']) || empty($category->fields['is_incident'])
+                ? \Ticket::DEMAND_TYPE : \Ticket::INCIDENT_TYPE;
+            $formId = Chatbot::findFormId($type);
+            $uuid = $formId !== null ? self::categoryQuestion($formId) : null;
+            if ($uuid !== null) {
+                // PHP mengganti titik pada nama parameter GET dengan garis bawah; GLPI melakukan hal yang sama saat membaca
+                return \Html::getPrefixedUrl('/Form/Render/' . $formId) . '?' . http_build_query([$uuid => $category->getID()]);
+            }
+        }
+        return ServiceCatalog::getSearchURL();
+    }
+
+    /** UUID pertanyaan dropdown Kategori ITIL pada form, atau null. */
+    private static function categoryQuestion(int $formId): ?string
+    {
+        global $DB;
+
+        $questions = \Glpi\Form\Question::getTable();
+        $sections = \Glpi\Form\Section::getTable();
+        foreach ($DB->request([
+            'SELECT'     => ["$questions.uuid", "$questions.extra_data"],
+            'FROM'       => $questions,
+            'INNER JOIN' => [$sections => ['ON' => [$sections => 'id', $questions => 'forms_sections_id']]],
+            'WHERE'      => ["$sections.forms_forms_id" => $formId, "$questions.type" => \Glpi\Form\QuestionType\QuestionTypeItemDropdown::class],
+            'ORDER'      => "$questions.id",
+        ]) as $row) {
+            if ((json_decode((string) $row['extra_data'], true)['itemtype'] ?? '') === ITILCategory::class) {
+                return (string) $row['uuid'];
+            }
+        }
+        return null;
     }
 
     /**

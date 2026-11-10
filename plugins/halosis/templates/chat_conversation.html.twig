@@ -12,7 +12,7 @@
             {% if request_url is defined and request_url %}
                 <div class="hc-bubble hc-bubble-ai">{{ user_name ? __('Hello %s!', 'halosis')|format(user_name) : __('Hello!', 'halosis') }} {{ __('What do you need today?', 'halosis') }}</div>
                 <div class="hc-intent" role="group" aria-label="{{ __('What do you need today?', 'halosis') }}">
-                    <a class="hc-intent-card" href="{{ request_url }}">
+                    <a class="hc-intent-card" href="{{ request_url }}" data-chat-request>
                         <span class="hc-intent-icon" aria-hidden="true"><i class="ti ti-clipboard-plus"></i></span>
                         <span class="hc-intent-text">
                             <strong>{{ __('Make a request', 'halosis') }}</strong>
@@ -63,6 +63,9 @@
     typing: __('The assistant is typing', 'halosis'),
     masked: __('Personal data in your message was hidden before processing.', 'halosis'),
     ended: __('This conversation has ended. Start a new one to ask again.', 'halosis'),
+    report_prompt: __('Tell me the problem you are facing, I will look for a solution first. If it is still not solved, I will create a report for you.', 'halosis'),
+    opening_request: __('Opening the service request form…', 'halosis'),
+    apply_service: __('Apply through the service', 'halosis'),
     error: __('The assistant is not available right now. You can still create a report.', 'halosis'),
     helpful: __('Did this answer help?', 'halosis'),
     resolved: __('Problem solved', 'halosis'),

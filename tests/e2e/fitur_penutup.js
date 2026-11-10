@@ -213,6 +213,65 @@ const LONG = [
       await rina.context().close();
       return items === 3 && !text.includes('@contoh.go.id') && !text.includes('081234567890') && none;
     });
+
+    await run('E20 kartu Laporkan masalah & Ajukan permintaan memberi respons terlihat', async () => {
+      const budi = await login(browser, 'budi');
+      await budi.waitForLoadState('networkidle');
+      // Percakapan terbuka dilanjutkan otomatis; mulai yang baru supaya pilihan awal tampil
+      const fresh = budi.getByRole('button', { name: /Percakapan baru|New conversation/ }).first();
+      if (await fresh.isVisible().catch(() => false)) { await fresh.click(); await budi.waitForTimeout(1500); }
+      const tickets = () => Number(sql('SELECT COUNT(*) FROM glpi_tickets;'));
+      const before = tickets();
+      await budi.getByText('Laporkan masalah').first().click(); await budi.waitForTimeout(500);
+      const focused = await budi.evaluate(() => document.activeElement && document.activeElement.matches('[data-chat-form] textarea'));
+      const flash = await budi.locator('[data-chat-form].hc-flash').count() === 1;
+      const msg = await budi.locator('[data-chat-report-prompt]').innerText();
+      await budi.getByText('Laporkan masalah').first().click(); await budi.waitForTimeout(300);
+      const once = await budi.locator('[data-chat-report-prompt]').count() === 1;
+      const noTicket = tickets() === before;
+      // Ajukan permintaan: tautan ke form katalog, dengan penanda klik diterima sebelum pindah halaman
+      const card = budi.locator('[data-chat-request]');
+      const href = await card.getAttribute('href');
+      await budi.evaluate(() => document.querySelector('[data-chat-request]').addEventListener('click', e => e.preventDefault(), true));
+      await card.click();
+      const loading = await card.evaluate(el => el.classList.contains('hc-loading') && /Membuka formulir/.test(el.innerText));
+      await budi.context().close();
+      return focused && flash && once && noTicket && /Ceritakan masalah yang Anda alami\. Saya carikan solusinya dulu; bila belum selesai, saya buatkan laporan\./.test(msg)
+        && /\/Form\/Render\/\d+/.test(href || '') && loading;
+    });
+
+    await run('E21 tautan sumber: artikel KB membuka isi artikel, katalog layanan membuka form kategorinya (tab sama)', async () => {
+      const budi = await login(browser, 'budi');
+      const fresh = budi.getByRole('button', { name: /Percakapan baru|New conversation/ }).first();
+      if (await fresh.isVisible().catch(() => false)) { await fresh.click(); await budi.waitForTimeout(1500); }
+      const chatUrl = budi.url();
+      const input = budi.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
+      await input.fill('Lupa kata sandi SSO'); await input.press('Enter');
+      const kb = budi.locator('a[data-chat-source="kb"]').first();
+      const service = budi.locator('a[data-chat-source="service"]').first();
+      await kb.waitFor({ timeout: 30000 });
+      const answer = await budi.locator('.hc-bubble-ai').last().innerText();
+      // Jawaban dari artikel KB, tanpa kalimat judul ganda; layanan sebagai tautan tambahan
+      const fromKb = /Berdasarkan artikel/.test(answer) && !/Layanan Akun/.test(answer);
+      const label = /Ajukan lewat layanan/.test(await service.innerText());
+      const sameTab = await kb.getAttribute('target') === '_self' && await service.getAttribute('target') === '_self';
+      const href = await service.getAttribute('href');
+      const category = sql("SELECT id FROM glpi_itilcategories WHERE completename LIKE '%SSO / Login%' LIMIT 1;");
+      const direct = /\/Form\/Render\/\d+\?[0-9a-f-]+=\d+/.test(href || '') && href.endsWith(`=${category}`);
+      const pages = budi.context().pages().length;
+      await Promise.all([budi.waitForURL(/\/Form\/Render\//), service.click()]);
+      await budi.waitForLoadState('networkidle');
+      const formOk = budi.context().pages().length === pages && /SSO \/ Login/.test(await budi.locator('main, body').first().innerText());
+      // Kembali ke chat lalu buka artikel KB: isi artikel tampil di tab yang sama
+      await budi.goto(chatUrl); await budi.waitForLoadState('networkidle');
+      const kbAgain = budi.locator('a[data-chat-source="kb"]').first();
+      await kbAgain.waitFor({ timeout: 30000 });
+      await Promise.all([budi.waitForLoadState('load'), kbAgain.click()]);
+      await budi.waitForLoadState('networkidle');
+      const article = /Tunggu 15 menit|Lupa password/.test(await budi.locator('body').innerText());
+      await budi.context().close();
+      return fromKb && label && sameTab && direct && formOk && article;
+    });
   } finally {
     if (dimas) {
       // Pengaturan selalu dikembalikan, juga bila uji FR-04 gagal di tengah
