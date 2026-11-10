@@ -28,7 +28,7 @@ Porsi kueri yang dijawab bila ambang atas diubah:
 
 Pada 0,83: 0,00% kueri rekaan tak terjawab lolos ke jawaban, dan 0,00% judul sumber gagal terjawab.
 
-Keterbatasan: judul sumber memihak skor tinggi karena teksnya ada di sumber; set rekaan ditulis tangan dan kecil; set tiket tidak punya label relevansi. Ambang belum boleh dinyatakan terkalibrasi sebelum penilaian tim (`reports/penilaian_relevansi.xlsx`) tersedia dan hasil UAT menentukan biaya salah jawab.
+Keterbatasan: judul sumber memihak skor tinggi karena teksnya ada di sumber; set rekaan ditulis tangan dan kecil; set tiket kini punya label dari satu penilai ahli (20 kueri, `reports/hasil_penilaian_relevansi.md`): relevan untuk petugas P@1 90%, layak self-service 37%. Seluruh 100 baris berskor 0,84–0,93 (≥ 0,83), jadi area di bawah ambang tidak teruji dan skor tidak memisahkan relevan dari tidak. Ambang belum boleh dinyatakan terkalibrasi sebelum ada penilai kedua, kueri lebih banyak dengan skor < 0,83, dan UAT yang menentukan biaya salah jawab.
 
 ## Triase: 40 / 70
 

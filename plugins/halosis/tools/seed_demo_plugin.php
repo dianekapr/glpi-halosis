@@ -2,7 +2,7 @@
 /**
  * ALAT DEMO (bukan bagian layanan AI): langkah sisi-plugin untuk scripts/seed_demo.py.
  * Jalankan lewat:  docker compose exec -T glpi php /var/www/glpi/plugins/halosis/tools/seed_demo_plugin.php <langkah> [arg]
- * Langkah: survei | keputusan | pola | chat <n_total> <n_rating> | mundurkan | hapus
+ * Langkah: survei | keputusan | pola | chat <n_total> <n_rating> | mundurkan | pemilik <id:akun,...> | hapus
  * Semua operasi dibatasi ketat pada data bertanda "[DEMO]" (tiket bernama "[DEMO]%", chat dengan pesan pertama
  * "[DEMO]…", pola/Problem berlabel "[DEMO]…"). Tidak menyentuh data latih atau indeks AI.
  */
@@ -195,6 +195,24 @@ switch ($argv[1] ?? '') {
         echo "tanggal dimundurkan: {$ke} tiket, " . count($chats) . ' chat, ' . count(demoPatterns()) . " pola\n";
         break;
 
+    case 'pemilik':  // Reminder pribadi [DEMO]: REST selalu memakai akun sesi sebagai pemilik → satu-satunya UPDATE: kolom users_id
+        foreach (explode(',', (string) ($argv[2] ?? '')) as $pair) {
+            [$rid, $login] = explode(':', $pair) + [1 => ''];
+            $u = new User();
+            if (!ctype_digit($rid) || !$u->getFromDBbyName($login)) { fwrite(STDERR, "pasangan tidak valid: {$pair}\n"); exit(1); }
+            $DB->update('glpi_reminders', ['users_id' => (int) $u->getID()], ['id' => (int) $rid, 'name' => ['LIKE', TAG . '%']]);
+            echo "reminder #{$rid} -> {$login}\n";
+        }
+        break;
+
+    case 'hapus_pengingat':  // Reminder [DEMO] milik akun lain tidak terlihat oleh REST (akun glpi) → hapus lewat kelas GLPI
+        $n = 0;
+        foreach ($DB->request(['FROM' => 'glpi_reminders', 'WHERE' => ['name' => ['LIKE', TAG . '%']]]) as $r) {
+            (new Reminder())->delete(['id' => (int) $r['id']], true); $n++;
+        }
+        echo "pengingat [DEMO] dihapus: {$n}\n";
+        break;
+
     case 'hapus':
         masuk('dimas');
         $ids = array_keys(demoTickets());
@@ -212,5 +230,5 @@ switch ($argv[1] ?? '') {
         break;
 
     default:
-        fwrite(STDERR, "langkah: keputusan | pola | chat | mundurkan | hapus\n"); exit(1);
+        fwrite(STDERR, "langkah: keputusan | pola | chat | mundurkan | pemilik | hapus\n"); exit(1);
 }

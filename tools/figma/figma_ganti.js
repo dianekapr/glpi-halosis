@@ -7,7 +7,6 @@ const txt = (n) => ('findAll' in n ? n.findAll(x => x.type === 'TEXT').map(x => 
 const rxs = (n) => (n.reactions || []).map(r => ({ trigger: r.trigger, actions: r.actions || (r.action ? [r.action] : []) }));
 const isNav = (x) => x.type === 'INSTANCE' && /^(Sidebar|Navbar)/.test(x.mainComponent ? x.mainComponent.name : x.name);
 const clickable = (tn, root) => { let c = tn; while (c.parent && c.parent.id !== root.id) { if (/^(Button|Link|Tab|Nav)/.test(c.parent.name) || c.parent.type === 'INSTANCE') return c.parent; if (c.parent.children && c.parent.children.length > 4) break; c = c.parent; } return tn.parent; };
-const allRx = pg.findAll(x => x.reactions && x.reactions.length);
 const out = [];
 for (const [tid, cid] of PAIRS) {
   const t = await figma.getNodeByIdAsync(tid), cap = await figma.getNodeByIdAsync(cid);
@@ -16,8 +15,9 @@ for (const [tid, cid] of PAIRS) {
   const keluar = [];
   for (const n of [t, ...t.findAll(x => x.reactions && x.reactions.length)]) { if (!n.reactions.length || (n !== t && inNav(n))) continue; keluar.push({ id: n.id, nama: n.name, teks: txt(n), reactions: rxs(n) }); }
   const inner = new Set(t.findAll(() => true).map(x => x.id));
-  const masuk = []; for (const n of allRx) { let top = n; while (top.parent && top.parent.type !== 'SECTION' && top.parent.type !== 'PAGE') top = top.parent; if (top.id === t.id) continue;
-    for (const r of rxs(n)) for (const a of r.actions) if (a.destinationId && (a.destinationId === t.id || inner.has(a.destinationId))) masuk.push({ dari: n.id, ke: a.destinationId }); }
+  // allRx dihitung per pasangan per Section (node basi dari frame yang sudah diganti membuat get_parent galat)
+  const masuk = []; for (const sec of pg.children) { if (sec.id === cap.id || !('findAll' in sec)) continue; for (const n of sec.findAll(x => x.reactions && x.reactions.length)) { try { let top = n; while (top.parent && top.parent.type !== 'SECTION' && top.parent.type !== 'PAGE') top = top.parent; if (top.id === t.id) continue;
+    for (const r of rxs(n)) for (const a of r.actions) if (a.destinationId && (a.destinationId === t.id || inner.has(a.destinationId))) masuk.push({ dari: n.id, ke: a.destinationId }); } catch (e) {} } }
   const sb = t.children.find(isNav); const mc = sb && sb.mainComponent; const sbw = sb ? sb.width : 240, sbn = sb ? sb.name : "";
   // ganti isi
   for (const c of [...t.children]) c.remove();
