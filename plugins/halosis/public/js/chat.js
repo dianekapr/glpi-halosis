@@ -202,6 +202,7 @@
             };
             const card = el('div', 'hc-offer', [
                 el('p', '', text),
+                ...(endOnDecline ? [el('p', 'hc-hint', t.retry_hint)] : []),
                 el('div', 'hc-actions-btns', [
                     button('hc-btn hc-btn-primary hc-btn-sm', [icon('file-plus'), t.yes_report], startReport),
                     button('hc-btn hc-btn-sm', t.no_thanks, decline),

@@ -786,7 +786,8 @@ final class Stats
             'FROM'       => Decision::getTable() . ' AS d',
             'INNER JOIN' => [Ticket::getTable() . ' AS t' => ['ON' => ['d' => 'tickets_id', 't' => 'id']]],
             'LEFT JOIN'  => [Suggestion::getTable() . ' AS s' => ['ON' => ['d' => 'suggestions_id', 's' => 'id']]],
-            'WHERE'      => ['d.action' => [Decision::ACTION_MODIFY, Decision::ACTION_REJECT]],
+            // Data demo ([DEMO], scripts/seed_demo.py) tidak ikut diekspor sebagai bahan koreksi
+            'WHERE'      => ['d.action' => [Decision::ACTION_MODIFY, Decision::ACTION_REJECT], 'NOT' => ['t.name' => ['LIKE', '[DEMO]%']]],
             'ORDER'      => 'd.id',
         ]) as $row) {
             $final = json_decode((string) $row['final_values'], true) ?: [];
