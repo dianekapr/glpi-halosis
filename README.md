@@ -115,6 +115,7 @@ Jalankan dari Terminal di folder `glpi-halosis` (`cd ~/Downloads/glpi-halosis`):
 | Menyalakan lagi besok | Buka Docker Desktop, lalu `docker compose up -d`, tunggu ±1 menit |
 | Menyimpan kondisi sebelum demo | `scripts/demo_snapshot.sh simpan` |
 | Kembali ke kondisi yang disimpan | `scripts/demo_snapshot.sh pulihkan` |
+| Mengisi dashboard dengan data fiktif **[DEMO]** (alat demo, bukan bagian layanan AI) | `python scripts/seed_demo.py buat --mundurkan-tanggal` (hapus: `python scripts/seed_demo.py hapus`; `rencana` = hanya cetak jumlah). Simpan snapshot dulu. Langkah sisi-plugin: `plugins/halosis/tools/seed_demo_plugin.php`; satu-satunya UPDATE tanggal ber-WHERE ketat pada baris [DEMO]. Data [DEMO] dikecualikan dari Ekspor koreksi & Kandidat → artikel, dan tidak menyentuh data latih/indeks AI |
 
 > **Windows:** jalankan snapshot dari **Git Bash** (bukan PowerShell/CMD) di dalam folder proyek yang berada di drive yang dibagikan ke Docker Desktop (mis. `C:\`). Skrip otomatis memakai path Windows; bila folder tidak terbaca container, skrip berhenti dengan pesan "GAGAL" dan data Keycloak tidak diubah.
 | Menghapus **semua** data lalu mulai dari nol | `docker compose down -v` lalu `scripts/pasang.sh` |

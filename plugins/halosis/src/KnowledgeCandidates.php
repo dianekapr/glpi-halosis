@@ -60,7 +60,8 @@ final class KnowledgeCandidates
         foreach ($DB->request([
             'SELECT' => ['id', 'name', 'content'],
             'FROM'   => Ticket::getTable(),
-            'WHERE'  => ['status' => [Ticket::SOLVED, Ticket::CLOSED], 'is_deleted' => 0],
+            // Tiket demo ([DEMO]) tidak menjadi kandidat artikel
+            'WHERE'  => ['status' => [Ticket::SOLVED, Ticket::CLOSED], 'is_deleted' => 0, 'NOT' => ['name' => ['LIKE', '[DEMO]%']]],
             'ORDER'  => 'id DESC',
         ]) as $ticket) {
             if (isset($known[(string) $ticket['id']])) {

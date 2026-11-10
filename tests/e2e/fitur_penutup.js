@@ -13,7 +13,6 @@ const PASSWORD = 'halosis';
 const ROOT = path.resolve(__dirname, '../..');
 const created = [];
 const problems = [];
-let started = null;
 
 async function api() {
   const auth = 'Basic ' + Buffer.from('glpi:glpi').toString('base64');
@@ -56,7 +55,7 @@ async function openConfig(page) {
 async function setIncludeRequests(page, on) {
   await openConfig(page);
   await page.locator('input[name=pattern_include_requests][type=checkbox]').evaluate((el, v) => { el.checked = v; }, on);
-  await Promise.all([page.waitForLoadState('networkidle'), page.locator('button[name=update]').click()]);
+  await track(() => Promise.all([page.waitForLoadState('networkidle'), page.locator('button[name=update]').click()]));  // Catatan "pengaturan diubah"
 }
 
 function sql(query) {
@@ -68,32 +67,59 @@ function cron(task) {
   execSync(`docker compose exec -T glpi php front/cron.php --force ${task}`, { cwd: ROOT, stdio: 'ignore' });
 }
 
+// Pembersihan HERMETIK: hanya objek dengan ID yang dicatat tes ini (tiket, SLA/SLM uji, pengingat Catatan, chat) atau
+// Problem yang seluruh tiket anggotanya adalah tiket uji. Data lain (termasuk data demo [DEMO]) tidak disentuh.
+const slaIds = [], slmIds = [], reminderIds = [];
+let chatsBefore = null;
+const reminderSet = () => new Set(ids(sql("SELECT id FROM glpi_reminders WHERE name LIKE 'HaloSIS:%';")));
+// Catatan audit (Pengingat) yang muncul akibat aksi tes ini dicatat ID-nya: dibuat tes = ada sesudah, tidak ada sebelum
+const track = async fn => { const before = reminderSet(); const r = await fn(); for (const id of reminderSet()) if (!before.has(id)) reminderIds.push(id); return r; };
+const ids = q => q.split('\n').filter(Boolean).map(Number);
+const chatIds = () => new Set(ids(sql('SELECT id FROM glpi_plugin_halosis_chats;')));
+
 async function cleanup(a) {
-  if (started) {
-    // Problem pola baru selama uji (tiket uji) & Catatan "pengaturan diubah" dari uji FR-04
-    for (const id of sql(`SELECT problems_id FROM glpi_plugin_halosis_patterns WHERE date_creation >= '${started}';`).split('\n').filter(Boolean)) {
-      problems.push(Number(id));
+  const list = created.join(',') || '0';
+  if (created.length) {
+    // Problem pola yang dibuat tes = Problem yang semua tiket anggotanya adalah tiket uji
+    for (const id of ids(sql(`SELECT problems_id FROM glpi_problems_tickets GROUP BY problems_id
+                               HAVING SUM(tickets_id NOT IN (${list})) = 0 AND SUM(tickets_id IN (${list})) > 0;`))) {
+      problems.push(id);
     }
-    sql(`DELETE pr FROM glpi_profiles_reminders pr JOIN glpi_reminders r ON r.id = pr.reminders_id WHERE r.name LIKE 'HaloSIS:%' AND r.date_creation >= '${started}';
-         DELETE FROM glpi_reminders WHERE name LIKE 'HaloSIS:%' AND date_creation >= '${started}';
-         DELETE FROM glpi_plugin_halosis_progress_reminders WHERE date_reminder >= '${started}';
-         DELETE FROM glpi_queuednotifications WHERE event = 'halosis_progress' AND create_time >= '${started}';`);
+  }
+  if (reminderIds.length) {
+    const r = reminderIds.join(',');
+    sql(`DELETE FROM glpi_profiles_reminders WHERE reminders_id IN (${r}); DELETE FROM glpi_reminders WHERE id IN (${r});`);
   }
   if (problems.length) {
+    const p = problems.join(',');
     await a.call('DELETE', 'Problem', { input: problems.map(id => ({ id })), force_purge: true });
-    sql(`DELETE FROM glpi_plugin_halosis_patterns WHERE problems_id IN (${problems.join(',')});
-         DELETE FROM glpi_problems_tickets WHERE problems_id IN (${problems.join(',')});
-         DELETE FROM glpi_queuednotifications WHERE itemtype = 'Problem' AND items_id IN (${problems.join(',')});`);
+    sql(`DELETE FROM glpi_plugin_halosis_patterns WHERE problems_id IN (${p});
+         DELETE FROM glpi_problems_tickets WHERE problems_id IN (${p});
+         DELETE FROM glpi_queuednotifications WHERE itemtype = 'Problem' AND items_id IN (${p});`);
   }
-  if (created.length === 0) return;
-  const ids = created.join(',');
-  await a.call('DELETE', 'Ticket', { input: created.map(id => ({ id })), force_purge: true });
-  sql(`DELETE FROM glpi_plugin_halosis_decisions WHERE tickets_id IN (${ids});
-       DELETE FROM glpi_plugin_halosis_triage_retries WHERE tickets_id IN (${ids});
-       DELETE FROM glpi_plugin_halosis_suggestions WHERE tickets_id IN (${ids});
-       DELETE FROM glpi_plugin_halosis_progress_reminders WHERE tickets_id IN (${ids});
-       DELETE FROM glpi_problems_tickets WHERE tickets_id IN (${ids});
-       DELETE FROM glpi_queuednotifications WHERE itemtype = 'Ticket' AND items_id IN (${ids});`);
+  if (created.length) {
+    await a.call('DELETE', 'Ticket', { input: created.map(id => ({ id })), force_purge: true });
+    sql(`DELETE FROM glpi_plugin_halosis_decisions WHERE tickets_id IN (${list});
+         DELETE FROM glpi_plugin_halosis_reassignments WHERE tickets_id IN (${list});
+         DELETE FROM glpi_plugin_halosis_triage_retries WHERE tickets_id IN (${list});
+         DELETE FROM glpi_plugin_halosis_suggestions WHERE tickets_id IN (${list});
+         DELETE FROM glpi_plugin_halosis_progress_reminders WHERE tickets_id IN (${list});
+         DELETE FROM glpi_problems_tickets WHERE tickets_id IN (${list});
+         DELETE FROM glpi_queuednotifications WHERE itemtype = 'Ticket' AND items_id IN (${list});`);
+  }
+  if (slaIds.length) await track(() => a.call('DELETE', 'SLA', { input: slaIds.map(id => ({ id })), force_purge: true }));
+  if (slmIds.length) await track(() => a.call('DELETE', 'SLM', { input: slmIds.map(id => ({ id })), force_purge: true }));
+  if (reminderIds.length) {  // Catatan yang timbul dari penghapusan SLA/SLM uji di atas
+    const r = reminderIds.join(',');
+    sql(`DELETE FROM glpi_profiles_reminders WHERE reminders_id IN (${r}); DELETE FROM glpi_reminders WHERE id IN (${r});`);
+  }
+  if (chatsBefore) {
+    const baru = [...chatIds()].filter(id => !chatsBefore.has(id));  // chat yang dibuat langkah UI E20/E21
+    if (baru.length) {
+      const c = baru.join(',');
+      sql(`DELETE FROM glpi_plugin_halosis_article_uses WHERE chats_id IN (${c}); DELETE FROM glpi_plugin_halosis_chats WHERE id IN (${c});`);
+    }
+  }
 }
 
 const LONG = [
@@ -113,7 +139,7 @@ const LONG = [
   const sub = shell && fs.readdirSync(path.join(cache, shell)).find(d => d.startsWith('chrome-headless-shell'));
   const browser = await chromium.launch(sub ? { executablePath: path.join(cache, shell, sub, 'chrome-headless-shell') } : {});
   const a = await api();
-  started = sql('SELECT NOW();');
+  chatsBefore = chatIds();
   const results = {};
   const run = async (name, fn) => {
     try { results[name] = (await fn()) ? 'LULUS' : 'GAGAL'; } catch (e) { results[name] = 'GAGAL (' + e.message.split('\n')[0].slice(0, 80) + ')'; }
@@ -124,9 +150,16 @@ const LONG = [
     dimas = await login(browser, 'dimas');
 
     await run('UC-10 pratinjau target SLA (tanpa menyimpan)', async () => {
-      // SLA penyelesaian yang paling banyak dipakai tiket aktif; target baru 1 menit → semua tiket jadi terlewati
-      const [sla, active] = sql(`SELECT slas_id_ttr, COUNT(*) FROM glpi_tickets WHERE is_deleted = 0 AND status < 5 AND slas_id_ttr > 0
-                                  GROUP BY slas_id_ttr ORDER BY 2 DESC LIMIT 1;`).split('\t');
+      // Hermetik: SLM + SLA penyelesaian milik tes dan 3 tiket uji yang memakainya; pratinjau hanya menghitung tiket ber-SLA itu.
+      // Target baru 1 menit → semua tiket uji (dibuat > 1 menit lalu) jadi terlewati.
+      const slm = (await track(() => a.call('POST', 'SLM', { input: { name: 'UJI-E2E SLM' } }))).id; slmIds.push(slm);
+      const sla = (await track(() => a.call('POST', 'SLA', { input: { name: 'UJI-E2E SLA TTR', slms_id: slm, type: 0, number_time: 8, definition_time: 'hour' } }))).id; slaIds.push(sla);
+      for (const t of ['Uji pratinjau SLA satu', 'Uji pratinjau SLA dua', 'Uji pratinjau SLA tiga']) {
+        const id = await ticket(a, { name: t, content: `${t}. Data uji otomatis.`, _users_id_requester: a.users.budi, slas_id_ttr: sla });
+        // Aturan tiket menimpa SLA saat dibuat → pasang SLA uji langsung; usia pasti > 1 menit
+        sql(`UPDATE glpi_tickets SET slas_id_ttr = ${sla}, date = NOW() - INTERVAL 1 HOUR, time_to_resolve = NOW() + INTERVAL 7 HOUR WHERE id = ${id};`);
+      }
+      const active = sql(`SELECT COUNT(*) FROM glpi_tickets WHERE is_deleted = 0 AND status < 5 AND slas_id_ttr = ${sla};`);
       const before = sql(`SELECT CONCAT(number_time, definition_time) FROM glpi_slas WHERE id = ${sla};`);
       await openConfig(dimas);
       await dimas.selectOption('#halosis_sla_target', `sla:${sla}`);
@@ -135,7 +168,7 @@ const LONG = [
       const box = await dimas.locator('[data-halosis-sla-result]').innerText();
       const overdueNew = Number((await dimas.locator('[data-halosis-sla-result] tbody tr:nth-child(2) td:nth-child(4)').innerText()).trim());
       const after = sql(`SELECT CONCAT(number_time, definition_time) FROM glpi_slas WHERE id = ${sla};`);
-      return box.includes(`${active} tiket aktif terdampak`) && overdueNew === Number(active) && before === after;
+      return active === '3' && box.includes(`${active} tiket aktif terdampak`) && overdueNew === Number(active) && before === after;
     });
 
     await run('UC-10 pratinjau aturan SLA (SLA pengganti respons & penyelesaian)', async () => {
@@ -172,6 +205,17 @@ const LONG = [
     });
 
     await run('UC-04 beban kerja memutus seri (selisih < 5 poin) + alasan di panel', async () => {
+      // Hermetik: beban tim dikendalikan tes. Tiket pengintai mengungkap 2 kandidat teratas; tes menambah tiket uji ber-tim
+      // kandidat #1 sampai bebannya lebih besar dari kandidat #2, lalu tiket sebenarnya dibuat (semua dibersihkan lewat ID).
+      const loadOf = gid => Number(sql(`SELECT COUNT(*) FROM glpi_groups_tickets gt JOIN glpi_tickets t ON t.id = gt.tickets_id
+                                        WHERE gt.groups_id = ${gid} AND gt.type = 2 AND t.is_deleted = 0 AND t.status < 5;`));
+      const probe = await ticket(a, { name: 'Tidak bisa login aplikasi', content: 'Tidak bisa login aplikasi', _users_id_requester: a.users.budi });
+      const pc = JSON.parse(sql(`SELECT candidates FROM glpi_plugin_halosis_suggestions WHERE tickets_id = ${probe};`));
+      if (pc.length > 1 && pc[0].groups_id > 0 && pc[1].groups_id > 0 && pc[0].groups_id !== pc[1].groups_id) {
+        for (let n = loadOf(pc[1].groups_id) - loadOf(pc[0].groups_id) + 1; n > 0; n--) {
+          await ticket(a, { name: 'Uji beban tim', content: 'Data uji otomatis.', _groups_id_assign: pc[0].groups_id, _users_id_requester: a.users.siti });
+        }
+      }
       const t = await ticket(a, { name: 'Tidak bisa login aplikasi', content: 'Tidak bisa login aplikasi', _users_id_requester: a.users.budi });
       const [candidates, group] = sql(`SELECT candidates, groups_id FROM glpi_plugin_halosis_suggestions WHERE tickets_id = ${t};`).split('\t');
       const c = JSON.parse(candidates);

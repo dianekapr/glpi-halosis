@@ -19,7 +19,8 @@ const ROOT = path.resolve(__dirname, '../..');
 const TEAM_MEMBER = { 'Tim Aplikasi Statistik': 'andi', 'Tim Identitas & Akses': 'fajar', 'Tim Jaringan': 'dedi', 'Tim Perangkat': 'rudi' };
 const created = [];
 const articles = [];  // [kandidat, artikel] dari UC-09 5a: artikel dihapus, kandidat dikembalikan ke "pending"
-let started = null;  // waktu DB saat uji mulai: percakapan chat uji sesudahnya ikut dihapus
+let started = null;  // waktu DB saat uji mulai (dipakai asersi UC-03)
+let chatsBefore = null;  // ID chat sebelum uji: pembersihan hanya menghapus chat ber-ID baru
 
 async function api() {
   const auth = 'Basic ' + Buffer.from('glpi:glpi').toString('base64');
@@ -84,13 +85,17 @@ async function cleanup(a) {
          UPDATE glpi_plugin_halosis_candidates SET status = 'pending', knowbaseitems_id = 0, users_id = 0, date_decision = NULL
           WHERE id = ${candidate};`);
   }
-  if (started) {
+  if (chatsBefore) {
+    // Hermetik: hanya percakapan dengan ID baru (tidak ada sebelum uji) yang dihapus; data demo tidak tersentuh.
     // Termasuk tiket yang dibuat lewat chat (UC-03); tiket tsb. ikut dihapus di bawah
-    for (const id of sql(`SELECT tickets_id FROM glpi_plugin_halosis_chats WHERE users_id IN (${a.users.budi}, ${a.users.siti})
-                            AND date_creation >= '${started}' AND tickets_id > 0;`).split('\n').filter(Boolean)) {
-      created.push(Number(id));
+    const baru = sql('SELECT id FROM glpi_plugin_halosis_chats;').split('\n').filter(Boolean).map(Number).filter(id => !chatsBefore.has(id));
+    if (baru.length) {
+      const c = baru.join(',');
+      for (const id of sql(`SELECT tickets_id FROM glpi_plugin_halosis_chats WHERE id IN (${c}) AND tickets_id > 0;`).split('\n').filter(Boolean)) {
+        created.push(Number(id));
+      }
+      sql(`DELETE FROM glpi_plugin_halosis_article_uses WHERE chats_id IN (${c}); DELETE FROM glpi_plugin_halosis_chats WHERE id IN (${c});`);
     }
-    sql(`DELETE FROM glpi_plugin_halosis_chats WHERE users_id IN (${a.users.budi}, ${a.users.siti}) AND date_creation >= '${started}';`);
   }
   if (created.length === 0) return;
   const ids = created.join(',');
@@ -110,6 +115,7 @@ async function cleanup(a) {
   const browser = await chromium.launch(sub ? { executablePath: path.join(cache, shell, sub, 'chrome-headless-shell') } : {});
   const a = await api();
   started = sql('SELECT NOW();');
+  chatsBefore = new Set(sql('SELECT id FROM glpi_plugin_halosis_chats;').split('\n').filter(Boolean).map(Number));
   const results = {};
   const run = async (name, fn) => {
     try { results[name] = (await fn()) ? 'LULUS' : 'GAGAL'; } catch (e) { results[name] = 'GAGAL (' + e.message.split('\n')[0].slice(0, 80) + ')'; }

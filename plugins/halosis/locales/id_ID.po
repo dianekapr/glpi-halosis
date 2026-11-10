@@ -480,6 +480,9 @@ msgstr "Masalah belum selesai? Saya akan membuatkan laporan untuk tim TI. Ringka
 msgid "I could not find the answer yet. Shall I create a report for the IT team? This conversation summary will be attached."
 msgstr "Saya belum menemukan jawabannya. Apakah Anda ingin saya buatkan laporan untuk tim TI? Ringkasan percakapan ini akan dilampirkan."
 
+msgid "Or retype your problem in other words."
+msgstr "Atau ketik ulang kendala Anda dengan pertanyaan lain."
+
 msgid "Yes, create report"
 msgstr "Ya, buat laporan"
 
