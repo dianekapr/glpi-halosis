@@ -118,5 +118,3 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 - **UC-03 5b** (pegawai tanpa hak membuat tiket): tidak ada akun demo yang bisa chat tetapi tanpa hak buat tiket (dapat disimulasikan dengan mencabut hak profil, ditandai ⚠️ di atas).
 - **UC-01 3a** pada UI normal: tombol Kirim tidak mengirim pesan kosong; pesan hanya muncul bila diminta langsung ke server.
 - **UC-04 5c (model belum lolos)**: hanya terjadi bila model aktif diganti dengan model yang gagal gerbang (tidak boleh diubah di demo).
-
-Catatan: T4_final.md masih mengutip teks lama 3c (dan 5a) ("…Mulai percakapan baru untuk bertanya lagi."); teks di aplikasi sudah diubah, dokumen sengaja tidak disentuh (tugas hanya-baca).

@@ -1,6 +1,6 @@
 # Cara kerja AI HaloSIS, langkah demi langkah
 
-Tanggal: 5 Nov 2026, diperbarui 7 Nov 2026 · Branch `dev`. Tujuan: mengecek kesesuaian implementasi dengan PoC di dokumen
+Tanggal: 5 Nov 2026, diperbarui 10 Nov 2026 · Branch `dev`. Tujuan: mengecek kesesuaian implementasi dengan PoC di dokumen
 *Kelompok 4 AKPSI-6* §2.4.7 (hal. 48–60). Nomor halaman mengikuti PDF AKPSI-6 tersebut.
 
 **Cara dokumen ini dibuat.** Sumber kebenarannya adalah kode (`ai/`, `plugins/halosis/src/`), metrik tersimpan
@@ -317,8 +317,7 @@ hasil `/cari`-nya terdiri dari artikel FAQ + solusi tiket (KB-5 tidak muncul unt
 
 Prompt LLM melarang fakta tambahan dan membatasi jawaban pada potongan sumber (`ai/halosis_ai/llm.py`).
 
-**Evaluasi.** Tidak ada penilaian manusia. Relevansi didekati dengan kesamaan tim: hasil dianggap benar bila berasal dari tiket
-tim yang sama.
+**Evaluasi.** Ada penilaian ahli domain (satu penilai, 20 kueri × 5 hasil, Cari pengetahuan petugas; `reports/hasil_penilaian_relevansi.md`): relevan untuk petugas P@1 90%, P@3 91,67%, P@5 91%, nDCG@5 0,9622, MRR 0,9375; layak self-service 37% (P@1 30%, P@3 35%). Skor seluruhnya 0,84–0,93, jadi ambang 0,78/0,83 belum teruji. Tanpa kappa. Angka kesamaan tim di bawah tetap sebagai proksi.
 
 | Set uji | Top-1 | Top-3 | MRR | Bukti |
 | --- | ---: | ---: | ---: | --- |
@@ -502,7 +501,7 @@ dan 61.
 | ITSM core | Proven PoC | Regresi demo (`reports/verifikasi_akhir.md:86`) | Diuji di prototipe |
 | SLA | Proven PoC | Di luar lingkup AI; regresi demo sama | Diuji di prototipe |
 | Knowledge | Proven PoC | Re-index dan tes (`ai/tests/test_reindex.py`) | Diuji di prototipe |
-| AI retrieval | PoC proven | 905 kueri proksi tim (`reports/banding_embedding.md`), 8 kasus KB (`reports/replikasi_poc.md`) | Diuji pada history dan 8 kasus, penilaian relevansi tim belum ada |
+| AI retrieval | PoC proven | 905 kueri proksi tim (`reports/banding_embedding.md`), 8 kasus KB (`reports/replikasi_poc.md`) | Diuji pada history dan 8 kasus, penilaian relevansi 1 penilai ahli tersedia (`reports/hasil_penilaian_relevansi.md`), belum ada kappa |
 | AI routing | PoC evidence | 1.559 tiket split waktu, rekonstruksi 1.324 tiket split PoC (`reports/replikasi_poc.md`) | Bukti lebih dekat ke pemakaian nyata, belum pernah dipakai petugas sungguhan |
 | Conversation | Partially proven | 10 uji ekstraktif vs Qwen, 9 sesuai harapan (`reports/replikasi_poc.md`); alur alternatif e2e | Partially proven |
 | Proactive detection | Partially proven | 666 insiden, proksi tim (`reports/banding_pola.md:15-19`), uji alur 3 tiket (`reports/verifikasi_akhir.md:88`) | Partially proven |
@@ -561,7 +560,7 @@ Status per 7 Nov 2026, setelah bagian A, B, dan C.
 | 4 | Skrip `banding_embedding.md` dan `banding_pola.md` tidak ada di repo | **Selesai.** Kedua uji dapat diulang | `ai/scripts/banding_embedding.py`, `ai/scripts/banding_pola.py` |
 | 5 | Perubahan triase tidak pernah dibandingkan pada set yang sama dengan PoC | **Selesai,** sebagai rekonstruksi | `reports/replikasi_poc.md` (Triase) |
 | 6 | `build_index.py` membaca DB GLPI langsung | **Selesai.** Kini lewat REST API | `ai/scripts/build_index.py:85`, `logs/akses_db.log` |
-| 7 | Ambang chat tanpa laporan kalibrasi | **Sebagian.** Laporan ada, pada 34 sumber, tetapi ambang belum boleh dinyatakan terkalibrasi sebelum penilaian tim dan UAT | `reports/kalibrasi_ambang.md` |
+| 7 | Ambang chat tanpa laporan kalibrasi | **Sebagian.** Laporan ada, pada 34 sumber, tetapi ambang belum boleh dinyatakan terkalibrasi sebelum ada penilai kedua, kueri berskor < 0,83, dan UAT | `reports/kalibrasi_ambang.md` |
 | 8 | Ambang pola tidak bisa diubah dari Pengaturan AI | **Selesai** | `plugins/halosis/src/PatternDetector.php:238`, `logs/a4_pola_set.log` |
 | 9 | Model triase dilatih Jan–Jun dan diuji Jul–Ags | **Bukan kekurangan.** Ini split waktu yang disengaja agar uji meniru pemakaian nyata. Pelatihan ulang mengikuti §6 | `ai/scripts/train_triage.py:134-138`, `reports/triase.md:27` |
 | 10 | `tata_kelola_ai.md` tertinggal: recall "Lainnya" 0,335 dan SOP "belum" | **Selesai.** Recall 0,4319, SOP dan katalog layanan terindeks, status urgensi dicatat | `reports/tata_kelola_ai.md`, `ai/models/triage.metrics.json` |
@@ -706,4 +705,4 @@ grup kecil. Hasil pola PoC (23 → 17 episode) tidak terulang. Angka 75,88% mema
 dengan PoC.
 
 Gerbang kualitas terbukti berjalan: urgensi nonaktif karena gagal skema B. Semua area tetap **belum siap produksi**. Yang masih
-diperlukan: penilaian relevansi oleh tim, UAT dan analisis biaya kesalahan untuk ambang, serta uji usability NFR-08.
+diperlukan: penilai kedua untuk relevansi (kappa) dan kueri skor < 0,83, UAT dan analisis biaya kesalahan untuk ambang, serta uji usability NFR-08.

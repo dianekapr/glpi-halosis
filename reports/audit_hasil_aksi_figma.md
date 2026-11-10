@@ -155,3 +155,7 @@ Perbaikan 2026-11-08 (Section 03, alat tools/figma/, akun andi, tiket uji 1360 d
 - ✅ **Langkah 3 tata letak**: Section 01 terlalu pendek untuk PG-R01..R08 (meluber ke 02) → diperbesar (17080×3907) dan Section 02–06/Komponen/Usulan digeser +2347; urutan 00, Alur Demo, 01–06, Komponen, Usulan; tumpang tindih 0, frame di luar Section 0. Layar: logs/f3_fig_halaman.png.
 - ✅ **Langkah 5 figma_verify**: Section 01–06 lintas peran 0, menggantung 0, self-link 0 (295/304/213/226/225/447 reaction); Alur Demo 01→12 12/12 terjangkau, menggantung 0, self-link 0 (lompatan lintas peran = sengaja).
 - **Data uji**: chat dibuat 3 (id>141) lalu dihapus lewat logs/f3_chat_pulih.sh: chat 49→49, article_uses 28→28, tiket 70→70. 458 tabel (logs/f3_all_sebelum.txt vs f3_all_akhir.txt): selisih hanya noise crontasklogs/events/sessions.
+
+## Catatan tangkap ulang 2026-11-10: PG-S21 / PG-S22 (respons tiruan)
+
+Frame PG-S21 (mode pilihan artikel) dan PG-S22 (tidak ditemukan + tawaran laporan) ditangkap dengan **respons tiruan tanpa menulis ke DB**: `steps/pg_chat_palsu.js` mencegat `POST ajax/chat.php?action=message` di browser dan mengisi JSON bentuk `Chatbot::ask()` (`plugins/halosis/src/Chatbot.php` ~l.207-216: `ok, chat_id, answer, found, ai, out_of_scope, sources[{id,name,url}], masked`). Teks `answer` dibaca dari `locales/id_ID.po` (msgid `Chatbot::notFound()` dan `Chatbot::choices()`); artikel sumber = KB asli id 15, 3, 2 (url `/front/knowbaseitem.form.php?id=N`). Tidak ada baris chat/tiket baru.
