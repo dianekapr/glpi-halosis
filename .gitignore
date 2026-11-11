@@ -20,7 +20,6 @@ ai/index/
 screenshot/modernisasi/**/*kandidat*
 
 # Dokumen perancangan & ekstrak teksnya (bahan audit) — jangan di-commit
-docs/
 backup/
 # Keluaran perintah kerja (log uji, bukti)
 logs/
