@@ -122,6 +122,8 @@ function plugin_init_halosis(): void
         RoleTheme::getHeaderTags(),
     );
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/role.js');
+    // "Ditangani oleh" di detail tiket pegawai (UC-07). Lihat HandledBy.
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/ditangani.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")

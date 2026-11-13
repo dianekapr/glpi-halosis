@@ -1112,8 +1112,8 @@ msgstr "Keputusan"
 msgid "Modified + rejected"
 msgstr "Diubah + ditolak"
 
-msgid "Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits."
-msgstr "Apakah yang Anda maksud salah satu artikel berikut? Buka artikel yang sesuai, atau klik “Buat laporan” bila tidak ada yang cocok."
+msgid "Did you mean one of these articles? Open the one that matches, then tell me whether it solves your problem."
+msgstr "Apakah yang Anda maksud salah satu artikel berikut? Buka artikel yang sesuai, lalu beri tahu saya apakah masalah Anda terselesaikan."
 
 msgid "Choose a review date after today."
 msgstr "Pilih tanggal tinjau setelah hari ini."
@@ -1552,3 +1552,18 @@ msgstr "Solusi disimpan. Tiket #%1$d berstatus Dipecahkan dan dipindahkan dari a
 
 msgid "Open ticket"
 msgstr "Buka tiket"
+
+msgid "Handled by"
+msgstr "Ditangani oleh"
+
+msgid "Awaiting Operator validation"
+msgstr "Menunggu validasi Operator"
+
+msgid "In process by the IT team"
+msgstr "Sedang diproses tim TI"
+
+msgid "Awaiting your response"
+msgstr "Menunggu tanggapan Anda"
+
+msgid "Completed, awaiting your confirmation"
+msgstr "Selesai, menunggu konfirmasi Anda"

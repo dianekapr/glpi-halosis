@@ -472,7 +472,7 @@ final class Chatbot
             return null;
         }
         return [
-            'answer'  => __('Did you mean one of these articles? Open the one that matches, or click “Create report” if none of them fits.', 'halosis'),
+            'answer'  => __('Did you mean one of these articles? Open the one that matches, then tell me whether it solves your problem.', 'halosis'),
             'found'   => false,
             'sources' => array_slice($sources, 0, 3),
             'model'   => '',

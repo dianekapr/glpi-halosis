@@ -262,7 +262,8 @@
             if (ended) {
                 return;
             }
-            found ? helpfulActions(col) : offerCard(col, hasChoices ? t.offer_choices : t.offer_notfound);
+            // Mode pilihan artikel (5b): tanya membantu atau tidak; kartu laporan langsung hanya untuk tidak-ditemukan (5a)
+            (found || hasChoices) ? helpfulActions(col) : offerCard(col, t.offer_notfound);
         };
 
         // ---- Alur percakapan ------------------------------------------------------------------
