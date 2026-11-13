@@ -13,7 +13,7 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 | Alur | Memicu | Tampilan yang diharapkan | Mengembalikan |
 |---|---|---|---|
 | 1a ✅ | Login `dimas` → Pengaturan AI → matikan sakelar fitur *chat* → simpan. Login `budi`, buka Tanya HaloSIS. | **Asisten Sedang Tidak Tersedia**, tombol Buat laporan, tautan FAQ. | Nyalakan sakelar lagi (atau pulihkan snapshot). |
-| 1b ✅ | Akun tanpa hak `plugin_halosis_chatbot` (mis. `rudi` aktif di profil Tim Teknis diarahkan ke /chat, atau cabut hak di profil Pegawai lewat Administrasi → Profil). | "Asisten tidak tersedia untuk akun Anda." | Kembalikan hak profil. |
+| 1b ✅ | Login `pegawai_tanpa_asisten` (Pegawai tanpa hak asisten), buka alamat `/plugins/halosis/front/chat.php` atau menu Tanya HaloSIS bila tampil. | "Asisten tidak tersedia untuk akun Anda." | – (akun demo khusus, tidak perlu dikembalikan). |
 | 2a ✅ | Klik kartu **Laporkan masalah**. | Kotak ketik difokuskan; asisten: "Ceritakan masalah yang Anda alami…". Tiket tidak dibuat. | Tidak perlu. |
 | 2b ✅ | Klik kartu **Ajukan permintaan**. | Form **Ajukan Permintaan** terbuka. | Tidak perlu. |
 | 3a ✅ | Kirim pesan kosong (tekan Kirim tanpa isi; bila tombol nonaktif, kirim hanya spasi lewat tampilan lain tidak mungkin). | "Silakan ketik pertanyaan." Pada UI normal tombol Kirim memang tidak mengirim pesan kosong, jadi pesan ini terutama muncul dari panggilan langsung ke server. | – |
@@ -41,7 +41,7 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 | 1a ✅ | Dari chat klik **Ya, buat laporan** (jalankan S-1). | Judul terisi + **Ringkasan yang dilampirkan**; setelah Kirim: "Laporan #… sudah dibuat…". | Hapus tiket / pulihkan snapshot. |
 | 1b ✅ | `rina` → Semua tiket → **Tambah**, isi Pemohon, Sumber permintaan (Phone/E-Mail/Direct), Judul, Deskripsi. | Tiket dibuat atas nama pemohon. | Hapus tiket / pulihkan. |
 | 5a ✅ | Form **Laporkan Masalah**: kosongkan Judul atau Deskripsi, Kirim. Pada kartu laporan chat: judul "abc". | Kolom ditandai, tiket tidak dibuat; "Judul laporan minimal 5 karakter." | – |
-| 5b ❌/⚠️ | Perlu akun yang bisa chat tetapi tanpa hak membuat tiket: tidak ada akun demo seperti itu. Dapat dibuat dengan mencabut hak "Tiket → Buat" pada profil Pegawai lalu coba S-1. | "Anda tidak berhak membuat tiket." | Kembalikan hak profil. |
+| 5b ✅ | Login `pegawai_tanpa_tiket` (bisa chat, tanpa hak membuat tiket), jalankan S-1 hingga tombol **Buat laporan**. | "Anda tidak berhak membuat tiket." | – (akun demo khusus). |
 | 6a ⚠️ | `docker compose stop halosis-ai`, buat tiket baru. | Tiket tersimpan; panel: "Belum ada saran AI untuk tiket ini." + **Buat saran AI**. | `docker compose start halosis-ai`; hapus tiket uji. |
 
 ## UC-04 Menghasilkan Rekomendasi Triase & Routing
@@ -58,7 +58,7 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 |---|---|---|---|
 | S-1 / 5a ✅ | Klik **Ubah**, ubah Kategori/Dampak/Urgensi/Prioritas/Grup, isi alasan, **Terapkan perubahan**. | "Nilai yang diubah diterapkan ke tiket." | Pulihkan snapshot. |
 | S-2 / 5b ✅ | Klik **Tolak**, isi alasan, **Tolak & triase manual**. | "Saran AI ditolak. Silakan triase tiket secara manual." | Pulihkan. |
-| 3a ✅ | Buka tiket dengan akun tanpa hak memutuskan (mis. `andi`). | Tombol keputusan tidak tampil; "Menunggu keputusan Operator." | – |
+| 3a ✅ | Login `operator_lihat` (Operator tanpa hak memutuskan saran AI), buka tiket bersaran AI. | Tombol keputusan tidak tampil; "Menunggu keputusan Operator." Server juga menolak. | – (akun demo khusus). |
 | 3b ✅ | Buka tiket tanpa saran (lihat UC-03 6a) → **Buat saran AI**. | "Saran AI dibuat." atau pesan gagal (layanan mati: "AI belum dapat memberikan saran…"). | Nyalakan layanan. |
 | 5c ✅ | Setelah keputusan, **Balas ▾ → Tambah solusi**. | Status **Dipecahkan**, pemohon diberi tahu. | Pulihkan. |
 | 5d ✅ | Buka kembali tiket yang saran sudah diputuskan lalu kirim keputusan lagi (dua tab). | "Saran ini sudah diputuskan." | – |
@@ -113,8 +113,17 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 | 8a ✅ | Isi URL layanan AI `ftp://x` → Simpan. | "URL layanan AI harus diawali http:// atau https://." (nilai lain tetap tersimpan) | Kembalikan URL (`http://halosis-ai:8000`). |
 | 8b ✅ | Biarkan kolom API key kosong → Simpan. | Nilai lama tetap dipakai. | – |
 
+## Aktif/nonaktif fitur (tanpa menghapus data)
+Akun `dimas` → menu **Pengaturan AI** → bagian **Fitur AI** (sakelar geser) → **Simpan**. Sakelar yang dipakai:
+| Tujuan | Sakelar / cara | Memicu | Mengembalikan |
+|---|---|---|---|
+| Fitur chat mati (UC-01 1a) | **Asisten layanan mandiri untuk pegawai** → mati | **Asisten Sedang Tidak Tersedia** untuk `budi` | Nyalakan sakelar yang sama → Simpan |
+| Layanan AI mati (UC-01 4a/4b, UC-06 4a) | Bukan sakelar: `docker compose stop halosis-ai` | Chat/Cari Pengetahuan memakai pencarian kata kunci berlabel **Dari Pusat Bantuan**; UC-06 4a: pesan layanan AI tidak dapat dihubungi | `docker compose start halosis-ai` |
+| Triase mati (UC-03 6a, UC-05 3b) | **Saran triase AI untuk tiket baru** → mati | Tiket baru tanpa saran: "Belum ada saran AI untuk tiket ini." + **Buat saran AI** | Nyalakan sakelar yang sama → Simpan |
+
+Akun demo khusus (kata sandi `halosis`, dibuat `python setup_akun_demo_khusus.py`, idempoten): `pegawai_tanpa_asisten` (profil *Pegawai (tanpa asisten)*) → UC-01 1b · `pegawai_tanpa_tiket` (*Pegawai (tanpa buat tiket)*) → UC-03 5b · `operator_lihat` (*Operator (lihat saja)*) → UC-05 3a.
+
 ## Ringkasan yang tidak dapat dipicu manual (❌)
 - **UC-04 1b** (mode demo tanpa layanan AI): layanan AI lokal selalu terpasang di demo; memicu butuh menghapus konfigurasi layanan.
-- **UC-03 5b** (pegawai tanpa hak membuat tiket): tidak ada akun demo yang bisa chat tetapi tanpa hak buat tiket (dapat disimulasikan dengan mencabut hak profil, ditandai ⚠️ di atas).
 - **UC-01 3a** pada UI normal: tombol Kirim tidak mengirim pesan kosong; pesan hanya muncul bila diminta langsung ke server.
 - **UC-04 5c (model belum lolos)**: hanya terjadi bila model aktif diganti dengan model yang gagal gerbang (tidak boleh diubah di demo).

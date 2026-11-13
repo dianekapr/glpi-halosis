@@ -460,7 +460,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **4a. Layanan AI gagal menjawab.** Sistem mencari dengan kata kunci di artikel, lalu menampilkan hasilnya dengan label **Dari Pusat Bantuan**. Bila kosong, alur lanjut ke 5a.
 - **4b. Permintaan ke server gagal.** Sistem menampilkan "Asisten sedang tidak tersedia. Anda tetap dapat membuat laporan." beserta kartu laporan.
 - **5a. Solusi tidak ditemukan.** Sistem menampilkan "Maaf, saya belum menemukan jawabannya di Pusat Bantuan…" dan kartu "Saya belum menemukan jawabannya. Apakah Anda ingin saya buatkan laporan untuk tim TI? Ringkasan percakapan ini akan dilampirkan. Atau ketik ulang kendala Anda dengan kata lain." dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**. **Ya, buat laporan** melanjutkan ke UC-03 S-1. **Tidak, terima kasih** hanya menutup kartu, dan pegawai tetap dapat bertanya lagi.
-- **5b. Keyakinan jawaban sedang.** Sistem menampilkan "Apakah yang Anda maksud salah satu artikel berikut?…" dengan tautan artikel, disusul kartu "Bila tidak ada artikel yang cocok, saya bisa membuatkan laporan untuk tim TI. Ringkasan percakapan ini akan dilampirkan. Atau ketik ulang kendala Anda dengan kata lain." dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**, seperti alur 5a.
+- **5b. Keyakinan jawaban sedang.** Sistem menampilkan "Apakah yang Anda maksud salah satu artikel berikut? Buka artikel yang sesuai, lalu beri tahu saya apakah masalah Anda terselesaikan." dengan tautan artikel, disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**. Alur lanjut ke langkah 6.
 - **5c. Pertanyaan di luar layanan TI.** Sistem mengarahkan pegawai ke unit terkait tanpa tawaran laporan.
 - **7a. Pegawai mengklik Belum terselesaikan.** Sistem menampilkan kartu "Masalah belum selesai? Saya akan membuatkan laporan…" dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**, serta petunjuk "Atau ketik ulang kendala Anda dengan kata lain." Kotak ketik tetap aktif. **Ya, buat laporan** melanjutkan ke UC-03 S-1.
 - **7b. Pada kartu alur 7a, pegawai mengklik Tidak, terima kasih.** Tiket tidak dibuat. Sistem menampilkan "Percakapan diakhiri. Anda dapat membacanya lagi di Riwayat percakapan." dan menutup kotak ketik. **Riwayat percakapan** menandainya **Berakhir tanpa laporan**.
@@ -619,7 +619,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 3. Operator mengklik satu tiket.
 4. Sistem menampilkan detail tiket dan panel **Saran AI**: **Keyakinan**, **Kategori**, **Dampak**, **Urgensi**, **Prioritas**, **Grup**, **Tiket aktif per kandidat tim**, penjelasan beserta tiket lama yang mirip, dan **Model**.
 5. Operator menilai saran sudah tepat dan mengklik **Terima**.
-6. Sistem menerapkan nilai saran ke tiket, menugaskan **Grup** tujuan, dan menampilkan "Saran AI diterima dan diterapkan ke tiket."
+6. Sistem menerapkan nilai saran ke tiket, menugaskan **Grup** tujuan, dan menampilkan "Saran AI diterima dan diterapkan ke tiket." serta "Keputusan disimpan. Tiket #… dipindahkan dari antrean validasi." dengan tautan **Buka tiket**.
 7. Sistem mengubah status tiket menjadi **Sedang proses (ditugaskan)**, mengirim notifikasi ke tim dan pemohon, serta mencatat keputusan di **Riwayat** tiket.
 
 **Subflows**
@@ -633,7 +633,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **3b. Tiket belum memiliki saran.** Panel menampilkan "Belum ada saran AI untuk tiket ini." Operator mengklik **Buat saran AI**. Bila berhasil, sistem menampilkan "Saran AI dibuat." Bila gagal, sistem menampilkan "AI belum dapat memberikan saran. Tiket tidak berubah; periksa files/_log/halosis.log." dan Operator melakukan triase manual.
 - **5a. Saran kurang tepat tetapi dapat dikoreksi.** Jalankan S-1.
 - **5b. Saran tidak dapat digunakan.** Jalankan S-2.
-- **5c. Tiket dapat diselesaikan di level 1.** Setelah keputusan saran, Operator mengklik **Balas ▾**, memilih **Tambah solusi**, menulis solusi, dan menyimpan. Sistem mengubah status menjadi **Dipecahkan** dan memberi tahu pemohon.
+- **5c. Tiket dapat diselesaikan di level 1.** Setelah keputusan saran, Operator mengklik **Balas ▾**, memilih **Tambah solusi**, menulis solusi, dan menyimpan. Sistem mengubah status menjadi **Dipecahkan**, memberi tahu pemohon, dan menampilkan "Solusi disimpan. Tiket #… berstatus Dipecahkan dan dipindahkan dari antrean validasi." dengan tautan **Buka tiket**.
 - **5d. Saran sudah diputuskan.** Sistem menampilkan "Saran ini sudah diputuskan."
 - **S-1a. Nilai sama dengan saran.** Sistem menampilkan "Nilainya sama dengan saran. Gunakan tombol Terima."
 - **S-1b. Alasan kurang dari 5 karakter.** Sistem menampilkan "Alasan wajib diisi, minimal 5 karakter."
@@ -707,7 +707,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 **Normal Flow of Events**
 
 1. Pegawai mengklik menu **Laporan saya**.
-2. Sistem menampilkan daftar dengan kolom **ID**, **Judul**, **Status**, **Kategori**, **Waktu untuk menyelesaikan**, dan **Terakhir diperbarui**.
+2. Sistem menampilkan daftar dengan kolom **ID**, **Judul**, **Status**, **Jenis**, **Kategori**, **Ditangani oleh**, **Waktu untuk menyelesaikan**, dan **Terakhir diperbarui**. Kolom **Ditangani oleh** menunjukkan posisi tiket: "Menunggu validasi Operator", nama grup tim yang menangani, "Menunggu tanggapan Anda", "Selesai, menunggu konfirmasi Anda", atau "Ditutup". Informasi yang sama tampil di detail tiket.
 3. Pegawai mengklik tiket berstatus **Dipecahkan**.
 4. Pegawai membaca solusi pada linimasa tiket.
 5. Pegawai mengklik **Setujui** pada kotak **Persetujuan atas solusi**. Kolom **Komentar** boleh dikosongkan.
