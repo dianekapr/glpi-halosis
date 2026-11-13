@@ -1,77 +1,69 @@
-# TUGAS: Revisi masukan tim 11 Nov (branch `dev`) — batch TERAKHIR (setelah ini hanya perbaikan bug)
+# TUGAS: Revisi masukan tim 11–13 Nov (branch `dev`) — batch TERAKHIR (setelah ini hanya perbaikan bug)
 
-Dikerjakan per sesi. Setiap sesi HANYA mengerjakan bagian yang diminta di prompt sesi.
+Dikerjakan per sesi, urut prioritas (A paling penting). Setiap sesi HANYA mengerjakan sesi yang diminta.
+Limit token terbatas: kerjakan efisien, jangan menjelajah kode di luar yang perlu.
 
 ## ATURAN (WAJIB)
-- Branch `dev`. Sebelum mulai: `git pull --rebase origin dev`. JANGAN ubah inti GLPI. JANGAN `docker compose down -v`.
-- Commit & push HANYA di akhir sesi, setelah uji lulus: `git add` file yang diubah saja (JANGAN `logs/`, `data/`,
-  `backup/`, `.env`, `*.xlsx`, `ai/models/`, `ai/index/`), pesan `Revisi 11 Nov sesi <N>: <ringkas>`, lalu
-  `git push origin dev`. Bila push ditolak: `git pull --rebase origin dev`, uji ulang singkat, push lagi.
-- JANGAN ubah/hapus data DB lewat SQL tanpa bertanya. Catat jumlah baris tabel yang disentuh sebelum mulai,
-  kembalikan data uji yang dibuat. Data `[DEMO]` harus utuh setelah tes.
-- Output panjang ke `logs/<nama>.log`, tampilkan `tail -20`. Screenshot maks. 3 per sesi. Laporan chat maks. 8 baris.
+- Branch dev. JANGAN git add/commit/push. JANGAN ubah inti GLPI. JANGAN docker compose down -v.
+- JANGAN ubah/hapus data DB lewat SQL tanpa bertanya. Catat jumlah baris tabel yang disentuh, kembalikan data uji.
+  Data `[DEMO]` harus utuh setelah tes.
+- Hemat token: baca kode dengan grep/sed (jangan baca file >300 baris utuh), jangan ulangi perintah gagal >2×, uji e2e
+  cukup SEKALI di akhir sesi.
+- Output panjang ke `logs/<nama>.log`, tampilkan `tail -20`. Tanpa screenshot kecuali perlu (maks. 2). Laporan maks. 8 baris.
 - Teks UI Bahasa Indonesia baku; perbarui `id_ID.po/.mo`; `bin/console cache:clear` setelah ubah teks/template.
-- Bila sebuah butir tidak bisa tanpa ubah inti GLPI: BERHENTI untuk butir itu, catat alasan + file:baris, lanjut butir lain.
-- Akhir setiap sesi: `tests/e2e/fitur_penutup.js` & `tests/e2e/alur_alternatif.js` lulus (assert hanya boleh
-  diubah untuk perilaku yang memang diubah di sesi itu, sebutkan).
-- Sebutkan teks PERSIS (msgstr) setiap teks UI baru/diubah di laporan (dipakai untuk T4).
+- Butir yang butuh ubah inti GLPI: lewati, catat alasan + file:baris.
+- Akhir sesi: `tests/e2e/fitur_penutup.js` & `tests/e2e/alur_alternatif.js` lulus (assert hanya diubah untuk perilaku
+  yang memang diubah, sebutkan).
+- Sebutkan teks PERSIS (msgstr) setiap teks UI baru/diubah (dipakai untuk T4).
 
 ---
 
-## SESI 1 — Dasbor, Statistik, Jenis tiket
+## SESI A — Dasbor, Jenis, Statistik, cek hak (prioritas tertinggi)
+- **A1 Dasbor.** Matikan mode "data demonstrasi" dasbor GLPI (angka "114.7K"). Semua profil staf (Operator, Tim Teknis,
+  Knowledge Manager, Manajemen, Administrator) hanya melihat dasbor **Assistance**; Central & Assets disembunyikan.
+  Cari kenapa sri masih melihat Central/Assets meski `setup_dasbor_manajemen.py` sudah jalan; perbaiki di skrip setup
+  (idempoten, untuk semua profil staf). Verifikasi per akun (rina, andi, lina, sri, dimas) setelah login ulang.
+- **A2 Jenis.** Pastikan form Laporkan Masalah → Insiden, Ajukan Permintaan → Permintaan (cek tiket 2741/2742).
+  Tambah kolom **Jenis** di daftar tiket Operator, Tim Teknis, dan "Laporan saya" (`setup_list_columns.py`).
+  Status tetap bawaan GLPI.
+- **A3 Statistik.** Terjemahkan sisa teks Inggris Statistik ("Global", "By ticket", "By hardware characteristics", dll.)
+  di `plugins/halosis/locales/core/id_ID.po`.
+- **A4 Cek hak (perbaiki bila salah):**
+  - UC-06 2b: tombol **Kembalikan ke Operator** tidak tampil untuk akun tim yang tidak ditugaskan (mis. dedi pada
+    tiket tim andi); server juga menolak.
+  - UC-05 3a: tombol **Terima/Ubah/Tolak** tidak tampil untuk akun tanpa hak memutuskan; server menolak.
+- **A5 Flash message UC-05.** Setelah Terima/Ubah/Tolak (dan setelah solusi 5c), tiket hilang dari daftar tersaring
+  "Menunggu keputusan" tanpa penjelasan. Tampilkan pesan yang jelas, mis. "Keputusan disimpan. Tiket #<id>
+  dipindahkan dari antrean validasi." dengan tautan ke tiket.
+- **A6 Panel SLA (TTR/TTO)** di form tiket: rapikan kotak yang berantakan (teks terpotong, ikon bertabrakan) lewat CSS
+  plugin saja (text-wrap, kotak menyesuaikan isi).
 
-**1.1 Dasbor.** Matikan mode "data demonstrasi" dasbor GLPI (angka seperti "114.7K Perangkat lunak" bukan data kita).
-Semua profil staf (Operator, Tim Teknis, Knowledge Manager, Manajemen, Administrator) hanya melihat dasbor
-**Assistance** (bawaan); Central & Assets tidak ditampilkan. Cari tahu kenapa sri masih melihat Central/Assets
-padahal `setup_dasbor_manajemen.py` sudah jalan; perbaiki di skrip setup (idempoten). Verifikasi per akun
-(rina, andi, lina, sri, dimas) setelah logout/login.
+## SESI B — Chat 5b & keterlacakan pelapor
+- **B1 Mode "pilihan" (UC-01 5b).** Kartu laporan langsung diganti "Apakah jawaban ini membantu?" + **Masalah
+  terselesaikan** / **Belum terselesaikan** (terselesaikan → rating; belum → kartu 7a). Kartu laporan langsung tetap
+  hanya untuk tidak-ditemukan (5a). Kalimat pengantar mode pilihan disesuaikan (jangan menyuruh klik "Buat laporan").
+- **B2 Ditangani oleh (UC-07).** Di "Laporan saya" dan detail tiket pegawai, kolom/info **Ditangani oleh**:
+  "Menunggu validasi Operator" (Baru, belum ditugaskan) / nama **grup** tim (Diproses) / "Menunggu tanggapan Anda"
+  (Tertunda) / "Selesai, menunggu konfirmasi Anda" (Dipecahkan) / "Ditutup". Nama grup saja, bukan nama orang.
 
-**1.2 Statistik.** Terjemahkan teks Inggris di Statistik ("Global", "By ticket", "By hardware characteristics", dsb.)
-lewat mekanisme terjemahan lokal yang sama dengan 47 teks sebelumnya (`plugins/halosis/locales/core/id_ID.po`).
-Opsi perangkat keras tetap ada (keputusan: menyembunyikannya mematikan Statistik tiket).
+## SESI C — Akun demo khusus & panduan aktif-nonaktif
+- **C1 Akun demo** (lewat API/skrip setup idempoten, profil turunan; kata sandi `halosis`; nama fiktif; masuk
+  snapshot): `pegawai_tanpa_asisten` (Pegawai tanpa hak asisten → UC-01 1b), `pegawai_tanpa_tiket` (Pegawai tanpa hak
+  membuat tiket → UC-03 5b), `operator_lihat` (Operator tanpa hak memutuskan saran → UC-05 3a). Pastikan akun demo
+  lain tidak berubah. Bila butuh Keycloak, tambah ke realm demo juga.
+- **C2 Panduan.** Tambahkan ke `reports/cara_memicu_alur_alternatif.md` bagian "Aktif/nonaktif fitur": mematikan fitur
+  chat (UC-01 1a), mematikan layanan AI (UC-01 4a/4b, UC-06 4a), mematikan triase (UC-03 6a, UC-05 3b — sebutkan
+  sakelar di Pengaturan AI bila ada, atau cara lain), beserta cara mengembalikan; dan perbarui baris UC-01 1b,
+  UC-03 5b, UC-05 3a agar memakai akun C1.
 
-**1.3 Jenis tiket.** Pastikan form **Laporkan Masalah → Insiden** dan **Ajukan Permintaan → Permintaan** (cek tiket
-2741/2742). Tambahkan kolom **Jenis** di daftar tiket Operator, Tim Teknis, dan "Laporan saya" pegawai
-(`setup_list_columns.py`). Status tetap bawaan GLPI (Dipecahkan → Ditutup untuk keduanya; tidak ada status "Dipenuhi").
+## SESI D — Opsional (hanya bila limit masih ada)
+- **D1 Widget chat di halaman FAQ** melanjutkan sesi yang sama (riwayat, tombol terselesaikan, rating); sesi baru
+  hanya lewat "Percakapan baru" atau refresh. Cek perilaku sekarang dulu (file:baris).
+- (Dibatalkan: "UI/UX lain yang belum pas" dan "alur kurang ramah pengguna baru di tiap peran" — terlalu umum;
+  pengguna baru dibantu lewat `reports/panduan_peran.md` + Panduan, tanpa ubah kode. Laporkan sebagai bug spesifik bila ada.)
 
----
+## Penutup (akhir sesi terakhir yang dijalankan)
+`scripts/demo_snapshot.sh simpan`, hapus snapshot lama `demo-20261110-165854`, sebutkan nama snapshot baru.
 
-## SESI 2 — Chat & keterlacakan (UC-01, UC-07)
-
-**2.1 Mode "pilihan" (UC-01 5b).** Kartu laporan langsung diganti dengan "Apakah jawaban ini membantu?" +
-**Masalah terselesaikan** / **Belum terselesaikan**, sama seperti jawaban biasa (terselesaikan → rating;
-belum → kartu 7a dengan tawaran laporan + petunjuk ketik ulang). Kartu laporan langsung TETAP untuk mode
-tidak-ditemukan (5a). Kalimat pengantar mode pilihan boleh disesuaikan agar tidak menyuruh klik "Buat laporan".
-
-**2.2 Widget chat di halaman FAQ.** Saat pegawai membuka artikel dari chat (tautan sumber / pilihan 5b) dan
-berpindah ke Tanya Jawab (FAQ), widget chat kanan bawah aktif dan **melanjutkan sesi yang sama** (riwayat pesan,
-tombol Masalah terselesaikan / Belum terselesaikan, rating) — bukan sesi baru. Sesi baru hanya dibuat lewat tombol
-"Percakapan baru". Alur tetap UC-01 langkah 6–8, hanya lokasi tombolnya. Cek dulu perilaku sekarang (file:baris)
-sebelum mengubah.
-
-**2.3 Keterlacakan untuk pelapor (UC-07).** Di "Laporan saya" dan detail tiket pegawai, tampilkan **posisi tiket**
-dengan bahasa awam, mis. kolom "Ditangani oleh": "Menunggu validasi Operator" (status Baru, belum ditugaskan) /
-nama **grup** tim yang ditugaskan / "Menunggu tanggapan Anda" (Tertunda) / "Selesai, menunggu konfirmasi Anda"
-(Dipecahkan). Tampilkan nama grup saja, BUKAN nama petugas perorangan. Lewat konfigurasi kolom / plugin.
-
-**2.4 (HANYA BACA)** Di `Stats.php`, percakapan UC-01 7b ("Belum terselesaikan" → "Tidak, terima kasih", tanpa
-rating, "Berakhir tanpa laporan") dihitung sebagai apa ("Terbantu tanpa tiket"? rating?). Bila salah dihitung
-terbantu, usulkan perbaikan minimal — JANGAN ubah dulu.
-
----
-
-## SESI 3 — Penutup
-- Uji kedua file e2e, `cache:clear`, lalu `scripts/demo_snapshot.sh simpan` dan hapus snapshot lama
-  `demo-20261110-165854`. Laporkan nama snapshot baru.
-- Ringkasan maks. 8 baris: per butir (selesai / tidak bisa + alasan), teks UI persis yang berubah, hasil uji, snapshot.
-
----
-
-## Prompt per sesi (jalankan `/clear` dulu, model Sonnet)
-- Sesi 1: `Baca docs/tugas_revisi_11nov.md (ATURAN + SESI 1 saja). Kerjakan HANYA SESI 1, lalu berhenti.`
-- Sesi 2: `Baca docs/tugas_revisi_11nov.md (ATURAN + SESI 2 saja). Kerjakan HANYA SESI 2, lalu berhenti.`
-- Sesi 3: `Baca docs/tugas_revisi_11nov.md (ATURAN + SESI 3 saja). Kerjakan HANYA SESI 3, lalu berhenti.`
-
-Catatan untuk dokumen (dikerjakan terpisah setelah semua sesi): T4 UC-01 5b (kartu baru), UC-01 Implementasi
-("widget chat juga dapat dibuka dari halaman FAQ dan melanjutkan sesi yang sama"), UC-07 (kolom Ditangani oleh,
-kolom Jenis); Figma (dasbor tiap peran, PG-S21, Laporan saya, daftar tiket) — Sabtu.
+## Prompt per sesi (`/clear` dulu, model Sonnet)
+`Baca docs/tugas_revisi_11nov.md (ATURAN + SESI <X> saja). Kerjakan HANYA SESI <X>, jangan commit, lalu berhenti.`
