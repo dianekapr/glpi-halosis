@@ -27,6 +27,8 @@ const ENDPOINT = (c) => `https://mcp.figma.com/mcp/capture/${c}/submit?bindVaria
   });
   const ctx = { shots: [] };
   const cap = async (i) => {
+    // sidebar GLPI mengikuti preferensi pengguna fold_menu (DB): buka lewat kelas body saja agar DB tidak berubah; frame Figma memakai sidebar terbuka 240 px
+    await page.evaluate(() => document.body.classList.remove('navbar-collapsed')); await page.waitForTimeout(600);
     if (png) await page.screenshot({ path: png.replace(/(\.png)?$/, `_${i}.png`) });
     const ic = await injectIcons(page);
     if (!ids[i] || ids[i] === 'x') { console.log('tanpa id, lewati tangkap', i, JSON.stringify(ic)); return; }
