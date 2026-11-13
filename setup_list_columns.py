@@ -31,9 +31,9 @@ GLOBAL = {
     # Operator: antrean validasi & semua tiket. Tanpa "Tanggal buka" (dobel dengan Terakhir diperbarui)
     # dan tanpa "Teknisi" (Operator menugaskan ke tim).
     # Waktu untuk mengambil alih = SLA respons (T1, setup_sla_alerts.py).
-    ('Ticket', 'central'): [12, 3, 7, 4, 8, 155, 18, 19], # Status, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk mengambil alih, Waktu untuk menyelesaikan, Terakhir diperbarui
+    ('Ticket', 'central'): [12, 14, 3, 7, 4, 8, 155, 18, 19], # Status, Jenis, Prioritas, Kategori, Pemohon, Grup teknisi, Waktu untuk mengambil alih, Waktu untuk menyelesaikan, Terakhir diperbarui
     # Pegawai (Helpdesk, "Laporan saya"): progres laporan + sisa waktu SLA (UC-07 langkah 2)
-    ('Ticket', 'helpdesk'): [12, 7, 18, 19],              # Status, Kategori, Waktu untuk menyelesaikan, Terakhir diperbarui
+    ('Ticket', 'helpdesk'): [12, 14, 7, 18, 19],          # Status, Jenis, Kategori, Waktu untuk menyelesaikan, Terakhir diperbarui
     # Masalah / pola insiden: tanpa Deskripsi (panjang) & Waktu untuk menyelesaikan (kosong untuk pola)
     ('Problem', 'central'): [12, 3, 7, 141, 15],          # Status, Prioritas, Kategori, Jumlah tiket, Tanggal buka
     # Knowledge Base: tanpa Parent article / Unsur terkait (kosong)
@@ -46,7 +46,7 @@ GLOBAL = {
     ('SLA', 'central'): [8, 7, 5],                        # SLM, Tipe, Waktu
 }
 # Tim Teknis ("Tiket saya & tim"): grup sudah tersaring (tim sendiri) → ganti dengan Teknisi
-TIM_TEKNIS_TICKET = [12, 3, 7, 4, 5, 18, 19]              # Status, Prioritas, Kategori, Pemohon, Teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui
+TIM_TEKNIS_TICKET = [12, 14, 3, 7, 4, 5, 18, 19]          # Status, Jenis, Prioritas, Kategori, Pemohon, Teknisi, Waktu untuk menyelesaikan, Terakhir diperbarui
 
 
 ALL = None

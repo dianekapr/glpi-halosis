@@ -13,6 +13,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Halosis\Chatbot;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\Decision;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
@@ -132,6 +133,7 @@ function plugin_init_halosis(): void
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
         Ticket::class       => [Triage::class, 'onTicketAdd'],
         Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
+        \ITILSolution::class => [Decision::class, 'onSolutionAdd'],
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave'],
     ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange'])
       + array_fill_keys($audited, [ConfigAudit::class, 'onItemAdd']);

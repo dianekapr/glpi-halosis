@@ -881,3 +881,58 @@ msgstr "Angka besar"
 
 msgid "Summary numbers"
 msgstr "Ringkasan angka"
+
+# Statistik (Sesi A3)
+msgid "Global"
+msgstr "Keseluruhan"
+
+msgid "By ticket"
+msgstr "Berdasarkan tiket"
+
+msgid "By problem"
+msgstr "Berdasarkan masalah"
+
+msgid "By change"
+msgstr "Berdasarkan perubahan"
+
+msgid "By hardware characteristics"
+msgstr "Berdasarkan karakteristik perangkat keras"
+
+msgid "Export to CSV"
+msgstr "Ekspor ke CSV"
+
+msgid "Number of opened tickets"
+msgstr "Jumlah tiket dibuka"
+
+msgid "Number of solved tickets"
+msgstr "Jumlah tiket terselesaikan"
+
+msgid "Number of late tickets"
+msgstr "Jumlah tiket terlambat"
+
+msgid "Number of closed tickets"
+msgstr "Jumlah tiket ditutup"
+
+msgid "Number of opened satisfaction survey"
+msgstr "Jumlah survei kepuasan dikirim"
+
+msgid "Number of answered satisfaction survey"
+msgstr "Jumlah survei kepuasan terjawab"
+
+msgid "Average satisfaction"
+msgstr "Rata-rata kepuasan"
+
+msgid "Average time to take into account"
+msgstr "Rata-rata waktu hingga diambil alih"
+
+msgid "Average time to resolution"
+msgstr "Rata-rata waktu hingga terselesaikan"
+
+msgid "Average time to closure"
+msgstr "Rata-rata waktu hingga ditutup"
+
+msgid "Average real duration of treatment of the ticket"
+msgstr "Rata-rata durasi penanganan sebenarnya per tiket"
+
+msgid "Total real duration of treatment of the ticket"
+msgstr "Total durasi penanganan sebenarnya"

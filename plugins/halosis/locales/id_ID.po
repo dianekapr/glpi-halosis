@@ -1543,3 +1543,12 @@ msgstr "Membuka formulir permintaan layanan…"
 
 msgid "Apply through the service"
 msgstr "Ajukan lewat layanan"
+
+msgid "Decision saved. Ticket #%1$d was moved out of the validation queue."
+msgstr "Keputusan disimpan. Tiket #%1$d dipindahkan dari antrean validasi."
+
+msgid "Solution saved. Ticket #%1$d is now Solved and moved out of the validation queue."
+msgstr "Solusi disimpan. Tiket #%1$d berstatus Dipecahkan dan dipindahkan dari antrean validasi."
+
+msgid "Open ticket"
+msgstr "Buka tiket"
