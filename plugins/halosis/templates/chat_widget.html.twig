@@ -25,8 +25,18 @@
                 <i class="ti ti-x" aria-hidden="true"></i>
             </button>
         </header>
+        {% if available %}
         <div class="hc-chat hc-chat-compact">
             {% include '@halosis/chat_conversation.html.twig' with {compact: true} %}
         </div>
+        {% else %}
+        <div class="hc-chat hc-chat-compact"><div class="hc-thread hc-unavailable" data-chat-off>
+            <span class="hc-unavailable-icon" aria-hidden="true"><i class="ti ti-message-off"></i></span>
+            <h2>{{ __('The assistant is not available right now', 'halosis') }}</h2>
+            <p>{{ __('Report your problem and an officer will help you.', 'halosis') }}</p>
+            <a class="hc-btn hc-btn-primary" href="{{ report_url }}">{{ __('Create report', 'halosis') }}</a>
+            <a class="hc-link" href="{{ faq_url }}">{{ __('Help center (FAQ)', 'halosis') }}</a>
+        </div></div>
+        {% endif %}
     </section>
 </div>

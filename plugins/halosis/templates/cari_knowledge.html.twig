@@ -42,7 +42,7 @@
                 <h2 class="hk-title">{% if r.url %}<a href="{{ r.url }}">{{ r.title }}</a>{% else %}{{ r.title }}{% endif %}</h2>
                 <p class="mb-0">{{ r.text|u.truncate(500, '…') }}</p>
                 {# KR-07: penilaian agent, tersimpan dengan sumber & skor (tanpa teks kueri) #}
-                <div class="hk-actions" data-hf data-ref="{{ r.ref }}" data-score="{{ r.score }}">
+                <div class="hk-actions" data-hf data-label-yes="{{ __('Marked as helpful', 'halosis') }}" data-label-no="{{ __('Marked as not helpful', 'halosis') }}" data-ref="{{ r.ref }}" data-score="{{ r.score }}">
                     <span class="small text-secondary">{{ __('Was this useful?', 'halosis') }}</span>
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-hf-helpful="1">
                         <i class="ti ti-thumb-up" aria-hidden="true"></i> {{ __('Helpful', 'halosis') }}

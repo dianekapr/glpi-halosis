@@ -135,16 +135,21 @@ async function cleanup(a) {
       await p.context().close(); return ok;
     });
 
-    await run('UC-02 mode pilihan: tombol "Ya, buat laporan" tetap tersedia', async () => {
+    await run('UC-02 5b mode pilihan: "Apakah jawaban ini membantu?"; "Belum terselesaikan" → kartu laporan', async () => {
       const p = await login(browser, 'budi');
       const fresh = p.getByRole('button', { name: /Percakapan baru|New conversation/ }).first();
       if (await fresh.isVisible().catch(() => false)) { await fresh.click(); await p.waitForTimeout(1500); }
       await p.getByText('Laporkan masalah').first().click(); await p.waitForTimeout(500);
       const input = p.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
       await input.fill('Kursi kantor saya patah'); await input.press('Enter');
+      const notYet = p.getByRole('button', { name: /Belum terselesaikan/ }).first();
+      await notYet.waitFor({ timeout: 30000 }).catch(() => {});
+      // Perilaku baru (B1): kartu laporan langsung tidak tampil di mode pilihan; baru muncul setelah "Belum terselesaikan"
+      const noDirect = await p.getByRole('button', { name: /Ya, buat laporan/ }).count() === 0;
+      await notYet.click();
       const offer = p.getByRole('button', { name: /Ya, buat laporan/ }).first();
-      await offer.waitFor({ timeout: 30000 }).catch(() => {});
-      const ok = await offer.isVisible();
+      await offer.waitFor({ timeout: 10000 }).catch(() => {});
+      const ok = noDirect && await offer.isVisible();
       await p.context().close(); return ok;
     });
 
@@ -155,6 +160,8 @@ async function cleanup(a) {
       await p.getByText('Laporkan masalah').first().click(); await p.waitForTimeout(500);
       const input = p.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
       await input.fill('Kursi kantor saya patah'); await input.press('Enter'); await p.waitForTimeout(6000);
+      const notYet = p.getByRole('button', { name: /Belum terselesaikan/ }).first();   // 5b: kartu laporan setelah "Belum terselesaikan"
+      if (await notYet.isVisible().catch(() => false)) { await notYet.click(); await p.waitForTimeout(500); }
       await p.getByRole('button', { name: /Ya, buat laporan/ }).first().click(); await p.waitForTimeout(500);
       const title = p.locator('form.hc-report input.hc-input');
       await title.fill('abc');

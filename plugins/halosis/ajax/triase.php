@@ -80,4 +80,5 @@ Session::addMessageAfterRedirect(match ($action) {
     Decision::ACTION_MODIFY => __s('Modified values applied to the ticket.', 'halosis'),
     default                 => __s('AI suggestion rejected. Please triage the ticket manually.', 'halosis'),
 });
+Decision::flashLeftQueue((int) $suggestion->fields['tickets_id']);
 $respond(200);

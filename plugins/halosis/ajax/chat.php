@@ -12,6 +12,7 @@
 use Glpi\Application\View\TemplateRenderer;
 use GlpiPlugin\Halosis\Chat;
 use GlpiPlugin\Halosis\Chatbot;
+use GlpiPlugin\Halosis\Config;
 
 global $CFG_GLPI;
 
@@ -19,8 +20,10 @@ $action = (string) ($_REQUEST['action'] ?? '');
 
 if ($action === 'widget') {
     header('Content-Type: text/html; charset=UTF-8');
-    if (Chatbot::isAvailable()) {
+    if (Chatbot::canUse()) {
         TemplateRenderer::getInstance()->display('@halosis/chat_widget.html.twig', [
+            'available'   => Config::isFeatureEnabled('chat'),
+            'faq_url'     => \KnowbaseItem::getSearchURL(),
             'ajax_url'    => $CFG_GLPI['root_doc'] . '/plugins/halosis/ajax/chat.php',
             'page_url'    => Chatbot::getPageUrl(),
             'report_url'  => \Glpi\Form\ServiceCatalog\ServiceCatalog::getSearchURL(),

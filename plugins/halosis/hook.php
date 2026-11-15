@@ -282,3 +282,9 @@ function plugin_halosis_uninstall(): bool
 
     return true;
 }
+
+/** Opsi pencarian tambahan: kolom "Ditangani oleh" pada daftar tiket (UC-07) */
+function plugin_halosis_getAddSearchOptionsNew($itemtype): array
+{
+    return $itemtype === 'Ticket' ? [\GlpiPlugin\Halosis\HandledBy::searchOption()] : [];
+}

@@ -64,7 +64,12 @@ function sql(query) {
 }
 
 function cron(task) {
-  execSync(`docker compose exec -T glpi php front/cron.php --force ${task}`, { cwd: ROOT, stdio: 'ignore' });
+  try {
+    execSync(`docker compose exec -T glpi php front/cron.php --force ${task}`, { cwd: ROOT, stdio: 'pipe' });
+  } catch (e) {
+    console.error(`cron ${task} gagal: ${e.message}\n${e.stdout || ''}${e.stderr || ''}`);
+    throw e;
+  }
 }
 
 // Pembersihan HERMETIK: hanya objek dengan ID yang dicatat tes ini (tiket, SLA/SLM uji, pengingat Catatan, chat) atau
@@ -242,7 +247,9 @@ const LONG = [
       cron('ProgressReminder');
       const first = queued(old);
       cron('ProgressReminder');
-      return first > 0 && queued(old) === first && queued(fresh) === 0;
+      const ok = first > 0 && queued(old) === first && queued(fresh) === 0;
+      if (!ok) console.error(`E19 rinci: tiket lama #${old} antre=${first}→${queued(old)}, tiket baru #${fresh} antre=${queued(fresh)}`);
+      return ok;
     });
 
     await run('E15 ringkasan 3 kalimat untuk deskripsi > 150 kata (tersamar)', async () => {

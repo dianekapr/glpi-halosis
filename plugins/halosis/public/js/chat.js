@@ -262,14 +262,21 @@
             if (ended) {
                 return;
             }
-            found ? helpfulActions(col) : offerCard(col, hasChoices ? t.offer_choices : t.offer_notfound);
+            // Mode pilihan artikel (5b): tanya membantu atau tidak; kartu laporan langsung hanya untuk tidak-ditemukan (5a)
+            (found || hasChoices) ? helpfulActions(col) : offerCard(col, t.offer_notfound);
         };
 
         // ---- Alur percakapan ------------------------------------------------------------------
 
+        let busyNow = false;
+        // Tombol Kirim nonaktif selama kotak kosong/hanya spasi atau asisten sedang sibuk
+        const syncSend = () => {
+            form.querySelector('button').disabled = busyNow || ended || input.value.trim() === '';
+        };
         const setBusy = (busy) => {
+            busyNow = busy;
             input.disabled = busy || ended;
-            form.querySelector('button').disabled = busy || ended;
+            syncSend();
             root.querySelectorAll('[data-chat-suggest]').forEach((b) => { b.disabled = busy || ended; });
         };
 
@@ -308,7 +315,7 @@
             input.value = '';
             clearActions();
             root.classList.add('hc-started');
-            userMessage(text);
+            const bubble = userMessage(text).querySelector('.hc-bubble-user');
             const waiting = typing();
             setBusy(true);
 
@@ -324,6 +331,9 @@
             }
             chatId = res.chat_id;
             store.set(STORE_ID, String(chatId));
+            if (res.masked && res.question) {
+                bubble.textContent = res.question; // tampilkan teks tersamar dari server, bukan yang diketik
+            }
             if (res.masked) {
                 systemMessage(t.masked);
             }
@@ -429,6 +439,9 @@
             send(input.value);
         });
 
+        input.addEventListener('input', syncSend);
+        syncSend();
+
         // Enter = kirim, Shift+Enter = baris baru
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
@@ -460,6 +473,15 @@
         holder.innerHTML = html;
         const root = holder.firstElementChild;
         document.body.appendChild(root);
+        if (root.querySelector('[data-chat-off]')) {
+            // Asisten dimatikan: widget hanya menampilkan pemberitahuan (buka/tutup panel)
+            const panel = root.querySelector('.hc-panel');
+            root.querySelectorAll('[data-chat-toggle]').forEach((b) => b.addEventListener('click', () => {
+                panel.hidden = !panel.hidden;
+                root.querySelector('.hc-launcher').setAttribute('aria-expanded', String(!panel.hidden));
+            }));
+            return;
+        }
         mount(root);
     };
 

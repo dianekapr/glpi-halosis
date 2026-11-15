@@ -1732,3 +1732,39 @@ body[class*="hs-role-"] .user-menu-dropdown-toggle .pe-2 > div.mt-1 {
 body[class*="hs-role-"] :is(.hc, .hc-launcher, .hc-panel, .hd-period, .hd-table-toggle, .halosis-pattern-banner) {
     --halosis-primary: var(--hs-role-ink);
 }
+
+/* Panel SLA (TTO/TTR) di form tiket: kotak menyesuaikan isi, teks dibungkus (tidak terpotong), ikon sejajar tanpa bertabrakan.
+   Hanya CSS plugin; markup bawaan GLPI (components/itilobject/service_levels.html.twig) tidak diubah. */
+[id^="dropdown_assign_la_"] {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem .5rem;
+    min-width: 0;
+}
+[id^="dropdown_assign_la_"] > .ti {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+[id^="dropdown_assign_la_"] .level_name.badge {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+    height: auto;
+    max-width: 100%;
+    margin: 0 !important;
+    padding: .25rem .5rem;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.35;
+}
+[id^="dropdown_assign_la_"] .level_name .text-truncate {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+[id^="dropdown_assign_la_"] .level_name .badge {
+    white-space: normal;
+    margin: 0 !important;
+}

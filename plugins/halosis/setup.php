@@ -13,6 +13,7 @@
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Halosis\Chatbot;
 use GlpiPlugin\Halosis\Config;
+use GlpiPlugin\Halosis\Decision;
 use GlpiPlugin\Halosis\ConfigMenu;
 use GlpiPlugin\Halosis\DashboardMenu;
 use GlpiPlugin\Halosis\HelpdeskHome;
@@ -103,7 +104,7 @@ function plugin_init_halosis(): void
 
     // Chatbot (antarmuka Helpdesk, pemegang hak chatbot, fitur aktif): halaman penuh "Tanya HaloSIS"
     // sebagai beranda Pegawai + widget melayang di halaman Helpdesk lain. Lihat HelpdeskHome.
-    if (Chatbot::isAvailable()) {
+    if (Chatbot::canUse()) {  // fitur dimatikan: widget tetap dimuat dan menampilkan pemberitahuan
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/chat.js');
         if (HelpdeskHome::shouldRedirectHome()) {
             $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] = HelpdeskHome::getRedirectHeaderTags();
@@ -121,6 +122,8 @@ function plugin_init_halosis(): void
         RoleTheme::getHeaderTags(),
     );
     $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/role.js');
+    // "Ditangani oleh" di detail tiket pegawai (UC-07). Lihat HandledBy.
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/ditangani.js');
 
     // Saran triase AI: dibuat saat tiket baru disimpan, ditampilkan di atas panel isian tiket
     // Pemindahan tiket ke grup lain setelah triase dicatat untuk dashboard (metrik "salah tim")
@@ -132,6 +135,7 @@ function plugin_init_halosis(): void
     $PLUGIN_HOOKS[Hooks::ITEM_ADD]['halosis'] = [
         Ticket::class       => [Triage::class, 'onTicketAdd'],
         Group_Ticket::class => [Reassignment::class, 'onGroupTicketAdd'],
+        \ITILSolution::class => [Decision::class, 'onSolutionAdd'],
         KnowbaseItem::class => [KnowledgeIndex::class, 'onArticleSave'],
     ] + array_fill_keys($kb_visibility, [KnowledgeIndex::class, 'onVisibilityChange'])
       + array_fill_keys($audited, [ConfigAudit::class, 'onItemAdd']);

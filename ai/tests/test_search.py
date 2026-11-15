@@ -47,5 +47,5 @@ def test_cari_filter_jenis_sumber(tmp_path, monkeypatch):
         .to_parquet(tmp_path / 'chunks.parquet')
     np.save(tmp_path / 'vectors.npy', np.array([[1.0, 0.0], [0.6, 0.8]], dtype=np.float32))
     monkeypatch.setattr(search, 'embed', lambda texts, kind: np.array([[1.0, 0.0]], dtype=np.float32))
-    assert [h['sumber'] for h in search.cari('x', k=2, index_dir=tmp_path)] == ['T-1', 'KB-1']
-    assert [h['sumber'] for h in search.cari('x', k=2, index_dir=tmp_path, jenis=('kb', 'layanan'))] == ['KB-1']
+    assert [h['sumber'] for h in search.cari('kata uji', k=2, index_dir=tmp_path)] == ['T-1', 'KB-1']
+    assert [h['sumber'] for h in search.cari('kata uji', k=2, index_dir=tmp_path, jenis=('kb', 'layanan'))] == ['KB-1']
