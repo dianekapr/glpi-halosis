@@ -169,7 +169,7 @@
  },
  "UC-09_7a": {
   "status": "ok",
-  "note": "Daftar artikel: draf bertanda \"Item ini belum diterbitkan\""
+  "note": "Daftar artikel: ikon mata-coret di-hover -> tooltip \"Item ini belum diterbitkan\" (tooltip title bawaan ditiru lewat DOM karena tidak tertangkap screenshot headless)"
  },
  "UC-09_5a": {
   "status": "ok",

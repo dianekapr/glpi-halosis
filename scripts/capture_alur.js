@@ -450,6 +450,27 @@ async function uc09(browser) {
   await lina.context().close();
 }
 
+// ---- UC-09 7a (mandiri, hanya baca): hover ikon mata-coret sampai tooltip "Item ini belum diterbitkan" tampil
+async function uc09_7a(browser) {
+  const lina = await newPage(browser, 'lina');
+  await step('UC-09_7a', async () => {
+    await lina.goto(`${BASE}/front/knowbaseitem.php?unpublished=1`); await lina.waitForLoadState('networkidle');
+    const icon = lina.locator('.not-published').first();
+    await icon.waitFor({ timeout: 8000 }); await icon.scrollIntoViewIfNeeded();
+    await icon.hover();
+    // Tooltip `title` bawaan peramban tidak tertangkap screenshot headless (dan screencapture OS butuh izin Screen Recording),
+    // jadi ditiru dengan elemen DOM bergaya tooltip bawaan, teksnya diambil dari atribut title ikon itu sendiri.
+    await icon.evaluate(e => {
+      const r = e.getBoundingClientRect(), t = document.createElement('div');
+      t.textContent = e.getAttribute('title');
+      t.style.cssText = `position:fixed;z-index:99999;left:${r.right + 6}px;top:${r.bottom + 2}px;padding:2px 6px;font:12px -apple-system,system-ui,sans-serif;color:#222;background:#f6f6f6;border:1px solid #bbb;box-shadow:0 1px 4px rgba(0,0,0,.25);white-space:nowrap`;
+      document.body.appendChild(t);
+    });
+    await shot(lina, 'UC-09_7a', 'Daftar artikel: ikon mata-coret di-hover -> tooltip "Item ini belum diterbitkan" (tooltip title bawaan ditiru lewat DOM karena tidak tertangkap screenshot headless)');
+  });
+  await lina.context().close();
+}
+
 // ---- UC-09 5a: LLM lokal (Ollama qwen2.5:3b) diaktifkan sementara lewat .env; .env dikembalikan + halosis-ai di-restart
 async function uc09_5a(browser) {
   const envFile = path.join(ROOT, '.env'), orig = fs.readFileSync(envFile, 'utf8');
@@ -527,6 +548,7 @@ async function uc10(browser) {
     if (WANT.has('UC-07')) await uc07(browser);
     if (WANT.has('UC-08')) await uc08(browser);
     if (WANT.has('UC-09')) await uc09(browser);
+    if (WANT.has('UC-09_7a')) await uc09_7a(browser);
     if (WANT.has('UC-09_5a')) await uc09_5a(browser);
     if (WANT.has('UC-10')) await uc10(browser);
   } finally {
