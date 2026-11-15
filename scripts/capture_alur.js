@@ -3,6 +3,7 @@
 //
 //   node scripts/capture_alur.js --uc UC-01,UC-02,UC-03,UC-05
 //   node scripts/capture_alur.js --uc UC-06,UC-07,UC-08,UC-09,UC-10
+//   node scripts/capture_alur.js --uc TAMBAHAN (tangkapan khusus -> reports/shots/tambahan/)
 //   node scripts/capture_alur.js --uc UTAMA     (alur utama UC-03/05/06/07/08 -> reports/shots/utama/UC-0X.png)
 //
 // Hasil: reports/shots/alur/<UC>_<alur>[_<langkah>].png dan reports/shots/alur/hasil.json (status per tangkapan).
@@ -548,6 +549,86 @@ async function utama(browser) {
   outDir = OUT;
 }
 
+// ---- TAMBAHAN: tangkapan khusus -> reports/shots/tambahan/ (tanpa SQL; tiket uji lewat API)
+async function tambahan(browser) {
+  outDir = path.join(ROOT, 'reports/shots/tambahan');
+  const a = await api();
+  const bodyText = p => p.locator('body').innerText();
+  await step('UC-01_5b', async () => {
+    const p = await newPage(browser, 'budi');
+    const qs = ['printer error', 'perangkat rusak', 'mau install software', 'tidak bisa cetak dokumen', 'Wifi lambat', 'Akun SSO terkunci', 'Email tidak bisa dibuka'];
+    let hit = null;
+    for (const q of qs) {
+      await openChat(p); await ask(p, q);
+      if (await p.getByText(/Apakah yang Anda maksud salah satu artikel berikut/).count()) { hit = q; break; }
+    }
+    if (!hit) throw new Error('zona sedang tidak muncul dari ' + qs.length + ' pertanyaan');
+    await btn(p, /Masalah terselesaikan/).waitFor();
+    await shot(p, 'UC-01_5b', 'Pertanyaan: ' + hit);
+    await p.context().close();
+  });
+  await step('UC-04_5b/5c', async () => {
+    const p = await newPage(browser, 'rina');
+    const list = await a.call('GET', 'Ticket?range=0-399&order=DESC');
+    let b = false, c = false;
+    for (const t of Array.isArray(list) ? list : []) {
+      if (b && c) break;
+      await openTicket(p, t.id);
+      const txt = await bodyText(p);
+      if (!/Perlu penilaian manual/.test(txt)) continue;
+      const low = /Model belum lolos/.test(txt);
+      if (low && !c) { c = true; await p.locator('[data-halosis-triase]').first().scrollIntoViewIfNeeded(); await shot(p, 'UC-04_5c', 'Tiket #' + t.id); }
+      else if (!low && !b && /keyakinan di bawah ambang/.test(txt)) { b = true; await p.locator('[data-halosis-triase]').first().scrollIntoViewIfNeeded(); await shot(p, 'UC-04_5b', 'Tiket #' + t.id); }
+    }
+    if (!b) skip('tambahan/UC-04_5b', 'tidak ada tiket demo dengan tanda itu');
+    if (!c) skip('tambahan/UC-04_5c', 'tidak ada tiket demo dengan "Model belum lolos"');
+    await p.context().close();
+  });
+  await step('UC-05_S2', async () => {
+    const p = await newPage(browser, 'rina');
+    const id = await makeTicket(a, 'Wi-Fi ruang rapat lantai 2 sering putus'); await sleep(7000);
+    await openTicket(p, id);
+    await p.locator('[data-action=show-reject]').click();
+    await p.fill('#halosis-reject-reason', 'Saran tidak sesuai, uji capture');
+    await p.waitForTimeout(300);
+    if (await p.locator('[data-action=reject]').isDisabled()) throw new Error('Tolak & triase manual tidak aktif');
+    await shot(p, 'UC-05_S2_form', 'Alasan terisi, tombol aktif');
+    await p.locator('[data-action=reject]').click();
+    await p.getByText(/Saran AI ditolak\. Silakan triase tiket secara manual/).first().waitFor({ timeout: 20000 });
+    await shot(p, 'UC-05_S2', 'Saran AI ditolak');
+    await p.context().close();
+  });
+  await step('UC-06_2a', async () => {
+    const p = await newPage(browser, 'andi');
+    const id = await teamTicket(a, 'Aplikasi FASIH tidak bisa sinkron data');
+    await openTicket(p, id);
+    await p.locator('[data-action=show-return]').click();
+    await p.fill('#halosis-return-reason', 'Salah tim, bukan ranah aplikasi statistik');
+    await shot(p, 'UC-06_2a_form', 'Form Kembalikan ke Operator terisi');
+    await p.locator('[data-action=return]').click(); await p.waitForTimeout(2500);
+    await shot(p, 'UC-06_2a', 'Setelah dikembalikan');
+    await p.context().close();
+  });
+  await step('UC-07_5a', async () => {
+    const budi = await newPage(browser, 'budi');
+    const id = await teamTicket(a, 'Email tidak bisa terkirim', 2);
+    await a.call('POST', 'ITILSolution', { input: { itemtype: 'Ticket', items_id: id, content: 'Solusi uji capture.' } });
+    await openTicket(budi, id);
+    const ed = editor(budi, 'button[name=add_reopen]'); await ed.click(); await ed.type('Masih gagal terkirim sejak pagi, solusi belum berhasil.');
+    await budi.locator('button[name=add_reopen]').first().click(); await budi.waitForLoadState('networkidle'); await budi.waitForTimeout(2000);
+    await shot(budi, 'UC-07_5a', 'Tolak dengan komentar: tiket kembali diproses');
+    await budi.context().close();
+  });
+  await step('UC-07_5c', async () => {
+    const p = await newPage(browser, 'rina');
+    await p.goto(BASE + '/plugins/halosis/SiapDitutup'); await p.waitForLoadState('networkidle');
+    if (!(await p.locator('table tbody tr').count()) || /Tidak ada|Belum ada/.test(await bodyText(p))) throw new Error('daftar Siap ditutup kosong (tidak bisa dipicu tanpa ubah data)');
+    await shot(p, 'UC-07_5c', 'Menu Siap ditutup');
+    await p.context().close();
+  });
+  outDir = OUT;
+}
+
 // ---- UC-10
 async function uc10(browser) {
   await step('UC-10_1a', async () => {
@@ -606,6 +687,7 @@ async function uc10(browser) {
     if (WANT.has('UC-09_7a')) await uc09_7a(browser);
     if (WANT.has('UC-09_5a')) await uc09_5a(browser);
     if (WANT.has('UC-10')) await uc10(browser);
+    if (WANT.has('TAMBAHAN')) await tambahan(browser);
   } finally {
     await browser.close();
     if (!(await aiHealthy())) await startAi();
