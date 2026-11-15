@@ -14,7 +14,6 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-01 | Normal flow | 8 Rating bintang | PG-S23 Chat: rating bintang 157:3533 | |
 | UC-01 | Normal flow | 9 Terima kasih, berakhir | – | Belum ada layar |
 | UC-01 | 1a Chat dimatikan | 1a Asisten Sedang Tidak Tersedia | – | Belum ada layar |
-| UC-01 | 1b Tanpa hak asisten | 1b Asisten tidak tersedia untuk akun | – | Belum ada layar |
 | UC-01 | 2a Kartu Laporkan masalah | 2a Fokus kotak + sapaan asisten | PG-R08 Chat: klik Laporkan masalah 317:6217 | |
 | UC-01 | 2b Kartu Ajukan permintaan | 2b Form Ajukan Permintaan | PG-R04 Form Ajukan Permintaan 253:4650 | |
 | UC-01 | 3a Pesan kosong | 3a Silakan ketik pertanyaan | – | Belum ada layar |
@@ -59,7 +58,6 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-03 | 1b Operator catat laporan | 1b Semua tiket, Tambah | OP-02 Semua tiket 135:2 | |
 | UC-03 | 1b Operator catat laporan | 1b Form Tambah (Pemohon, Sumber) | – | Belum ada layar |
 | UC-03 | 5a Kolom wajib kosong | 5a Judul wajib diisi | PG-R02 Galat Judul wajib diisi 247:4650 | |
-| UC-03 | 5b Tanpa hak membuat tiket | 5b Anda tidak berhak membuat tiket | – | Belum ada layar |
 | UC-03 | 6a Saran triase gagal | 6a Belum ada saran AI + Buat saran AI | – | Belum ada layar |
 | UC-04 | Normal flow | 1 Kirim ke AI Engine | – | Proses sistem |
 | UC-04 | Normal flow | 2 Prediksi 3 tim | – | Proses sistem |
@@ -68,7 +66,6 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-04 | Normal flow | 5 Keyakinan mencapai ambang | 07 Detail tiket + panel Saran AI 32:2 | |
 | UC-04 | Normal flow | 6 Panel Saran AI Menunggu keputusan | 07 Detail tiket + panel Saran AI 32:2 | |
 | UC-04 | 1a AI tidak tersedia | 1a Dicoba ulang tiap 15 menit | – | Proses sistem |
-| UC-04 | 1b Mode demo | 1b Saran dari aturan kata kunci | – | Proses sistem |
 | UC-04 | 5a Keyakinan di antara ambang | 5a Pilih dari 3 kandidat | OP-03 Panel Saran AI "Pilih dari 3 kandidat" 46:289 | |
 | UC-04 | 5b Keyakinan di bawah ambang rendah | 5b Perlu penilaian manual | OP-04 Panel "Perlu penilaian manual" 46:390 | |
 | UC-04 | 5c Model belum lolos / Lainnya | 5c Perlu penilaian manual + peringatan model | OP-04 Panel "Perlu penilaian manual" 46:390 | |
@@ -84,8 +81,7 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-05 | S-1 Ubah (5a) | 7 Status Sedang proses | 07-R1 Terima saran → diterapkan 195:3708 | |
 | UC-05 | S-2 Tolak (5b) | S-2 Tolak & triase manual | 07-R2 Tolak → form alasan 185:3708 | |
 | UC-05 | S-2 Tolak (5b) | S-2 Triase manual | 07-R3 Tolak saran → triase manual 196:3708 | |
-| UC-05 | 3a Tanpa hak memutuskan | 3a Menunggu keputusan Operator | – | Belum ada layar |
-| UC-05 | 3b Tiket tanpa saran | 3b Buat saran AI | – | Belum ada layar |
+| UC-05 | 3a Tiket tanpa saran | 3a Buat saran AI | – | Belum ada layar |
 | UC-05 | 5c Selesai di level 1 | 5c Balas, Tambah solusi, Dipecahkan | – | Belum ada layar |
 | UC-05 | 5d Saran sudah diputuskan | 5d Saran ini sudah diputuskan | – | Belum ada layar |
 | UC-05 | S-1a Nilai sama | S-1a Gunakan tombol Terima | – | Belum ada layar |
@@ -148,7 +144,6 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-09 | S-2 Tulis artikel baru | S-2 Tambah artikel | KM-04 Tulis artikel 80:2 | |
 | UC-09 | S-2 Tulis artikel baru | S-2 Draf tersimpan | – | Belum ada layar |
 | UC-09 | 1a AI mati | 1a Pemberitahuan layanan AI | – | Belum ada layar |
-| UC-09 | 1b Hanya melihat | 1b Tombol tersembunyi | – | Belum ada layar |
 | UC-09 | 3a Tidak ada kandidat | 3a Belum ada kandidat di sini | – | Belum ada layar |
 | UC-09 | 4a Kandidat tidak layak | 4a Abaikan + alasan | KM-01 Kandidat pengetahuan 50:2 | |
 | UC-09 | 4a Kandidat tidak layak | 4a Diabaikan | KM-R2 Tab Diabaikan 296:5257 | |
