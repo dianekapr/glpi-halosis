@@ -96,8 +96,8 @@ Pakai **jendela penyamaran/privat** baru untuk setiap akun, supaya bisa login se
    **Saran AI** menunjukkan kategori, tim, dan tingkat keyakinan AI. Klik **Terima** (atau **Ubah**/**Tolak**
    dengan alasan).
 4. **Tim teknis menyelesaikan** — login `andi`, buka menu **Tiket saya & tim**, buka laporan tadi, lalu klik
-   **Answer ▾ › Add a solution** (beberapa tombol bawaan GLPI masih berbahasa Inggris), tulis solusinya, simpan.
-5. **Pegawai menyetujui** — login `budi`, buka **Laporan saya**, buka laporannya, klik **Approve** (setujui solusi).
+   **Balas ▾ › Tambah solusi**, tulis solusinya, simpan.
+5. **Pegawai menyetujui** — login `budi`, buka **Laporan saya**, buka laporannya, klik **Setujui**.
    Laporan pun **Ditutup**.
 6. **Manajemen melihat hasil** — login `sri`, buka **Kinerja AI**: berapa saran AI yang diterima, diubah, ditolak,
    dan kepatuhan SLA.
@@ -113,6 +113,8 @@ Jalankan dari Terminal di folder `glpi-halosis` (`cd ~/Downloads/glpi-halosis`):
 | --- | --- |
 | Mematikan HaloSIS (data tetap tersimpan) | `docker compose down` |
 | Menyalakan lagi besok | Buka Docker Desktop, lalu `docker compose up -d`, tunggu ±1 menit |
+| Mematikan fitur chat atau saran triase saja (layanan AI tetap jalan) | Login `dimas` › **Pengaturan AI** › bagian **Fitur AI** › matikan sakelar "Asisten layanan mandiri untuk pegawai" / "Saran triase AI untuk tiket baru" › simpan |
+| Mematikan layanan AI (uji alur "AI mati") | `docker compose stop halosis-ai` (nyalakan: `docker compose start halosis-ai`) |
 | Menyimpan kondisi sebelum demo | `scripts/demo_snapshot.sh simpan` |
 | Kembali ke kondisi yang disimpan | `scripts/demo_snapshot.sh pulihkan` |
 | Mengisi dashboard dengan data fiktif **[DEMO]** (alat demo, bukan bagian layanan AI) | `python scripts/seed_demo.py buat --mundurkan-tanggal` (hapus: `python scripts/seed_demo.py hapus`; `rencana` = hanya cetak jumlah). Simpan snapshot dulu. Langkah sisi-plugin: `plugins/halosis/tools/seed_demo_plugin.php`; dua UPDATE ber-WHERE ketat pada baris [DEMO]: tanggal (`--mundurkan-tanggal`) dan kolom pemilik (`users_id`) 6 Reminder pribadi [DEMO] (langkah `pemilik`; REST selalu memakai akun sesi sebagai pemilik). Bagian agenda saja (tugas minggu ini, catatan publik, pengingat pribadi): `python scripts/seed_demo.py agenda` / `agenda-hapus`. Data [DEMO] dikecualikan dari Ekspor koreksi & Kandidat → artikel, dan tidak menyentuh data latih/indeks AI |
@@ -598,6 +600,10 @@ menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri →
 | Pengguna | Nama depan, Nama belakang, Email, Profil (Entitas), Grup, Aktif, Terakhir login | Telepon, Lokasi (kosong) |
 | Tim (Grup) | Manager (ketua tim), Jumlah pengguna, Bisa ditugaskan | Komentar (kosong) |
 | Kategori layanan (ITIL) | Grup, Jumlah tiket, Terlihat untuk insiden / permintaan / antarmuka sederhana | — |
+
+Ketiga daftar tiket juga memuat kolom **Jenis** (Insiden/Permintaan). **Laporan saya** pegawai memuat kolom
+**Ditangani oleh** (plugin): "Menunggu validasi Operator", nama grup tim, "Menunggu tanggapan Anda",
+"Selesai, menunggu konfirmasi Anda", atau "Ditutup" (nama grup, bukan nama orang).
 | SLA / SLM | SLM, Tipe, Waktu / Kalender | — |
 | Alur kerja & aturan (aturan tiket) | Kolom tetap bawaan GLPI (Nama, Deskripsi, Dipakai untuk, Kriteria, Tindakan, Aktif, Posisi) | Daftar aturan bukan mesin pencarian, kolomnya tidak bisa diatur preferensi |
 
@@ -884,18 +890,18 @@ Tampilan mengikuti prototipe `halosis-web` **tanpa mengubah GLPI** (NFR-10): han
 | Buat Laporan | **Katalog layanan** / Buat tiket |
 | Pusat Bantuan | **FAQ** (artikel KB yang ditandai FAQ) |
 | Migrasi data (FR-10) | `ai/scripts/prepare_data.py` (pembersihan & penyamaran) + `ai/scripts/reconcile.py` → `reports/rekonsiliasi.md`: jumlah sumber/berhasil/gagal, tidak lengkap, duplikat, nilai disamarkan per jenis, per bulan & per tim (lihat [`ai/README.md`](ai/README.md#fr-10--rekonsiliasi-migrasi)) |
-| Konfirmasi "sudah beres / belum beres" (UC-07) | Tombol **Approve / Refuse** pada solusi tiket. *Refuse* wajib disertai alasan (ditegakkan GLPI) dan membuka kembali tiket ke tim |
-| Kembalikan ke operator, salah tim (UC-06 alur alternatif) | Panel **Saran AI** di tiket → *Kembalikan ke operator (salah tim)*, alasan wajib (plugin) |
+| Konfirmasi "sudah beres / belum beres" (UC-07) | Tombol **Setujui / Tolak** pada solusi tiket. *Tolak* wajib disertai alasan (ditegakkan GLPI) dan membuka kembali tiket ke tim |
+| Kembalikan ke Operator, salah tim (UC-06 alur 2a/2b) | Panel **Saran AI** di tiket → *Kembalikan ke Operator (salah tim)*, alasan wajib (plugin); tombol hanya tampil untuk tim yang ditugaskan, server menolak tim lain |
 | Peringatan risiko SLA (BR-02) | Level eskalasi SLA + notifikasi **Ticket Recall** (langkah 5b) |
 | Antrean validasi & Semua tiket (operator) | **Bantuan › Tiket** (filter status Baru) |
 | Tiket saya & tim (Tim Teknis) | Beranda **Tampilan Personal / Tampilan Group** |
-| Komentar publik / catatan internal | **Answer › Followup** (centang *Private* untuk internal), **Task** |
+| Komentar publik / catatan internal | **Balas › Tindak lanjut** (centang *Pribadi* untuk catatan internal), **Tugas** |
 | Pemantauan SLA (respons & penyelesaian) | Kolom "Waktu untuk mengambil alih" (SLA respons) & "Waktu untuk menyelesaikan" + **Setup › Service levels** |
 | Pola insiden | **Bantuan › Masalah** (tiket ditautkan ke masalah) |
 | Knowledge base (KM) | **Tools › Basisdata pengetahuan** |
 | Cari pengetahuan (Operator & Tim Teknis) | Menu **Cari pengetahuan** (plugin, `/plugins/halosis/CariKnowledge`): pencarian semantik artikel KB & tiket historis; layanan AI mati → kata kunci artikel KB |
 | Kandidat Knowledge (KM, UC-09) | Menu **Kandidat pengetahuan** (plugin): solusi tiket selesai & solusi berulang dari indeks AI → *Jadikan artikel* (draf KB) / *Abaikan* (dengan alasan) |
-| Dashboard manajemen, laporan | **Bantuan › Dasbor**, **Bantuan › Statistik** |
+| Dashboard manajemen, laporan | **Bantuan › Dasbor** (staf hanya melihat dasbor *Assistance*; mode data demonstrasi dimatikan), **Bantuan › Statistik** |
 | Katalog layanan, tim, pengguna & peran | **Pengaturan › Daftar pilihan › Kategori ITIL**, **Administrasi › Groups / Users / Profil** (nama profil = role HaloSIS) |
 | Alur kerja & aturan otomatis | **Administrasi › Rules › Business rules for tickets** |
 | Jejak audit | Tab **Riwayat** di setiap tiket/objek |
@@ -967,7 +973,11 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Prioritas & urgensi (BR-05, FR-08, 2.1.4) | Rekomendasi prioritas (P1) & prediksi urgensi (P2) dari history | **Status 7 Nov 2026: model urgensi tidak dipakai karena gagal gerbang skema B; panel memakai aturan kata kunci + validasi Operator.** Riwayat sebelum keputusan itu: history versi baru memuat `urgency`/`impact`/`priority`: dampak = urgensi pada 99,7% insiden dan prioritas = matriks keduanya, jadi **satu model urgensi insiden** Medium vs Low (`ai/scripts/train_urgensi.py`: TF-IDF teks tersamar + nama tim, LR seimbang → P(Low), validasi silang 5 lipatan) dengan **ambang per kelas** dipilih otomatis: **Rendah** bila P(Low) ≥ 0,90 (presisi 78,79%, Wilson 95% 62,25–89,32%, vs proporsi Low 18,76%; recall 5,12%, 33 tiket), **Sedang** bila P(Low) ≤ 0,45 (akurasi 84,30% vs pembanding 81,24%, cakupan 76,70%), di antaranya aturan kata kunci; gerbang per kelas (kedua kelas lolos, `urgensi.metrics.json`). Panel "Urgensi disarankan: Rendah/Sedang (keyakinan)" hanya bila kelasnya lolos & di atas ambangnya. **Keterbatasan:** Rendah hanya mengenali ± 5% insiden Low (sisanya aturan); Sedang lolos tipis (syarat > 84,24%). Dampak = urgensi, **naik 1 tingkat** bila ≥ 3 tiket serupa dalam 60 menit / Problem pola terbuka atau kategori layanan kritis (`critical_services`, bawaan SSO, Email, Jaringan); panel menampilkan alasannya. Prioritas = matriks GLPI. High/Critical (21 tiket) & REQ (hampir semua Medium): aturan kata kunci (kata utuh, negasi "tidak mendesak") + sinyal. Model prioritas lama (proksi tier SLA, F1 = pembanding) dihapus; satu ambang keyakinan 70% versi 31 Okt (Low tidak pernah tertangkap) diganti | 81% insiden berlabel Medium, kemungkinan besar **nilai bawaan formulir**, bukan penilaian petugas → batas atas model rendah; dokumen menempatkan urgensi P2 dengan validasi manusia | Rekam urgensi/dampak final Operator (Terima/Ubah) sebagai label yang lebih bersih → latih ulang; gerbang `/health` mencegah model lemah dipakai |
 | Sumber knowledge dari history (AI-4, UC-09) | Masalah → solusi dari tiket selesai | Solusi = pesan terakhir ≤ `resolved` + 5 menit yang bukan dari pemohon (pesan terakhir dicek lewat `last_conversation_user_id`), lolos penyaring template & ≥ 5 kata; cadangan `close_notes` → `resolution` bila bukan template. Solusi > 220 kata dipecah (masalah diulang di tiap potongan). Uji retrieval ekspor baru, 1.069 kueri Jul–Ags ([`reports/banding_solusi.md`](reports/banding_solusi.md); set berbeda dari banding embedding 906 kueri ekspor lama): Top-1 72,50% / Top-3 89,06% / MRR 0,8115 vs aturan lama 73,15% / 89,43% / 0,8163 → dalam toleransi 1 poin, dipakai. **Dedup solusi identik tidak dipakai** (Top-1 −1,96 poin) | Pesan setelah tiket diselesaikan (terima kasih, tiket dibuka lagi) bukan solusi; petugas sering menulis solusi 1–3 menit setelah menekan "selesai", jadi toleransi 5 menit (bukan 1) | Penilaian manual mutu solusi pada sampel; dedup dinilai ulang bila ada label relevansi manusia |
 | Rekomendasi jenis REQ/INC (T4) | Triase menyarankan jenis tiket (hal. 97, 100, 104) | Klasifier ringan terpisah (`ai/scripts/train_jenis.py`, `ai/models/jenis.joblib`, dilatih ulang dari history versi baru, F1 makro 67,52% vs 67,50% model lama → lolos): akurasi 68,25%, ≥ 70% yakin → 83,96%; panel hanya menampilkan "Jenis disarankan" bila berbeda & yakin | Jenis tetap ditentukan jalur masuk & Operator; model tim tidak diubah | — |
-| Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Maksud Anda…?" + Buat laporan (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
+| Chatbot keyakinan sedang (T3) | Jawaban terbatas / klarifikasi (hal. 100) | Skor 0,78–0,83: tidak menjawab, menawarkan ≤ 3 judul artikel KB "Apakah yang Anda maksud…?" lalu "Apakah jawaban ini membantu?" (**Masalah terselesaikan** → rating / **Belum terselesaikan** → kartu laporan) (`HALOSIS_CHAT_SUGGEST_MIN_SCORE`) | Tanpa mengarang jawaban; hanya artikel KB karena tiket historis tidak punya tautan | Jarang muncul selama KB masih sedikit (± 6 artikel vs ± 6.700 potongan tiket); ambang 0,78 asumsi |
+| Kueri tanpa makna (UC-02 S-1a) | Hasil kosong bila tidak ada yang relevan | Penjaga `search.bermakna()` sebelum pencarian semantik (`/cari` dan `/chat`): kueri tanpa kata huruf ≥ 3 karakter (hanya simbol, angka, huruf tunggal) → kosong / alur 5a | Embedding tetap memberi skor tinggi untuk kueri sampah seperti `<<>><<>>` | Ambang tidak diubah; metrik retrieval 8 kasus sama sebelum/sesudah |
+| Umpan balik petugas (UC-02 S-1b) | Membantu / Tidak membantu | Disimpan + penanda "Ditandai membantu" / "Ditandai tidak membantu"; urutan hasil tidak berubah | Data untuk evaluasi & kurasi KM; satu klik tidak boleh menyembunyikan artikel bagi semua petugas | Dipakai Knowledge Manager saat meninjau artikel |
+| Fitur chat dimatikan (UC-01 1a) | Pesan asisten tidak tersedia | Sakelar Pengaturan AI › Fitur AI; menu **Tanya HaloSIS** tetap tampil, halaman & widget menampilkan "Asisten Sedang Tidak Tersedia" + **Buat laporan** + FAQ | Pegawai tetap punya jalan melapor | – |
+| Penyamaran di layar chat (NFR-06) | Data sensitif disamarkan | Gelembung pesan pengguna langsung diganti teks tersamar dari server (mis. "password : [disamarkan]") tanpa perlu muat ulang | Kata sandi tidak tertinggal di layar | – |
 | HTTPS, monitoring (NFR-05, NFR-09) | HTTPS & observability terpusat | **Profile opsional** di docker-compose: `tls` (Caddy, sertifikat internal) dan `monitoring` (Prometheus + mysqld-exporter + Grafana); `docker compose up -d` biasa tidak berubah | Demo lokal tetap ringan; unduhan image hanya bila dipakai | Sertifikat BPS, alert, metrik GLPI & host |
 | Konfigurasi admin (T20, UC-10) | Pratinjau dampak & notifikasi perubahan konfigurasi | Pratinjau dampak (tanpa menyimpan): ambang AI (saran 30 hari) dan **perubahan SLA / aturan SLA** (tiket aktif terdampak; status aman / berisiko = sisa ≤ 20% / terlewati sekarang vs target baru; aturan: tiket dicocokkan kriteria aturan, jenis SLA pengganti menentukan aksi respons/penyelesaian); perubahan Pengaturan AI, aturan SLA, SLA, kategori → log sistem GLPI + Catatan untuk Administrator | Tanpa ubah kode inti: memakai Event log, Reminder, perhitungan tanggal SLA & pencocokan kriteria aturan GLPI; risiko memakai waktu jam dinding (eskalasi GLPI memakai jam kerja) | Pratinjau kategori (Rules › Test) |
 | Tingkat keyakinan triase (T2) | Tinggi / sedang / rendah (hal. 100) | Dua ambang di Pengaturan AI: ≥ 70% "Disarankan", 40–69% "Pilih dari 3 kandidat", < 40% "Perlu penilaian manual" | Angka tidak ditentukan dokumen; 70%: akurasi 88,35% di atasnya (`reports/triase.md`); 40%: di bawahnya akurasi ≤ 50% (pita 30–50% = 50,0%, 0–30% = 35,5%) | Kalibrasi ulang setelah data keputusan Operator cukup |
@@ -989,10 +999,10 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Baru | Baru (*New*) | Menunggu validasi Operator (antrean validasi) |
 | Assigned | Diproses (ditugaskan) | Setelah Operator menerima/ubah saran AI dan menugaskan tim; SLA respons berhenti |
 | Dalam Penanganan | Diproses (direncanakan) | Tim Teknis mengerjakan (tugas/tindak lanjut) |
-| Pending | Menunggu (*Pending*) | Menunggu pegawai/pihak lain; jam SLA berhenti |
-| Resolved | Selesai (*Solved*) | Solusi diajukan, menunggu konfirmasi pegawai (Approve/Refuse) |
+| Pending | Tertunda (*Pending*) | Menunggu pegawai/pihak lain; jam SLA berhenti |
+| Resolved | Dipecahkan (*Solved*) | Solusi diajukan, menunggu konfirmasi pegawai (Setujui/Tolak) |
 | Closed | Ditutup (*Closed*) | Pegawai menyetujui solusi atau tutup otomatis; survei kepuasan dikirim |
-| Reopened | Diproses kembali | Pegawai menolak solusi (*Refuse* + alasan) → tiket kembali ke tim |
+| Reopened | Diproses kembali | Pegawai menolak solusi (*Tolak* + alasan) → tiket kembali ke tim |
 
 **Evidence Maturity** (format §2.4.7.8; PoC evidence ≠ production readiness):
 
@@ -1008,6 +1018,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 | Deteksi pola insiden | Semantik `/pola` (uji 10 tiket "lemot/lambat" → 1 Problem), fallback kata kunci; banding rata-rata vs DBSCAN pada 666 insiden history (`reports/banding_pola.md`); regresi demo Bonus pola (`reports/uji_regresi_demo.md`) | Partially proven (tanpa label pola manual) |
 | HITL & audit | Terima/Ubah/Tolak + alasan, Kembalikan ke operator, tab Riwayat; regresi skenario demo 17 langkah lolos (`reports/uji_regresi_demo.md`) | Proven |
 | Login SSO bersamaan (beban halaman) | k6 10 akun petugas, 5 menit: 0% galat, login p95 60 ms, daftar tiket p95 56 ms; bug duplikat Jabatan ditemukan & ditutup (`reports/rencana_uji.md` §7) | Proven (laptop) |
+| Regresi alur & alur alternatif | `tests/e2e/fitur_penutup.js`, `alur_alternatif.js`, `revisi_15nov.js` (kueri simbol, umpan balik, chat mati, penyamaran langsung, tombol Kirim) lulus 15 Nov 2026; data uji dibersihkan otomatis | Proven (lokal) |
 | Kesiapan demo | Snapshot simpan/pulihkan (tiket uji hilang setelah pulihkan, 11 dtk), `reports/checklist_demo.md` | Proven |
 | Upgrade platform (Skenario 2) | GLPI 12.0.0 → 12.0.1 dari snapshot di lingkungan terpisah: skema OK, plugin Enabled, data utuh (`reports/uji_upgrade.md`) | Proven (patch) |
 | SLA resmi BPS & KPI tabel 1.3 | Aturan SLA BPS (uji: insiden prioritas 3 → respons 15 menit + Medium 8 hari, permintaan → 7 hari, prioritas 5 → Crit 2 hari); KPI kepatuhan SLA dengan dua baris pembanding: **dokumen** 27,59% (overall) / 42,62% (respons) dan **history versi baru** 28,87% (extended, 1.819 imputasi) / respons 43,08% (`response_sla_final_result`); selisih karena metode (ekspor baru mengestimasi komponen SLA yang tidak tercatat, lihat `metode` di baseline.json & `reports/eda.md`). Kepuasan pemohon (% nilai ≥ 4, baseline 95,76%) dengan cakupan rating 1.155/6.681 = 17,3% dan catatan dokumen §5.2.1 (rating tidak wajib, klaim tinggi berisiko optimistis); `plugins/halosis/baseline.json` (`ai/scripts/baseline.py`) | Proven (data contoh) |
