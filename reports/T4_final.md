@@ -450,17 +450,17 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 **Alternate/Exceptional Flows**
 
-- **1a. Fitur chat dimatikan.** Halaman menampilkan **Asisten Sedang Tidak Tersedia**, "Laporkan kendala Anda dan petugas akan membantu.", tombol **Buat laporan**, dan tautan **Tanya Jawab (FAQ)**.
+- **1a. Fitur chat dimatikan.** Menu **Tanya HaloSIS** tetap tampil. Halaman dan widget chat menampilkan **Asisten Sedang Tidak Tersedia**, "Laporkan kendala Anda dan petugas akan membantu.", tombol **Buat laporan**, dan tautan **Tanya Jawab (FAQ)**.
 - **2a. Pegawai mengklik kartu Laporkan masalah.** Kotak **Tulis kendala Anda…** difokuskan dan disorot, lalu asisten menampilkan "Ceritakan masalah yang Anda alami. Saya carikan solusinya dulu; bila belum selesai, saya buatkan laporan." Tiket tidak dibuat. Alur lanjut ke langkah 3.
 - **2b. Pegawai mengklik kartu Ajukan permintaan.** Sistem membuka form **Ajukan Permintaan** (UC-03 langkah 3).
-- **3a. Pesan kosong.** Sistem menampilkan "Silakan ketik pertanyaan."
+- **3a. Pesan kosong.** Tombol **Kirim** tidak aktif selama kotak ketik kosong, sehingga pesan tidak terkirim sampai pegawai mengetik pertanyaan.
 - **3b. Percakapan sudah terlalu panjang.** Sistem menampilkan "Percakapan terlalu panjang. Buat laporan atau mulai percakapan baru."
 - **3c. Percakapan sudah berakhir.** Sistem menampilkan "Percakapan ini sudah selesai. Klik tombol Percakapan baru (ikon ⟳ di kanan atas) untuk bertanya lagi."
 - **4a. Layanan AI gagal menjawab.** Sistem mencari dengan kata kunci di artikel, lalu menampilkan hasilnya dengan label **Dari Pusat Bantuan**. Bila kosong, alur lanjut ke 5a.
 - **4b. Permintaan ke server gagal.** Sistem menampilkan "Asisten sedang tidak tersedia. Anda tetap dapat membuat laporan." beserta kartu laporan.
 - **5a. Solusi tidak ditemukan.** Sistem menampilkan "Maaf, saya belum menemukan jawabannya di Pusat Bantuan…" dan kartu "Saya belum menemukan jawabannya. Apakah Anda ingin saya buatkan laporan untuk tim TI? Ringkasan percakapan ini akan dilampirkan. Atau ketik ulang kendala Anda dengan kata lain." dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**. **Ya, buat laporan** melanjutkan ke UC-03 S-1. **Tidak, terima kasih** hanya menutup kartu, dan pegawai tetap dapat bertanya lagi.
 - **5b. Keyakinan jawaban sedang.** Sistem menampilkan "Apakah yang Anda maksud salah satu artikel berikut? Buka artikel yang sesuai, lalu beri tahu saya apakah masalah Anda terselesaikan." dengan tautan artikel, disusul "Apakah jawaban ini membantu?" dengan tombol **Masalah terselesaikan** dan **Belum terselesaikan**. Alur lanjut ke langkah 6.
-- **5c. Pertanyaan di luar layanan TI.** Sistem mengarahkan pegawai ke unit terkait tanpa tawaran laporan.
+- **5c. Pertanyaan urusan non-TI yang dikenali (Kepegawaian, Keuangan, atau Umum).** Sistem mengarahkan pegawai ke unit terkait tanpa tawaran laporan. Pertanyaan lain di luar layanan TI yang tidak dikenali diperlakukan seperti alur 5a.
 - **7a. Pegawai mengklik Belum terselesaikan.** Sistem menampilkan kartu "Masalah belum selesai? Saya akan membuatkan laporan…" dengan tombol **Ya, buat laporan** dan **Tidak, terima kasih**, serta petunjuk "Atau ketik ulang kendala Anda dengan kata lain." Kotak ketik tetap aktif. **Ya, buat laporan** melanjutkan ke UC-03 S-1.
 - **7b. Pada kartu alur 7a, pegawai mengklik Tidak, terima kasih.** Tiket tidak dibuat. Sistem menampilkan "Percakapan diakhiri. Anda dapat membacanya lagi di Riwayat percakapan." dan menutup kotak ketik. **Riwayat percakapan** menandainya **Berakhir tanpa laporan**.
 
@@ -502,8 +502,8 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 - **3a. Indeks belum tersedia atau layanan mati.** AI Engine mengembalikan status gagal dan pemanggil beralih ke pencarian kata kunci. Halaman **Cari Pengetahuan** menampilkan "Layanan AI HaloSIS tidak dapat dihubungi: hanya menampilkan hasil kata kunci…".
 - **5a. Tidak ada hasil yang memenuhi ambang.** AI Engine mengembalikan status tidak ditemukan, atau sampai tiga artikel bila skornya berada di zona sedang. Pencarian tetap dicatat.
-- **S-1a. Hasil pencarian kosong.** Halaman **Cari Pengetahuan** menampilkan "Pengetahuan tidak ditemukan. Silakan coba kata lain."
-- **S-1b. Petugas memberi umpan balik.** Setelah tombol **Membantu** atau **Tidak membantu** diklik, sistem menampilkan "Terima kasih, umpan balik Anda tersimpan." Teks pertanyaan tidak disimpan.
+- **S-1a. Hasil pencarian kosong.** Termasuk kueri tanpa kata bermakna (hanya simbol, angka, atau huruf tunggal). Halaman **Cari Pengetahuan** menampilkan "Pengetahuan tidak ditemukan. Silakan coba kata lain."
+- **S-1b. Petugas memberi umpan balik.** Setelah tombol **Membantu** atau **Tidak membantu** diklik, sistem menampilkan "Terima kasih, umpan balik Anda tersimpan." dan tombol pada hasil itu berubah menjadi penanda **Ditandai membantu** atau **Ditandai tidak membantu**. Umpan balik tidak mengubah urutan hasil; datanya dipakai untuk evaluasi dan kurasi artikel. Teks pertanyaan tidak disimpan.
 
 **Implementasi.** `ai/service/app.py` (`POST /chat`, `POST /cari`), `ai/halosis_ai/search.py` (model `intfloat/multilingual-e5-base`), `ai/halosis_ai/privacy.py`; `CariKnowledgeController`; `ajax/feedback.php`; tabel `glpi_plugin_halosis_feedback`.
 
@@ -632,7 +632,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **5c. Tiket dapat diselesaikan di level 1.** Setelah keputusan saran, Operator mengklik **Balas ▾**, memilih **Tambah solusi**, menulis solusi, dan menyimpan. Sistem mengubah status menjadi **Dipecahkan**, memberi tahu pemohon, dan menampilkan "Solusi disimpan. Tiket #… berstatus Dipecahkan dan dipindahkan dari antrean validasi." dengan tautan **Buka tiket**.
 - **5d. Saran sudah diputuskan.** Sistem menampilkan "Saran ini sudah diputuskan."
 - **S-1a. Nilai sama dengan saran.** Sistem menampilkan "Nilainya sama dengan saran. Gunakan tombol Terima."
-- **S-1b. Alasan kurang dari 5 karakter.** Sistem menampilkan "Alasan wajib diisi, minimal 5 karakter."
+- **S-1b. Alasan kurang dari 5 karakter.** Tombol **Terapkan perubahan** (atau **Tolak & triase manual** pada S-2) tidak aktif sampai alasan berisi minimal 5 karakter.
 
 **Implementasi.** `TriagePanel`, `Triage::decide()`, `Triage::applyToTicket()`, `Decision`, `Suggestion`; `ajax/triase.php`; `public/js/triase.js`; tabel `glpi_plugin_halosis_decisions`, `glpi_plugin_halosis_suggestions`, `glpi_plugin_halosis_reassignments`.
 
@@ -673,7 +673,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 **Alternate/Exceptional Flows**
 
 - **2a. Penugasan tidak sesuai.** Tim Teknis mengklik **Kembalikan ke Operator (salah tim)**, mengisi alasan minimal 5 karakter pada kolom "Mengapa tiket ini bukan untuk tim Anda?", lalu mengklik **Kembalikan ke Operator**. Sistem menampilkan "Tiket dikembalikan ke antrean validasi Operator.", mengosongkan penugasan, dan mengubah status menjadi **Baru**. Use case berakhir.
-- **2b. Pengguna bukan tim yang ditugaskan.** Sistem menampilkan "Hanya tim yang ditugaskan yang dapat mengembalikan tiket ini selama masih diproses."
+- **2b. Pengguna bukan tim yang ditugaskan.** Anggota Tim Teknis dari tim lain (mis. `dedi` pada tiket tim `andi`) dapat membuka tiket, tetapi tombol **Kembalikan ke Operator (salah tim)** tidak tampil. Bila permintaan tetap dikirim, sistem menolak dengan pesan "Hanya tim yang ditugaskan yang dapat mengembalikan tiket ini selama masih diproses."
 - **4a. Layanan AI mati.** **Cari Pengetahuan** menampilkan "Layanan AI HaloSIS tidak dapat dihubungi: hanya menampilkan hasil kata kunci…".
 - **5a. Informasi dari pegawai belum cukup.** Jalankan S-1.
 - **7a. Pegawai menolak solusi (UC-07 alur 4a).** Tiket kembali ke proses dan Tim Teknis melanjutkan dari langkah 5.
@@ -734,7 +734,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 | Use-Case Type | Detail, Real |
 | Stakeholders and Interests | **Operator dan Tim Teknis:** ingin peringatan dini sebelum SLA dilanggar.<br>**Manajemen:** ingin gambaran kinerja layanan dan pola insiden.<br>**Pegawai BPS:** terdampak lebih sedikit bila insiden massal diketahui lebih awal. |
 | Brief Description | Tugas terjadwal memeriksa eskalasi SLA dan mengelompokkan tiket serupa. Hasilnya berupa notifikasi, Masalah **Pola insiden: …**, dan halaman pantau. |
-| Trigger | Waktu pemantauan berkala tiba, atau aktor ingin meninjau kinerja layanan. |
+| Trigger | Waktu pemantauan berkala tiba, atau Operator, Tim Teknis, atau Manajemen ingin meninjau kinerja layanan. |
 | Type | Temporal |
 | Relationships | **Association:** Petugas Layanan TI, Manajemen/Pimpinan<br>**Include:** –<br>**Extend:** –<br>**Generalization:** Operator HaloSIS dan Tim Teknis mewarisi asosiasi dari Petugas Layanan TI |
 | Pre-kondisi | Aturan SLA dan ambang pola dikonfigurasi (UC-10); ada tiket aktif. |
@@ -749,8 +749,8 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 3. Sistem mendapati tiket mendekati batas SLA dan mengirim notifikasi ke teknisi, grup yang ditugaskan, supervisor grup, dan grup Operator.
 4. Sistem mendapati kelompok yang mencapai ambang, lalu membuat Masalah **Pola insiden: …**, menautkan tiketnya, menugaskannya ke grup Operator, dan mengirim notifikasi.
 5. Operator membuka **Dasbor** dan melihat banner **Pola insiden terdeteksi** dengan jumlah tiket tertaut.
-6. Aktor membuka **Pemantauan SLA**, **Pola insiden**, atau **Kinerja AI**. Pada **Kinerja AI**, aktor memilih **Periode**, **Tim**, dan **Kategori layanan**, lalu mengklik **Terapkan**.
-7. Aktor membuka tiket atau Masalah terkait, lalu mengeskalasi tiket, mengonfirmasi pola, atau menautkan tiket.
+6. Operator dan Tim Teknis membuka **Pemantauan SLA** atau **Pola insiden**. Manajemen membuka **Pemantauan SLA**, **Pola insiden**, atau **Kinerja AI**; pada **Kinerja AI**, Manajemen memilih **Periode**, **Tim**, dan **Kategori layanan**, lalu mengklik **Terapkan**.
+7. Operator membuka Masalah terkait, lalu mengonfirmasi pola atau menautkan tiket. Tim Teknis membuka tiket timnya, lalu menindaklanjuti atau mengeskalasinya. Manajemen hanya meninjau (akses baca).
 8. Sistem mencatat perubahan pada riwayat tiket atau Masalah.
 
 **Subflows:** –
@@ -762,7 +762,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **4a. Tidak ada kelompok yang mencapai ambang.** Tidak ada Masalah baru yang dibuat.
 - **4b. Pola sudah memiliki Masalah terbuka.** Sistem hanya menautkan tiket baru tanpa membuat Masalah baru.
 - **6a. Pengguna yang perannya tidak mendapat menu Kinerja AI (mis. Tim Teknis atau Pegawai) membuka alamatnya langsung.** Sistem menolak akses.
-- **7a. Aktor menilai tidak perlu tindak lanjut.** Use case berakhir setelah data ditinjau.
+- **7a. Operator, Tim Teknis, atau Manajemen menilai tidak perlu tindak lanjut.** Use case berakhir setelah data ditinjau.
 
 **Implementasi.** `PatternDetector`, `Stats`, `ProgressReminder`, `DashboardController`; `POST /pola`; tugas `slaticket` dan `IncidentPattern`; `setup_sla_alerts.py`; tabel `glpi_plugin_halosis_patterns`, `glpi_slalevels_tickets`, `glpi_problems`.
 
@@ -855,7 +855,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 **Alternate/Exceptional Flows**
 
-- **1a. Pengguna tidak berhak.** Menu tidak tampil dan akses langsung ditolak. Use case berakhir.
+- **1a. Pengguna dengan peran selain Administrator (mis. Operator) membuka alamat Pengaturan AI langsung.** Menu tidak tampil dan akses ditolak. Use case berakhir.
 - **6a. Pratinjau SLA tanpa pilihan lengkap.** Sistem menampilkan "Pilih SLA atau aturan SLA dan target barunya."
 - **8a. URL tidak valid.** Sistem menampilkan "URL layanan AI harus diawali http:// atau https://." Nilai lain yang valid tetap tersimpan.
 - **8b. Kolom API key dikosongkan.** Nilai lama tetap dipakai.
