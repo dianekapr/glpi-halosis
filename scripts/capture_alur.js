@@ -364,27 +364,29 @@ async function uc09(browser) {
   const a = await api();
   const kand = (p, q = '') => p.goto(`${BASE}/plugins/halosis/Kandidat${q}`).then(() => p.waitForLoadState('networkidle'));
   const lina = await newPage(browser, 'lina');
-  await step('UC-09_3a', async () => {
-    for (const st of ['article', 'ignored', 'pending']) {
-      await kand(lina, `?status=${st}`);
-      if (await lina.getByText(/Belum ada kandidat di sini/).count()) { await shot(lina, 'UC-09_3a', `Tab ${st} tanpa kandidat`); return; }
-    }
-    throw new Error('tidak ada tab kosong (tab Perlu ditinjau 0 artikel; filter target tanpa kandidat tidak ada di UI)');
+  await step('UC-09_3a', async () => {  // tab "Perlu ditinjau" kosong (sebelum ada artikel jatuh tempo)
+    await kand(lina, '?status=review');
+    await lina.getByText(/Tidak ada artikel yang perlu ditinjau/).first().waitFor({ timeout: 8000 });
+    await shot(lina, 'UC-09_3a', 'Tab Perlu ditinjau kosong (teks sebenarnya: "Tidak ada artikel yang perlu ditinjau."; "Belum ada kandidat di sini." hanya di tab kandidat)');
   });
+  // Artikel jatuh tempo: tidak ada jalur UI/API/seed (date_mod diisi GLPI saat ini; kb_review_months min. 1 bulan).
+  // Atas izin pengguna: SATU UPDATE date_mod artikel FAQ tertua (dipulihkan lewat demo_snapshot.sh pulihkan).
   await step('UC-09_S1a', async () => {
+    sh(`docker compose exec -T db sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "UPDATE glpi_knowbaseitems SET date_mod = DATE_SUB(NOW(), INTERVAL 8 MONTH) WHERE id = (SELECT id FROM (SELECT MIN(id) id FROM glpi_knowbaseitems WHERE is_faq = 1) t)" 2>/dev/null'`);
     await kand(lina, '?status=review');
     if (!(await lina.locator('[data-hk-review]').count())) throw new Error('tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)');
     const f = lina.locator('[data-hk-review]').first();
     await f.locator('input[type=date]').fill('2020-01-01'); await f.locator('button[type=submit]').click();
-    await lina.getByText(/setelah hari ini/i).first().waitFor(); await shot(lina, 'UC-09_S1a', 'Tanggal tinjau di masa lalu ditolak');
+    await lina.getByText(/setelah hari ini/i).first().waitFor(); await shot(lina, 'UC-09_S1a', 'Tanggal tinjau di masa lalu ditolak: Pilih tanggal tinjau setelah hari ini.');
   });
   await step('UC-09_S1', async () => {
     await kand(lina, '?status=review');
     if (!(await lina.locator('[data-hk-review]').count())) throw new Error('tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)');
     const f = lina.locator('[data-hk-review]').first();
     const d = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
-    await f.locator('input[type=date]').fill(d); await f.locator('button[type=submit]').click(); await lina.waitForTimeout(2000);
-    await shot(lina, 'UC-09_S1', 'Tanggal tinjau berikutnya tersimpan');
+    await f.locator('input[type=date]').fill(d); await f.locator('button[type=submit]').click();
+    await lina.getByText(/Tanggal tinjau berikutnya tersimpan/i).first().waitFor({ timeout: 8000 });
+    await shot(lina, 'UC-09_S1', 'Tanggal tinjau berikutnya tersimpan.');
   });
   await step('UC-09_4b', async () => {
     await kand(lina, '?status=pending');
@@ -413,7 +415,13 @@ async function uc09(browser) {
     await lina.waitForLoadState('networkidle'); await lina.waitForTimeout(1500);
     article = lina.url();
     await shot(lina, 'UC-09_S2', 'Draf artikel tersimpan dari kandidat');
-    await shot(lina, 'UC-09_7a', 'Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat)');
+  });
+  await step('UC-09_7a', async () => {  // daftar KB: draf tanpa target bertanda ikon mata-coret ("Item ini belum diterbitkan")
+    await lina.goto(`${BASE}/front/knowbaseitem.php?unpublished=1`); await lina.waitForLoadState('networkidle');  // = tombol "Tampilkan yang belum diterbitkan"
+    const hit = lina.locator('.not-published');
+    await hit.first().waitFor({ timeout: 8000 });
+    await hit.first().scrollIntoViewIfNeeded(); await hit.first().hover().catch(() => {});
+    await shot(lina, 'UC-09_7a', 'Daftar artikel: draf bertanda "Item ini belum diterbitkan"');
   });
   // Terbitkan: Sunting → centang FAQ ("Tambahkan ke Tanya Jawab") → Simpan
   const faqPublish = async pg => {  // menu ⋮ di sebelah tombol Sunting (bukan menu pohon di sisi kiri)
@@ -437,11 +445,32 @@ async function uc09(browser) {
       await shot(lina, 'UC-09_8a', 'Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai'); }
     finally { await startAi(); }
   });
-  const llm = (() => { try { return /LLM_PROVIDER=(?!none)\w+/.test(sh('docker compose exec -T halosis-ai env')); } catch (e) { return false; } })();
-  if (llm) await step('UC-09_5a', async () => { await shot(lina, 'UC-09_5a', 'Draf disusun AI, wajib ditinjau'); });
-  else skip('UC-09_5a', 'dilewati: LLM_PROVIDER tidak aktif (draf memakai templat)');
+  skip('UC-09_5a', 'dijalankan terpisah: node scripts/capture_alur.js --uc UC-09_5a (mengaktifkan LLM sementara lewat .env)');
   results.__article = article;
   await lina.context().close();
+}
+
+// ---- UC-09 5a: LLM lokal (Ollama qwen2.5:3b) diaktifkan sementara lewat .env; .env dikembalikan + halosis-ai di-restart
+async function uc09_5a(browser) {
+  const envFile = path.join(ROOT, '.env'), orig = fs.readFileSync(envFile, 'utf8');
+  const tags = await (await fetch('http://localhost:11434/api/tags')).json().catch(() => ({ models: [] }));
+  if (!(tags.models || []).some(m => m.name === 'qwen2.5:3b')) return skip('UC-09_5a', 'dilewati: Ollama/qwen2.5:3b tidak ada');
+  fs.writeFileSync(envFile, orig.replace(/\n*$/, '\n') + 'LLM_PROVIDER=openai\nLLM_BASE_URL=http://host.docker.internal:11434/v1\nLLM_MODEL=qwen2.5:3b\n');
+  try {
+    sh('docker compose up -d --force-recreate halosis-ai'); await sleep(3000); for (let i = 0; i < 90 && !(await aiHealthy()); i++) await sleep(1000);
+    const lina = await newPage(browser, 'lina');
+    await step('UC-09_5a', async () => {
+      await lina.goto(`${BASE}/plugins/halosis/Kandidat?status=pending`); await lina.waitForLoadState('networkidle');
+      const b = lina.locator('[data-hk-action=article]').first();
+      await Promise.all([lina.waitForURL(/knowbaseitem/i, { timeout: 120000 }), b.click()]);
+      await lina.waitForLoadState('networkidle'); await lina.waitForTimeout(1500);
+      await shot(lina, 'UC-09_5a', 'Draf disusun AI (qwen2.5:3b), wajib ditinjau');
+    });
+    await lina.context().close();
+  } finally {
+    fs.writeFileSync(envFile, orig);
+    sh('docker compose up -d --force-recreate halosis-ai'); await sleep(3000); for (let i = 0; i < 90 && !(await aiHealthy()); i++) await sleep(1000);
+  }
 }
 
 // ---- UC-10
@@ -498,6 +527,7 @@ async function uc10(browser) {
     if (WANT.has('UC-07')) await uc07(browser);
     if (WANT.has('UC-08')) await uc08(browser);
     if (WANT.has('UC-09')) await uc09(browser);
+    if (WANT.has('UC-09_5a')) await uc09_5a(browser);
     if (WANT.has('UC-10')) await uc10(browser);
   } finally {
     await browser.close();

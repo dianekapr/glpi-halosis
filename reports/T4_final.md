@@ -811,7 +811,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **4a. Kandidat tidak layak.** Knowledge Manager mengklik **Abaikan**, mengisi **Alasan pengabaian**, lalu mengklik **Abaikan kandidat**. Sistem menampilkan "Kandidat diabaikan." Alasan kurang dari 5 karakter menghasilkan "Tuliskan alasan minimal 5 karakter."
 - **4b. Kandidat sudah diputuskan pengguna lain.** Sistem menampilkan "Kandidat ini sudah diputuskan."
 - **5a. Penyusun draf AI (LLM) diaktifkan.** AI Engine menyusun ulang masalah dan solusi menjadi artikel berbahasa formal (judul, gejala, langkah penyelesaian) hanya dari teks sumber, dengan sitasi tiket sumber dan tanda "Disusun AI, wajib ditinjau Knowledge Manager". Bila LLM gagal atau tidak tersedia, draf memakai templat seperti langkah 5. Alur lanjut ke langkah 6.
-- **7a. Artikel belum layak terbit.** Draf dibiarkan tanpa target dan tidak muncul pada pencarian. Daftar artikel menandainya "Item ini belum diterbitkan".
+- **7a. Artikel belum layak terbit.** Draf dibiarkan tanpa target dan tidak muncul pada pencarian. Daftar artikel menandainya dengan ikon mata dicoret yang menampilkan "Item ini belum diterbitkan" saat kursor diarahkan.
 - **8a. Pembaruan indeks gagal.** Sistem menampilkan "Gagal memperbarui indeks pencarian; indeks sebelumnya tetap dipakai."
 - **S-1a. Tanggal tinjau tidak valid.** Sistem menampilkan "Pilih tanggal tinjau setelah hari ini."
 

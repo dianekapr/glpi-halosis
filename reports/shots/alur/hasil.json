@@ -144,16 +144,16 @@
   "note": "andi membuka alamat Kinerja AI langsung: akses ditolak"
  },
  "UC-09_3a": {
-  "status": "lewat",
-  "note": "gagal: tidak ada tab kosong (tab Perlu ditinjau 0 artikel; filter target tanpa kandidat tidak ada di UI)"
+  "status": "ok",
+  "note": "Tab Perlu ditinjau kosong (teks sebenarnya: \"Tidak ada artikel yang perlu ditinjau.\"; \"Belum ada kandidat di sini.\" hanya di tab kandidat)"
  },
  "UC-09_S1a": {
-  "status": "lewat",
-  "note": "gagal: tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)"
+  "status": "ok",
+  "note": "Tanggal tinjau di masa lalu ditolak: Pilih tanggal tinjau setelah hari ini."
  },
  "UC-09_S1": {
-  "status": "lewat",
-  "note": "gagal: tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)"
+  "status": "ok",
+  "note": "Tanggal tinjau berikutnya tersimpan."
  },
  "UC-09_4b": {
   "status": "ok",
@@ -169,13 +169,13 @@
  },
  "UC-09_7a": {
   "status": "ok",
-  "note": "Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat)"
+  "note": "Daftar artikel: draf bertanda \"Item ini belum diterbitkan\""
  },
  "UC-09_5a": {
-  "status": "lewat",
-  "note": "dilewati: LLM_PROVIDER tidak aktif (draf memakai templat)"
+  "status": "ok",
+  "note": "Draf disusun AI (qwen2.5:3b), wajib ditinjau"
  },
- "__article": "http://localhost:8080/front/knowbaseitem.form.php?id=69",
+ "__article": "http://localhost:8080/front/knowbaseitem.form.php?id=60",
  "UC-10_1a": {
   "status": "ok",
   "note": "rina membuka alamat Pengaturan AI langsung: akses ditolak"

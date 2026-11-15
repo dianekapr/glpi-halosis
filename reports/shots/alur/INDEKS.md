@@ -41,7 +41,11 @@
 | UC-09 | 4b | – | UC-09_4b.png | Dua sesi: sesi kedua memutuskan kandidat yang sudah diputuskan |
 | UC-09 | 1a | – | UC-09_1a.png | Layanan AI dimatikan: kandidat tiket tetap tampil + pemberitahuan |
 | UC-09 | S2 | – | UC-09_S2.png | Draf artikel tersimpan dari kandidat |
-| UC-09 | 7a | – | UC-09_7a.png | Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat) |
+| UC-09 | 3a | – | UC-09_3a.png | Tab Perlu ditinjau kosong ("Tidak ada artikel yang perlu ditinjau."; teks "Belum ada kandidat di sini." hanya muncul di tab kandidat) |
+| UC-09 | S1a | – | UC-09_S1a.png | Tanggal tinjau lampau ditolak: Pilih tanggal tinjau setelah hari ini. |
+| UC-09 | S1 | – | UC-09_S1.png | Tanggal tinjau berikutnya tersimpan. |
+| UC-09 | 5a | – | UC-09_5a.png | Draf disusun AI (Ollama qwen2.5:3b), "Disusun AI, wajib ditinjau" |
+| UC-09 | 7a | – | UC-09_7a.png | Daftar artikel (Tampilkan yang belum diterbitkan): draf bertanda ikon "Item ini belum diterbitkan" |
 | UC-10 | 1a | – | UC-10_1a.png | rina membuka alamat Pengaturan AI langsung: akses ditolak |
 | UC-10 | 6a | – | UC-10_6a.png | Pratinjau SLA tanpa memilih SLA/target |
 | UC-10 | 8a | – | UC-10_8a.png | URL layanan AI ftp://x ditolak |
@@ -57,7 +61,8 @@
 - UC-03 1a: salinan UC-01 5a (alur identik).
 - UC-01 1a/UC-03 6a memakai sakelar Pengaturan AI (dikembalikan; seluruh data uji juga dibersihkan lewat pulihkan snapshot).
 
-**Dilewati UC-06–10**
-- UC-09 S-1, S-1a, 3a: tab "Perlu ditinjau" kosong & tidak ada penyaring target tanpa kandidat di UI demo.
-- UC-09 5a: LLM_PROVIDER tidak aktif (draf memakai templat).
-- UC-09 7a: memakai tangkapan draf (toast "tinjau, lalu terbitkan"); pesan "Item ini belum diterbitkan" tidak tampil di halaman.
+**Catatan UC-06–10**
+- UC-09 S1/S1a: tidak ada jalur UI/API/seed untuk artikel jatuh tempo; atas izin, SATU `UPDATE glpi_knowbaseitems SET date_mod = NOW() - 8 bulan` pada artikel FAQ tertua (skrip, lalu dipulihkan dari backup/demo-20261115-080525).
+- UC-09 5a: LLM diaktifkan sementara lewat .env (LLM_PROVIDER=openai, Ollama host, qwen2.5:3b), halosis-ai di-recreate; .env dan halosis-ai dikembalikan setelahnya (`node scripts/capture_alur.js --uc UC-09_5a`).
+- UC-09 7a: ikon mata-coret di daftar artikel; teks "Item ini belum diterbitkan" hanya berupa tooltip/teks tersembunyi (visually-hidden).
+- Figma (halaman Alur Real Use Case, UC-09): kotak abu 3a, S-1, S-1a, 5a diganti frame screenshot; 7a diganti; jarak baris bawah dirapikan.
