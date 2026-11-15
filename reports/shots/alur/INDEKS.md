@@ -1,4 +1,4 @@
-# Indeks screenshot alur (UC-01 s.d. UC-05)
+# Indeks screenshot alur (UC-01 s.d. UC-10)
 
 | UC | alur | langkah | file | catatan |
 |---|---|---|---|---|
@@ -29,6 +29,26 @@
 | UC-05 | 5d | – | UC-05_5d.png | Dua sesi: sesi kedua mencoba memutuskan saran yang sudah diputuskan |
 | UC-05 | S1a | – | UC-05_S1a.png | Nilai sama dengan saran: gunakan tombol Terima |
 | UC-05 | S1b | – | UC-05_S1b.png | Alasan <5 karakter: Terapkan perubahan nonaktif |
+| UC-06 | normal_3 | – | UC-06_normal_3.png | andi menambahkan dirinya sebagai penanggung jawab + Simpan |
+| UC-06 | 2b | – | UC-06_2b.png | dedi (tim lain) membuka tiket tim andi: tombol Kembalikan ke Operator tidak tampil |
+| UC-06 | S1 | – | UC-06_S1.png | Status Tertunda (SLA dijeda) setelah Simpan |
+| UC-06 | normal_7 | – | UC-06_normal_7.png | Solusi disimpan: status Dipecahkan, SLA, kandidat pengetahuan |
+| UC-06 | 4a | – | UC-06_4a.png | Layanan AI dimatikan: hanya hasil kata kunci |
+| UC-07 | 3a | – | UC-07_3a.png | Keterangan tambahan terkirim pada tiket belum Dipecahkan |
+| UC-07 | 5b | – | UC-07_5b.png | Tolak tanpa komentar: alasan wajib diisi, solusi tidak ditolak |
+| UC-08 | normal_5 | – | UC-08_normal_5.png | Dasbor: banner Pola insiden terdeteksi |
+| UC-08 | 6a | – | UC-08_6a.png | andi membuka alamat Kinerja AI langsung: akses ditolak |
+| UC-09 | 4b | – | UC-09_4b.png | Dua sesi: sesi kedua memutuskan kandidat yang sudah diputuskan |
+| UC-09 | 1a | – | UC-09_1a.png | Layanan AI dimatikan: kandidat tiket tetap tampil + pemberitahuan |
+| UC-09 | S2 | – | UC-09_S2.png | Draf artikel tersimpan dari kandidat |
+| UC-09 | 7a | – | UC-09_7a.png | Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat) |
+| UC-10 | 1a | – | UC-10_1a.png | rina membuka alamat Pengaturan AI langsung: akses ditolak |
+| UC-10 | 6a | – | UC-10_6a.png | Pratinjau SLA tanpa memilih SLA/target |
+| UC-10 | 8a | – | UC-10_8a.png | URL layanan AI ftp://x ditolak |
+| UC-10 | 8b | – | UC-10_8b.png | API key dikosongkan lalu Simpan: nilai lama tetap dipakai |
+| UC-10 | normal_8 | – | UC-10_normal_8.png | Konfigurasi (nilai sama) berhasil disimpan |
+| UC-09 | normal_7 | – | UC-09_normal_7.png | Artikel diterbitkan lewat Tambahkan ke Tanya Jawab (FAQ) |
+| UC-09 | 8a | – | UC-09_8a.png | Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai |
 
 **Dilewati / catatan**
 - UC-05 5c: tangkapan awal gagal (selektor "Balas"), diulang dengan dropdown; kini berhasil.
@@ -36,3 +56,8 @@
 - UC-03 1b: hanya form Tambah kosong (pengisian Pemohon/Sumber via select2 tidak diotomatisasi).
 - UC-03 1a: salinan UC-01 5a (alur identik).
 - UC-01 1a/UC-03 6a memakai sakelar Pengaturan AI (dikembalikan; seluruh data uji juga dibersihkan lewat pulihkan snapshot).
+
+**Dilewati UC-06–10**
+- UC-09 S-1, S-1a, 3a: tab "Perlu ditinjau" kosong & tidak ada penyaring target tanpa kandidat di UI demo.
+- UC-09 5a: LLM_PROVIDER tidak aktif (draf memakai templat).
+- UC-09 7a: memakai tangkapan draf (toast "tinjau, lalu terbitkan"); pesan "Item ini belum diterbitkan" tidak tampil di halaman.

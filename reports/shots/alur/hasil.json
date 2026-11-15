@@ -106,5 +106,102 @@
  "UC-05_5c_form": {
   "status": "ok",
   "note": "Form Tambah solusi"
+ },
+ "UC-06_normal_3": {
+  "status": "ok",
+  "note": "andi menambahkan dirinya sebagai penanggung jawab + Simpan"
+ },
+ "UC-06_2b": {
+  "status": "ok",
+  "note": "dedi (tim lain) membuka tiket tim andi: tombol Kembalikan ke Operator tidak tampil"
+ },
+ "UC-06_S1": {
+  "status": "ok",
+  "note": "Status Tertunda (SLA dijeda) setelah Simpan"
+ },
+ "UC-06_normal_7": {
+  "status": "ok",
+  "note": "Solusi disimpan: status Dipecahkan, SLA, kandidat pengetahuan"
+ },
+ "UC-06_4a": {
+  "status": "ok",
+  "note": "Layanan AI dimatikan: hanya hasil kata kunci"
+ },
+ "UC-07_3a": {
+  "status": "ok",
+  "note": "Keterangan tambahan terkirim pada tiket belum Dipecahkan"
+ },
+ "UC-07_5b": {
+  "status": "ok",
+  "note": "Tolak tanpa komentar: alasan wajib diisi, solusi tidak ditolak"
+ },
+ "UC-08_normal_5": {
+  "status": "ok",
+  "note": "Dasbor: banner Pola insiden terdeteksi"
+ },
+ "UC-08_6a": {
+  "status": "ok",
+  "note": "andi membuka alamat Kinerja AI langsung: akses ditolak"
+ },
+ "UC-09_3a": {
+  "status": "lewat",
+  "note": "gagal: tidak ada tab kosong (tab Perlu ditinjau 0 artikel; filter target tanpa kandidat tidak ada di UI)"
+ },
+ "UC-09_S1a": {
+  "status": "lewat",
+  "note": "gagal: tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)"
+ },
+ "UC-09_S1": {
+  "status": "lewat",
+  "note": "gagal: tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)"
+ },
+ "UC-09_4b": {
+  "status": "ok",
+  "note": "Dua sesi: sesi kedua memutuskan kandidat yang sudah diputuskan"
+ },
+ "UC-09_1a": {
+  "status": "ok",
+  "note": "Layanan AI dimatikan: kandidat tiket tetap tampil + pemberitahuan"
+ },
+ "UC-09_S2": {
+  "status": "ok",
+  "note": "Draf artikel tersimpan dari kandidat"
+ },
+ "UC-09_7a": {
+  "status": "ok",
+  "note": "Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat)"
+ },
+ "UC-09_5a": {
+  "status": "lewat",
+  "note": "dilewati: LLM_PROVIDER tidak aktif (draf memakai templat)"
+ },
+ "__article": "http://localhost:8080/front/knowbaseitem.form.php?id=69",
+ "UC-10_1a": {
+  "status": "ok",
+  "note": "rina membuka alamat Pengaturan AI langsung: akses ditolak"
+ },
+ "UC-10_6a": {
+  "status": "ok",
+  "note": "Pratinjau SLA tanpa memilih SLA/target"
+ },
+ "UC-10_8a": {
+  "status": "ok",
+  "note": "URL layanan AI ftp://x ditolak"
+ },
+ "UC-10_8b": {
+  "status": "ok",
+  "note": "API key dikosongkan lalu Simpan: nilai lama tetap dipakai"
+ },
+ "UC-10_normal_8": {
+  "status": "ok",
+  "note": "Konfigurasi (nilai sama) berhasil disimpan"
+ },
+ "UC-09_normal_7": {
+  "status": "ok",
+  "note": "Artikel diterbitkan lewat Tambahkan ke Tanya Jawab (FAQ)"
+ },
+ "UC-09_8a": {
+  "status": "ok",
+  "note": "Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai"
  }
 }

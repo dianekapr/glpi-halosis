@@ -1,7 +1,8 @@
-// Tangkap screenshot bukti alur alternatif (peta alur Figma, titik "Belum ada layar") UC-01 … UC-05.
+// Tangkap screenshot bukti alur alternatif (peta alur Figma, titik "Belum ada layar") UC-01 … UC-10.
 // Mengikuti reports/cara_memicu_alur_alternatif.md. Viewport 1440×900, deviceScaleFactor 2.
 //
 //   node scripts/capture_alur.js --uc UC-01,UC-02,UC-03,UC-05
+//   node scripts/capture_alur.js --uc UC-06,UC-07,UC-08,UC-09,UC-10
 //
 // Hasil: reports/shots/alur/<UC>_<alur>[_<langkah>].png dan reports/shots/alur/hasil.json (status per tangkapan).
 // PERINGATAN: skrip MENGUBAH data (tiket, chat, log, sakelar fitur; layanan halosis-ai dimatikan sebentar).
@@ -261,6 +262,229 @@ async function uc03_05(browser, want) {
   await rina.context().close();
 }
 
+// ---- Pembantu UC-06 … UC-10
+const TEAM = 'Tim Aplikasi Statistik';  // tim akun `andi`
+async function teamTicket(a, title, status) {
+  const id = await makeTicket(a, title);
+  const groups = await a.call('GET', 'Group?range=0-100');
+  await a.call('POST', 'Group_Ticket', { input: { tickets_id: id, groups_id: groups.find(g => g.name === TEAM).id, type: 2 } });
+  if (status) await a.call('PUT', `Ticket/${id}`, { input: { status } });
+  return id;
+}
+const editor = (p, form) => p.frameLocator(`form:has(${form}) iframe`).first().locator('body');
+
+// ---- UC-06 (andi = Tim Teknis; dedi = tim lain)
+async function uc06(browser) {
+  const a = await api();
+  const andi = await newPage(browser, 'andi');
+  await step('UC-06_normal_3', async () => {
+    const id = await teamTicket(a, 'Aplikasi FASIH tidak bisa sinkron data');
+    await openTicket(andi, id);
+    await Promise.all([andi.waitForLoadState('networkidle'), andi.locator('button[form^=addme_as_assign]').click()]); await andi.waitForTimeout(1500);
+    await shot(andi, 'UC-06_normal_3', 'andi menambahkan dirinya sebagai penanggung jawab + Simpan');
+  });
+  await step('UC-06_2b', async () => {
+    const id = await teamTicket(a, 'Aplikasi FASIH lambat saat input');
+    const dedi = await newPage(browser, 'dedi');
+    await openTicket(dedi, id);
+    if (await dedi.locator('[data-action=show-return]').isVisible().catch(() => false)) throw new Error('tombol Kembalikan tampil untuk dedi');
+    await shot(dedi, 'UC-06_2b', 'dedi (tim lain) membuka tiket tim andi: tombol Kembalikan ke Operator tidak tampil');
+    await dedi.context().close();
+  });
+  await step('UC-06_S1', async () => {
+    const id = await teamTicket(a, 'Aplikasi FASIH gagal unggah dokumen');
+    await openTicket(andi, id);
+    await andi.locator('select[name=status]').first().evaluate(el => { el.value = '4'; el.dispatchEvent(new Event('change', { bubbles: true })); });
+    await Promise.all([andi.waitForLoadState('networkidle'), andi.locator('button[name=update]').first().click()]);
+    await andi.waitForTimeout(1500);
+    await shot(andi, 'UC-06_S1', 'Status Tertunda (SLA dijeda) setelah Simpan');
+  });
+  await step('UC-06_normal_7', async () => {
+    const id = await teamTicket(a, 'Aplikasi FASIH tidak bisa login SSO');
+    await openTicket(andi, id);
+    await andi.locator('.main-actions .dropdown-toggle-split, .timeline-buttons .dropdown-toggle-split').first().click(); await andi.waitForTimeout(500);
+    await andi.locator('.dropdown-menu.show').getByText(/solusi/i).first().click(); await andi.waitForTimeout(2000);
+    const ed = editor(andi, 'button[name=add]'); await ed.click(); await ed.type('Cache sesi dibersihkan, uji capture.');
+    await andi.locator('button[name=add]').first().click(); await andi.waitForLoadState('networkidle'); await andi.waitForTimeout(2000);
+    await shot(andi, 'UC-06_normal_7', 'Solusi disimpan: status Dipecahkan, SLA, kandidat pengetahuan');
+  });
+  await andi.context().close();
+  await step('UC-06_4a', async () => {
+    const p = await newPage(browser, 'andi');
+    stopAi();
+    try {
+      await p.goto(`${BASE}/plugins/halosis/CariKnowledge?q=${encodeURIComponent('reset password SSO')}`); await p.waitForLoadState('networkidle');
+      await p.getByText(/tidak dapat dihubungi/i).first().waitFor();
+      await shot(p, 'UC-06_4a', 'Layanan AI dimatikan: hanya hasil kata kunci');
+    } finally { await startAi(); await p.context().close(); }
+  });
+}
+
+// ---- UC-07 (budi = pemohon)
+async function uc07(browser) {
+  const a = await api();
+  const budi = await newPage(browser, 'budi');
+  await step('UC-07_3a', async () => {
+    const id = await teamTicket(a, 'Printer lantai 2 macet', 2);
+    await openTicket(budi, id);
+    await budi.locator('.answer-action, button:has-text("Balas")').first().click(); await budi.waitForTimeout(1500);
+    const ed = editor(budi, 'button[name=add]'); await ed.click(); await ed.type('Masalah masih terjadi sejak pagi ini.');
+    await budi.locator('button[name=add]').first().click(); await budi.waitForLoadState('networkidle'); await budi.waitForTimeout(2000);
+    await shot(budi, 'UC-07_3a', 'Keterangan tambahan terkirim pada tiket belum Dipecahkan');
+  });
+  await step('UC-07_5b', async () => {
+    const id = await teamTicket(a, 'Email tidak bisa terkirim');
+    await a.call('POST', 'ITILSolution', { input: { itemtype: 'Ticket', items_id: id, content: 'Solusi uji capture.' } });
+    await openTicket(budi, id);
+    await budi.locator('button[name=add_reopen]').first().click(); await budi.waitForLoadState('networkidle'); await budi.waitForTimeout(1500);
+    await shot(budi, 'UC-07_5b', 'Tolak tanpa komentar: alasan wajib diisi, solusi tidak ditolak');
+  });
+  await budi.context().close();
+}
+
+// ---- UC-08
+async function uc08(browser) {
+  await step('UC-08_normal_5', async () => {
+    const p = await newPage(browser, 'rina');  // banner tampil di Beranda untuk pemegang hak triase
+    await p.goto(`${BASE}/front/central.php`); await p.waitForLoadState('networkidle');
+    await p.locator('.halosis-pattern-banner').first().waitFor({ timeout: 8000 });
+    await shot(p, 'UC-08_normal_5', 'Dasbor: banner Pola insiden terdeteksi');
+    await p.context().close();
+  });
+  await step('UC-08_6a', async () => {
+    const p = await newPage(browser, 'andi');
+    await p.goto(`${BASE}/plugins/halosis/Dashboard`); await p.waitForLoadState('networkidle');
+    await shot(p, 'UC-08_6a', 'andi membuka alamat Kinerja AI langsung: akses ditolak');
+    await p.context().close();
+  });
+}
+
+// ---- UC-09 (lina = Knowledge Manager)
+async function uc09(browser) {
+  const a = await api();
+  const kand = (p, q = '') => p.goto(`${BASE}/plugins/halosis/Kandidat${q}`).then(() => p.waitForLoadState('networkidle'));
+  const lina = await newPage(browser, 'lina');
+  await step('UC-09_3a', async () => {
+    for (const st of ['article', 'ignored', 'pending']) {
+      await kand(lina, `?status=${st}`);
+      if (await lina.getByText(/Belum ada kandidat di sini/).count()) { await shot(lina, 'UC-09_3a', `Tab ${st} tanpa kandidat`); return; }
+    }
+    throw new Error('tidak ada tab kosong (tab Perlu ditinjau 0 artikel; filter target tanpa kandidat tidak ada di UI)');
+  });
+  await step('UC-09_S1a', async () => {
+    await kand(lina, '?status=review');
+    if (!(await lina.locator('[data-hk-review]').count())) throw new Error('tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)');
+    const f = lina.locator('[data-hk-review]').first();
+    await f.locator('input[type=date]').fill('2020-01-01'); await f.locator('button[type=submit]').click();
+    await lina.getByText(/setelah hari ini/i).first().waitFor(); await shot(lina, 'UC-09_S1a', 'Tanggal tinjau di masa lalu ditolak');
+  });
+  await step('UC-09_S1', async () => {
+    await kand(lina, '?status=review');
+    if (!(await lina.locator('[data-hk-review]').count())) throw new Error('tab Perlu ditinjau kosong (tidak ada artikel jatuh tempo tinjau)');
+    const f = lina.locator('[data-hk-review]').first();
+    const d = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
+    await f.locator('input[type=date]').fill(d); await f.locator('button[type=submit]').click(); await lina.waitForTimeout(2000);
+    await shot(lina, 'UC-09_S1', 'Tanggal tinjau berikutnya tersimpan');
+  });
+  await step('UC-09_4b', async () => {
+    await kand(lina, '?status=pending');
+    const id = await lina.locator('[data-hk-toggle]').first().getAttribute('data-id');
+    const l2 = await newPage(browser, 'lina'); await kand(l2, '?status=pending');
+    for (const [pg, text] of [[lina, 'Diabaikan karena uji capture'], [l2, 'Diabaikan karena uji capture']]) {
+      await pg.locator(`[data-hk-toggle][data-id="${id}"]`).click();
+      await pg.fill(`#hk-reason-${id}`, text);
+      await pg.locator(`form[data-hk-ignore][data-id="${id}"] button[type=submit]`).click(); await pg.waitForTimeout(2000);
+    }
+    await shot(l2, 'UC-09_4b', 'Dua sesi: sesi kedua memutuskan kandidat yang sudah diputuskan');
+    await l2.context().close();
+  });
+  await step('UC-09_1a', async () => {
+    stopAi();
+    try { await kand(lina, '?status=pending'); await lina.getByText(/tidak dapat dihubungi/i).first().waitFor();
+      await shot(lina, 'UC-09_1a', 'Layanan AI dimatikan: kandidat tiket tetap tampil + pemberitahuan'); }
+    finally { await startAi(); }
+  });
+  // artikel dari kandidat (S-2, 5a, 7a, normal 7, 8a)
+  let article = null;
+  await step('UC-09_S2', async () => {
+    await kand(lina, '?status=pending');
+    const btn = lina.locator('[data-hk-action=article]').first();
+    await Promise.all([lina.waitForURL(/knowbaseitem/i, { timeout: 20000 }), btn.click()]);
+    await lina.waitForLoadState('networkidle'); await lina.waitForTimeout(1500);
+    article = lina.url();
+    await shot(lina, 'UC-09_S2', 'Draf artikel tersimpan dari kandidat');
+    await shot(lina, 'UC-09_7a', 'Draf tanpa target (toast: tinjau, lalu terbitkan agar dapat dilihat)');
+  });
+  // Terbitkan: Sunting → centang FAQ ("Tambahkan ke Tanya Jawab") → Simpan
+  const faqPublish = async pg => {  // menu ⋮ di sebelah tombol Sunting (bukan menu pohon di sisi kiri)
+    const dots = pg.locator('xpath=(//*[self::a or self::button][contains(normalize-space(.),"Sunting")]/following::*[self::a or self::button][.//i[contains(@class,"ti-dots-vertical")]])[1]');
+    await dots.click({ timeout: 5000 }); await pg.waitForTimeout(400);
+    const menu = pg.locator('.dropdown-menu.show:has-text("Tanya Jawab")').last();
+    await menu.getByText('Tambahkan ke Tanya Jawab (FAQ)').click(); await pg.waitForTimeout(2500);
+    if (!(await menu.locator('input[type=checkbox]').nth(1).isChecked().catch(() => false)) && !(await pg.getByText(/Tanya Jawab|FAQ/i).count())) throw new Error('FAQ tidak aktif');
+  };
+  await step('UC-09_normal_7', async () => {
+    await lina.goto(article); await lina.waitForLoadState('networkidle');
+    await faqPublish(lina);
+    await shot(lina, 'UC-09_normal_7', 'Artikel diterbitkan lewat Tambahkan ke Tanya Jawab (FAQ)');
+  });
+  await step('UC-09_8a', async () => {
+    await kand(lina, '?status=pending');
+    const btn = lina.locator('[data-hk-action=article]').first();
+    await Promise.all([lina.waitForURL(/knowbaseitem/i, { timeout: 20000 }), btn.click()]); await lina.waitForLoadState('networkidle');
+    stopAi();
+    try { await faqPublish(lina); await lina.reload(); await lina.waitForLoadState('networkidle'); await lina.getByText(/Gagal memperbarui indeks/i).first().waitFor({ timeout: 8000 });
+      await shot(lina, 'UC-09_8a', 'Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai'); }
+    finally { await startAi(); }
+  });
+  const llm = (() => { try { return /LLM_PROVIDER=(?!none)\w+/.test(sh('docker compose exec -T halosis-ai env')); } catch (e) { return false; } })();
+  if (llm) await step('UC-09_5a', async () => { await shot(lina, 'UC-09_5a', 'Draf disusun AI, wajib ditinjau'); });
+  else skip('UC-09_5a', 'dilewati: LLM_PROVIDER tidak aktif (draf memakai templat)');
+  results.__article = article;
+  await lina.context().close();
+}
+
+// ---- UC-10
+async function uc10(browser) {
+  await step('UC-10_1a', async () => {
+    const p = await newPage(browser, 'rina');
+    await p.goto(`${BASE}/plugins/halosis/front/config.form.php`); await p.waitForLoadState('networkidle');
+    await shot(p, 'UC-10_1a', 'rina membuka alamat Pengaturan AI langsung: akses ditolak');
+    await p.context().close();
+  });
+  const p = await newPage(browser, 'dimas');
+  await openConfig(p);
+  await step('UC-10_6a', async () => {
+    await p.locator('button[name=preview_sla]').click(); await p.waitForLoadState('networkidle');
+    await p.getByText(/Pilih SLA atau aturan SLA/i).first().waitFor();
+    await p.getByText(/Pilih SLA atau aturan SLA/i).first().scrollIntoViewIfNeeded();
+    await shot(p, 'UC-10_6a', 'Pratinjau SLA tanpa memilih SLA/target');
+  });
+  await openConfig(p);
+  await step('UC-10_8a', async () => {
+    const orig = await p.locator('input[name=service_url]').inputValue();
+    await p.fill('input[name=service_url]', 'ftp://x');
+    await Promise.all([p.waitForLoadState('networkidle'), p.locator('button[name=update]').click()]);
+    await p.getByText(/harus diawali http/i).first().waitFor();
+    await shot(p, 'UC-10_8a', 'URL layanan AI ftp://x ditolak');
+    await openConfig(p);
+    if ((await p.locator('input[name=service_url]').inputValue()) !== orig) throw new Error('URL efektif berubah');
+  });
+  await step('UC-10_8b', async () => {
+    await openConfig(p);
+    await p.locator('input[name=api_key]').fill('');
+    await Promise.all([p.waitForLoadState('networkidle'), p.locator('button[name=update]').click()]);
+    await shot(p, 'UC-10_8b', 'API key dikosongkan lalu Simpan: nilai lama tetap dipakai');
+  });
+  await step('UC-10_normal_8', async () => {
+    await openConfig(p);
+    await Promise.all([p.waitForLoadState('networkidle'), p.locator('button[name=update]').click()]);
+    await p.getByText(/berhasil disimpan/i).first().waitFor();
+    await shot(p, 'UC-10_normal_8', 'Konfigurasi (nilai sama) berhasil disimpan');
+  });
+  await p.context().close();
+}
+
 (async () => {
   const cache = path.join(os.homedir(), 'Library/Caches/ms-playwright');
   const shell = fs.existsSync(cache) ? fs.readdirSync(cache).find(d => d.startsWith('chromium_headless_shell')) : null;
@@ -270,6 +494,11 @@ async function uc03_05(browser, want) {
     if (WANT.has('UC-01')) await uc01(browser);
     if (WANT.has('UC-02')) await uc02(browser);
     if (WANT.has('UC-03') || WANT.has('UC-05')) await uc03_05(browser, WANT);
+    if (WANT.has('UC-06')) await uc06(browser);
+    if (WANT.has('UC-07')) await uc07(browser);
+    if (WANT.has('UC-08')) await uc08(browser);
+    if (WANT.has('UC-09')) await uc09(browser);
+    if (WANT.has('UC-10')) await uc10(browser);
   } finally {
     await browser.close();
     if (!(await aiHealthy())) await startAi();
