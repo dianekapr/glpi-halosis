@@ -546,7 +546,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 - **1a. Tiket berasal dari UC-01.** Jalankan S-1.
 - **1b. Operator mencatat laporan telepon, email, atau tatap muka.** Operator membuka **Semua tiket**, mengklik **Tambah**, mengisi **Pemohon**, **Sumber permintaan** (**Phone**, **E-Mail**, atau **Direct**), **Judul**, dan **Deskripsi**, lalu mengklik **Tambah**. Alur lanjut ke langkah 6.
 - **5a. Kolom wajib kosong.** Form menandai **Judul** atau **Deskripsi** dan tiket tidak dibuat. Pegawai melengkapi isian dan mengklik **Kirim** lagi. Pada S-1, judul pendek menghasilkan pesan "Judul laporan minimal 5 karakter."
-- **6a. Saran triase tidak dapat dibuat.** Tiket tetap tersimpan tanpa saran. Sistem mencoba lagi secara berkala, dan panel menampilkan "Belum ada saran AI untuk tiket ini." dengan tombol **Buat saran AI** (lihat UC-05 alur 3b).
+- **6a. Saran triase tidak dapat dibuat.** Tiket tetap tersimpan tanpa saran. Sistem mencoba lagi secara berkala, dan panel menampilkan "Belum ada saran AI untuk tiket ini." dengan tombol **Buat saran AI** (lihat UC-05 alur 3a).
 
 **Implementasi.** Form katalog GLPI, `FormCatalog::localize()`; `ajax/chat.php` (`action=ticket`), `Chatbot::createTicket()`, `Triage::onTicketAdd()`, `TriageRetry`; aturan `RuleTicket` untuk SLA; tabel `glpi_tickets`, `glpi_plugin_halosis_chats`.
 
@@ -626,7 +626,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 
 **Alternate/Exceptional Flows**
 
-- **3b. Tiket belum memiliki saran.** Panel menampilkan "Belum ada saran AI untuk tiket ini." Operator mengklik **Buat saran AI**. Bila berhasil, sistem menampilkan "Saran AI dibuat." Bila gagal, sistem menampilkan "AI belum dapat memberikan saran. Tiket tidak berubah; periksa files/_log/halosis.log." dan Operator melakukan triase manual.
+- **3a. Tiket belum memiliki saran.** Panel menampilkan "Belum ada saran AI untuk tiket ini." Operator mengklik **Buat saran AI**. Bila berhasil, sistem menampilkan "Saran AI dibuat." Bila gagal, sistem menampilkan "AI belum dapat memberikan saran. Tiket tidak berubah; periksa files/_log/halosis.log." dan Operator melakukan triase manual.
 - **5a. Saran kurang tepat tetapi dapat dikoreksi.** Jalankan S-1.
 - **5b. Saran tidak dapat digunakan.** Jalankan S-2.
 - **5c. Tiket dapat diselesaikan di level 1.** Setelah keputusan saran, Operator mengklik **Balas ▾**, memilih **Tambah solusi**, menulis solusi, dan menyimpan. Sistem mengubah status menjadi **Dipecahkan**, memberi tahu pemohon, dan menampilkan "Solusi disimpan. Tiket #… berstatus Dipecahkan dan dipindahkan dari antrean validasi." dengan tautan **Buka tiket**.

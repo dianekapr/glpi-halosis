@@ -55,7 +55,7 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 |---|---|---|---|
 | S-1 / 5a ✅ | Klik **Ubah**, ubah Kategori/Dampak/Urgensi/Prioritas/Grup, isi alasan, **Terapkan perubahan**. | "Nilai yang diubah diterapkan ke tiket." + "Keputusan disimpan. Tiket #… dipindahkan dari antrean validasi." (**Buka tiket**) | Pulihkan snapshot. |
 | S-2 / 5b ✅ | Klik **Tolak**, isi alasan, **Tolak & triase manual**. | "Saran AI ditolak. Silakan triase tiket secara manual." + "Keputusan disimpan…" (**Buka tiket**) | Pulihkan. |
-| 3b ✅ | Buka tiket tanpa saran (lihat UC-03 6a) → **Buat saran AI**. | "Saran AI dibuat." atau pesan gagal (layanan mati: "AI belum dapat memberikan saran…"). | Nyalakan layanan. |
+| 3a ✅ | Buka tiket tanpa saran (lihat UC-03 6a) → **Buat saran AI**. | "Saran AI dibuat." atau pesan gagal (layanan mati: "AI belum dapat memberikan saran…"). | Nyalakan layanan. |
 | 5c ✅ | Setelah keputusan, **Balas ▾ → Tambah solusi**. | Status **Dipecahkan**, pemohon diberi tahu; "Solusi disimpan. Tiket #… berstatus Dipecahkan dan dipindahkan dari antrean validasi." | Pulihkan. |
 | 5d ✅ | Buka kembali tiket yang saran sudah diputuskan lalu kirim keputusan lagi (dua tab). | "Saran ini sudah diputuskan." | – |
 | S-1a ✅ | Pada Ubah, biarkan nilai sama dengan saran. | "Nilainya sama dengan saran. Gunakan tombol Terima." | – |
@@ -114,7 +114,7 @@ Akun `dimas` → menu **Pengaturan AI** → bagian **Fitur AI** (sakelar geser) 
 |---|---|---|---|
 | Fitur chat mati (UC-01 1a) | **Asisten layanan mandiri untuk pegawai** → mati | **Asisten Sedang Tidak Tersedia** untuk `budi` | Nyalakan sakelar yang sama → Simpan |
 | Layanan AI mati (UC-01 4a/4b, UC-06 4a) | Bukan sakelar: `docker compose stop halosis-ai` | Chat/Cari Pengetahuan memakai pencarian kata kunci berlabel **Dari Pusat Bantuan**; UC-06 4a: pesan layanan AI tidak dapat dihubungi | `docker compose start halosis-ai` |
-| Triase mati (UC-03 6a, UC-05 3b) | **Saran triase AI untuk tiket baru** → mati | Tiket baru tanpa saran: "Belum ada saran AI untuk tiket ini." + **Buat saran AI** | Nyalakan sakelar yang sama → Simpan |
+| Triase mati (UC-03 6a, UC-05 3a) | **Saran triase AI untuk tiket baru** → mati | Tiket baru tanpa saran: "Belum ada saran AI untuk tiket ini." + **Buat saran AI** | Nyalakan sakelar yang sama → Simpan |
 
 
 ## Ringkasan yang tidak dapat dipicu manual (❌)
