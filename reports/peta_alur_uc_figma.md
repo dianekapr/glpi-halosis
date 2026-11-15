@@ -13,10 +13,10 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-01 | Normal flow | 7 Klik Masalah terselesaikan | PG-S20 Chat: jawaban ditemukan 154:3533 | |
 | UC-01 | Normal flow | 8 Rating bintang | PG-S23 Chat: rating bintang 157:3533 | |
 | UC-01 | Normal flow | 9 Terima kasih, berakhir | – | Belum ada layar |
-| UC-01 | 1a Chat dimatikan | 1a Asisten Sedang Tidak Tersedia | – | Belum ada layar |
+| UC-01 | 1a Chat dimatikan | 1a Menu tetap tampil, Asisten Sedang Tidak Tersedia | – | Belum ada layar |
 | UC-01 | 2a Kartu Laporkan masalah | 2a Fokus kotak + sapaan asisten | PG-R08 Chat: klik Laporkan masalah 317:6217 | |
 | UC-01 | 2b Kartu Ajukan permintaan | 2b Form Ajukan Permintaan | PG-R04 Form Ajukan Permintaan 253:4650 | |
-| UC-01 | 3a Pesan kosong | 3a Silakan ketik pertanyaan | – | Belum ada layar |
+| UC-01 | 3a Pesan kosong | 3a Tombol Kirim tidak aktif | – | Belum ada layar |
 | UC-01 | 3b Percakapan terlalu panjang | 3b Buat laporan atau percakapan baru | – | Belum ada layar |
 | UC-01 | 3c Percakapan sudah berakhir | 3c Klik Percakapan baru | – | Belum ada layar |
 | UC-01 | 4a AI gagal menjawab | 4a Pencarian kata kunci | – | Proses sistem |
@@ -44,7 +44,7 @@ Sumber: `reports/T4_final.md` bagian B; frame sumber dari halaman "Prototype Hal
 | UC-02 | 3a Indeks/layanan mati | 3a Hasil kata kunci + pemberitahuan | – | Belum ada layar |
 | UC-02 | 5a Tidak ada hasil | 5a Tidak ditemukan / maks. 3 artikel | – | Belum ada layar |
 | UC-02 | S-1a Hasil kosong | S-1a Pengetahuan tidak ditemukan | – | Belum ada layar |
-| UC-02 | S-1b Umpan balik petugas | S-1b Terima kasih, umpan balik tersimpan | – | Belum ada layar |
+| UC-02 | S-1b Umpan balik petugas | S-1b Umpan balik tersimpan + penanda | – | Belum ada layar |
 | UC-03 | Normal flow | 1 Menu Buat laporan | PG-03 Buat laporan (Katalog layanan) 133:2 | |
 | UC-03 | Normal flow | 2 Pilih Laporkan Masalah/Ajukan Permintaan | PG-03 Buat laporan (Katalog layanan) 133:2 | |
 | UC-03 | Normal flow | 3 Isi Judul, Deskripsi, dst. | PG-04 Form Laporkan masalah 139:2 | |
