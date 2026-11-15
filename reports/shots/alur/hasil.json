@@ -203,5 +203,29 @@
  "UC-09_8a": {
   "status": "ok",
   "note": "Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai"
+ },
+ "UC-03": {
+  "status": "lewat",
+  "note": "gagal: locator.click: Timeout 45000ms exceeded."
+ },
+ "utama/UC-05": {
+  "status": "ok",
+  "note": "rina: Terima saran AI, pesan Keputusan disimpan"
+ },
+ "utama/UC-06": {
+  "status": "ok",
+  "note": "andi: tombol Kembalikan ke Operator (salah tim) terlihat di panel tiket"
+ },
+ "utama/UC-07": {
+  "status": "ok",
+  "note": "budi: Laporan saya dengan kolom Jenis & Ditangani oleh"
+ },
+ "utama/UC-08": {
+  "status": "ok",
+  "note": "sri: Pemantauan SLA"
+ },
+ "utama/UC-03": {
+  "status": "ok",
+  "note": "budi: Buat laporan > Laporkan Masalah, form terisi (belum dikirim)"
  }
 }

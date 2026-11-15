@@ -3,6 +3,7 @@
 //
 //   node scripts/capture_alur.js --uc UC-01,UC-02,UC-03,UC-05
 //   node scripts/capture_alur.js --uc UC-06,UC-07,UC-08,UC-09,UC-10
+//   node scripts/capture_alur.js --uc UTAMA     (alur utama UC-03/05/06/07/08 -> reports/shots/utama/UC-0X.png)
 //
 // Hasil: reports/shots/alur/<UC>_<alur>[_<langkah>].png dan reports/shots/alur/hasil.json (status per tangkapan).
 // PERINGATAN: skrip MENGUBAH data (tiket, chat, log, sakelar fitur; layanan halosis-ai dimatikan sebentar).
@@ -35,10 +36,13 @@ async function newPage(browser, user) {
   await Promise.all([p.waitForLoadState('networkidle'), p.click('button[name=submit]')]);
   return p;
 }
+let outDir = OUT;
 async function shot(p, name, note) {
   await sleep(700);
-  await p.screenshot({ path: path.join(OUT, name + '.png') });
-  results[name] = { status: 'ok', note: note || '' }; console.log('OK    ', name);
+  fs.mkdirSync(outDir, { recursive: true });
+  await p.screenshot({ path: path.join(outDir, name + '.png') });
+  const key = outDir === OUT ? name : path.basename(outDir) + '/' + name;
+  results[key] = { status: 'ok', note: note || '' }; console.log('OK    ', key);
 }
 function skip(name, why) { results[name] = { status: 'lewat', note: why }; console.log('LEWAT ', name, '-', why); }
 async function step(name, fn) {
@@ -494,6 +498,56 @@ async function uc09_5a(browser) {
   }
 }
 
+// ---- Alur utama (bukan alternatif): satu tangkapan per UC -> reports/shots/utama/
+async function utama(browser) {
+  outDir = path.join(ROOT, 'reports/shots/utama');
+  const a = await api();
+  await step('UC-03', async () => {
+    const p = await newPage(browser, 'budi');
+    await p.goto(`${BASE}/Helpdesk`).catch(() => {}); await p.waitForLoadState('networkidle');
+    await p.getByRole('link', { name: /Buat laporan/ }).first().click(); await p.waitForLoadState('networkidle');
+    await p.locator('a[href*="/Form/Render/1"]').first().click(); await p.waitForLoadState('networkidle');
+    await p.locator('input[name=answers_6]').fill('Printer lantai 2 tidak bisa mencetak');
+    const ed = p.frameLocator('.tox-edit-area iframe').first().locator('body');
+    await ed.click(); await ed.type('Printer menampilkan galat sejak pagi ini dan tidak ada antrean cetak.');
+    await shot(p, 'UC-03', 'budi: Buat laporan > Laporkan Masalah, form terisi (belum dikirim)');
+    await p.context().close();
+  });
+  await step('UC-05', async () => {
+    const p = await newPage(browser, 'rina');
+    const id = await makeTicket(a, 'Wi-Fi ruang rapat lantai 2 sering putus'); await sleep(7000);
+    await openTicket(p, id);
+    await p.locator('[data-halosis-triase] button[data-action=accept]').first().click();
+    await p.getByText(/Keputusan disimpan/).first().waitFor({ timeout: 20000 });
+    await shot(p, 'UC-05', 'rina: Terima saran AI, pesan Keputusan disimpan');
+    await p.context().close();
+  });
+  await step('UC-06', async () => {
+    const p = await newPage(browser, 'andi');
+    const id = await teamTicket(a, 'Aplikasi FASIH tidak bisa sinkron data');
+    await openTicket(p, id);
+    const b = p.locator('[data-action=show-return]').first();
+    await b.waitFor(); await b.scrollIntoViewIfNeeded();
+    await shot(p, 'UC-06', 'andi: tombol Kembalikan ke Operator (salah tim) terlihat di panel tiket');
+    await p.context().close();
+  });
+  await step('UC-07', async () => {
+    const p = await newPage(browser, 'budi');
+    await p.goto(`${BASE}/Helpdesk`).catch(() => {}); await p.waitForLoadState('networkidle');
+    await p.getByRole('link', { name: /Laporan saya/ }).first().click(); await p.waitForLoadState('networkidle');
+    await p.getByText('Ditangani oleh').first().waitFor();
+    await shot(p, 'UC-07', 'budi: Laporan saya dengan kolom Jenis & Ditangani oleh');
+    await p.context().close();
+  });
+  await step('UC-08', async () => {
+    const p = await newPage(browser, 'sri');
+    await p.getByRole('link', { name: /Pemantauan SLA/ }).first().click(); await p.waitForLoadState('networkidle');
+    await shot(p, 'UC-08', 'sri: Pemantauan SLA');
+    await p.context().close();
+  });
+  outDir = OUT;
+}
+
 // ---- UC-10
 async function uc10(browser) {
   await step('UC-10_1a', async () => {
@@ -541,6 +595,7 @@ async function uc10(browser) {
   const sub = shell && fs.readdirSync(path.join(cache, shell)).find(d => d.startsWith('chrome-headless-shell'));
   const browser = await chromium.launch(sub ? { executablePath: path.join(cache, shell, sub, 'chrome-headless-shell') } : {});
   try {
+    if (WANT.has('UTAMA')) await utama(browser);
     if (WANT.has('UC-01')) await uc01(browser);
     if (WANT.has('UC-02')) await uc02(browser);
     if (WANT.has('UC-03') || WANT.has('UC-05')) await uc03_05(browser, WANT);
