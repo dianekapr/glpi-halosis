@@ -268,9 +268,15 @@
 
         // ---- Alur percakapan ------------------------------------------------------------------
 
+        let busyNow = false;
+        // Tombol Kirim nonaktif selama kotak kosong/hanya spasi atau asisten sedang sibuk
+        const syncSend = () => {
+            form.querySelector('button').disabled = busyNow || ended || input.value.trim() === '';
+        };
         const setBusy = (busy) => {
+            busyNow = busy;
             input.disabled = busy || ended;
-            form.querySelector('button').disabled = busy || ended;
+            syncSend();
             root.querySelectorAll('[data-chat-suggest]').forEach((b) => { b.disabled = busy || ended; });
         };
 
@@ -432,6 +438,9 @@
             event.preventDefault();
             send(input.value);
         });
+
+        input.addEventListener('input', syncSend);
+        syncSend();
 
         // Enter = kirim, Shift+Enter = baris baru
         input.addEventListener('keydown', (event) => {

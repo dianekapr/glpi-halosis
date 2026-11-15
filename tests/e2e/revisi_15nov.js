@@ -32,6 +32,14 @@ async function login(browser, user) {
     const budi = await login(browser, 'budi');
     await budi.goto(`${BASE}/plugins/halosis/Chat`); await budi.waitForLoadState('networkidle');
     const input = budi.locator('[data-chat-form] textarea, [data-chat-form] input[type=text]').first();
+    // UC-01 3a: tombol Kirim nonaktif saat kosong/spasi, aktif saat ada teks
+    const kirim = budi.locator('[data-chat-form] button').first();
+    ok(await kirim.isDisabled(), 'UC-01 3a Kirim nonaktif saat kotak kosong');
+    await input.fill('   ');
+    ok(await kirim.isDisabled(), 'UC-01 3a Kirim nonaktif saat hanya spasi');
+    await input.fill('a');
+    ok(await kirim.isEnabled(), 'UC-01 3a Kirim aktif saat ada teks');
+    await input.fill('');
     await input.fill('lupa sandi SSO, password: RahasiaBanget99 email budi@contoh.go.id');
     await input.press('Enter');
     await budi.waitForFunction(() => document.querySelectorAll('.hc-row-ai .hc-bubble-ai:not(.hc-typing)').length > 0 && !document.querySelector('.hc-typing'));
