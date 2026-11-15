@@ -703,7 +703,7 @@ UC-02 dan UC-04 tidak dibuatkan skenario karena merupakan use case sistem yang d
 **Normal Flow of Events**
 
 1. Pegawai mengklik menu **Laporan saya**.
-2. Sistem menampilkan daftar dengan kolom **ID**, **Judul**, **Status**, **Jenis**, **Kategori**, **Ditangani oleh**, **Waktu untuk menyelesaikan**, dan **Terakhir diperbarui**. Kolom **Ditangani oleh** menunjukkan posisi tiket: "Menunggu validasi Operator", nama grup tim yang menangani, "Menunggu tanggapan Anda", "Selesai, menunggu konfirmasi Anda", atau "Ditutup". Informasi yang sama tampil di detail tiket.
+2. Sistem menampilkan daftar dengan kolom **ID**, **Judul**, **Status**, **Tipe**, **Kategori**, **Ditangani oleh**, **Waktu untuk menyelesaikan**, dan **Terakhir diperbarui**. Kolom **Ditangani oleh** menunjukkan posisi tiket: "Menunggu validasi Operator", nama grup tim yang menangani, "Menunggu tanggapan Anda", "Selesai, menunggu konfirmasi Anda", atau "Ditutup". Informasi yang sama tampil di detail tiket.
 3. Pegawai mengklik tiket berstatus **Dipecahkan**.
 4. Pegawai membaca solusi pada linimasa tiket.
 5. Pegawai mengklik **Setujui** pada kotak **Persetujuan atas solusi**. Kolom **Komentar** boleh dikosongkan.

@@ -601,7 +601,7 @@ menambahkan kolom **ID** dan **nama/judul**; berikut kolom tambahannya (kiri →
 | Tim (Grup) | Manager (ketua tim), Jumlah pengguna, Bisa ditugaskan | Komentar (kosong) |
 | Kategori layanan (ITIL) | Grup, Jumlah tiket, Terlihat untuk insiden / permintaan / antarmuka sederhana | — |
 
-Ketiga daftar tiket juga memuat kolom **Jenis** (Insiden/Permintaan). **Laporan saya** pegawai memuat kolom
+Ketiga daftar tiket juga memuat kolom **Tipe** (Insiden/Permintaan). **Laporan saya** pegawai memuat kolom
 **Ditangani oleh** (plugin): "Menunggu validasi Operator", nama grup tim, "Menunggu tanggapan Anda",
 "Selesai, menunggu konfirmasi Anda", atau "Ditutup" (nama grup, bukan nama orang).
 | SLA / SLM | SLM, Tipe, Waktu / Kalender | — |
