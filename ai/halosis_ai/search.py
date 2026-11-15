@@ -14,6 +14,7 @@ import os
 import urllib.request
 import re
 import threading
+from difflib import get_close_matches
 from functools import lru_cache
 from pathlib import Path
 
@@ -29,6 +30,7 @@ MAX_WORDS = 220  # panjang potongan (kata); artikel KB panjang dipecah
 
 _indexes: dict[Path, tuple[pd.DataFrame, np.ndarray]] = {}
 _lock = threading.Lock()
+_vocab: dict[Path, dict[int, list[str]]] = {}  # kosakata per indeks (token huruf ≥3), dikelompokkan menurut panjang
 
 
 def strip_html(value: str) -> str:
@@ -162,6 +164,7 @@ def load_index(index_dir: Path | None = None) -> tuple[pd.DataFrame, np.ndarray]
                 chunks, vectors = pd.read_parquet(index_dir / 'chunks.parquet'), np.load(index_dir / 'vectors.npy')
                 check_compatible(len(chunks), vectors, index_dir)
                 _indexes[index_dir] = (chunks, vectors)
+                _vocab.pop(index_dir, None)
     return _indexes[index_dir]
 
 
@@ -189,6 +192,7 @@ def update_article(kb_id: int, title: str, answer_html: str, remove: bool = Fals
             vectors = np.vstack([vectors, new_vectors]).astype(np.float32)
         _write_atomic(index_dir, chunks, vectors)
         _indexes[index_dir] = (chunks, vectors)
+        _vocab.pop(index_dir, None)
     return 0 if new_vectors is None else len(new)
 
 
@@ -210,6 +214,7 @@ def replace_services(items: list[dict], index_dir: Path | None = None) -> int:
             vectors = np.vstack([vectors, new_vectors]).astype(np.float32)
         _write_atomic(index_dir, chunks, vectors)
         _indexes[index_dir] = (chunks, vectors)
+        _vocab.pop(index_dir, None)
     return len(new)
 
 
@@ -239,9 +244,41 @@ def tanpa_judul(text: str, title: str) -> str:
     return text
 
 
-def bermakna(query: str) -> bool:
-    """Penjaga kueri (UC-02 S-1a): minimal satu kata huruf ≥3 karakter; "<<>>", satu huruf, angka/simbol saja → tidak bermakna."""
-    return re.search(r'[^\W\d_]{3,}', str(query)) is not None
+STOPWORD = frozenset('yang dan di ke dari apa saya tidak bisa untuk dengan cara ini itu ada kenapa bagaimana'.split())
+_TOKEN = re.compile(r'[^\W\d_]{3,}')
+
+
+def _kosakata(index_dir: Path) -> dict[int, list[str]]:
+    """Kosakata indeks (token huruf ≥3, huruf kecil) per panjang; dibangun sekali per pemuatan/reindeks lalu di-cache."""
+    vocab = _vocab.get(index_dir)
+    if vocab is None:
+        chunks, _ = load_index(index_dir)
+        words = {w for t in chunks['teks'].astype(str) for w in _TOKEN.findall(t.lower())}
+        vocab = {}
+        for w in sorted(words):
+            vocab.setdefault(len(w), []).append(w)
+        _vocab[index_dir] = vocab
+    return vocab
+
+
+def bermakna(query: str, index_dir: Path | None = None) -> bool:
+    """Penjaga kueri (UC-02 S-1a): minimal satu token huruf ≥3 non-stopword yang ada di kosakata indeks
+    atau mirip kata kosakata (difflib, cutoff 0.8). "<<>>", angka/simbol, kata acak → tidak bermakna."""
+    tokens = {t for t in _TOKEN.findall(str(query).lower()) if t not in STOPWORD}
+    if not tokens:
+        return False
+    try:
+        vocab = _kosakata(index_dir or INDEX_DIR)
+    except Exception:  # indeks belum ada: cukup pemeriksaan bentuk (dulu)
+        return True
+    for t in tokens:
+        if t in vocab.get(len(t), ()):
+            return True
+    for t in tokens:
+        near = [w for n in range(len(t) - 2, len(t) + 3) for w in vocab.get(n, ())]
+        if get_close_matches(t, near, n=1, cutoff=0.8):
+            return True
+    return False
 
 
 def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str, ...] | None = None) -> list[dict]:
@@ -252,7 +289,7 @@ def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str
     Satu hasil per sumber (potongan terbaik); artikel/tiket yang dipecah tidak memenuhi daftar dengan dirinya sendiri.
     `solusi` = solusi tiket utuh bila potongannya hasil pemecahan (kolom ada di indeks baru).
     """
-    if not bermakna(query):
+    if not bermakna(query, index_dir):
         return []
     chunks, vectors = load_index(index_dir)
     q = embed([str(privacy.mask_text(query))], 'query')[0]
