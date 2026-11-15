@@ -309,7 +309,7 @@
             input.value = '';
             clearActions();
             root.classList.add('hc-started');
-            userMessage(text);
+            const bubble = userMessage(text).querySelector('.hc-bubble-user');
             const waiting = typing();
             setBusy(true);
 
@@ -325,6 +325,9 @@
             }
             chatId = res.chat_id;
             store.set(STORE_ID, String(chatId));
+            if (res.masked && res.question) {
+                bubble.textContent = res.question; // tampilkan teks tersamar dari server, bukan yang diketik
+            }
             if (res.masked) {
                 systemMessage(t.masked);
             }
@@ -461,6 +464,15 @@
         holder.innerHTML = html;
         const root = holder.firstElementChild;
         document.body.appendChild(root);
+        if (root.querySelector('[data-chat-off]')) {
+            // Asisten dimatikan: widget hanya menampilkan pemberitahuan (buka/tutup panel)
+            const panel = root.querySelector('.hc-panel');
+            root.querySelectorAll('[data-chat-toggle]').forEach((b) => b.addEventListener('click', () => {
+                panel.hidden = !panel.hidden;
+                root.querySelector('.hc-launcher').setAttribute('aria-expanded', String(!panel.hidden));
+            }));
+            return;
+        }
         mount(root);
     };
 

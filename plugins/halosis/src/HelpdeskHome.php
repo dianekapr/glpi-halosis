@@ -33,7 +33,7 @@ final class HelpdeskHome
      */
     public static function redefineMenu(array $menu): array
     {
-        if (!Chatbot::isAvailable()) {
+        if (!Chatbot::canUse()) {  // menu tetap tampil walau fitur chat dimatikan (halaman memberi pemberitahuan)
             return $menu;
         }
 
@@ -93,6 +93,6 @@ final class HelpdeskHome
 
     public static function shouldRedirectHome(): bool
     {
-        return Session::getLoginUserID() !== false && self::isHelpdeskHomeRequest() && Chatbot::isAvailable();
+        return Session::getLoginUserID() !== false && self::isHelpdeskHomeRequest() && Chatbot::canUse();
     }
 }

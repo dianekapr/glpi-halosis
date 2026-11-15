@@ -27,7 +27,13 @@
         const result = response ? await response.json().catch(() => null) : null;
         if (result?.ok) {
             box.querySelector('[data-hf-done]').classList.remove('d-none');
+            // Tombol jadi penanda dan tidak bisa diklik lagi; peringkat tidak berubah (umpan balik untuk kurasi KM)
+            const yes = button.dataset.hfHelpful === '1';
+            box.querySelectorAll('button').forEach((b) => { if (b !== button) { b.remove(); } });
             button.classList.add('active');
+            button.disabled = true;
+            button.removeAttribute('data-hf-helpful');
+            button.innerHTML = `<i class="ti ti-${yes ? 'thumb-up' : 'thumb-down'}" aria-hidden="true"></i> ${yes ? box.dataset.labelYes : box.dataset.labelNo}`;
         } else {
             box.querySelectorAll('button').forEach((b) => { b.disabled = false; });
         }

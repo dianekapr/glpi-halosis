@@ -118,7 +118,7 @@ def test_chat_kecualikan_sumber_tetap_kena_ambang(monkeypatch):
             {**kb, 'skor': 0.84, 'sumber': 'KB-2', 'judul': 'Cukup relevan'},
             {**kb, 'skor': 0.70, 'sumber': 'KB-6', 'judul': 'Kurang relevan'}]
     c = client(monkeypatch, hits)
-    ask = lambda **k: c.post('/chat', json={'pertanyaan': 'x', 'riwayat': [], **k}).json()  # noqa: E731
+    ask = lambda **k: c.post('/chat', json={'pertanyaan': 'reset password', 'riwayat': [], **k}).json()  # noqa: E731
     assert ask()['sumber'][0]['sumber'] == 'KB-9'
     assert ask(kecualikan=['KB-9'])['sumber'][0]['sumber'] == 'KB-2'  # pengganti lolos ambang yang sama
     body = ask(kecualikan=['KB-9', 'KB-2'])  # sisanya di bawah ambang → tidak ditemukan, bukan KB-6
@@ -256,3 +256,13 @@ def test_chat_artikel_kb_didahulukan_dari_layanan(monkeypatch):
     r = client(monkeypatch, [layanan, {**kb, 'skor': 0.80}]).post('/chat', json={'pertanyaan': 'sso'}).json()
     assert [s['sumber'] for s in r['sumber']] == ['LAYANAN-C2']
     assert r['jawaban'] == 'Permintaan ini bisa diajukan lewat layanan "Akun & Akses > SSO / Login" di katalog layanan.'
+
+
+def test_kueri_tanpa_makna_hasil_kosong(monkeypatch):
+    hits = [{'potongan': 'Reset password SSO', 'skor': 0.9, 'sumber': 'kb:1', 'jenis_sumber': 'kb', 'judul': 'Reset password'}]
+    c = client(monkeypatch, hits)
+    for q in ['<<>><<>><<>>', 'a', '12345', '?? !! 99', 'ab']:
+        assert c.post('/cari', json={'q': q}).json() == {'hasil': []}
+        r = c.post('/chat', json={'pertanyaan': q}).json()
+        assert r['ditemukan'] is False and r['sumber'] == [] and r['mode'] == 'tidak-ditemukan'
+    assert c.post('/cari', json={'q': 'reset password'}).json()['hasil']

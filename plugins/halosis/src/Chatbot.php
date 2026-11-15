@@ -207,6 +207,7 @@ final class Chatbot
         return [
             'ok'      => true,
             'chat_id' => $chat->getID(),
+            'question' => $question, // pesan pengguna tersamar seperti yang tersimpan (NFR-06)
             'answer'  => $reply['answer'],
             'found'   => $reply['found'],
             'ai'      => self::isAiModel($reply['model']),

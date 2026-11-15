@@ -381,7 +381,7 @@ def chat(req: ChatRequest) -> dict:
     question = str(privacy.mask_text(req.pertanyaan))
     excluded = set(req.kecualikan)
     found = [h for h in search.cari(question, k=CHAT_CHOICE_POOL + len(excluded), jenis=CHAT_SOURCES)
-             if h['sumber'] not in excluded]
+             if h['sumber'] not in excluded] if search.bermakna(req.pertanyaan) else []  # kueri tanpa makna → alur 5a
     retrieval_ms = ms_since(start)
     top_score = round(float(found[0]['skor']), 4) if found else None
     # Artikel KB yang lolos ambang menjawab lebih dulu; katalog layanan jadi tautan tambahan
@@ -492,7 +492,7 @@ def cari(req: SearchRequest) -> dict:
     if not state.get('search'):
         raise HTTPException(503, 'Indeks pencarian belum tersedia')
     start = time.perf_counter()
-    hits = search.cari(str(privacy.mask_text(req.q)), k=req.k)
+    hits = search.cari(str(privacy.mask_text(req.q)), k=req.k) if search.bermakna(req.q) else []
     record_latency('cari', retrieval_ms=ms_since(start), total_ms=ms_since(start),
                    skor_teratas=round(float(hits[0]['skor']), 4) if hits else None, hasil=len(hits))
     return {'hasil': [{'judul': h['judul'], 'potongan': h['potongan'], 'skor': h['skor'], 'sumber': h['sumber'],

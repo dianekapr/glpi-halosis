@@ -239,6 +239,11 @@ def tanpa_judul(text: str, title: str) -> str:
     return text
 
 
+def bermakna(query: str) -> bool:
+    """Penjaga kueri (UC-02 S-1a): minimal satu kata huruf ≥3 karakter; "<<>>", satu huruf, angka/simbol saja → tidak bermakna."""
+    return re.search(r'[^\W\d_]{3,}', str(query)) is not None
+
+
 def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str, ...] | None = None) -> list[dict]:
     """Cari k sumber paling mirip → [{potongan, skor, sumber, jenis_sumber, judul, solusi?}].
 
@@ -247,6 +252,8 @@ def cari(query: str, k: int = 5, index_dir: Path | None = None, jenis: tuple[str
     Satu hasil per sumber (potongan terbaik); artikel/tiket yang dipecah tidak memenuhi daftar dengan dirinya sendiri.
     `solusi` = solusi tiket utuh bila potongannya hasil pemecahan (kolom ada di indeks baru).
     """
+    if not bermakna(query):
+        return []
     chunks, vectors = load_index(index_dir)
     q = embed([str(privacy.mask_text(query))], 'query')[0]
     scores = vectors @ q

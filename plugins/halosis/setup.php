@@ -104,7 +104,7 @@ function plugin_init_halosis(): void
 
     // Chatbot (antarmuka Helpdesk, pemegang hak chatbot, fitur aktif): halaman penuh "Tanya HaloSIS"
     // sebagai beranda Pegawai + widget melayang di halaman Helpdesk lain. Lihat HelpdeskHome.
-    if (Chatbot::isAvailable()) {
+    if (Chatbot::canUse()) {  // fitur dimatikan: widget tetap dimuat dan menampilkan pemberitahuan
         $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['halosis'][] = plugin_halosis_asset('js/chat.js');
         if (HelpdeskHome::shouldRedirectHome()) {
             $PLUGIN_HOOKS[Hooks::ADD_HEADER_TAG]['halosis'] = HelpdeskHome::getRedirectHeaderTags();
