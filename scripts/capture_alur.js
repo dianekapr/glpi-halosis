@@ -4,6 +4,7 @@
 //   node scripts/capture_alur.js --uc UC-01,UC-02,UC-03,UC-05
 //   node scripts/capture_alur.js --uc UC-06,UC-07,UC-08,UC-09,UC-10
 //   node scripts/capture_alur.js --uc TAMBAHAN (tangkapan khusus -> reports/shots/tambahan/)
+//   node scripts/capture_alur.js --uc BAB11     (UC-10_normal_9, UC-09_4a_val, UC-08_normal_3 -> reports/shots/tambahan/)
 //   node scripts/capture_alur.js --uc UTAMA     (alur utama UC-03/05/06/07/08 -> reports/shots/utama/UC-0X.png)
 //
 // Hasil: reports/shots/alur/<UC>_<alur>[_<langkah>].png dan reports/shots/alur/hasil.json (status per tangkapan).
@@ -670,6 +671,48 @@ async function uc10(browser) {
   await p.context().close();
 }
 
+// ---- BAB11: tangkapan tambahan -> reports/shots/tambahan/ (tanpa SQL)
+async function bab11(browser) {
+  outDir = path.join(ROOT, 'reports/shots/tambahan');
+  await step('UC-10_normal_9', async () => {
+    const p = await newPage(browser, 'dimas');
+    await openConfig(p);
+    const f = p.locator('input[name=triage_threshold]');
+    const orig = await f.inputValue();
+    const alt = String(orig).includes(',') || String(orig).includes('.') ? (Number(String(orig).replace(',', '.')) > 0.5 ? '0.5' : '0.6') : (Number(orig) > 50 ? '50' : '60');
+    const save = async v => { await openConfig(p); await p.fill('input[name=triage_threshold]', v);
+      await Promise.all([p.waitForLoadState('networkidle'), p.locator('button[name=update]').click()]);
+      await p.getByText(/berhasil disimpan/i).first().waitFor(); };
+    await save(alt); await save(orig);
+    await p.goto(`${BASE}/front/central.php`); await p.waitForLoadState('networkidle');
+    const note = p.getByText(/Pengaturan AI HaloSIS diubah/).first();
+    await note.waitFor({ timeout: 8000 }); await note.scrollIntoViewIfNeeded();
+    await shot(p, 'UC-10_normal_9', `Catatan perubahan konfigurasi di Beranda (triage_threshold ${orig} -> ${alt} -> ${orig})`);
+    await p.context().close();
+  });
+  await step('UC-09_4a_val', async () => {
+    const p = await newPage(browser, 'lina');
+    await p.goto(`${BASE}/plugins/halosis/Kandidat?status=pending`); await p.waitForLoadState('networkidle');
+    const tg = p.locator('[data-hk-toggle]:visible').first();
+    const id = await tg.getAttribute('data-id');
+    await tg.scrollIntoViewIfNeeded(); await tg.click();
+    await p.fill(`#hk-reason-${id}`, 'abc');
+    const sb = p.locator(`form[data-hk-ignore][data-id="${id}"] button[type=submit]`);
+    await sb.evaluate(e => { e.disabled = false; });  // tombol nonaktif <5 karakter; validasi server dipicu langsung
+    await sb.click();
+    await p.getByText('Tuliskan alasan minimal 5 karakter.').first().waitFor({ timeout: 8000 });
+    await shot(p, 'UC-09_4a_val', 'Alasan "abc" ditolak (tidak disimpan)');
+    await p.context().close();
+  });
+  await step('UC-08_normal_3', async () => {
+    const p = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
+    await p.goto('http://localhost:8025/'); await p.waitForLoadState('networkidle'); await p.waitForTimeout(1500);
+    await shot(p, 'UC-08_normal_3', 'Mailpit: email notifikasi SLA terbaru');
+    await p.context().close();
+  });
+  outDir = OUT;
+}
+
 (async () => {
   const cache = path.join(os.homedir(), 'Library/Caches/ms-playwright');
   const shell = fs.existsSync(cache) ? fs.readdirSync(cache).find(d => d.startsWith('chromium_headless_shell')) : null;
@@ -687,6 +730,7 @@ async function uc10(browser) {
     if (WANT.has('UC-09_7a')) await uc09_7a(browser);
     if (WANT.has('UC-09_5a')) await uc09_5a(browser);
     if (WANT.has('UC-10')) await uc10(browser);
+    if (WANT.has('BAB11')) await bab11(browser);
     if (WANT.has('TAMBAHAN')) await tambahan(browser);
   } finally {
     await browser.close();

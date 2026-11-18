@@ -227,5 +227,65 @@
  "utama/UC-03": {
   "status": "ok",
   "note": "budi: Buat laporan > Laporkan Masalah, form terisi (belum dikirim)"
+ },
+ "UC-01_5b": {
+  "status": "lewat",
+  "note": "gagal: zona sedang tidak muncul dari 12 pertanyaan"
+ },
+ "tambahan/UC-04_5b": {
+  "status": "ok",
+  "note": "Tiket #2742"
+ },
+ "tambahan/UC-04_5c": {
+  "status": "lewat",
+  "note": "tidak ada tiket demo dengan \"Model belum lolos\""
+ },
+ "tambahan/UC-05_S2_form": {
+  "status": "ok",
+  "note": "Alasan terisi, tombol aktif"
+ },
+ "tambahan/UC-05_S2": {
+  "status": "ok",
+  "note": "Saran AI ditolak"
+ },
+ "tambahan/UC-06_2a_form": {
+  "status": "ok",
+  "note": "Form Kembalikan ke Operator terisi"
+ },
+ "tambahan/UC-06_2a": {
+  "status": "ok",
+  "note": "Setelah dikembalikan"
+ },
+ "tambahan/UC-07_5a": {
+  "status": "ok",
+  "note": "Tolak dengan komentar: tiket kembali diproses"
+ },
+ "tambahan/UC-07_5c": {
+  "status": "ok",
+  "note": "Menu Siap ditutup"
+ },
+ "tambahan/UC-01_5b": {
+  "status": "ok",
+  "note": "Pertanyaan: printer error"
+ },
+ "UC-10_normal_9": {
+  "status": "lewat",
+  "note": "gagal: locator.waitFor: Timeout 8000ms exceeded."
+ },
+ "UC-09_4a_val": {
+  "status": "lewat",
+  "note": "gagal: locator.click: Timeout 45000ms exceeded."
+ },
+ "tambahan/UC-08_normal_3": {
+  "status": "ok",
+  "note": "Mailpit: email notifikasi SLA terbaru"
+ },
+ "tambahan/UC-09_4a_val": {
+  "status": "ok",
+  "note": "Alasan \"abc\" ditolak (tidak disimpan)"
+ },
+ "tambahan/UC-10_normal_9": {
+  "status": "ok",
+  "note": "Catatan perubahan konfigurasi di Beranda (triage_threshold 70 -> 50 -> 70)"
  }
 }
