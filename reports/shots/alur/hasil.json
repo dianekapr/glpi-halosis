@@ -1,0 +1,291 @@
+{
+ "UC-01_normal_9": {
+  "status": "ok",
+  "note": "Terima kasih, percakapan berakhir"
+ },
+ "UC-01_3a": {
+  "status": "ok",
+  "note": "Kotak kosong, tombol Kirim nonaktif"
+ },
+ "UC-01_4b": {
+  "status": "ok",
+  "note": "Request chat diputus (page.route abort)"
+ },
+ "UC-01_5a": {
+  "status": "ok",
+  "note": "Kartu tawaran laporan"
+ },
+ "UC-01_5a_S1_form": {
+  "status": "ok",
+  "note": "Form laporan dengan ringkasan terlampir"
+ },
+ "UC-01_5a_S1": {
+  "status": "ok",
+  "note": "Laporan sudah dibuat"
+ },
+ "UC-03_1a_S1": {
+  "status": "ok",
+  "note": "Salinan UC-01_5a_S1 (alur sama: Ya, buat laporan → Kirim)"
+ },
+ "UC-03_1a_S1_form": {
+  "status": "ok",
+  "note": "Salinan UC-01_5a_S1_form (judul terisi + ringkasan)"
+ },
+ "UC-01_5c": {
+  "status": "ok",
+  "note": "Diarahkan ke unit terkait"
+ },
+ "UC-01_7a": {
+  "status": "ok",
+  "note": "Kartu laporan setelah Belum terselesaikan"
+ },
+ "UC-01_7a_S1": {
+  "status": "ok",
+  "note": "Laporan sudah dibuat"
+ },
+ "UC-01_7b": {
+  "status": "ok",
+  "note": "Percakapan diakhiri; kotak ketik terkunci"
+ },
+ "UC-01_3c": {
+  "status": "ok",
+  "note": "Muat ulang: percakapan sudah selesai, kotak ketik terkunci"
+ },
+ "UC-01_3b": {
+  "status": "ok",
+  "note": "Pesan ke-21: percakapan terlalu panjang"
+ },
+ "UC-01_1a": {
+  "status": "ok",
+  "note": "Sakelar chat dimatikan"
+ },
+ "UC-02_S1a": {
+  "status": "ok",
+  "note": "Pengetahuan tidak ditemukan"
+ },
+ "UC-02_5a": {
+  "status": "ok",
+  "note": "Tanpa hasil di atas ambang"
+ },
+ "UC-02_S1b": {
+  "status": "ok",
+  "note": "Umpan balik tersimpan + penanda Ditandai tidak membantu"
+ },
+ "UC-02_3a": {
+  "status": "ok",
+  "note": "Layanan AI dimatikan"
+ },
+ "UC-03_1b": {
+  "status": "ok",
+  "note": "Form Tambah tiket (Pemohon, Sumber permintaan, Judul, Deskripsi) — belum diisi"
+ },
+ "UC-03_6a": {
+  "status": "ok",
+  "note": "Sakelar triase dimatikan saat tiket dibuat"
+ },
+ "UC-05_3a": {
+  "status": "ok",
+  "note": "Setelah klik Buat saran AI"
+ },
+ "UC-05_S1b": {
+  "status": "ok",
+  "note": "Alasan <5 karakter: Terapkan perubahan nonaktif"
+ },
+ "UC-05_S1a": {
+  "status": "ok",
+  "note": "Nilai sama dengan saran: gunakan tombol Terima"
+ },
+ "UC-05_5d": {
+  "status": "ok",
+  "note": "Dua sesi: sesi kedua mencoba memutuskan saran yang sudah diputuskan"
+ },
+ "UC-05_5c": {
+  "status": "ok",
+  "note": "Setelah solusi disimpan: Dipecahkan"
+ },
+ "UC-05_5c_form": {
+  "status": "ok",
+  "note": "Form Tambah solusi"
+ },
+ "UC-06_normal_3": {
+  "status": "ok",
+  "note": "andi menambahkan dirinya sebagai penanggung jawab + Simpan"
+ },
+ "UC-06_2b": {
+  "status": "ok",
+  "note": "dedi (tim lain) membuka tiket tim andi: tombol Kembalikan ke Operator tidak tampil"
+ },
+ "UC-06_S1": {
+  "status": "ok",
+  "note": "Status Tertunda (SLA dijeda) setelah Simpan"
+ },
+ "UC-06_normal_7": {
+  "status": "ok",
+  "note": "Solusi disimpan: status Dipecahkan, SLA, kandidat pengetahuan"
+ },
+ "UC-06_4a": {
+  "status": "ok",
+  "note": "Layanan AI dimatikan: hanya hasil kata kunci"
+ },
+ "UC-07_3a": {
+  "status": "ok",
+  "note": "Keterangan tambahan terkirim pada tiket belum Dipecahkan"
+ },
+ "UC-07_5b": {
+  "status": "ok",
+  "note": "Tolak tanpa komentar: alasan wajib diisi, solusi tidak ditolak"
+ },
+ "UC-08_normal_5": {
+  "status": "ok",
+  "note": "Dasbor: banner Pola insiden terdeteksi"
+ },
+ "UC-08_6a": {
+  "status": "ok",
+  "note": "andi membuka alamat Kinerja AI langsung: akses ditolak"
+ },
+ "UC-09_3a": {
+  "status": "ok",
+  "note": "Tab Perlu ditinjau kosong (teks sebenarnya: \"Tidak ada artikel yang perlu ditinjau.\"; \"Belum ada kandidat di sini.\" hanya di tab kandidat)"
+ },
+ "UC-09_S1a": {
+  "status": "ok",
+  "note": "Tanggal tinjau di masa lalu ditolak: Pilih tanggal tinjau setelah hari ini."
+ },
+ "UC-09_S1": {
+  "status": "ok",
+  "note": "Tanggal tinjau berikutnya tersimpan."
+ },
+ "UC-09_4b": {
+  "status": "ok",
+  "note": "Dua sesi: sesi kedua memutuskan kandidat yang sudah diputuskan"
+ },
+ "UC-09_1a": {
+  "status": "ok",
+  "note": "Layanan AI dimatikan: kandidat tiket tetap tampil + pemberitahuan"
+ },
+ "UC-09_S2": {
+  "status": "ok",
+  "note": "Draf artikel tersimpan dari kandidat"
+ },
+ "UC-09_7a": {
+  "status": "ok",
+  "note": "Daftar artikel: ikon mata-coret di-hover -> tooltip \"Item ini belum diterbitkan\" (tooltip title bawaan ditiru lewat DOM karena tidak tertangkap screenshot headless)"
+ },
+ "UC-09_5a": {
+  "status": "ok",
+  "note": "Draf disusun AI (qwen2.5:3b), wajib ditinjau"
+ },
+ "__article": "http://localhost:8080/front/knowbaseitem.form.php?id=60",
+ "UC-10_1a": {
+  "status": "ok",
+  "note": "rina membuka alamat Pengaturan AI langsung: akses ditolak"
+ },
+ "UC-10_6a": {
+  "status": "ok",
+  "note": "Pratinjau SLA tanpa memilih SLA/target"
+ },
+ "UC-10_8a": {
+  "status": "ok",
+  "note": "URL layanan AI ftp://x ditolak"
+ },
+ "UC-10_8b": {
+  "status": "ok",
+  "note": "API key dikosongkan lalu Simpan: nilai lama tetap dipakai"
+ },
+ "UC-10_normal_8": {
+  "status": "ok",
+  "note": "Konfigurasi (nilai sama) berhasil disimpan"
+ },
+ "UC-09_normal_7": {
+  "status": "ok",
+  "note": "Artikel diterbitkan lewat Tambahkan ke Tanya Jawab (FAQ)"
+ },
+ "UC-09_8a": {
+  "status": "ok",
+  "note": "Layanan AI mati saat menerbitkan: gagal memperbarui indeks, indeks lama dipakai"
+ },
+ "UC-03": {
+  "status": "lewat",
+  "note": "gagal: locator.click: Timeout 45000ms exceeded."
+ },
+ "utama/UC-05": {
+  "status": "ok",
+  "note": "rina: Terima saran AI, pesan Keputusan disimpan"
+ },
+ "utama/UC-06": {
+  "status": "ok",
+  "note": "andi: tombol Kembalikan ke Operator (salah tim) terlihat di panel tiket"
+ },
+ "utama/UC-07": {
+  "status": "ok",
+  "note": "budi: Laporan saya dengan kolom Jenis & Ditangani oleh"
+ },
+ "utama/UC-08": {
+  "status": "ok",
+  "note": "sri: Pemantauan SLA"
+ },
+ "utama/UC-03": {
+  "status": "ok",
+  "note": "budi: Buat laporan > Laporkan Masalah, form terisi (belum dikirim)"
+ },
+ "UC-01_5b": {
+  "status": "lewat",
+  "note": "gagal: zona sedang tidak muncul dari 12 pertanyaan"
+ },
+ "tambahan/UC-04_5b": {
+  "status": "ok",
+  "note": "Tiket #2742"
+ },
+ "tambahan/UC-04_5c": {
+  "status": "lewat",
+  "note": "tidak ada tiket demo dengan \"Model belum lolos\""
+ },
+ "tambahan/UC-05_S2_form": {
+  "status": "ok",
+  "note": "Alasan terisi, tombol aktif"
+ },
+ "tambahan/UC-05_S2": {
+  "status": "ok",
+  "note": "Saran AI ditolak"
+ },
+ "tambahan/UC-06_2a_form": {
+  "status": "ok",
+  "note": "Form Kembalikan ke Operator terisi"
+ },
+ "tambahan/UC-06_2a": {
+  "status": "ok",
+  "note": "Setelah dikembalikan"
+ },
+ "tambahan/UC-07_5a": {
+  "status": "ok",
+  "note": "Tolak dengan komentar: tiket kembali diproses"
+ },
+ "tambahan/UC-07_5c": {
+  "status": "ok",
+  "note": "Menu Siap ditutup"
+ },
+ "tambahan/UC-01_5b": {
+  "status": "ok",
+  "note": "Pertanyaan: printer error"
+ },
+ "UC-10_normal_9": {
+  "status": "lewat",
+  "note": "gagal: locator.waitFor: Timeout 8000ms exceeded."
+ },
+ "UC-09_4a_val": {
+  "status": "lewat",
+  "note": "gagal: locator.click: Timeout 45000ms exceeded."
+ },
+ "tambahan/UC-08_normal_3": {
+  "status": "ok",
+  "note": "Mailpit: email notifikasi SLA terbaru"
+ },
+ "tambahan/UC-09_4a_val": {
+  "status": "ok",
+  "note": "Alasan \"abc\" ditolak (tidak disimpan)"
+ },
+ "tambahan/UC-10_normal_9": {
+  "status": "ok",
+  "note": "Catatan perubahan konfigurasi di Beranda (triage_threshold 70 -> 50 -> 70)"
+ }
+}

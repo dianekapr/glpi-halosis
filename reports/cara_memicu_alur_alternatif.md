@@ -92,11 +92,11 @@ Alur yang sudah otomatis diuji: `tests/e2e/alur_alternatif.js` (UC-01 4a, UC-02 
 | Alur | Memicu | Tampilan | Mengembalikan |
 |---|---|---|---|
 | 1a ⚠️ | Hentikan `halosis-ai`, buka Kandidat pengetahuan. | Kandidat tiket tetap tampil + pemberitahuan layanan AI. | Nyalakan layanan. |
-| 3a / 3b ✅ | Saring ke target tanpa kandidat. | "Belum ada kandidat di sini." → S-1 (artikel ada) atau S-2 (belum ada). | – |
+| 3a / 3b ✅ | Buka tab kandidat yang kosong (mis. **Dijadikan artikel** bila belum ada). Tab **Perlu ditinjau** yang kosong menampilkan "Tidak ada artikel yang perlu ditinjau." | "Belum ada kandidat di sini." → S-1 (artikel ada) atau S-2 (belum ada). | – |
 | 4a ✅ | **Abaikan** dengan alasan <5 karakter / sah. | "Tuliskan alasan minimal 5 karakter." / "Kandidat diabaikan." | Pulihkan. |
 | 4b ⚠️ | Dua sesi (dua peramban) pada kandidat yang sama; putuskan di sesi pertama lalu sesi kedua. | "Kandidat ini sudah diputuskan." | Pulihkan. |
 | 5a ⚠️ | Aktifkan LLM (profil `llm`, `LLM_PROVIDER=openai`) lalu **Jadikan artikel**. Bawaan LLM mati → templat. | Draf berlabel "Disusun AI, wajib ditinjau…" (hanya dengan LLM). | Kembalikan `.env`. |
-| 7a ✅ | Simpan artikel tanpa target. | Draf tak muncul di pencarian; "Item ini belum diterbitkan". | Hapus artikel. |
+| 7a ✅ | Simpan artikel tanpa target. | Draf tak muncul di pencarian; ikon mata dicoret, arahkan kursor → "Item ini belum diterbitkan". | Hapus artikel. |
 | 8a ⚠️ | Hentikan `halosis-ai` lalu terbitkan artikel. | "Gagal memperbarui indeks pencarian; indeks sebelumnya tetap dipakai." | Nyalakan layanan; pulihkan. |
 | S-1a ✅ | Isi tanggal tinjau di masa lalu. | "Pilih tanggal tinjau setelah hari ini." | – |
 
