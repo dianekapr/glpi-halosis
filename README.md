@@ -28,127 +28,311 @@ Password semua akun contoh: **`halosis`**. Daftar lengkap ada di [Pemasangan man
 
 ## Cara memasang di laptop (untuk pemula)
 
-Tidak perlu bisa memrogram. Ikuti 5 langkah ini berurutan; cukup dilakukan **sekali**.
+Tidak perlu bisa memrogram. Ikuti tahap 1–4 berurutan; cukup dilakukan **sekali**. Tahap 5 dipakai setiap ada
+pembaruan, tahap 6–8 dipakai saat menyiapkan demo dan menguji.
 
-### Langkah 1 — Pasang tiga aplikasi
+### Tahap 1 — Persiapan
+
+Pasang tiga aplikasi ini:
 
 | Aplikasi | Gunanya | Unduh |
 | --- | --- | --- |
 | **Docker Desktop** | "Wadah" yang menjalankan HaloSIS di laptop | https://www.docker.com/products/docker-desktop |
-| **Git** | Mengambil kode HaloSIS dari GitHub | Mac: sudah ada (lihat langkah 2). Windows: https://git-scm.com/download/win (klik *Next* terus) |
+| **Git** | Mengambil kode HaloSIS dari GitHub | Mac: biasanya sudah ada. Windows: https://git-scm.com/download/win (klik *Next* sampai selesai) |
 | **Python 3** | Mengisi data contoh | Mac: biasanya sudah ada. Windows: https://www.python.org/downloads (**centang "Add python.exe to PATH"**) |
 
-Setelah memasang Docker Desktop, **buka aplikasinya** dan tunggu sampai ikon paus 🐳 di pojok layar berhenti
-bergerak. Laptop sebaiknya punya RAM minimal 8 GB dan ruang kosong ±15 GB.
+Setelah memasang Docker Desktop, **buka aplikasinya**. Docker harus selalu terbuka saat memakai HaloSIS. Laptop
+sebaiknya punya RAM minimal 8 GB dan ruang kosong ±15 GB.
 
-### Langkah 2 — Buka Terminal
-
-Terminal adalah jendela untuk mengetik perintah. Cukup salin-tempel perintah dari panduan ini, lalu tekan **Enter**.
-
-- **Mac:** tekan `⌘ Command` + `Spasi`, ketik **Terminal**, tekan Enter.
-- **Windows:** klik Start, ketik **Git Bash**, buka aplikasinya (jangan pakai Command Prompt).
-
-Cek ketiga aplikasi sudah terpasang (masing-masing harus menampilkan nomor versi, bukan pesan galat):
+Buka Terminal. **Mac:** tekan `⌘ Command` + `Spasi`, ketik **Terminal**, Enter. **Windows:** klik Start, ketik
+**Git Bash** (jangan pakai Command Prompt). Cek ketiganya terpasang (harus muncul nomor versi, bukan pesan galat):
 ```bash
 docker --version
 git --version
 python3 --version      # Windows: python --version
 ```
-Di Mac, bila muncul tawaran memasang *command line developer tools* saat mengetik `git`, klik **Install**.
 
-### Langkah 3 — Ambil kode HaloSIS
+Kenalkan diri ke Git (ganti dengan nama dan email GitHub):
+```bash
+git config --global user.name "Nama Anda"
+git config --global user.email "email-github-anda@contoh.com"
+```
 
-Salin-tempel tiga baris ini ke Terminal (satu per satu, tekan Enter tiap baris):
+### Tahap 2 — Pasang HaloSIS
+
+**1. Ambil kode dari GitHub.**
 ```bash
 cd ~/Downloads
 git clone https://github.com/dianekapr/glpi-halosis.git
 cd glpi-halosis
+git checkout master
+cp .env.example .env
 ```
-Kode tersimpan di folder **Downloads › glpi-halosis**. (Bila diminta login GitHub, minta akses ke pemilik repo.)
 
-### Langkah 4 — Jalankan pemasangan otomatis
-
-Masih di Terminal yang sama, ketik:
+**2. Jalankan pemasangan otomatis** (Docker Desktop harus sudah terbuka). Pertama kali ±10–20 menit; tunggu sampai
+muncul **"Selesai!"**. Jika muncul `permission denied`, ketik `bash scripts/pasang.sh`. Jika muncul **GAGAL**,
+buka Docker Desktop lalu jalankan perintah yang sama lagi (aman diulang).
 ```bash
 scripts/pasang.sh
 ```
-Perintah ini menyalakan HaloSIS, memasang plugin, dan mengisi data contoh. **Pertama kali bisa 10–20 menit**
-(mengunduh beberapa GB) — biarkan sampai muncul tulisan **"Selesai!"**. Kalau muncul tulisan merah **GAGAL**, baca
-pesannya (biasanya Docker belum dibuka) lalu ulangi perintah yang sama; aman dijalankan berkali-kali.
 
-### Langkah 5 — Buka HaloSIS di browser
+**3. Cek semua layanan menyala.** Semua baris harus berstatus *Up* atau *running*.
+```bash
+docker compose ps
+```
 
-Buka **http://localhost:8080** di Chrome/Edge/Safari, lalu login **`budi`** / **`halosis`**. Anda langsung masuk ke
-**Tanya HaloSIS** (asisten chat). Selamat, HaloSIS sudah berjalan! Lanjutkan dengan tur di bawah.
+**4. Buka** http://localhost:8080 dan login **`budi`** / **`halosis`**. Jika langsung masuk ke halaman chat
+**Tanya HaloSIS**, pemasangan berhasil. Pada tahap ini HaloSIS memakai jawaban ekstraktif (tanpa LLM).
 
-> Tanpa file model AI, HaloSIS memakai **mode demo** (jawaban contoh yang tetap). Untuk AI sungguhan dari history
-> tiket, anggota tim memasang file model sesuai bagian [C2](#c2-pasang-model-ai-dari-google-drive-untuk-penguji).
+### Tahap 3 — Pasang AI dari Google Drive
 
-## Tur 10 menit: coba satu laporan dari awal sampai selesai
+> ℹ️ Model AI dilatih dari data internal BPS, jadi tidak disimpan di GitHub. Folder Drive hanya dapat dibuka
+> oleh akun Google yang sudah diberi akses.
 
-Pakai **jendela penyamaran/privat** baru untuk setiap akun, supaya bisa login sebagai beberapa orang sekaligus.
+**1. Unduh.** Login dengan akun Google yang sudah diberi akses, lalu buka [folder Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link).
+Unduh folder **models** dan folder **snapshot demo** (klik nama folder di bagian atas › **Download**, ulangi untuk
+folder satunya). Drive membuat dua berkas zip (mis. `drive-download-…-001.zip`) di folder Downloads; tunggu sampai
+keduanya selesai. Berkas Excel data ticketing **tidak** perlu diunduh.
 
-1. **Pegawai bertanya** — login `budi`. Klik **Laporkan masalah**, lalu klik contoh **FASIH gagal sinkron**.
-   Asisten menjawab dengan langkah-langkah dari artikel bantuan.
-2. **Pegawai membuat laporan** — di bawah jawaban klik **Belum terselesaikan** → **Ya, buat laporan** →
-   **Kirim laporan**. Ringkasan percakapan ikut terlampir, jadi pegawai tidak perlu menjelaskan ulang.
-3. **Operator memeriksa saran AI** — login `rina`, buka menu **Antrean validasi**, buka laporan tadi. Panel
-   **Saran AI** menunjukkan kategori, tim, dan tingkat keyakinan AI. Klik **Terima** (atau **Ubah**/**Tolak**
-   dengan alasan).
-4. **Tim teknis menyelesaikan** — login `andi`, buka menu **Tiket saya & tim**, buka laporan tadi, lalu klik
-   **Balas ▾ › Tambah solusi**, tulis solusinya, simpan.
-5. **Pegawai menyetujui** — login `budi`, buka **Laporan saya**, buka laporannya, klik **Setujui**.
-   Laporan pun **Ditutup**.
-6. **Manajemen melihat hasil** — login `sri`, buka **Kinerja AI**: berapa saran AI yang diterima, diubah, ditolak,
-   dan kepatuhan SLA.
+**2. Ekstrak dan pindahkan ke folder proyek:**
+```bash
+cd ~/Downloads
+mkdir -p halosis-ai-files
+unzip -o "drive-download-*.zip" -d halosis-ai-files
+cd ~/Downloads/glpi-halosis
+mkdir -p ai/models backup
+rm -f ai/models/prioritas.joblib
+cp $(find ~/Downloads/halosis-ai-files -name "*.joblib" -o -name "*.metrics.json") ai/models/
+rm -rf backup/demo-20261115-080525
+cp -R "$(dirname "$(find ~/Downloads/halosis-ai-files -name glpi.sql.gz)")" backup/demo-20261115-080525
+```
 
-Skenario lengkap (termasuk pola insiden, artikel bantuan, dan pengaturan) ada di
+**3. Cek isi folder.**
+```bash
+ls ai/models backup/demo-20261115-080525
+```
+`ai/models` harus berisi `triage.joblib`, `triage.metrics.json`, `jenis.joblib`, `urgensi.joblib`, dan
+`urgensi.metrics.json`. `backup/demo-20261115-080525` harus berisi `glpi.sql.gz`, `keycloak-data.tgz`, `ai-index`,
+dan `ringkasan.txt`. **Jangan ekstrak** `glpi.sql.gz` dan `keycloak-data.tgz` (di Windows ikonnya kadang seperti
+folder; itu normal).
+
+**4. Pulihkan snapshot demo, lalu cek layanan AI.** Pastikan HaloSIS sudah menyala (`docker compose up -d`).
+Snapshot berisi database GLPI, akun login, dan indeks AI dari versi yang sama, sehingga sumber yang dikutip chatbot
+cocok dengan artikel di GLPI.
+```bash
+scripts/demo_snapshot.sh pulihkan backup/demo-20261115-080525
+curl -s http://localhost:8001/health
+```
+Pertama kali butuh ±2–5 menit (mengunduh model bahasa ±1 GB). Ulangi `curl` sampai muncul `"status":"ok"`.
+
+| Yang muncul | Yang dilakukan |
+| --- | --- |
+| `"status":"sebagian"` | Ada berkas yang salah tempat → ulangi langkah 2–4 |
+| Peringatan indeks tidak cocok | Ulangi langkah 4 |
+| Tidak ada jawaban sama sekali | Lihat log: `docker compose logs --tail 30 halosis-ai` (siap bila ada tulisan `Application startup complete`) |
+
+> **Khusus Windows:** jalankan perintah `pulihkan` dari **Git Bash** dengan kode terbaru (`git pull`, versi
+> 9 November 2026 ke atas). Skrip memeriksa berkas snapshot lebih dulu; bila tidak terbaca, muncul **GAGAL** dan
+> data login tidak diubah. Bila tetap gagal, atau login rusak karena pernah memakai versi lama, jalankan ini di
+> **PowerShell** dari folder `glpi-halosis`:
+> ```powershell
+> docker compose stop keycloak
+> docker run --rm -v glpi-halosis_keycloak_data:/data -v "${PWD}\backup\demo-20261115-080525:/backup:ro" alpine:3.22 sh -c "find /data -mindepth 1 -delete && tar xzf /backup/keycloak-data.tgz -C /data"
+> docker compose start keycloak
+> New-Item -ItemType Directory -Force ai\index | Out-Null
+> Copy-Item backup\demo-20261115-080525\ai-index\* ai\index\ -Recurse -Force
+> docker compose restart halosis-ai
+> curl.exe -s http://localhost:8001/health
+> ```
+
+**5. Bersihkan berkas unduhan.** Folder `backup/` tidak ikut ke GitHub, jadi aman
+disimpan untuk dipulihkan lagi nanti.
+```bash
+rm -rf ~/Downloads/halosis-ai-files ~/Downloads/drive-download-*.zip
+```
+
+### Tahap 3b — Aktifkan LLM lokal (opsional)
+
+Untuk mendemokan jawaban chatbot yang dirangkai LLM (label **"Dijawab oleh AI"**). Tanpa tahap ini HaloSIS tetap
+berjalan dengan jawaban ekstraktif. Lakukan **setelah Tahap 3** dan `/health` sudah `"status":"ok"`. Laptop
+sebaiknya berspesifikasi Standar atau Optimal.
+
+**1. Jalankan Ollama sebagai layanan Docker** (Mac, Windows, dan Linux):
+```bash
+docker compose --profile llm up -d ollama
+```
+**2. Unduh model Qwen2.5 3B** (±2 GB, tidak diunduh otomatis):
+```bash
+docker compose exec ollama ollama pull qwen2.5:3b
+```
+**3. Buka berkas `.env`** di folder `glpi-halosis`, lalu isi tiga baris ini:
+```bash
+LLM_PROVIDER=openai
+LLM_BASE_URL=http://ollama:11434/v1
+LLM_MODEL=qwen2.5:3b
+```
+Bila memakai Ollama yang dipasang langsung di komputer (bukan lewat Docker), pakai
+`LLM_BASE_URL=http://host.docker.internal:11434/v1`, dan ganti langkah 1–2 dengan `ollama pull qwen2.5:3b` di
+terminal biasa.
+
+**4. Mulai ulang layanan AI** agar pengaturan terbaca:
+```bash
+docker compose up -d halosis-ai
+```
+**5. Cek LLM aktif.** Keluaran harus menampilkan bagian generasi aktif dan `model_llm` berisi `qwen2.5:3b`.
+```bash
+curl -s http://localhost:8001/health
+```
+**6. Uji.** Buka http://localhost:8080, login `budi`, tanyakan *"FASIH gagal sinkron"*. Jawaban LLM berlabel
+**"Dijawab oleh AI"** (pertama kali bisa beberapa detik). Bila skor kemiripan di bawah 0,83 atau model gagal,
+yang tampil artikel berlabel **"Dari Pusat Bantuan"**.
+
+Untuk mematikan LLM: ubah `LLM_PROVIDER=none` di `.env`, lalu `docker compose up -d halosis-ai`. Chatbot kembali
+memakai jawaban ekstraktif. Rincian pengaturan ada di [Konfigurasi model AI](#konfigurasi-model-ai-env--profile-llm).
+
+### Tahap 4 — Uji coba alur
+
+Buka http://localhost:8080 dan pakai **jendela penyamaran/privat** baru untuk setiap akun.
+
+1. **Pegawai bertanya** — login `budi`, klik **Laporkan masalah**, lalu ketik *"FASIH gagal sinkron"*. Asisten
+   menjawab dari artikel bantuan.
+2. **Pegawai membuat laporan** — klik **Belum terselesaikan** → **Ya, buat laporan** → **Kirim laporan**.
+3. **Operator memeriksa saran AI** — login `rina`, buka **Antrean validasi**, buka laporan tadi. Panel **Saran AI**
+   menampilkan kategori, tim, urgensi, dan keyakinan. Klik **Terima** (atau **Ubah**/**Tolak** dengan alasan).
+4. **Tim teknis menyelesaikan** — login `andi`, buka **Tiket saya & tim**, buka laporannya, klik
+   **Balas ▾ › Tambah solusi**, tulis solusi, simpan.
+5. **Pegawai menyetujui** — login `budi`, buka **Laporan saya**, buka laporannya, klik **Setujui**. Laporan ditutup.
+6. **Manajemen melihat hasil** — login `sri`, buka **Kinerja AI**.
+
+Skenario lengkap (pola insiden, artikel bantuan, pengaturan) ada di
 [`plugins/halosis/README.md`](plugins/halosis/README.md#skenario-demo-langkah-demi-langkah).
 
-## Menyalakan, mematikan, dan mengulang
+### Tahap 5 — Pembaruan
 
-Jalankan dari Terminal di folder `glpi-halosis` (`cd ~/Downloads/glpi-halosis`):
+Jalankan bila kode di GitHub atau isi folder Drive diperbarui. Urutannya selalu sama: ambil kode terbaru,
+perbarui layanan, unduh ulang snapshot (dan model bila ikut diperbarui) dari Drive, lalu cek.
+
+**1. Simpan pekerjaan (bila ada) dan ambil kode terbaru.** `git stash` menyimpan sementara berkas yang diubah dan
+`git stash pop` mengembalikannya.
+```bash
+cd ~/Downloads/glpi-halosis
+git stash
+git fetch origin
+git checkout dev
+git reset --hard origin/dev
+git stash pop
+```
+**2. Perbarui layanan AI dan plugin.**
+```bash
+scripts/pasang.sh
+docker compose up -d --build halosis-ai
+docker compose exec glpi php bin/console cache:clear --allow-superuser
+```
+**3. Hapus sisa unduhan lama, unduh ulang snapshot** (dan model bila disebut) seperti Tahap 3 langkah 1–2, lalu
+**wajib** jalankan `pulihkan` agar data demo masuk. Akun login ikut dipulihkan dari snapshot.
+```bash
+rm -rf ~/Downloads/halosis-ai-files ~/Downloads/drive-download-*.zip
+scripts/demo_snapshot.sh pulihkan backup/demo-20261115-080525
+```
+**4. Cek hasilnya.**
+```bash
+curl -s http://localhost:8001/health
+```
+- `/health` harus `"status":"ok"`, dan kualitas model urgensi harus tertulis **"tidak lolos (skema B)"**. Bila
+  tertulis lolos, folder models belum tertimpa → ulangi langkah 3.
+- Login `sri` › **Kinerja AI**: grafik 12 minggu harus terisi (data demo [DEMO]).
+- Login `rina`: di Dasbor harus ada banner **"Pola insiden terdeteksi · [DEMO] Wi-Fi gedung B putus"**. Bila tidak
+  ada, `pulihkan` belum dijalankan atau snapshot yang diunduh masih versi lama.
+
+### Tahap 6 — Perintah dan persiapan demo
+
+Jalankan dari folder proyek (`cd ~/Downloads/glpi-halosis`):
 
 | Mau apa | Perintah |
 | --- | --- |
-| Mematikan HaloSIS (data tetap tersimpan) | `docker compose down` |
-| Menyalakan lagi besok | Buka Docker Desktop, lalu `docker compose up -d`, tunggu ±1 menit |
-| Mematikan fitur chat atau saran triase saja (layanan AI tetap jalan) | Login `dimas` › **Pengaturan AI** › bagian **Fitur AI** › matikan sakelar "Asisten layanan mandiri untuk pegawai" / "Saran triase AI untuk tiket baru" › simpan |
+| Mematikan (data tetap aman) | `docker compose down` |
+| Menyalakan lagi (buka Docker Desktop dulu) | `docker compose up -d` |
+| Cek layanan menyala | `docker compose ps` |
+| Cek AI siap | `curl -s http://localhost:8001/health` |
+| Lihat log bila ada galat | `docker compose logs --tail 50 glpi` |
+| Simpan kondisi sebelum demo | `scripts/demo_snapshot.sh simpan` |
+| Kembali ke kondisi tersimpan terakhir | `scripts/demo_snapshot.sh pulihkan` |
+| Kembali ke snapshot tim (dari Drive) | `scripts/demo_snapshot.sh pulihkan backup/demo-20261115-080525` |
+| Mematikan fitur chat atau saran triase saja | Login `dimas` › **Pengaturan AI** › **Fitur AI** › matikan sakelar › simpan (lihat Tahap 8B) |
 | Mematikan layanan AI (uji alur "AI mati") | `docker compose stop halosis-ai` (nyalakan: `docker compose start halosis-ai`) |
-| Menyimpan kondisi sebelum demo | `scripts/demo_snapshot.sh simpan` |
-| Kembali ke kondisi yang disimpan | `scripts/demo_snapshot.sh pulihkan` |
-| Mengisi dashboard dengan data fiktif **[DEMO]** (alat demo, bukan bagian layanan AI) | `python scripts/seed_demo.py buat --mundurkan-tanggal` (hapus: `python scripts/seed_demo.py hapus`; `rencana` = hanya cetak jumlah). Simpan snapshot dulu. Langkah sisi-plugin: `plugins/halosis/tools/seed_demo_plugin.php`; dua UPDATE ber-WHERE ketat pada baris [DEMO]: tanggal (`--mundurkan-tanggal`) dan kolom pemilik (`users_id`) 6 Reminder pribadi [DEMO] (langkah `pemilik`; REST selalu memakai akun sesi sebagai pemilik). Bagian agenda saja (tugas minggu ini, catatan publik, pengingat pribadi): `python scripts/seed_demo.py agenda` / `agenda-hapus`. Data [DEMO] dikecualikan dari Ekspor koreksi & Kandidat → artikel, dan tidak menyentuh data latih/indeks AI |
+| Hapus **SEMUA** data, mulai dari nol | `docker compose down -v`, lalu `scripts/pasang.sh` |
 
-> **Windows:** jalankan snapshot dari **Git Bash** (bukan PowerShell/CMD) di dalam folder proyek yang berada di drive yang dibagikan ke Docker Desktop (mis. `C:\`). Skrip otomatis memakai path Windows; bila folder tidak terbaca container, skrip berhenti dengan pesan "GAGAL" dan data Keycloak tidak diubah.
-| Menghapus **semua** data lalu mulai dari nol | `docker compose down -v` lalu `scripts/pasang.sh` |
+> ⚠️ `down -v` menghapus semua data, termasuk laporan dan akun. Pakai hanya bila memang ingin mulai dari nol.
 
-## Kalau ada masalah
+Sebelum demo, jalankan empat perintah ini, lalu ikuti [`reports/checklist_demo.md`](reports/checklist_demo.md).
+Bila HaloSIS akan dibuka dari laptop lain di jaringan, ganti dulu kata sandi bawaan.
+```bash
+cd ~/Downloads/glpi-halosis
+docker compose up -d
+curl -s http://localhost:8001/health
+scripts/demo_snapshot.sh pulihkan backup/demo-20261115-080525
+```
 
-| Yang terlihat | Coba ini |
+### Tahap 7 — Pemecahan masalah
+
+| Yang terlihat | Yang dicoba |
 | --- | --- |
-| `GAGAL: Docker belum menyala` / `Cannot connect to the Docker daemon` | Buka aplikasi Docker Desktop, tunggu ikon paus diam, ulangi perintah |
-| `command not found: python3` (Windows) | Pasang ulang Python dan centang **Add python.exe to PATH**, lalu tutup & buka lagi Git Bash |
-| `permission denied: scripts/pasang.sh` | Ketik `bash scripts/pasang.sh` |
-| Halaman http://localhost:8080 tidak terbuka | Tunggu 1–2 menit setelah menyalakan, lalu muat ulang. Cek Docker Desktop menyala |
-| Login `budi` ditolak padahal password benar | Salah password 5× membuat akun terkunci ±15 menit. Tunggu, lalu coba lagi |
-| Tidak bisa login sama sekali | Login darurat `glpi` / `glpi` tetap bisa; laporkan ke pemilik repo |
-| Laptop jadi lambat | Matikan HaloSIS saat tidak dipakai (`docker compose down`) |
-| Masalah lain | Simpan tulisan galatnya (screenshot), kirim ke pemilik repo |
+| `GAGAL: Docker belum menyala` / `Cannot connect to the Docker daemon` | Buka Docker Desktop, ulangi perintah |
+| `permission denied: scripts/pasang.sh` | Jalankan `bash scripts/pasang.sh` |
+| `command not found: python3` (Windows) | Pasang ulang Python, centang **Add python.exe to PATH**, buka ulang Git Bash |
+| `git pull` gagal: *Your local changes would be overwritten* | Ada berkas yang diubah → `git stash`, `git pull`, lalu `git stash pop` |
+| http://localhost:8080 tidak terbuka | Tunggu 1–2 menit, muat ulang, lalu cek `docker compose ps` |
+| Login ditolak padahal kata sandi benar | Salah 5× = terkunci ±15 menit. Tunggu lalu coba lagi. Darurat: `glpi` / `glpi` |
+| `/health` "sebagian" | Berkas model/indeks salah tempat → ulangi Tahap 3 langkah 2–4 |
+| Jawaban chatbot benar tetapi tautan sumbernya beda topik, atau `/health` memberi peringatan indeks tidak cocok | Database dan indeks AI dari versi berbeda → pulihkan snapshot tim (Tahap 3 langkah 4) |
+| Windows: `tar: can't open '/backup/keycloak-data.tgz'` atau GAGAL saat pulihkan, login gagal | `git pull` versi terbaru, ulangi `pulihkan` dari Git Bash. Bila masih gagal, jalankan perintah PowerShell di Tahap 3 langkah 4 |
+| `Snapshot tidak lengkap: backup/…` | Isi folder salah tempat. `ls backup/demo-20261115-080525` harus berisi `glpi.sql.gz` dan `keycloak-data.tgz` → ulangi Tahap 3 langkah 2 |
+| Saran AI tidak muncul di laporan | Cek `/health` "ok"; di panel laporan klik **Buat saran AI**. Login `glpi` › **Pengaturan AI**: URL layanan harus `http://halosis-ai:8000` |
+| Laptop lambat | Jalankan `docker compose down` saat tidak dipakai |
+| Masalah lain | Lihat log: `docker compose logs --tail 50 glpi` atau `docker compose logs --tail 50 halosis-ai` |
 
+### Tahap 8 — Uji khusus
+
+**A. Saat layanan AI mati.** Matikan layanan AI, lalu tanya sesuatu di Tanya HaloSIS (login `budi`). Asisten tetap
+menjawab lewat pencarian kata kunci dengan label "Dari Pusat Bantuan"; bila tidak ada yang cocok, asisten menawarkan
+**Buat laporan** (T4 UC-01 alur 4a dan 5a). Contoh: *"FASIH gagal sinkronisasi"*, *"printer macet"*. Setelah
+selesai, layanan **wajib** dinyalakan lagi.
+```bash
+docker compose stop halosis-ai
+# ... uji di peramban ...
+docker compose start halosis-ai
+curl -s http://localhost:8001/health
+```
+
+**B. Mematikan fitur tertentu.** Login `dimas` › **Pengaturan AI** › bagian **Fitur AI**:
+- Sakelar **"Asisten layanan mandiri untuk pegawai"** mematikan chat (T4 UC-01 alur 1a: halaman menampilkan
+  "Asisten Sedang Tidak Tersedia", tombol Buat laporan, dan tautan FAQ).
+- Sakelar **"Saran triase AI untuk tiket baru"** mematikan triase (UC-03 alur 6a, UC-05 alur 3a: tiket tanpa saran AI).
+
+Simpan (masukkan ulang kata sandi bila diminta). Setelah selesai, nyalakan lagi.
+
+**C. Data demo.** Snapshot tim berisi ±135 tiket contoh bertanda **[DEMO]** yang tersebar selama 12 minggu agar
+dasbor tiap peran terisi. Angkanya fiktif, jadi **tidak boleh** dipakai sebagai hasil evaluasi (angka resmi ada di
+`reports/`). Data demo tidak ikut ke ekspor koreksi maupun kandidat artikel. Untuk kembali ke kondisi awal snapshot
+setelah mencoba-coba:
+```bash
+scripts/demo_snapshot.sh pulihkan backup/demo-20261115-080525
+```
 **Alamat yang perlu diketahui**
 
 | Alamat | Isinya |
 | --- | --- |
 | http://localhost:8080 | Aplikasi HaloSIS |
+| http://localhost:8001/health | Status layanan AI |
 | http://localhost:8025 | Kotak masuk email uji (semua email HaloSIS ditahan di sini, tidak terkirim ke luar) |
 | http://localhost:8180 | Pengelola akun/SSO (Keycloak; login `admin` / `admin`) — untuk administrator |
 
 ---
 
-# Bagian untuk anggota tim & rincian teknis
+# Rincian teknis
 
-Bagian di bawah ini untuk anggota tim yang ikut mengembangkan atau perlu tahu cara kerjanya. Pengguna yang hanya
-mencoba HaloSIS cukup membaca bagian di atas.
+Bagian di bawah ini menjelaskan cara kerja HaloSIS secara teknis. Untuk sekadar mencoba HaloSIS, cukup ikuti
+Tahap 1–8 di atas.
 
 **Ringkas teknis:** GLPI 12 + **plugin HaloSIS** (chatbot Tanya HaloSIS, saran triase, deteksi pola insiden,
 kandidat knowledge, pengingat progres, dashboard kinerja AI) + palet tema HaloSIS + layanan AI lokal `halosis-ai` +
@@ -157,302 +341,14 @@ Keycloak). Data contoh: 4 tim teknis, kategori layanan (SSO, FASIH, SiPecut, VPN
 resmi BPS, 12 tiket, artikel knowledge base, dan 1 "masalah" contoh pola insiden. Cara pakai fitur & skenario demo:
 [`plugins/halosis/README.md`](plugins/halosis/README.md).
 
-## Untuk anggota tim: mulai dari link GitHub
+**Yang tidak disimpan di GitHub.** Data history tiket, model AI, dan indeks pencarian berisi data internal BPS,
+jadi tidak ikut ke repo (lihat [`ai/README.md`](ai/README.md)):
 
-Untuk anggota tim yang ikut mengubah kode. Belum pernah pakai Git/GitHub? Ikuti dari atas sampai bawah. Cukup
-sekali di langkah A–C; langkah D dipakai setiap kali kamu bekerja.
-
-**Istilah singkat**
-
-| Istilah | Artinya |
+| Kebutuhan | Yang diperlukan |
 | --- | --- |
-| **Repo** (repository) | Folder proyek yang disimpan di GitHub, lengkap dengan riwayat perubahannya |
-| **Clone** | Mengunduh repo ke laptop (sekali saja) |
-| **Commit** | "Simpan titik" perubahan di laptop, dengan pesan singkat |
-| **Push** | Mengirim commit dari laptop ke GitHub |
-| **Pull** | Mengambil perubahan terbaru teman dari GitHub ke laptop |
-| **Branch** | Jalur kerja terpisah, supaya pekerjaanmu tidak mengganggu pekerjaan teman |
-| **Pull Request (PR)** | Permintaan menggabungkan branch-mu ke branch bersama, bisa dicek teman dulu |
-| **Conflict** | Kamu dan teman mengubah baris yang sama; Git minta kamu memilih mana yang dipakai |
-
-### A. Persiapan (sekali saja)
-
-1. **Pasang aplikasi:**
-   - **Git**: Mac → buka Terminal, ketik `git --version` (kalau belum ada, macOS menawarkan untuk memasang);
-     Windows → https://git-scm.com/download/win (pilih opsi bawaan saja).
-   - **Docker Desktop**: https://www.docker.com/products/docker-desktop, lalu buka aplikasinya sampai ikon paus
-     di menu bar/taskbar berhenti bergerak.
-   - **Python 3**: Mac biasanya sudah ada (`python3 --version`); Windows → https://www.python.org/downloads
-     (centang **Add python.exe to PATH** saat instalasi).
-   - Disarankan: **VS Code** (https://code.visualstudio.com) untuk membuka & mengedit kode.
-2. **Kenalkan dirimu ke Git** (nama & email yang tercatat di setiap commit):
-   ```bash
-   git config --global user.name "Nama Kamu"
-   git config --global user.email "email-github-kamu@contoh.com"
-   ```
-3. **Login GitHub dari laptop.** GitHub tidak menerima password biasa untuk push. Pilih salah satu:
-   - Paling mudah: pasang **GitHub Desktop** (https://desktop.github.com) dan login di sana; Git di laptop ikut
-     memakai login itu.
-   - Atau GitHub CLI: pasang dari https://cli.github.com lalu jalankan `gh auth login` (pilih *GitHub.com* →
-     *HTTPS* → *Login with a web browser*).
-
-### B. Ambil kode (clone)
-
-Buka Terminal (Mac) atau **Git Bash** (Windows), lalu:
-```bash
-cd ~/Downloads                     # pindah ke folder tempat proyek mau disimpan
-git clone https://github.com/dianekapr/glpi-halosis.git
-cd glpi-halosis
-git checkout dev                   # kerja tim ada di branch dev
-cp .env.example .env               # Windows (cmd): copy .env.example .env
-```
-File `.env` berisi pengaturan lokal dan sengaja tidak ikut ke GitHub.
-
-### C. Jalankan di laptop
-
-Jalankan `scripts/pasang.sh` (sama dengan [Langkah 4 pemula](#langkah-4--jalankan-pemasangan-otomatis)); rincian tiap
-langkahnya ada di [Pemasangan manual](#pemasangan-manual-yang-dijalankan-scriptspasangsh). Catatan untuk anggota tim:
-
-- `docker compose up -d` pertama kali juga membangun layanan AI (`halosis-ai`), mengunduh Keycloak, dan
-  mengunduh beberapa GB; bisa 10–20 menit. Selanjutnya cepat.
-- **Sudah punya `.env` dari sebelumnya?** Salin blok `HALOSIS_KEYCLOAK_*` dari `.env.example` ke `.env`, lalu
-  `docker compose up -d`. Tanpa blok itu SSO mati dan login memakai password lokal GLPI.
-- **Data history tiket, model AI, dan indeks pencarian TIDAK ada di GitHub** (berisi data pribadi, lihat
-  [`ai/README.md`](ai/README.md)). Siapa perlu apa:
-
-  | Kebutuhan | Yang diperlukan |
-  | --- | --- |
-  | Menjalankan & menguji GLPI + plugin | Tidak perlu data apa pun. `seed_halosis.py` mengisi data contoh; tanpa model AI, plugin otomatis memakai **mode demo** |
-  | **Menguji end-to-end dengan AI sungguhan** (saran triase dari model, chatbot dari artikel KB terbit & katalog layanan) | Folder `ai/models/` dan `ai/index/` dari pemilik repo. **Tidak perlu file Excel** |
-  | Melatih ulang model dari Excel | Hanya 1–2 orang yang mengurus AI; ikuti [`ai/README.md`](ai/README.md) |
-
-  Cara memasangnya ada di bagian **C2** di bawah.
-- Windows: ganti `.venv/bin/python` dengan `.venv\Scripts\python` dan `.venv/bin/pip` dengan `.venv\Scripts\pip`.
-
-### C2. Pasang model AI dari Google Drive (untuk penguji)
-
-> ⚠️ Isi folder ini diturunkan dari history tiket BPS (sudah disamarkan, tetapi tetap **data internal**).
-> Jangan unggah ulang, jangan kirim ke orang lain/grup chat, dan jangan di-commit ke GitHub.
-
-**Syarat:** `scripts/pasang.sh` sudah selesai (GLPI menyala, plugin terpasang, data contoh sudah diisi).
-Indeks chatbot merujuk artikel Knowledge Base hasil `seed_halosis.py`, jadi langkah 5 wajib dijalankan dulu.
-
-**1. Unduh dari Google Drive** (login dengan akun Google yang diberi akses oleh pemilik repo):
-
-| Yang diunduh | Untuk siapa | Link |
-| --- | --- | --- |
-| Folder **`models`** (model AI) | Semua penguji | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
-| Folder **`index`** (indeks pencarian chatbot) | Semua penguji | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
-| **Data ticketing** (Excel history tiket mentah) | **Hanya Pengelola AI** yang melatih ulang model ([`ai/README.md`](ai/README.md)); penguji **tidak perlu** | [Google Drive](https://drive.google.com/drive/folders/1XFP020tMVDOuHLvurjcnKSUjHqCVmYlS?usp=share_link) |
-
-Ketiganya ada di folder Drive yang sama; unduh hanya yang Anda perlukan. File data ticketing disimpan di
-`data/raw/` (di-ignore git) dan **tidak boleh** disalin ke tempat lain.
-
-Isi `models` + `index` **7 file**: `models/triage.joblib` (±40 MB,
-saran tim) + `models/triage.metrics.json` (metrik gerbang kualitas), `models/jenis.joblib` (saran jenis REQ/INC),
-`models/urgensi.joblib` + `models/urgensi.metrics.json` (saran urgensi insiden), dan `index/chunks.parquet` +
-`index/vectors.npy`. Versi 31 Okt 2026 dilatih dari **ekspor history versi baru** (220 kolom); `prioritas.joblib`
-lama tidak dipakai lagi — hapus bila masih ada di folder Anda (pemilik repo: hapus juga dari Drive dan unggah
-ulang ketujuh file ini).
-**Anggota tim tidak melatih ulang model**: cukup pakai file ini (melatih ulang butuh data history mentah yang hanya
-dipegang Pengelola AI; lihat `reports/tata_kelola_ai.md`). Tanpa berkas opsional (`jenis`/`urgensi`), panel hanya
-tidak menampilkan saran itu; tanpa `triage.metrics.json` model triase dinyatakan belum lolos uji kualitas.
-
-Di Drive: pilih kedua folder (atau folder induknya) → klik kanan → **Download**. Drive mengemasnya jadi file
-`.zip` (namanya bisa seperti `drive-download-20261028T…-001.zip`). Ekstrak: Mac → klik dua kali file zip;
-Windows → klik kanan → **Extract All**.
-
-> 🔒 **Untuk pemilik repo:** repo ini **publik**, jadi link di atas terbaca siapa pun. Bagikan folder Drive
-> **hanya ke akun Google anggota tim** (Bagikan › tambahkan email satu per satu, peran *Pelihat*); jangan pakai akses
-> umum "Siapa saja yang memiliki link". **Data ticketing berisi data pribadi mentah**: sebaiknya ditaruh di folder
-> Drive terpisah yang hanya dibagikan ke Pengelola AI.
-
-**2. Taruh di folder proyek** sehingga susunannya **persis** seperti ini (nama huruf kecil semua):
-```text
-glpi-halosis/
-└── ai/
-    ├── models/
-    │   ├── triage.joblib
-    │   ├── triage.metrics.json
-    │   ├── jenis.joblib
-    │   ├── urgensi.joblib
-    │   └── urgensi.metrics.json
-    └── index/
-        ├── chunks.parquet
-        └── vectors.npy
-```
-Hati-hati folder dobel hasil ekstrak, mis. `ai/models/models/triage.joblib`. Kalau begitu, pindahkan file-nya
-naik satu tingkat. Cek dari folder proyek:
-```bash
-ls ai/models ai/index          # Mac/Linux
-dir ai\models ai\index         # Windows (cmd)
-```
-Harus terlihat tepat enam file di atas.
-
-**3. Nyalakan ulang layanan AI**
-```bash
-docker compose restart halosis-ai
-```
-(Kalau layanan belum pernah dibuat: `docker compose up -d --build halosis-ai`.)
-
-**4. Cek layanan siap.** Buka http://localhost:8001/health. Saat pertama kali, layanan mengunduh model bahasa
-(±1 GB), jadi bisa 2–5 menit; muat ulang halaman sampai muncul:
-```text
-{"status":"ok","triase":true,"versi_model":"triase-tfidf-lr-…","pencarian":true, …}
-```
-Metrik: http://localhost:8001/metrics
-
-| Yang muncul | Artinya | Yang dilakukan |
-| --- | --- | --- |
-| `"status":"ok"` | Model & indeks terbaca | Lanjut ke langkah 5 |
-| `"status":"sebagian"`, `"triase":false` | `triage.joblib` tidak ditemukan | Cek susunan folder (langkah 2), lalu ulangi langkah 3 |
-| `"status":"sebagian"`, `"pencarian":false` | `chunks.parquet`/`vectors.npy` tidak ditemukan | Cek susunan folder (langkah 2), lalu ulangi langkah 3 |
-| Halaman tidak bisa dibuka | Layanan masih menyiapkan diri (mengunduh model bahasa) atau belum menyala | Tunggu beberapa menit lalu muat ulang. Bila tetap: `docker compose ps` (harus ada `halosis-ai` *Up*) dan `docker compose logs --tail 30 halosis-ai` (siap bila ada baris `Application startup complete`) |
-
-**5. Pastikan GLPI memakai layanan ini.** Login `glpi` → menu **Pengaturan AI** → bagian *Layanan AI HaloSIS*:
-URL harus `http://halosis-ai:8000` (bawaan). Jangan diganti `localhost:8001`: GLPI berjalan di dalam Docker
-dan memanggil layanan lewat nama `halosis-ai`.
-
-**6. Uji cepat**
-- Login `budi` / `halosis` → langsung di **Tanya HaloSIS** dengan kartu *Ajukan permintaan* & *Laporkan masalah*.
-- Klik **Laporkan masalah** → tanya *"kuota email saya penuh"* → jawaban punya sumber artikel KB atau layanan
-  (tanpa model: jawaban dari artikel FAQ saja).
-- Login `budi` → tanya *"resep nasi goreng"* → asisten menjawab belum menemukan jawaban.
-- Buat tiket *"tidak bisa login SSO"* → login `rina` → buka tiketnya → panel **Saran AI** menyebut model
-  `triase-tfidf-lr-…` beserta 3 tim teratas (tanpa model: `demo-rules-v1`).
-
-Lalu jalankan skenario lengkap di
-[`plugins/halosis/README.md`](plugins/halosis/README.md#skenario-demo-langkah-demi-langkah).
-
-**7. Setelah selesai menguji**
-- `git status` tidak boleh menampilkan `ai/models` atau `ai/index` (sudah di-`.gitignore`). Kalau muncul,
-  jangan commit; kabari pemilik repo.
-- Bila tidak dipakai lagi, hapus kedua folder dan file zip unduhannya.
-
-### C3. Update untuk anggota tim (setiap kali `git pull` membawa perubahan plugin/AI)
-
-**Cara singkat** (aman diulang): `git pull && docker compose up -d --build halosis-ai && scripts/pasang.sh`.
-
-> **Anggota tim yang sudah clone sebelum 2 Nov 2026: jalankan ulang `scripts/pasang.sh` sekali.** Gejala bila belum:
-> halaman login/menu tampil berbahasa Inggris di browser berbahasa Inggris ("Login to your account", "Welcome to
-> HaloSIS"). Penyebabnya bukan berkas `.mo` (ikut git), melainkan instalasi lama: bahasa bawaan GLPI belum id_ID,
-> label inti belum disalin ke `files/_locales/core_halosis`, dan cache terjemahan GLPI masih versi lama. Sejak
-> versi ini plugin memaksa halaman login berbahasa Indonesia dan memasang ulang terjemahan + mengosongkan cache
-> terjemahan otomatis bila berkas `.mo` berubah setelah `git pull` (`LoginPage::syncLocales`); `pasang.sh` juga
-> menyetel bahasa bawaan & bahasa akun demo ke id_ID.
-
-Rinciannya, bila ingin menjalankan satu per satu dari folder repo (aman diulang). Urutan penting: `halosis-ai` harus
-hidup **sebelum** install plugin, karena install juga mengisi katalog layanan ke indeks chatbot.
-
-```bash
-git pull
-docker compose up -d --build halosis-ai                          # kode layanan AI terbaru (tunggu /health "ok")
-curl -s localhost:8001/health
-docker compose exec glpi php bin/console plugin:install halosis -u glpi --force --allow-superuser   # tabel/config baru + katalog layanan → indeks
-docker compose exec glpi php bin/console plugin:activate halosis --allow-superuser
-docker compose exec glpi php bin/console plugins:halosis:setup-roles --allow-superuser             # role & hak (mis. hapus tiket hanya Super-Admin)
-.venv/bin/python setup_sla_alerts.py http://localhost:8080        # SLA respons & penyelesaian, notifikasi
-.venv/bin/python setup_pejabat_rules.py http://localhost:8080     # grup Pejabat + aturan urgensi +1 pemohon pejabat
-.venv/bin/python setup_list_columns.py http://localhost:8080      # kolom daftar (mis. Waktu untuk mengambil alih)
-docker compose exec glpi php bin/console cache:clear --allow-superuser                             # template/CSS plugin terbaru
-```
-
-- **Impor ulang realm Keycloak** hanya bila `keycloak/halosis-realm.json` berubah (mis. atribut NIP/unit/jabatan).
-  Ini menghapus **data Keycloak saja** (akun & role dibuat ulang dari JSON; data GLPI tidak tersentuh):
-  `docker compose stop keycloak && docker compose rm -f keycloak && docker volume rm glpi-halosis_keycloak_data && docker compose up -d keycloak`
-- **Katalog layanan belum masuk indeks** (cek: `curl -s localhost:8001/metrics | grep index_chunks`): ulangi
-  `plugin:install` saat `halosis-ai` hidup, atau simpan ulang salah satu kategori di Pengaturan › Daftar pilihan › Kategori ITIL.
-- Sebelum demo: `scripts/demo_snapshot.sh simpan`; kembali ke kondisi itu: `scripts/demo_snapshot.sh pulihkan`
-  (lihat `reports/checklist_demo.md`).
-
-### D. Alur kerja harian (biar tidak bentrok)
-
-Branch di repo ini:
-
-| Branch | Isi | Siapa yang mengubah |
-| --- | --- | --- |
-| `master` | Versi stabil untuk demo/pengumpulan | Hanya lewat PR dari `dev`, disepakati bersama |
-| `dev` | Gabungan pekerjaan tim yang sudah dicek | Hanya lewat Pull Request |
-| `fitur/<nama>-<topik>` | Pekerjaanmu sendiri, mis. `fitur/rina-dashboard` | Kamu |
-
-**1. Sebelum mulai kerja: ambil yang terbaru**
-```bash
-git checkout dev
-git pull
-```
-
-**2. Buat branch untuk tugasmu** (sekali per tugas)
-```bash
-git checkout -b fitur/namamu-topik
-```
-
-**3. Kerjakan, lalu simpan (commit)**
-```bash
-git status                         # lihat file apa saja yang berubah
-git add plugins/halosis/src/Stats.php   # pilih file yang memang mau disimpan
-git commit -m "Tambah grafik tren mingguan di dashboard"
-```
-Commit sering-sering dengan pesan yang jelas. Hindari `git add .` kalau belum yakin isi `git status`.
-
-**4. Kirim ke GitHub (push)**
-```bash
-git push -u origin fitur/namamu-topik      # pertama kali untuk branch ini
-git push                                   # berikutnya cukup ini
-```
-
-**5. Buat Pull Request ke `dev`.** Buka repo di GitHub → muncul tombol **Compare & pull request** → pastikan
-*base: `dev`* ← *compare: branch-mu* → tulis apa yang diubah & cara mengeceknya → **Create pull request**. Minta
-satu teman mengecek, lalu klik **Merge pull request**.
-
-**6. Setelah PR digabung**
-```bash
-git checkout dev
-git pull
-git branch -d fitur/namamu-topik           # hapus branch lama di laptop
-```
-
-**Kalau `dev` sudah berubah saat kamu masih bekerja** (teman sudah merge duluan), gabungkan dulu ke branch-mu
-supaya conflict ketahuan lebih awal:
-```bash
-git checkout dev && git pull
-git checkout fitur/namamu-topik
-git merge dev
-```
-
-**Kalau muncul conflict.** Git menandai bagian yang bentrok di dalam file:
-```text
-<<<<<<< HEAD
-versi kamu
-=======
-versi dari dev
->>>>>>> dev
-```
-Buka file itu (VS Code menampilkan tombol *Accept Current / Incoming / Both*), sisakan versi yang benar,
-hapus tanda `<<<<<<<`, `=======`, `>>>>>>>`, lalu:
-```bash
-git add nama-file-yang-bentrok
-git commit -m "Selesaikan conflict dengan dev"
-```
-Ragu memilih? Tanya teman yang mengubah bagian itu sebelum commit.
-
-**Aturan emas**
-- **Jangan pernah commit** `data/`, `.env`, `ai/models/`, `ai/index/`, file `.xlsx`/`.parquet` (data pribadi &
-  rahasia). Semuanya sudah ada di `.gitignore`; tetap cek `git status` sebelum commit.
-- Jangan kerja langsung di `dev`/`master`; selalu lewat branch + PR.
-- Selalu `git pull` di `dev` sebelum membuat branch baru.
-- Jangan pakai `git push --force` ke `dev`/`master`.
-- Bagi tugas per bagian/berkas di grup supaya jarang mengubah file yang sama bersamaan.
-
-**Masalah yang sering muncul**
-
-| Pesan | Artinya & solusinya |
-| --- | --- |
-| `! [rejected] … (fetch first)` / `non-fast-forward` | Di GitHub ada perubahan yang belum kamu ambil → `git pull`, selesaikan conflict bila ada, lalu `git push` lagi |
-| `Your local changes … would be overwritten` | Ada perubahan yang belum di-commit → commit dulu, atau simpan sementara dengan `git stash` lalu `git stash pop` setelah pull |
-| `Permission denied` / `403` | Belum login (langkah A.3), atau akunmu belum punya akses tulis ke repo → minta ke pemilik repo |
-| `Authentication failed` | Pakai login GitHub Desktop / `gh auth login`, bukan password akun |
-| Terlanjur commit file data (belum push) | `git reset --soft HEAD~1`, keluarkan file itu dari commit, lalu kabari pemilik repo |
-| Terlanjur **push** file data/`.env` | Jangan push lagi; segera kabari pemilik repo (riwayat GitHub harus dibersihkan & password diganti) |
+| Menjalankan GLPI + plugin | Tidak perlu data apa pun. `seed_halosis.py` mengisi data contoh; tanpa model AI, plugin memakai **mode demo** |
+| Menguji dengan AI sungguhan (saran triase dari model, chatbot dari artikel bantuan) | Folder `models` dan snapshot demo dari Drive ([Tahap 3](#tahap-3--pasang-ai-dari-google-drive)) |
+| Melatih ulang model dari data history | Ikuti [`ai/README.md`](ai/README.md) |
 
 ## Pemasangan manual (yang dijalankan `scripts/pasang.sh`)
 
@@ -1034,7 +930,7 @@ Perbedaan implementasi dengan dokumen perancangan / PoC (§2.4.7) dan alasannya
 
 ## Mematikan / mengulang dari nol (catatan teknis)
 
-Perintahnya ada di [Menyalakan, mematikan, dan mengulang](#menyalakan-mematikan-dan-mengulang). `docker compose down -v`
+Perintahnya ada di [Tahap 6 — Perintah dan persiapan demo](#tahap-6--perintah-dan-persiapan-demo). `docker compose down -v`
 juga menghapus data Keycloak; realm `halosis` diimpor ulang dari `keycloak/halosis-realm.json` saat
 `docker compose up -d` berikutnya.
 
